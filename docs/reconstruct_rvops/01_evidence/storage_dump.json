@@ -1,0 +1,37 @@
+{
+  "captured_at": "2026-10-15T14:06:46-03:00",
+  "account_id": "0f14ffff",
+  "account_name": "Sales Rocket",
+  "user": {
+    "id": "2b08046d-d5e2-4d83-8fd3-b76e184748d7",
+    "email": "thiago@salesrocketbrasil.com.br",
+    "name": "Thiago Hortolan",
+    "phone": "+5514996417447"
+  },
+  "roles": [
+    "ads", "asset", "billing", "campaign", "communication-inbox",
+    "communication-management", "communication-operators", "communication-tools",
+    "company", "config", "deal", "email", "export", "form", "import",
+    "landing_page", "lead", "pipeline", "point", "product", "report-dashboard",
+    "report-panel", "segment", "snippet", "task", "template", "ticket", "kairos"
+  ],
+  "cookies": [
+    {
+      "name": "acc_client_lb",
+      "value": "8c8024c2d863fba3",
+      "domain": "app.rvops.com",
+      "path": "/"
+    },
+    {
+      "name": "17_zpW76p0ba07a87eb8600e1QgG&mJJ_22",
+      "domain": ".rvops.com",
+      "path": "/"
+    },
+    {
+      "name": "2fe1d41048bbcf10630470c702b5fe82",
+      "value": "886cba46a899b415bc4c7a8a46087561",
+      "domain": "app.rvops.com",
+      "path": "/"
+    }
+  ]
+}
