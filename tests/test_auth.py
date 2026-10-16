@@ -75,7 +75,7 @@ def test_auth_logout():
 
 
 def test_frontend_auth_elements():
-    """Valida presença da tela de login, rodapé de usuário e botões de alternar/sair no frontend."""
+    """Valida presença da tela de login, rodapé de usuário, gestão de usuários e importador universal no frontend."""
     res = client.get("/")
     assert res.status_code == 200
     html = res.text
@@ -85,10 +85,111 @@ def test_frontend_auth_elements():
     assert 'id="login-email"' in html
     assert 'id="login-password"' in html
     assert 'hevertoneduardoperes@gmail.com' in html
+    assert 'fillSuperAdminCredentials()' in html
     # 2. Rodapé de usuário e botões de logout/troca
     assert 'id="sidebar-user-avatar"' in html
     assert 'id="sidebar-user-name"' in html
     assert 'Heverton Eduardo Peres' in html
     assert 'openLoginModal()' in html
     assert 'handleLogout()' in html
+    # 3. Central de Gestão de Usuários & Credenciais
+    assert 'id="users-view"' in html
+    assert 'id="modal-new-collaborator"' in html
+    assert 'id="modal-reset-collaborator-password"' in html
+    assert 'fetchUsersList()' in html
+    # 4. Importador Universal em Massa de Carteiras
+    assert 'id="import-contacts-view"' in html
+    assert 'id="import-csv-text"' in html
+    assert 'handleBulkImportSubmit()' in html
+
+
+
+def test_users_management_crud_and_security_invariants():
+    """Valida gestão de colaboradores, reset de senha e invariante inquebrável de superadmin único."""
+    # 1. Login do Super Admin
+    login_res = client.post("/api/v1/auth/login", json={
+        "email": "hevertoneduardoperes@gmail.com",
+        "password": "@#Khen741963@#"
+    })
+    token = login_res.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # 2. Listagem de usuários
+    list_res = client.get("/api/v1/auth/users", headers=headers)
+    assert list_res.status_code == 200
+    users = list_res.json()
+    assert len(users) >= 1
+    # Verifica que apenas Heverton é superadmin
+    superadmins = [u for u in users if u["is_superadmin"] is True]
+    assert len(superadmins) == 1
+    assert superadmins[0]["email"] == "hevertoneduardoperes@gmail.com"
+
+    # 3. Criação de novo colaborador pelo Super Admin
+    import uuid
+    collab_email = f"dr.colaborador.{uuid.uuid4().hex[:6]}@revnaut.com"
+    create_res = client.post("/api/v1/auth/users", json={
+        "name": "Dr. Fernando Odonto",
+        "email": collab_email,
+        "password": "senhaInicial123",
+        "role": "Consultor Comercial Odonto",
+        "phone": "(11) 98765-4321"
+    }, headers=headers)
+    assert create_res.status_code == 200
+    collab_data = create_res.json()
+    assert collab_data["is_superadmin"] is False
+    assert collab_data["email"] == collab_email
+    new_user_id = collab_data["id"]
+
+    # 4. Colaborador recém-criado consegue logar com sua senha
+    collab_login = client.post("/api/v1/auth/login", json={
+        "email": collab_email,
+        "password": "senhaInicial123"
+    })
+    assert collab_login.status_code == 200
+    collab_token = collab_login.json()["access_token"]
+    collab_headers = {"Authorization": f"Bearer {collab_token}"}
+
+    # 5. Colaborador comum NÃO PODE cadastrar novos usuários (403 Forbidden)
+    forbidden_res = client.post("/api/v1/auth/users", json={
+        "name": "Intruso",
+        "email": "intruso@revnaut.com",
+        "password": "123"
+    }, headers=collab_headers)
+    assert forbidden_res.status_code == 403
+
+    # 6. Super Admin reseta a senha do colaborador
+    reset_res = client.post(f"/api/v1/auth/users/{new_user_id}/reset-password", json={
+        "new_password": "NovaSenhaSegura2026!"
+    }, headers=headers)
+    assert reset_res.status_code == 200
+    assert reset_res.json()["success"] is True
+
+    # 7. Colaborador loga com a NOVA senha com sucesso
+    new_login = client.post("/api/v1/auth/login", json={
+        "email": collab_email,
+        "password": "NovaSenhaSegura2026!"
+    })
+    assert new_login.status_code == 200
+
+    # 8. Desativação e Ativação do colaborador
+    deact_res = client.put(f"/api/v1/auth/users/{new_user_id}/status", json={"is_active": False}, headers=headers)
+    assert deact_res.status_code == 200
+
+    # Login deve falhar com 403 para usuário desativado
+    blocked_login = client.post("/api/v1/auth/login", json={
+        "email": collab_email,
+        "password": "NovaSenhaSegura2026!"
+    })
+    assert blocked_login.status_code == 403
+
+    # Reativação
+    react_res = client.put(f"/api/v1/auth/users/{new_user_id}/status", json={"is_active": True}, headers=headers)
+    assert react_res.status_code == 200
+
+    # 9. Invariante: Super Admin não pode ser desativado
+    superadmin_user_id = superadmins[0]["id"]
+    super_deact_res = client.put(f"/api/v1/auth/users/{superadmin_user_id}/status", json={"is_active": False}, headers=headers)
+    assert super_deact_res.status_code == 400
+    assert "Super Admin único não pode ser desativado" in super_deact_res.json()["detail"]
+
 

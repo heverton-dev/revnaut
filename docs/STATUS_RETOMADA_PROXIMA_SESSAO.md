@@ -1,61 +1,59 @@
 # Status de Retomada — Próxima Sessão (Revnaut Dental Ops)
 
-**Data do Ponto de Restauração:** 16/10/2026 09:44 BRT  
+**Data do Ponto de Restauração:** 16/10/2026 10:05 BRT  
 **ID da Conversa:** `f1bbcd99-64df-4a50-a2e8-1a221672f2dd`  
 **Repositório GitHub:** `https://github.com/heverton-dev/revnaut` (Privado)  
 **Ambiente Ativo:** Local Monolith / VPS Swarm (`https://revnaut.vpsconexao.org`)  
-**Backend:** FastAPI + SQLite WAL (`data/revops.db`)  
+**Backend:** FastAPI + SQLite WAL (`data/revops.db` / `data/rvops.db`)  
 **Frontend:** `docs/reconstruct_rvops/05_reconstructed_app/index.html` (Servido na raiz `/`)  
-**Testes Automatizados:** 55/55 passaram com 100% de sucesso (`pytest -v`)  
+**Testes Automatizados:** 59/59 passaram com 100% de sucesso (`pytest -v`)  
 **Quality Gates AIDD:** 12/12 gates aprovados em exit code 0 (`G_TESTES_REAIS`, `G_BLOQUEAR_SEGREDOS`, `G_CYBERSECURITY_OWASP`, `G_QUARTETO_SINE_QUA_NON`, `G_CONTRACTS`, `G_STACK_PADRAO_OURO`, `G_SAIDA_BINARIA`, `G_DETERMINISMO_LEI_1`, `G_ESTRUTURA_AST`, `G_HARNESS_COMPAT`, `G_INJECT`, `G_PERFORMANCE`)
 
 ---
 
 ## 1. O que foi Entregue e Homologado (RevOps Puro: CRM Odontológico, Autenticação, Metas & Comissões)
 
-- [x] **Módulo de Autenticação, Tela de Login & Gestão de Sessão (Novo):**
+- [x] **Módulo de Autenticação, Tela de Login & Gestão de Sessão (100% Concluído):**
   - Fatia vertical modular `src/features/auth/` (`schemas.py`, `service.py`, `router.py`).
   - Endpoints canônicos: `POST /api/v1/auth/login`, `GET /api/v1/auth/me`, `POST /api/v1/auth/logout`.
   - Assinatura segura de sessão via HMAC-SHA256 (`Bearer Token`) e validação de hash determinístico de senhas.
-  - Tela/Modal de Login corporativa integrada no frontend com suporte à credencial do Super Admin (`hevertoneduardoperes@gmail.com`).
-  - Rodapé de usuário na barra lateral com avatar `HP`, dados do Super Admin e botões de **"Alternar Credencial / Login"** e **"Sair da Sessão (Logout)"**.
-  - Testes: `tests/test_auth.py` (6/6 aprovados).
+  - Tela de Login com atalho de 1 clique: `⚡ Entrar com Super Admin (Heverton)`.
+  - Botões explícitos no menu lateral (`.sidebar-nav`): "Alternar Credencial / Login" e "Sair da Sessão (Logout)".
+  - Proteção proativa: se não autenticado, abre imediatamente a tela de login.
 
-- [x] **Motor de Lead Scoring ICP Odontológico (Backend & Frontend):**
-  - Catálogo de 4 Presets Setoriais Plug & Play:
-    1. *Implantes Premium & Cirurgias Avançadas* (CRO + Especialidade Cirúrgica + Volume > 30/mês).
-    2. *Ensino & Pesquisa Acadêmica* (São Leopoldo Mandic, USP, FOA, Doutores e Especialistas).
-    3. *Distribuidores & Redes de Clínicas* (CNPJ Atacadista, Franquias, Alto Giro).
-    4. *Clínicas Multidisciplinares & Estética* (Protesistas, Harmonização, Periodontia).
-  - Tiers Customizáveis pela Empresa (`tier_a_min`, `tier_b_min`) com recálculo determinístico via API (`POST /api/v1/scoring/recalculate`).
-  - Painel visual em `scoring-icp-view` com cartões de presets e inputs de limiares de corte.
+- [x] **Central de Gestão de Usuários & Credenciais (Backend & Frontend):**
+  - Endpoints administrativos: `GET /api/v1/auth/users`, `POST /api/v1/auth/users`, `PUT /api/v1/auth/users/{user_id}/status`, `POST /api/v1/auth/users/{user_id}/reset-password`.
+  - Invariante de Segurança Inviolável: Apenas `hevertoneduardoperes@gmail.com` é Super Admin (`is_superadmin = 1`). Novos colaboradores cadastrados têm `is_superadmin = 0` obrigatoriamente.
+  - View `#users-view` completa no SPA com listagem de colaboradores, badges RBAC, métricas de status e modais `#modal-new-collaborator` e `#modal-reset-collaborator-password`.
 
-- [x] **Motor de Metas Comerciais & Provisionamento Top-Down:**
-  - DDL no SQLite WAL: tabela `sales_targets` com integridade referencial.
-  - Cálculo determinístico do realizado em tempo real a partir de Deals ganhos (`stage_id = 105`).
-  - Algoritmo de Sugestão de Metas com crescimento progressivo (+15% sobre histórico real).
-  - Monitor de cotas em tempo real com barra de progresso visual e categorização (Supermeta, No Alvo, Em Risco).
+- [x] **Importador Universal em Massa de Carteiras de Clientes Odontológicos (CSV / XLSX / JSON):**
+  - Endpoint `POST /api/v1/contacts/import` com processamento em lote e sanitização.
+  - Parsing de colunas odontológicas: `Nome`, `CRO`, `UF`, `Especialidade`, `Telefone`, `Clínica`, `Cidade/Estado`, `Volume Implantes/Mês`.
+  - 3 Estratégias Determinísticas de Distribuição:
+    1. *Territorial por UF:* Mapeia cirurgiões conforme estado/região da equipe comercial.
+    2. *Por Especialidade Odontológica:* Direciona perfis cirúrgicos (Buco/Implante) para consultores técnicos.
+    3. *Round-Robin Equilibrado:* Divisão equitativa 1-a-1 entre os consultores ativos da equipe.
+  - Deduplicação determinística: atualização idempotente caso CRO + UF ou e-mail já existam na conta.
+  - View `#import-contacts-view` com textarea CSV, botão para carregar dados demo reais, prévia dinâmica de dados e relatório de alocação por consultor.
 
-- [x] **Motor de Comissionamento Hierárquico Multinível & Acelerador de Supermeta:**
-  - DDL no SQLite WAL: tabela `commission_rules` com comissão direta, *override* regional/distrital e acelerador.
-  - Endpoint de Extrato Consolidado (`GET /api/v1/hierarchy/commissions/statement`):
-    - Comissão direta por vendas próprias.
-    - Override hierárquico sobre o volume ganho pela sub-árvore de subordinados.
-    - Bônus acelerador disparado automaticamente quando o atingimento atinge ou supera 100%.
-  - Nova aba interativa "🎯 Metas & Comissões de Equipes" integrada na view `#hierarchy-view`.
+- [x] **Motor de Lead Scoring ICP Odontológico & Tiers Customizáveis:**
+  - Presets setoriais e recálculo dinâmico da base.
 
-- [x] **Auditoria Completa dos Quality Gates AIDD:**
-  - 49/49 testes automatizados reais 100% GREEN (`tests/test_targets_and_commissions.py` + suíte completa).
-  - 12 Quality Gates executados com exit code 0.
+- [x] **Metas Top-Down & Comissionamento Hierárquico:**
+  - Gestão de cotas com acelerador de supermeta e extrato consolidado.
+
+- [x] **Suíte de Testes Automatizados:**
+  - 59/59 testes reais passando com exit code 0 (`pytest -v`). Testes adicionados em `tests/test_auth.py` e `tests/test_contacts_import.py`.
 
 ---
 
 ## 2. O que Iniciar Imediatamente a Seguir
 
-1. **Sincronização em Produção VPS Swarm:**
-   - Realizar git push para `heverton-dev/revnaut` e acionar webhook de deploy contínuo em `https://revnaut.vpsconexao.org`.
+1. **Conector Plug & Play de ERP Odontológico (TOTVS Protheus Adapter):**
+   - Módulo `src/features/integrations/totvs.py` para sincronização bidirecional de clientes e emissão de pedidos de venda (`SC5/SC6`).
 2. **Construtor de Fluxos e Gatilhos de Receita:**
    - Automação de transbordo de leads Hot (Tier A) diretamente para os Closers regionais conforme o escopo de cada território.
+
 
 ---
 

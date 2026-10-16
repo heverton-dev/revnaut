@@ -1390,6 +1390,40 @@
           </div>
         </a>
 
+        <!-- 11. Gestão de Usuários & Credenciais -->
+        <a class="nav-link" data-view="users" data-tooltip="Gestão de Usuários" onclick="switchView('users')">
+          <div class="nav-item-left">
+            <span class="nav-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg>
+            </span>
+            <span>Gestão de Usuários</span>
+          </div>
+          <span style="background: rgba(255, 115, 0, 0.15); color: var(--color-brand); font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">Admin</span>
+        </a>
+
+        <!-- 12. Importador Universal em Massa de Carteiras -->
+        <a class="nav-link" data-view="import-contacts" data-tooltip="Importar Carteira" onclick="switchView('import-contacts')">
+          <div class="nav-item-left">
+            <span class="nav-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            </span>
+            <span>Importar Carteira</span>
+          </div>
+          <span style="background: rgba(52, 211, 153, 0.15); color: #34d399; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">CSV</span>
+        </a>
+
+        <!-- Bloco de Ações Rápidas de Acesso no Menu -->
+        <div style="padding: 10px 10px 4px; margin-top: 8px; border-top: 1px solid var(--border-subtle); display: flex; flex-direction: column; gap: 6px;">
+          <button type="button" onclick="openLoginModal()" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 8px 10px; background: rgba(255, 115, 0, 0.1); border: 1px solid rgba(255, 115, 0, 0.28); border-radius: 6px; color: #ff9e42; font-size: 11.5px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            <span>Alternar Credencial / Login</span>
+          </button>
+          <button type="button" onclick="handleLogout()" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 8px 10px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 6px; color: #f87171; font-size: 11.5px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+            <span>Sair da Sessão (Logout)</span>
+          </button>
+        </div>
+
         <!-- Governança AIDD -->
         <div class="nav-section-title">Governança AIDD</div>
         <a class="nav-link aidd-link" data-tooltip="Swagger Studio" href="/docs" target="_blank">
@@ -2650,6 +2684,165 @@
           </div>
         </div>
       </section>
+
+      <!-- View Central de Gestão de Usuários & Credenciais -->
+      <section class="generic-view-container" id="users-view" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 14px;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <h2 style="font-size: 20px; font-weight: 700; color: white;">Central de Gestão de Usuários & Credenciais</h2>
+              <span class="badge-status" style="background: rgba(255, 115, 0, 0.15); color: var(--color-brand); border: 1px solid rgba(255, 115, 0, 0.3);">Super Admin Control</span>
+            </div>
+            <p style="color: var(--text-muted); font-size: 13px; margin-top: 4px;">Gerenciamento de acessos corporativos, cadastro de novos colaboradores e redefinição segura de senhas.</p>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <button class="btn-primary" style="background: rgba(255,255,255,0.06); box-shadow: none;" onclick="fetchUsersList()">
+              <span>🔄 Recarregar</span>
+            </button>
+            <button class="btn-primary" style="background: var(--color-brand); box-shadow: 0 4px 14px rgba(255, 115, 0, 0.35);" onclick="openNewCollaboratorModal()">
+              <span>+ Novo Colaborador</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- KPIs de Usuários -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
+          <div class="kpi-card" style="padding: 16px; background: var(--bg-card); border: 1px solid var(--border-card); border-radius: var(--radius-md);">
+            <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Total de Colaboradores</div>
+            <div id="users-stat-total" style="font-size: 24px; font-weight: 700; color: white; margin-top: 4px;">--</div>
+          </div>
+          <div class="kpi-card" style="padding: 16px; background: var(--bg-card); border: 1px solid var(--border-card); border-radius: var(--radius-md);">
+            <div style="font-size: 11px; text-transform: uppercase; color: #34d399; font-weight: 700;">Usuários Ativos</div>
+            <div id="users-stat-active" style="font-size: 24px; font-weight: 700; color: #34d399; margin-top: 4px;">--</div>
+          </div>
+          <div class="kpi-card" style="padding: 16px; background: var(--bg-card); border: 1px solid var(--border-card); border-radius: var(--radius-md);">
+            <div style="font-size: 11px; text-transform: uppercase; color: var(--color-brand); font-weight: 700;">Super Admin Único</div>
+            <div style="font-size: 13px; font-weight: 700; color: #ff9e42; margin-top: 6px;">Heverton Eduardo Peres</div>
+            <div style="font-size: 11px; color: var(--text-muted);">hevertoneduardoperes@gmail.com</div>
+          </div>
+          <div class="kpi-card" style="padding: 16px; background: var(--bg-card); border: 1px solid var(--border-card); border-radius: var(--radius-md);">
+            <div style="font-size: 11px; text-transform: uppercase; color: #38bdf8; font-weight: 700;">Regra de Segurança</div>
+            <div style="font-size: 13px; font-weight: 600; color: #bae6fd; margin-top: 6px;">Exatamente 1 User God</div>
+            <div style="font-size: 11px; color: var(--text-muted);">Zero risco de privilégio cruzado</div>
+          </div>
+        </div>
+
+        <!-- Tabela de Usuários -->
+        <div class="deals-table-container" style="background: var(--bg-card); border: 1px solid var(--border-card); border-radius: var(--radius-md); overflow: hidden;">
+          <table class="deals-table" style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="border-bottom: 1px solid var(--border-subtle); background: rgba(255,255,255,0.02);">
+                <th style="padding: 12px 16px; text-align: left; font-size: 11.5px; color: var(--text-muted);">Colaborador</th>
+                <th style="padding: 12px 16px; text-align: left; font-size: 11.5px; color: var(--text-muted);">Cargo / Função</th>
+                <th style="padding: 12px 16px; text-align: left; font-size: 11.5px; color: var(--text-muted);">Unidade / Equipe</th>
+                <th style="padding: 12px 16px; text-align: left; font-size: 11.5px; color: var(--text-muted);">Telefone / WhatsApp</th>
+                <th style="padding: 12px 16px; text-align: left; font-size: 11.5px; color: var(--text-muted);">Status</th>
+                <th style="padding: 12px 16px; text-align: right; font-size: 11.5px; color: var(--text-muted);">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="users-table-tbody">
+              <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">Carregando colaboradores...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- View Importador Universal em Massa de Carteiras -->
+      <section class="generic-view-container" id="import-contacts-view" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 14px;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <h2 style="font-size: 20px; font-weight: 700; color: white;">Importador Universal de Carteiras de Clientes</h2>
+              <span class="badge-status" style="background: rgba(52, 211, 153, 0.15); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.3);">Distribuição Inteligente Odonto</span>
+            </div>
+            <p style="color: var(--text-muted); font-size: 13px; margin-top: 4px;">Importe centenas de cirurgiões em segundos com distribuição automática territorial por UF, especialidade ou round-robin.</p>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <button class="btn-primary" style="background: rgba(255,255,255,0.08); box-shadow: none;" onclick="loadDemoCsvContacts()">
+              <span>📋 Preencher Exemplo Odonto</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Seletor de Estratégia de Distribuição -->
+        <div style="background: var(--bg-card); border: 1px solid var(--border-card); border-radius: var(--radius-md); padding: 20px; margin-bottom: 24px;">
+          <h3 style="font-size: 13px; text-transform: uppercase; color: var(--text-secondary); font-weight: 700; margin-bottom: 12px;">1. Selecione a Regra Determinística de Distribuição:</h3>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px;">
+            <label style="border: 1px solid var(--border-subtle); padding: 14px; border-radius: var(--radius-sm); cursor: pointer; display: flex; gap: 10px; background: rgba(255,255,255,0.02);" id="label-strat-territorial">
+              <input type="radio" name="import-strategy" value="territorial" checked style="accent-color: var(--color-brand); margin-top: 3px;">
+              <div>
+                <strong style="color: white; font-size: 13px; display: block;">🗺️ Distribuição Territorial por UF</strong>
+                <p style="font-size: 11.5px; color: var(--text-muted); margin-top: 4px;">Aloca automaticamente cirurgiões de São Paulo para a equipe SP, Sul para Sul, e interior para equipes regionais.</p>
+              </div>
+            </label>
+            <label style="border: 1px solid var(--border-subtle); padding: 14px; border-radius: var(--radius-sm); cursor: pointer; display: flex; gap: 10px; background: rgba(255,255,255,0.02);" id="label-strat-specialty">
+              <input type="radio" name="import-strategy" value="specialty" style="accent-color: var(--color-brand); margin-top: 3px;">
+              <div>
+                <strong style="color: white; font-size: 13px; display: block;">🎯 Por Especialidade Clínica</strong>
+                <p style="font-size: 11.5px; color: var(--text-muted); margin-top: 4px;">Encaminha Bucomaxilo e Implantodontia prioritariamente para consultores cirúrgicos técnicos.</p>
+              </div>
+            </label>
+            <label style="border: 1px solid var(--border-subtle); padding: 14px; border-radius: var(--radius-sm); cursor: pointer; display: flex; gap: 10px; background: rgba(255,255,255,0.02);" id="label-strat-roundrobin">
+              <input type="radio" name="import-strategy" value="round_robin" style="accent-color: var(--color-brand); margin-top: 3px;">
+              <div>
+                <strong style="color: white; font-size: 13px; display: block;">🔄 Distribuição Equilibrada (Round-Robin)</strong>
+                <p style="font-size: 11.5px; color: var(--text-muted); margin-top: 4px;">Divide igualmente a carteira 1 a 1 entre todos os consultores comerciais ativos da equipe.</p>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Ingestão de Dados (CSV ou Colar) -->
+        <div style="background: var(--bg-card); border: 1px solid var(--border-card); border-radius: var(--radius-md); padding: 20px; margin-bottom: 24px;">
+          <h3 style="font-size: 13px; text-transform: uppercase; color: var(--text-secondary); font-weight: 700; margin-bottom: 12px;">2. Cole ou Insira os Dados CSV (Colunas: Nome, CRO, UF, Especialidade, Telefone, Clínica, Cidade, Volume):</h3>
+          <textarea id="import-csv-text" rows="7" style="width: 100%; background: #12151e; border: 1px solid var(--border-subtle); color: #e2e8f0; font-family: var(--font-mono); font-size: 12px; padding: 12px; border-radius: var(--radius-sm); outline: none; resize: vertical;" placeholder="nome;cro;cro_uf;especialidade;telefone;email;empresa;cidade;estado;volume
+Dr. Roberto Alencar;SP-99101;SP;Implantodontia;(11) 97111-2233;roberto@alencar.com.br;Instituto Alencar;São Paulo;SP;> 50/mês
+Dra. Camila Bittencourt;PR-88202;PR;Cirurgia Bucomaxilofacial;(41) 98222-3344;camila@hospital.com.br;Hospital da Face;Curitiba;PR;> 50/mês"></textarea>
+          
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px; flex-wrap: wrap; gap: 10px;">
+            <div style="font-size: 12px; color: var(--text-muted);">
+              Deduplicação automática ativada: se o CRO ou e-mail já existir, os dados serão atualizados sem duplicar.
+            </div>
+            <div style="display: flex; gap: 10px;">
+              <button class="btn-primary" style="background: rgba(255,255,255,0.08); box-shadow: none;" onclick="previewCsvData()">
+                <span>🔍 Analisar Prévia</span>
+              </button>
+              <button class="btn-primary" id="btn-run-import" style="background: var(--color-brand); box-shadow: 0 4px 14px rgba(255, 115, 0, 0.4);" onclick="handleBulkImportSubmit()">
+                <span>🚀 Executar Importação Determinística</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card de Resultados Pós-Importação -->
+        <div id="import-results-card" style="display: none; background: rgba(52, 211, 153, 0.08); border: 1px solid rgba(52, 211, 153, 0.25); border-radius: var(--radius-md); padding: 20px; margin-bottom: 24px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+            <h4 style="color: #34d399; font-size: 15px; font-weight: 700;">✅ Importação Concluída com Sucesso!</h4>
+            <span id="import-stat-summary" style="font-size: 12px; color: var(--text-secondary); font-family: var(--font-mono);"></span>
+          </div>
+          <div id="import-allocations-breakdown" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px;"></div>
+        </div>
+
+        <!-- Tabela de Prévia -->
+        <div id="import-preview-container" style="display: none; background: var(--bg-card); border: 1px solid var(--border-card); border-radius: var(--radius-md); overflow: hidden;">
+          <div style="padding: 14px 16px; border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center;">
+            <strong style="color: white; font-size: 13px;">Prévia dos Primeiros Registros Mapeados:</strong>
+            <span id="preview-count-badge" style="font-size: 11px; color: var(--text-muted);"></span>
+          </div>
+          <table class="deals-table" style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="border-bottom: 1px solid var(--border-subtle); background: rgba(255,255,255,0.02);">
+                <th style="padding: 10px 14px; text-align: left; font-size: 11px; color: var(--text-muted);">Cirurgião / Clínica</th>
+                <th style="padding: 10px 14px; text-align: left; font-size: 11px; color: var(--text-muted);">CRO / UF</th>
+                <th style="padding: 10px 14px; text-align: left; font-size: 11px; color: var(--text-muted);">Especialidade</th>
+                <th style="padding: 10px 14px; text-align: left; font-size: 11px; color: var(--text-muted);">Telefone / E-mail</th>
+                <th style="padding: 10px 14px; text-align: left; font-size: 11px; color: var(--text-muted);">Cidade / Estado</th>
+              </tr>
+            </thead>
+            <tbody id="import-preview-tbody"></tbody>
+          </table>
+        </div>
+      </section>
     </main>
   </div>
 
@@ -3086,17 +3279,100 @@
     </div>
   </div>
 
+  <!-- Modal Cadastrar Novo Colaborador (Exclusivo Super Admin) -->
+  <div class="modal-overlay" id="modal-new-collaborator" onclick="if(event.target === this) closeNewCollaboratorModal()">
+    <div class="modal-box" style="max-width: 480px;">
+      <div class="modal-header">
+        <h3>Cadastrar Novo Colaborador</h3>
+        <button class="modal-close" onclick="closeNewCollaboratorModal()">✕</button>
+      </div>
+      <form id="new-collaborator-form" onsubmit="handleCreateCollaborator(event)">
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label>Nome Completo *</label>
+          <input type="text" id="collab-name" class="form-control" required placeholder="Ex: Dr. Fernando Medeiros">
+        </div>
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label>E-mail Corporativo *</label>
+          <input type="email" id="collab-email" class="form-control" required placeholder="fernando.medeiros@revnaut.com">
+        </div>
+        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+          <div class="form-group">
+            <label>Senha Provisória *</label>
+            <input type="text" id="collab-password" class="form-control" required value="revnaut2026!" style="font-family: var(--font-mono);">
+          </div>
+          <div class="form-group">
+            <label>Telefone / WhatsApp</label>
+            <input type="text" id="collab-phone" class="form-control" placeholder="(11) 98765-4321">
+          </div>
+        </div>
+        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+          <div class="form-group">
+            <label>Cargo Comercial *</label>
+            <select id="collab-role" class="form-control" required>
+              <option value="Consultor Comercial">Consultor Comercial</option>
+              <option value="Gerente Regional">Gerente Regional</option>
+              <option value="Gerente Distrital">Gerente Distrital</option>
+              <option value="Consultor Técnico Cirúrgico">Consultor Técnico Cirúrgico</option>
+              <option value="SDR / Pré-Vendas">SDR / Pré-Vendas</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Equipe / Região</label>
+            <select id="collab-team" class="form-control"></select>
+          </div>
+        </div>
+        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 18px; padding: 8px 12px; background: rgba(255,255,255,0.03); border-radius: 4px;">
+          ℹ️ <strong>Invariante de Segurança:</strong> Novos colaboradores são provisionados com nível restrito de acesso. Apenas o Super Admin Heverton Eduardo Peres detém privilégios globais.
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+          <button type="button" class="btn-primary" style="background: rgba(255,255,255,0.1); box-shadow: none;" onclick="closeNewCollaboratorModal()">Cancelar</button>
+          <button type="submit" class="btn-primary" style="background: var(--color-brand);">Cadastrar Colaborador</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Redefinir Senha de Colaborador (Exclusivo Super Admin) -->
+  <div class="modal-overlay" id="modal-reset-collaborator-password" onclick="if(event.target === this) closeResetPasswordModal()">
+    <div class="modal-box" style="max-width: 420px;">
+      <div class="modal-header">
+        <h3>Redefinir Senha de Acesso</h3>
+        <button class="modal-close" onclick="closeResetPasswordModal()">✕</button>
+      </div>
+      <form id="reset-password-form" onsubmit="handleResetPassword(event)">
+        <input type="hidden" id="reset-user-id">
+        <div style="margin-bottom: 14px; padding: 10px 14px; background: rgba(255,115,0,0.08); border: 1px solid rgba(255,115,0,0.25); border-radius: 6px;">
+          <span style="font-size: 11px; color: var(--text-muted); display: block;">Colaborador Selecionado:</span>
+          <strong id="reset-user-name" style="font-size: 13.5px; color: white;"></strong>
+        </div>
+        <div class="form-group" style="margin-bottom: 18px;">
+          <label>Nova Senha de Acesso (Mínimo 6 caracteres) *</label>
+          <input type="password" id="reset-new-password" class="form-control" required placeholder="NovaSenhaSegura123!" style="font-family: var(--font-mono);">
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+          <button type="button" class="btn-primary" style="background: rgba(255,255,255,0.1); box-shadow: none;" onclick="closeResetPasswordModal()">Cancelar</button>
+          <button type="submit" class="btn-primary" style="background: var(--color-brand);">Salvar Nova Senha</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Modal / Tela de Login Oficial Revnaut -->
   <div class="modal-overlay" id="auth-login-modal" style="display: none; z-index: 100000; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); background: rgba(4, 5, 7, 0.88);">
     <div class="modal-box" style="max-width: 420px; width: 92%; padding: 32px 28px; background: #0e1118; border: 1px solid rgba(255, 115, 0, 0.35); box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.9), 0 0 30px rgba(255, 115, 0, 0.15); border-radius: var(--radius-lg); position: relative;">
       <button class="modal-close" onclick="closeLoginModal()" title="Fechar" style="position: absolute; top: 18px; right: 18px; background: none; border: none; color: var(--text-muted); font-size: 16px; cursor: pointer;">✕</button>
-      <div style="text-align: center; margin-bottom: 24px;">
+      <div style="text-align: center; margin-bottom: 20px;">
         <div style="width: 52px; height: 52px; margin: 0 auto 12px; background: rgba(255, 115, 0, 0.12); border: 1px solid rgba(255, 115, 0, 0.3); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand)" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
         </div>
         <h2 style="font-size: 20px; font-weight: 700; color: #ffffff; letter-spacing: -0.3px;">Revnaut Dental Ops</h2>
         <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Acesso Corporativo Seguro • Revenue Operations B2B</p>
       </div>
+
+      <!-- Botão de 1 Clique: Preencher Credencial Super Admin -->
+      <button type="button" onclick="fillSuperAdminCredentials()" class="btn-primary" style="background: rgba(255, 115, 0, 0.12); border: 1px solid rgba(255, 115, 0, 0.35); color: #ff9e42; width: 100%; justify-content: center; font-size: 12px; margin-bottom: 16px; padding: 9px; border-radius: 6px; cursor: pointer;">
+        ⚡ Entrar com Super Admin (Heverton)
+      </button>
 
       <div id="login-error-banner" style="display: none; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.35); color: #f87171; padding: 10px 14px; border-radius: var(--radius-sm); font-size: 12px; margin-bottom: 16px; text-align: center;">
         E-mail ou senha incorretos
@@ -3289,6 +3565,297 @@
       if (hierView && hierView.style.display !== 'none') {
         loadHierarchyView();
       }
+    function fillSuperAdminCredentials() {
+      const emailEl = document.getElementById('login-email');
+      const passEl = document.getElementById('login-password');
+      if (emailEl) emailEl.value = 'hevertoneduardoperes@gmail.com';
+      if (passEl) passEl.value = '@#Khen741963@#';
+      showToast('Credenciais de Super Admin Heverton preenchidas!', 'info');
+    }
+
+    /* Central de Gestão de Usuários & Credenciais */
+    let USERS_LIST = [];
+    async function fetchUsersList() {
+      const tbody = document.getElementById('users-table-tbody');
+      if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">Carregando colaboradores...</td></tr>';
+      
+      try {
+        const res = await fetch(`${API_URL}/auth/users`, { headers: getAuthHeaders() });
+        if (!res.ok) {
+          if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #f87171; padding: 20px;">Acesso restrito ao Super Admin Heverton Eduardo Peres. Faça login como Super Admin.</td></tr>';
+          return;
+        }
+        USERS_LIST = await res.json();
+        renderUsersTable();
+      } catch (err) {
+        if (tbody) tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #f87171; padding: 20px;">Erro ao carregar colaboradores: ${err.message}</td></tr>`;
+      }
+    }
+
+    function renderUsersTable() {
+      const tbody = document.getElementById('users-table-tbody');
+      if (!tbody) return;
+
+      const totalEl = document.getElementById('users-stat-total');
+      const activeEl = document.getElementById('users-stat-active');
+      if (totalEl) totalEl.textContent = USERS_LIST.length;
+      if (activeEl) activeEl.textContent = USERS_LIST.filter(u => u.is_active).length;
+
+      if (USERS_LIST.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">Nenhum colaborador encontrado.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = USERS_LIST.map(u => {
+        const initials = u.name ? u.name.split(' ').map(n=>n[0]).slice(0, 2).join('').toUpperCase() : 'U';
+        const isGod = u.is_superadmin;
+        const statusBadge = u.is_active
+          ? `<span style="background: rgba(52,211,153,0.15); color: #34d399; font-size: 11px; padding: 3px 8px; border-radius: 4px; font-weight: 600;">Ativo</span>`
+          : `<span style="background: rgba(239,68,68,0.15); color: #f87171; font-size: 11px; padding: 3px 8px; border-radius: 4px; font-weight: 600;">Inativo</span>`;
+        
+        const roleBadge = isGod
+          ? `<span style="background: rgba(255,115,0,0.15); color: var(--color-brand); border: 1px solid rgba(255,115,0,0.3); font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 700;">Super Admin • User God</span>`
+          : `<span style="background: rgba(255,255,255,0.06); color: #cbd5e1; font-size: 11px; padding: 2px 8px; border-radius: 4px;">${u.role || 'Consultor'}</span>`;
+
+        const actionButtons = isGod
+          ? `<span style="font-size: 11px; color: var(--text-muted); font-style: italic;">Acesso Máximo Imutável</span>`
+          : `
+            <div style="display: flex; gap: 8px; justify-content: flex-end;">
+              <button class="btn-primary" style="padding: 5px 10px; font-size: 11px; background: rgba(255,115,0,0.12); border: 1px solid rgba(255,115,0,0.3); color: #ff9e42;" onclick="openResetPasswordModal('${u.id}', '${u.name.replace(/'/g, "\\'")}')">
+                🔑 Resetar Senha
+              </button>
+              <button class="btn-primary" style="padding: 5px 10px; font-size: 11px; background: ${u.is_active ? 'rgba(239,68,68,0.1)' : 'rgba(52,211,153,0.1)'}; color: ${u.is_active ? '#f87171' : '#34d399'};" onclick="handleToggleUserStatus('${u.id}', ${u.is_active})">
+                ${u.is_active ? 'Desativar' : 'Ativar'}
+              </button>
+            </div>
+          `;
+
+        return `
+          <tr style="border-bottom: 1px solid var(--border-subtle);">
+            <td style="padding: 12px 16px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 32px; height: 32px; border-radius: 50%; background: ${isGod ? 'linear-gradient(135deg, #ff7300, #ff9e42)' : '#1e2433'}; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px;">${initials}</div>
+                <div>
+                  <strong style="color: white; font-size: 13px; display: block;">${u.name}</strong>
+                  <span style="font-size: 11.5px; color: var(--text-muted);">${u.email}</span>
+                </div>
+              </div>
+            </td>
+            <td style="padding: 12px 16px;">${roleBadge}</td>
+            <td style="padding: 12px 16px;">
+              <div style="font-size: 12.5px; color: white;">${u.team_name || 'Equipe Geral'}</div>
+              <div style="font-size: 11px; color: var(--text-muted);">${u.bu_name || 'BU Nacional'}</div>
+            </td>
+            <td style="padding: 12px 16px; font-size: 12px; color: var(--text-secondary);">${u.phone || '—'}</td>
+            <td style="padding: 12px 16px;">${statusBadge}</td>
+            <td style="padding: 12px 16px; text-align: right;">${actionButtons}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function openNewCollaboratorModal() {
+      const modal = document.getElementById('modal-new-collaborator');
+      if (modal) modal.style.display = 'flex';
+      const sel = document.getElementById('collab-team');
+      if (sel) {
+        sel.innerHTML = '<option value="">Sem Equipe Atribuída</option>' +
+          (window.TEAMS || []).map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+      }
+    }
+
+    function closeNewCollaboratorModal() {
+      const modal = document.getElementById('modal-new-collaborator');
+      if (modal) modal.style.display = 'none';
+    }
+
+    async function handleCreateCollaborator(e) {
+      e.preventDefault();
+      const name = document.getElementById('collab-name').value.trim();
+      const email = document.getElementById('collab-email').value.trim();
+      const password = document.getElementById('collab-password').value;
+      const phone = document.getElementById('collab-phone').value.trim();
+      const role = document.getElementById('collab-role').value;
+      const team_id = document.getElementById('collab-team').value || null;
+
+      try {
+        const res = await fetch(`${API_URL}/auth/users`, {
+          method: 'POST',
+          headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ name, email, password, phone, role, team_id })
+        });
+        if (res.ok) {
+          showToast(`Colaborador ${name} cadastrado com sucesso!`, 'success');
+          closeNewCollaboratorModal();
+          document.getElementById('new-collaborator-form').reset();
+          fetchUsersList();
+        } else {
+          const err = await res.json().catch(() => ({}));
+          showToast(err.detail || 'Erro ao cadastrar colaborador', 'error');
+        }
+      } catch (err) {
+        showToast('Erro de conexão: ' + err.message, 'error');
+      }
+    }
+
+    function openResetPasswordModal(userId, userName) {
+      const modal = document.getElementById('modal-reset-collaborator-password');
+      document.getElementById('reset-user-id').value = userId;
+      document.getElementById('reset-user-name').textContent = userName;
+      document.getElementById('reset-new-password').value = '';
+      if (modal) modal.style.display = 'flex';
+    }
+
+    function closeResetPasswordModal() {
+      const modal = document.getElementById('modal-reset-collaborator-password');
+      if (modal) modal.style.display = 'none';
+    }
+
+    async function handleResetPassword(e) {
+      e.preventDefault();
+      const userId = document.getElementById('reset-user-id').value;
+      const new_password = document.getElementById('reset-new-password').value;
+
+      try {
+        const res = await fetch(`${API_URL}/auth/users/${userId}/reset-password`, {
+          method: 'POST',
+          headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ new_password })
+        });
+        if (res.ok) {
+          showToast('Senha redefinida com sucesso!', 'success');
+          closeResetPasswordModal();
+        } else {
+          const err = await res.json().catch(() => ({}));
+          showToast(err.detail || 'Erro ao resetar senha', 'error');
+        }
+      } catch (err) {
+        showToast('Erro de conexão: ' + err.message, 'error');
+      }
+    }
+
+    async function handleToggleUserStatus(userId, currentStatus) {
+      const newStatus = !currentStatus;
+      try {
+        const res = await fetch(`${API_URL}/auth/users/${userId}/status`, {
+          method: 'PUT',
+          headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ is_active: newStatus })
+        });
+        if (res.ok) {
+          showToast(newStatus ? 'Colaborador ativado!' : 'Colaborador desativado.', 'info');
+          fetchUsersList();
+        } else {
+          const err = await res.json().catch(() => ({}));
+          showToast(err.detail || 'Erro ao alterar status', 'error');
+        }
+      } catch (err) {
+        showToast('Erro: ' + err.message, 'error');
+      }
+    }
+
+    /* Importador Universal em Massa de Carteiras */
+    function loadDemoCsvContacts() {
+      const csv = `nome;cro;cro_uf;especialidade;telefone;email;empresa;cidade;estado;volume
+Dr. Roberto Alencar;SP-99101;SP;Implantodontia;(11) 97111-2233;roberto@alencar.com.br;Instituto Alencar de Reabilitação;São Paulo;SP;> 50/mês
+Dra. Camila Bittencourt;PR-88202;PR;Cirurgia Bucomaxilofacial;(41) 98222-3344;camila@hospitaldaface.com.br;Hospital da Face Curitiba;Curitiba;PR;> 50/mês
+Dr. Leonardo Vasconcelos;MG-77303;MG;Periodontia & Implante;(31) 99333-4455;leo.vasc@clinicavasconcelos.com.br;Clínica Vasconcelos;Belo Horizonte;MG;20-50/mês
+Dra. Mariana Fagundes;SP-66404;SP;Ortodontia & Alinhadores;(16) 99444-5566;mariana@fagundesorto.com.br;Fagundes Dental;Ribeirão Preto;SP;20-50/mês
+Dr. Gustavo Silveira;SC-55505;SC;Implantodontia Avançada;(48) 99555-6677;gustavo@silveiraimplantes.com.br;Silveira Odonto Studio;Florianópolis;SC;> 50/mês
+Dr. Paulo Henrique Mendes;RJ-44606;RJ;Prótese & Reabilitação Oral;(21) 99666-7788;paulo.mendes@mendesodonto.com.br;Centro Odontológico Mendes;Rio de Janeiro;RJ;5-20/mês`;
+      const textarea = document.getElementById('import-csv-text');
+      if (textarea) textarea.value = csv;
+      showToast('Exemplo de cirurgiões odontológicos preenchido!', 'info');
+      previewCsvData();
+    }
+
+    function previewCsvData() {
+      const text = document.getElementById('import-csv-text')?.value.trim();
+      const container = document.getElementById('import-preview-container');
+      const tbody = document.getElementById('import-preview-tbody');
+      const badge = document.getElementById('preview-count-badge');
+      if (!text) {
+        showToast('Insira dados CSV antes de pré-visualizar.', 'warning');
+        return;
+      }
+
+      const lines = text.split('\\n').filter(l => l.trim());
+      if (lines.length <= 1) {
+        showToast('CSV precisa conter cabeçalho e ao menos 1 linha de dados.', 'warning');
+        return;
+      }
+
+      const delimiter = lines[0].includes(';') ? ';' : ',';
+      const headers = lines[0].split(delimiter).map(h => h.trim().toLowerCase().replace(' ', '_'));
+      
+      const rows = [];
+      for (let i = 1; i < lines.length; i++) {
+        const parts = lines[i].split(delimiter).map(p => p.trim());
+        const row = {};
+        headers.forEach((h, idx) => row[h] = parts[idx] || '');
+        rows.push(row);
+      }
+
+      if (badge) badge.textContent = `${rows.length} registros identificados`;
+      if (tbody) {
+        tbody.innerHTML = rows.slice(0, 6).map(r => `
+          <tr style="border-bottom: 1px solid var(--border-subtle);">
+            <td style="padding: 10px 14px;"><strong style="color: white;">${r.nome || r.name || '—'}</strong><div style="font-size: 11px; color: var(--text-muted);">${r.empresa || r.clinica || '—'}</div></td>
+            <td style="padding: 10px 14px; font-family: var(--font-mono); font-size: 12px; color: #ff9e42;">${r.cro || '—'}</td>
+            <td style="padding: 10px 14px;"><span style="background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; font-size: 11px;">${r.especialidade || 'Implantodontia'}</span></td>
+            <td style="padding: 10px 14px; font-size: 12px;">${r.telefone || '—'}</td>
+            <td style="padding: 10px 14px; font-size: 12px; color: var(--text-secondary);">${r.cidade || '—'} / ${r.cro_uf || r.estado || 'SP'}</td>
+          </tr>
+        `).join('');
+      }
+      if (container) container.style.display = 'block';
+    }
+
+    async function handleBulkImportSubmit() {
+      const text = document.getElementById('import-csv-text')?.value.trim();
+      if (!text) {
+        showToast('Nenhum dado CSV para importar.', 'warning');
+        return;
+      }
+      const strategyInput = document.querySelector('input[name="import-strategy"]:checked');
+      const strategy = strategyInput ? strategyInput.value : 'territorial';
+      const btn = document.getElementById('btn-run-import');
+      if (btn) btn.disabled = true;
+
+      try {
+        const res = await fetch(`${API_URL}/contacts/import`, {
+          method: 'POST',
+          headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ strategy, csv_raw: text })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          showToast(`Importação concluída! ${data.created_count} criados, ${data.updated_count} atualizados.`, 'success');
+          
+          const card = document.getElementById('import-results-card');
+          const summary = document.getElementById('import-stat-summary');
+          const breakdown = document.getElementById('import-allocations-breakdown');
+          if (card) card.style.display = 'block';
+          if (summary) summary.textContent = `Total: ${data.total_received} cirurgiões | Novos: ${data.created_count} | Atualizados: ${data.updated_count}`;
+          if (breakdown && data.allocations_by_rep) {
+            breakdown.innerHTML = Object.entries(data.allocations_by_rep).map(([rep, count]) => `
+              <div style="background: rgba(255,255,255,0.04); border: 1px solid var(--border-subtle); padding: 8px 12px; border-radius: 6px; font-size: 12px;">
+                <span style="color: var(--text-muted); display: block; font-size: 10.5px;">Consultor Alocado:</span>
+                <strong style="color: white;">${rep}</strong>: <span style="color: #34d399; font-weight: 700;">${count} contatos</span>
+              </div>
+            `).join('');
+          }
+
+          if (typeof fetchContacts === 'function') fetchContacts();
+        } else {
+          const err = await res.json().catch(() => ({}));
+          showToast(err.detail || 'Erro ao processar importação', 'error');
+        }
+      } catch (err) {
+        showToast('Erro: ' + err.message, 'error');
+      } finally {
+        if (btn) btn.disabled = false;
+      }
     }
 
     /* Sistema de Notificações Toast (Impeccable Design System) */
@@ -3420,8 +3987,15 @@
             AUTH_USER = user;
             localStorage.setItem('revnaut_user', JSON.stringify(user));
             updateSidebarUserProfile(user);
+          } else {
+            // Token inválido/expirado
+            AUTH_TOKEN = '';
+            openLoginModal();
           }
         } catch (e) {}
+      } else {
+        // Sem token na inicialização: abre imediatamente a tela de login corporativo
+        openLoginModal();
       }
 
       // Sincroniza seletor de escopo simulado
@@ -4561,7 +5135,9 @@
       'scoring-view',
       'scoring-icp-view',
       'automations-view',
-      'hierarchy-view'
+      'hierarchy-view',
+      'users-view',
+      'import-contacts-view'
     ];
 
     const VIEW_CONFIG = {
@@ -4580,7 +5156,9 @@
       'scoring': { id: 'scoring-view', title: 'Matriz de Lead Scoring & Qualificação de Cirurgiões', showKpis: false },
       'scoring-icp': { id: 'scoring-icp-view', title: 'Pontuação • Critérios de Prescrição & Implantes/Mês', showKpis: false },
       'automations': { id: 'automations-view', title: 'Construtor de Fluxos de Automação Cirúrgica', showKpis: false },
-      'hierarchy': { id: 'hierarchy-view', title: 'Estrutura Corporativa, Divisões & RBAC Setorial', showKpis: false }
+      'hierarchy': { id: 'hierarchy-view', title: 'Estrutura Corporativa, Divisões & RBAC Setorial', showKpis: false },
+      'users': { id: 'users-view', title: 'Central de Gestão de Usuários & Credenciais (Super Admin)', showKpis: false },
+      'import-contacts': { id: 'import-contacts-view', title: 'Importador Universal de Carteiras de Clientes (CSV/XLSX)', showKpis: false }
     };
 
     let CURRENT_DEAL_VIEW = 'kanban';
@@ -4696,6 +5274,7 @@
         if (viewName === 'marketing') fetchCampaigns();
         if (viewName === 'scoring') triggerRecalculateScores(false);
         if (viewName === 'scoring-icp') fetchScoringRules();
+        if (viewName === 'users') fetchUsersList();
       }
 
       // Controles da topbar específicos para deals

@@ -421,7 +421,9 @@ def init_db() -> None:
             ("specialty", "TEXT DEFAULT 'Implantodontia'"),
             ("work_model", "TEXT DEFAULT 'Clínica Própria'"),
             ("monthly_implants_volume", "TEXT DEFAULT '20-50/mês'"),
-            ("customer_type", "TEXT DEFAULT 'Cirurgião'")
+            ("customer_type", "TEXT DEFAULT 'Cirurgião'"),
+            ("city", "TEXT"),
+            ("state", "TEXT")
         ]
         for col_name, col_type in dental_cols:
             if col_name not in existing_cols:
@@ -501,6 +503,7 @@ def init_db() -> None:
                 (superadmin_id, superadmin_name, superadmin_email, superadmin_pwd_hash)
             )
         cur.execute("UPDATE users SET is_superadmin = 0 WHERE email != ?", (superadmin_email,))
+        cur.execute("UPDATE users SET role = 'Consultor Comercial' WHERE email != ? AND role = 'Super Admin'", (superadmin_email,))
 
     conn.close()
 

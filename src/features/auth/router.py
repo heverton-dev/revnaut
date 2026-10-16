@@ -6,12 +6,25 @@ Rotas da API para Autenticação e Sessão de Usuários.
 from __future__ import annotations
 from typing import Optional
 from fastapi import APIRouter, HTTPException, Header, Depends
-from src.features.auth.schemas import LoginRequest, LoginResponse, UserProfileOut, LogoutResponse
+from src.features.auth.schemas import (
+    LoginRequest,
+    LoginResponse,
+    UserProfileOut,
+    LogoutResponse,
+    UserListItem,
+    CreateCollaboratorRequest,
+    ResetPasswordRequest,
+    UpdateUserStatusRequest
+)
 from src.features.auth.service import (
     authenticate_user,
     create_session_token,
     verify_session_token,
-    get_user_profile
+    get_user_profile,
+    list_all_users,
+    create_collaborator,
+    update_user_status,
+    reset_user_password
 )
 
 router = APIRouter(prefix="/api/v1/auth", tags=["Autenticação & Sessão"])
@@ -50,7 +63,7 @@ def get_current_user(
     )
 
 
-@app_route := router.post("/login", response_model=LoginResponse, summary="Autenticar usuário e emitir token de sessão")
+@router.post("/login", response_model=LoginResponse, summary="Autenticar usuário e emitir token de sessão")
 def login(payload: LoginRequest):
     user_dict = authenticate_user(payload.email, payload.password)
     token = create_session_token(user_dict["id"])
@@ -77,3 +90,44 @@ def me(current_user: UserProfileOut = Depends(get_current_user)):
 @router.post("/logout", response_model=LogoutResponse, summary="Encerrar sessão ativa")
 def logout():
     return LogoutResponse(success=True, message="Sessão encerrada com sucesso")
+
+
+@router.get("/users", response_model=list[UserListItem], summary="Listar todos os colaboradores da conta")
+def list_users(current_user: UserProfileOut = Depends(get_current_user)):
+    return list_all_users(account_id=current_user.account_id)
+
+
+@router.post("/users", summary="Cadastrar novo colaborador (Super Admin exclusivo)")
+def create_user(payload: CreateCollaboratorRequest, current_user: UserProfileOut = Depends(get_current_user)):
+    return create_collaborator(
+        data=payload,
+        current_user=current_user.model_dump(),
+        account_id=current_user.account_id
+    )
+
+
+@router.put("/users/{user_id}/status", summary="Alterar status de ativação de colaborador")
+def change_status(
+    user_id: str,
+    payload: UpdateUserStatusRequest,
+    current_user: UserProfileOut = Depends(get_current_user)
+):
+    return update_user_status(
+        target_user_id=user_id,
+        is_active=payload.is_active,
+        current_user=current_user.model_dump()
+    )
+
+
+@router.post("/users/{user_id}/reset-password", summary="Redefinir senha de colaborador (Super Admin exclusivo)")
+def reset_password(
+    user_id: str,
+    payload: ResetPasswordRequest,
+    current_user: UserProfileOut = Depends(get_current_user)
+):
+    return reset_user_password(
+        target_user_id=user_id,
+        new_password=payload.new_password,
+        current_user=current_user.model_dump()
+    )
+

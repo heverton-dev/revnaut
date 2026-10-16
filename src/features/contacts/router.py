@@ -5,7 +5,7 @@ Vertical Slice: Contacts Router
 
 from typing import Optional
 from fastapi import APIRouter, Header, status
-from src.features.contacts.schemas import ContactCreate
+from src.features.contacts.schemas import ContactCreate, ContactImportRequest, ContactImportResponse
 from src.features.contacts import service
 
 router = APIRouter(tags=["Contatos & Leads"])
@@ -36,3 +36,18 @@ def create_contact(
     finally:
         conn.close()
     return service.create_contact(payload)
+
+
+@router.post("/api/v1/contacts/import", response_model=ContactImportResponse, summary="Importação em Massa com Distribuição Territorial")
+def import_contacts(
+    payload: ContactImportRequest,
+    account_id: str = "0f14ffff",
+    x_user_id: Optional[str] = Header(None)
+):
+    conn = get_connection()
+    try:
+        enforce_user_permission(conn, x_user_id, account_id, "contacts:write")
+    finally:
+        conn.close()
+    return service.import_contacts_batch(payload, account_id=account_id)
+
