@@ -9,6 +9,11 @@ import tarfile
 import tempfile
 import paramiko
 from pathlib import Path
+from dotenv import load_dotenv
+
+env_file = Path(__file__).resolve().parent.parent / ".env"
+if env_file.exists():
+    load_dotenv(env_file)
 
 VPS_HOST = os.environ.get("VPS_HOST", "127.0.0.1")
 VPS_PORT = int(os.environ.get("VPS_PORT", 22))
