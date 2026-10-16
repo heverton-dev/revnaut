@@ -51,3 +51,38 @@ def import_contacts(
         conn.close()
     return service.import_contacts_batch(payload, account_id=account_id)
 
+
+from pydantic import BaseModel
+class ContactTimelineCommentCreate(BaseModel):
+    comment: str
+    author_name: Optional[str] = "Consultor Especialista"
+
+
+@router.get("/api/v1/contacts/{contact_id}/profile", summary="Perfil Completo, Histórico & Oportunidades do Contato")
+def get_contact_profile(contact_id: int):
+    profile = service.get_contact_full_profile(contact_id)
+    if not profile:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Contato não localizado")
+    return profile
+
+
+@router.get("/api/v1/contacts/{contact_id}/timeline", summary="Histórico e Linha do Tempo do Contato")
+def get_contact_timeline(contact_id: int):
+    return {"contact_id": contact_id, "timeline": service.get_contact_timeline(contact_id)}
+
+
+@router.post("/api/v1/contacts/{contact_id}/timeline/comments", status_code=status.HTTP_201_CREATED, summary="Adicionar Nota de Auditoria na Timeline do Contato")
+def add_timeline_comment(
+    contact_id: int, 
+    payload: ContactTimelineCommentCreate,
+    x_user_id: Optional[str] = Header(None)
+):
+    return service.add_contact_timeline_comment(
+        contact_id=contact_id, 
+        comment=payload.comment, 
+        user_id=x_user_id, 
+        author_name=payload.author_name or "Consultor Especialista"
+    )
+
+

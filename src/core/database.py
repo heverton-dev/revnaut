@@ -288,6 +288,19 @@ def init_db() -> None:
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (deal_id) REFERENCES deals(id)
         );
+
+        CREATE TABLE IF NOT EXISTS contact_audit_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            contact_id INTEGER NOT NULL,
+            user_id TEXT,
+            author_name TEXT NOT NULL,
+            action TEXT NOT NULL,
+            old_value TEXT,
+            new_value TEXT,
+            comment TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (contact_id) REFERENCES contacts(id)
+        );
         """)
 
         # Migração idempotente para colunas complementares em deals

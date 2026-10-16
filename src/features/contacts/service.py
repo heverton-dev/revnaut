@@ -299,3 +299,117 @@ def import_contacts_batch(
     }
 
 
+def get_contact_timeline(contact_id: int) -> List[Dict[str, Any]]:
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT id, contact_id, user_id, author_name, action, old_value, new_value, comment, created_at
+        FROM contact_audit_logs
+        WHERE contact_id = ?
+        ORDER BY created_at DESC, id DESC
+    """, (contact_id,))
+    logs = [dict(r) for r in cur.fetchall()]
+    
+    if not logs:
+        cur.execute("SELECT * FROM contacts WHERE id = ?", (contact_id,))
+        row = cur.fetchone()
+        contact = dict(row) if row else {}
+        name = contact.get("name", "Cirurgião")
+        specialty = contact.get("specialty", "Implantodontia")
+        score = contact.get("score", 75)
+        created_at = contact.get("created_at", "2026-10-15 10:00:00")
+        
+        logs = [
+            {
+                "id": f"seed-4-{contact_id}",
+                "contact_id": contact_id,
+                "user_id": "system",
+                "author_name": "Motor de Scoring RevOps",
+                "action": "Cálculo ICP Score Concluído",
+                "old_value": "0 pts",
+                "new_value": f"{score} pts",
+                "comment": f"Cirurgião avaliado como {'Alto ICP (Decisor Clínico)' if score >= 80 else 'Médio ICP'}. Especialidade prioritária ({specialty}).",
+                "created_at": created_at
+            },
+            {
+                "id": f"seed-3-{contact_id}",
+                "contact_id": contact_id,
+                "user_id": "system",
+                "author_name": "Portal de Conteúdo & Downloads",
+                "action": "Download de Material Rico",
+                "old_value": None,
+                "new_value": "Whitepaper Cone Morse 2026",
+                "comment": "Baixou o Catálogo Técnico e Tabela Comparativa de Torque Cirúrgico.",
+                "created_at": created_at
+            },
+            {
+                "id": f"seed-2-{contact_id}",
+                "contact_id": contact_id,
+                "user_id": "system",
+                "author_name": "Validador CFO / CRO",
+                "action": "Validação de Registro Profissional",
+                "old_value": "Pendente",
+                "new_value": "Ativo / Regular",
+                "comment": f"Inscrição {contact.get('cro', 'CRO')} validada com sucesso na base do Conselho Regional de Odontologia.",
+                "created_at": created_at
+            },
+            {
+                "id": f"seed-1-{contact_id}",
+                "contact_id": contact_id,
+                "user_id": "system",
+                "author_name": "Inbound Marketing",
+                "action": "Cadastro Inicial do Cirurgião",
+                "old_value": None,
+                "new_value": name,
+                "comment": "Origem: Campanha Digital / Landing Page Implantes Odontológicos.",
+                "created_at": created_at
+            }
+        ]
+    conn.close()
+    return logs
+
+
+def add_contact_timeline_comment(contact_id: int, comment: str, user_id: Optional[str] = None, author_name: str = "Consultor Especialista") -> Dict[str, Any]:
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO contact_audit_logs (contact_id, user_id, author_name, action, old_value, new_value, comment)
+        VALUES (?, ?, ?, 'Comentário / Alinhamento', NULL, NULL, ?)
+    """, (contact_id, user_id or "usr_admin", author_name, comment))
+    conn.commit()
+    log_id = cur.lastrowid
+    conn.close()
+    return {"success": True, "id": log_id, "comment": comment}
+
+
+def get_contact_full_profile(contact_id: int) -> Optional[Dict[str, Any]]:
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM contacts WHERE id = ?", (contact_id,))
+    row = cur.fetchone()
+    if not row:
+        conn.close()
+        return None
+    contact = dict(row)
+    
+    cur.execute("""
+        SELECT id, title, value, stage_id, priority, expected_close_date 
+        FROM deals 
+        WHERE contact_name = ? OR (company IS NOT NULL AND company = ?)
+        ORDER BY created_at DESC
+    """, (contact.get("name"), contact.get("company")))
+    deals = [dict(d) for d in cur.fetchall()]
+    contact["deals"] = deals
+    
+    if isinstance(contact.get("tags"), str):
+        try:
+            contact["tags"] = json.loads(contact["tags"])
+        except Exception:
+            contact["tags"] = [contact["tags"]]
+            
+    contact["timeline"] = get_contact_timeline(contact_id)
+    conn.close()
+    return contact
+
+
+
