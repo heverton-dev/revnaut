@@ -2,6 +2,7 @@
 
 **Data do Ponto de Restauração:** 16/10/2026 08:05 BRT  
 **ID da Conversa:** `f1bbcd99-64df-4a50-a2e8-1a221672f2dd`  
+**Repositório GitHub:** `https://github.com/heverton-dev/revnaut` (Privado)  
 **Ambiente Ativo:** Local Monolith / VPS Swarm (`https://revnaut.vpsconexao.org`)  
 **Backend:** FastAPI + SQLite WAL (`data/revops.db`)  
 **Frontend:** `docs/reconstruct_rvops/05_reconstructed_app/index.html` (Servido na raiz `/`)  
