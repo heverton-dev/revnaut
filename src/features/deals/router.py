@@ -50,7 +50,7 @@ def create_deal(
         enforce_user_permission(conn, x_user_id, account_id, "deals:write")
     finally:
         conn.close()
-    return service.create_deal(payload)
+    return service.create_deal(payload, user_id=x_user_id)
 
 
 @router.put("/api/v1/deals/{deal_id}/stage", summary="Mover Oportunidade de Estágio com Validação de Crédito")

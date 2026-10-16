@@ -12,6 +12,7 @@ class DealCreate(BaseModel):
     value: float = Field(..., gt=0, description="Valor do negócio em Reais")
     company: str = Field(..., description="Nome da empresa")
     contact_name: str = Field(..., description="Nome do contato decisor")
+    pipeline_id: int | None = Field(default=None, description="ID do funil/pipeline de vendas")
     stage_id: int = Field(default=101, description="ID do estágio inicial no funil")
     priority: str = Field(default="media", pattern="^(baixa|media|alta)$")
 

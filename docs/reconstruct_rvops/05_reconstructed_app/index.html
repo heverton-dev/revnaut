@@ -1490,10 +1490,10 @@
           </button>
           <h1 class="page-title" id="topbar-title">Cirurgiões & Venda Direta / Consignação</h1>
           <select class="pipeline-selector" id="pipeline-selector" onchange="handlePipelineChange(this.value)" title="Alternar Funil Setorial Odontológico">
-            <option value="1">Cirurgiões & Venda Direta / Consignação</option>
-            <option value="2">Instituições de Ensino & Kits Acadêmicos (Mandic)</option>
+            <option value="1">Cirurgiões & Venda Direta</option>
+            <option value="2">Prospecção & SDR Outbound</option>
             <option value="3">Distribuidores & Contratos Atacado</option>
-            <option value="4">Key Opinion Leaders (KOLs) & CIOSP</option>
+            <option value="4">CS, Expansão & Key Accounts</option>
           </select>
           <span class="status-indicator" style="display: inline-flex; align-items: center; gap: 6px;">
             <span class="status-dot"></span>
@@ -5958,6 +5958,10 @@ Dr. Paulo Henrique Mendes;RJ-44606;RJ;Prótese & Reabilitação Oral;(21) 99666-
     });
 
     function openDealModal() {
+      const stageSelect = document.getElementById('deal-stage');
+      if (stageSelect && Array.isArray(STAGES) && STAGES.length > 0) {
+        stageSelect.innerHTML = STAGES.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+      }
       document.getElementById('deal-modal').classList.add('active');
     }
 
@@ -5972,6 +5976,7 @@ Dr. Paulo Henrique Mendes;RJ-44606;RJ;Prótese & Reabilitação Oral;(21) 99666-
         value: parseFloat(document.getElementById('deal-value').value),
         company: document.getElementById('deal-company').value,
         contact_name: document.getElementById('deal-contact').value,
+        pipeline_id: CURRENT_PIPELINE_ID,
         stage_id: parseInt(document.getElementById('deal-stage').value),
         priority: document.getElementById('deal-priority').value
       };
@@ -5979,18 +5984,19 @@ Dr. Paulo Henrique Mendes;RJ-44606;RJ;Prótese & Reabilitação Oral;(21) 99666-
       try {
         const res = await fetch(`${API_URL}/deals`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify(payload)
         });
         if (res.ok) {
           closeDealModal();
           document.getElementById('deal-form').reset();
-          await fetchDeals();
+          await fetchDeals(CURRENT_PIPELINE_ID);
           await fetchMetrics();
           if (CURRENT_DEAL_VIEW === 'table') renderDealsTable();
           showToast('Negócio cadastrado com sucesso!', 'success');
         } else {
-          showToast('Erro ao criar negócio', 'error');
+          const errData = await res.json().catch(() => ({}));
+          showToast('Erro ao criar negócio: ' + (errData.detail || res.statusText), 'error');
         }
       } catch (err) {
         showToast('Erro ao criar negócio: ' + err.message, 'error');

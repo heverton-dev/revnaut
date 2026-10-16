@@ -472,11 +472,11 @@ def init_db() -> None:
                 insts_data
             )
 
-        # Atualização canônica dos nomes dos pipelines para a Indústria Dental
+        # Atualização canônica dos nomes dos pipelines para a Indústria Dental (RevOps Puro)
         cur.execute("UPDATE pipelines SET name = 'Cirurgiões & Venda Direta' WHERE id = 1")
-        cur.execute("UPDATE pipelines SET name = 'Instituições de Ensino & Kits Acadêmicos (Mandic)' WHERE id = 2")
-        cur.execute("UPDATE pipelines SET name = 'Distribuidores & Contratos Atacado (Sell-In / Sell-Out)' WHERE id = 3")
-        cur.execute("UPDATE pipelines SET name = 'Key Opinion Leaders (KOLs), Speakers & CIOSP' WHERE id = 4")
+        cur.execute("UPDATE pipelines SET name = 'Prospecção & SDR Outbound' WHERE id = 2")
+        cur.execute("UPDATE pipelines SET name = 'Distribuidores & Contratos Atacado' WHERE id = 3")
+        cur.execute("UPDATE pipelines SET name = 'CS, Expansão & Key Accounts' WHERE id = 4")
 
         # Migração de colunas de hierarquia e escopo em users
         cur.execute("PRAGMA table_info(users);")

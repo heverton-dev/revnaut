@@ -76,14 +76,31 @@ def get_metrics() -> Dict[str, Any]:
     }
 
 
-def create_deal(payload: DealCreate) -> Dict[str, Any]:
+def create_deal(payload: DealCreate, user_id: Optional[str] = None) -> Dict[str, Any]:
     conn = get_connection()
     cur = conn.cursor()
     deal_id = f"d-{int(time.time() * 1000)}"
+
+    # Determina pipeline_id a partir do payload ou do estágio
+    pipe_id = payload.pipeline_id
+    if not pipe_id:
+        cur.execute("SELECT pipeline_id FROM stages WHERE id = ?", (payload.stage_id,))
+        s_row = cur.fetchone()
+        pipe_id = s_row[0] if s_row else 1
+
+    # Determina team_id se user_id for fornecido
+    owner_id = user_id or "u_superadmin"
+    team_id = None
+    if owner_id:
+        cur.execute("SELECT team_id FROM users WHERE id = ?", (owner_id,))
+        u_row = cur.fetchone()
+        if u_row:
+            team_id = u_row[0]
+
     cur.execute("""
-        INSERT INTO deals (id, account_id, pipeline_id, stage_id, title, value, company, contact_name, priority)
-        VALUES (?, '0f14ffff', 1, ?, ?, ?, ?, ?, ?)
-    """, (deal_id, payload.stage_id, payload.title, payload.value, payload.company, payload.contact_name, payload.priority))
+        INSERT INTO deals (id, account_id, pipeline_id, stage_id, title, value, company, contact_name, priority, owner_id, team_id)
+        VALUES (?, '0f14ffff', ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (deal_id, pipe_id, payload.stage_id, payload.title, payload.value, payload.company, payload.contact_name, payload.priority, owner_id, team_id))
     conn.commit()
     conn.close()
     return {
@@ -93,8 +110,11 @@ def create_deal(payload: DealCreate) -> Dict[str, Any]:
         "value": payload.value,
         "company": payload.company,
         "contact_name": payload.contact_name,
+        "pipeline_id": pipe_id,
         "stage_id": payload.stage_id,
-        "priority": payload.priority
+        "priority": payload.priority,
+        "owner_id": owner_id,
+        "team_id": team_id
     }
 
 

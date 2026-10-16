@@ -79,3 +79,31 @@ def test_export_deals_csv():
     csv_text = res.text
     assert "ID,Titulo,Empresa,Contato,Valor_R$,Estagio,Prioridade,Previsao_Fechamento" in csv_text
     assert len(csv_text.splitlines()) > 1
+
+
+def test_create_deal_with_pipeline_and_owner():
+    from tests.test_data_scoping import setup_scoping_fixture
+    setup_scoping_fixture()
+
+    payload = {
+        "title": "Prospecção SDR - Clínica OdontoMaster",
+        "value": 35000.0,
+        "company": "OdontoMaster Implantes",
+        "contact_name": "Dr. Lucas Lima",
+        "pipeline_id": 2,
+        "stage_id": 201,
+        "priority": "alta"
+    }
+    res = client.post("/api/v1/deals", json=payload, headers={"X-User-Id": "u_cons_capital_1"})
+    assert res.status_code == 201
+    data = res.json()
+    assert data["pipeline_id"] == 2
+    assert data["stage_id"] == 201
+    assert data["owner_id"] == "u_cons_capital_1"
+
+    # Validar listagem filtrada por pipeline_id 2
+    res_list = client.get("/api/v1/deals?pipeline_id=2", headers={"X-User-Id": "u_cons_capital_1"})
+    assert res_list.status_code == 200
+    deals_data = res_list.json()
+    assert any(d["id"] == data["id"] for d in deals_data["deals"])
+

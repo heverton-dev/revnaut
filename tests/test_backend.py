@@ -381,16 +381,16 @@ def test_institutions_api_crud():
 
 
 def test_dental_specialized_pipelines():
-    """Valida se os funis de vendas estao especializados para a industria odontologica."""
+    """Valida se os funis de vendas estao especializados para a industria odontologica e revops puro."""
     conn = get_connection()
     cur = conn.cursor()
     cur.execute("SELECT name FROM pipelines ORDER BY id")
     names = [r["name"] for r in cur.fetchall()]
     conn.close()
     assert any("Cirurgiões" in n for n in names)
-    assert any("Instituições de Ensino" in n for n in names)
+    assert any("Prospecção & SDR Outbound" in n for n in names)
     assert any("Distribuidores" in n for n in names)
-    assert any("Key Opinion Leaders" in n for n in names)
+    assert any("CS, Expansão" in n for n in names)
 
 
 def test_contacts_dental_fields():

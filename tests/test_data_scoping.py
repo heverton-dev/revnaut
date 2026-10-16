@@ -32,6 +32,10 @@ def setup_scoping_fixture():
         cur.execute("INSERT OR IGNORE INTO roles (id, account_id, name, default_data_scope, is_admin) VALUES ('r_greg', ?, 'Gerente Regional', 'team', 0)", (acc,))
         cur.execute("INSERT OR IGNORE INTO roles (id, account_id, name, default_data_scope, is_admin) VALUES ('r_gdist', ?, 'Gerente Distrital', 'subtree', 0)", (acc,))
 
+        for r_id in ('r_cons', 'r_greg', 'r_gdist'):
+            for p_code in ('deals:read', 'deals:write', 'contacts:read', 'contacts:write'):
+                cur.execute("INSERT OR IGNORE INTO role_permissions (account_id, role_id, permission_code) VALUES (?, ?, ?)", (acc, r_id, p_code))
+
         # 4. Usuários
         cur.execute("INSERT OR REPLACE INTO users (id, account_id, team_id, role_id, name, email, custom_data_scope, is_superadmin) VALUES "
                     "('u_cons_capital_1', ?, 'tm_reg_capital', 'r_cons', 'Consultor Capital 1', 'cons1@empresa.com', 'self', 0)", (acc,))
