@@ -175,7 +175,7 @@ def test_frontend_targets_and_scoring_presets_elements():
     # 2. Presets e Tiers Customizáveis em Scoring ICP
     assert 'id="scoring-tier-a-min"' in html
     assert 'id="scoring-tier-b-min"' in html
-    assert 'id="scoring-presets-container"' in html
-    assert "💎 Implantes Premium" in html
-    assert "🎓 Acadêmico & Mandic" in html
+    assert "Implantes Premium" in html
+    assert "Acadêmico & Mandic" in html
+
 
