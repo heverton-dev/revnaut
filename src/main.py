@@ -25,8 +25,10 @@ from src.features.institutions.router import router as institutions_router
 from src.features.webhooks.router import router as webhooks_router
 from src.features.quarteto.router import router as quarteto_router
 from src.features.hierarchy.router import router as hierarchy_router
+from src.features.auth import auth_router
 
 # Inicializa schema e seed SQLite WAL
+
 init_db()
 
 app = FastAPI(
@@ -75,6 +77,7 @@ app.include_router(institutions_router)
 app.include_router(webhooks_router)
 app.include_router(quarteto_router)
 app.include_router(hierarchy_router)
+app.include_router(auth_router)
 
 # Montagem de Estáticos e Frontend Root
 _possible_static_paths = [

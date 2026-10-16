@@ -1,17 +1,25 @@
 # Status de Retomada — Próxima Sessão (Revnaut Dental Ops)
 
-**Data do Ponto de Restauração:** 16/10/2026 09:12 BRT  
+**Data do Ponto de Restauração:** 16/10/2026 09:44 BRT  
 **ID da Conversa:** `f1bbcd99-64df-4a50-a2e8-1a221672f2dd`  
 **Repositório GitHub:** `https://github.com/heverton-dev/revnaut` (Privado)  
 **Ambiente Ativo:** Local Monolith / VPS Swarm (`https://revnaut.vpsconexao.org`)  
 **Backend:** FastAPI + SQLite WAL (`data/revops.db`)  
 **Frontend:** `docs/reconstruct_rvops/05_reconstructed_app/index.html` (Servido na raiz `/`)  
-**Testes Automatizados:** 49/49 passaram com 100% de sucesso (`pytest -v`)  
+**Testes Automatizados:** 55/55 passaram com 100% de sucesso (`pytest -v`)  
 **Quality Gates AIDD:** 12/12 gates aprovados em exit code 0 (`G_TESTES_REAIS`, `G_BLOQUEAR_SEGREDOS`, `G_CYBERSECURITY_OWASP`, `G_QUARTETO_SINE_QUA_NON`, `G_CONTRACTS`, `G_STACK_PADRAO_OURO`, `G_SAIDA_BINARIA`, `G_DETERMINISMO_LEI_1`, `G_ESTRUTURA_AST`, `G_HARNESS_COMPAT`, `G_INJECT`, `G_PERFORMANCE`)
 
 ---
 
-## 1. O que foi Entregue e Homologado (RevOps Puro: CRM Odontológico, Metas & Comissões)
+## 1. O que foi Entregue e Homologado (RevOps Puro: CRM Odontológico, Autenticação, Metas & Comissões)
+
+- [x] **Módulo de Autenticação, Tela de Login & Gestão de Sessão (Novo):**
+  - Fatia vertical modular `src/features/auth/` (`schemas.py`, `service.py`, `router.py`).
+  - Endpoints canônicos: `POST /api/v1/auth/login`, `GET /api/v1/auth/me`, `POST /api/v1/auth/logout`.
+  - Assinatura segura de sessão via HMAC-SHA256 (`Bearer Token`) e validação de hash determinístico de senhas.
+  - Tela/Modal de Login corporativa integrada no frontend com suporte à credencial do Super Admin (`hevertoneduardoperes@gmail.com`).
+  - Rodapé de usuário na barra lateral com avatar `HP`, dados do Super Admin e botões de **"Alternar Credencial / Login"** e **"Sair da Sessão (Logout)"**.
+  - Testes: `tests/test_auth.py` (6/6 aprovados).
 
 - [x] **Motor de Lead Scoring ICP Odontológico (Backend & Frontend):**
   - Catálogo de 4 Presets Setoriais Plug & Play:

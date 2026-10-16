@@ -15,3 +15,5 @@ DB_PATH = DATA_DIR / "rvops.db"
 PORT = int(os.getenv("PORT", 8000))
 HOST = os.getenv("HOST", "0.0.0.0")
 APP_ENV = os.getenv("APP_ENV", "production")
+SECRET_KEY = os.getenv("SECRET_KEY", "revnaut-secret-key-2026-superadmin-god")
+
