@@ -1067,6 +1067,251 @@
       background: rgba(255, 255, 255, 0.02);
     }
 
+    /* Estilos Especializados do Módulo de Contatos & Cirurgiões (Impeccable) */
+    .contacts-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .contacts-search-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+      min-width: 280px;
+    }
+    .contacts-search-input {
+      flex: 1;
+      background: rgba(14, 18, 27, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-sm);
+      padding: 9px 14px;
+      font-size: 13px;
+      color: #ffffff;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+    .contacts-search-input:focus {
+      border-color: #ff7300;
+      box-shadow: 0 0 0 3px rgba(255, 115, 0, 0.15);
+      background: rgba(18, 24, 38, 0.95);
+    }
+    .contacts-select-filter {
+      background: rgba(14, 18, 27, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-sm);
+      padding: 9px 12px;
+      font-size: 12.5px;
+      color: #e2e8f0;
+      outline: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .contacts-select-filter:focus {
+      border-color: #ff7300;
+    }
+    .contacts-select-filter option {
+      background: #0f131d;
+      color: #ffffff;
+    }
+    .contacts-stats-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .contacts-stat-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 4px 10px;
+      font-size: 11.5px;
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+      color: var(--text-muted);
+    }
+    .contacts-stat-chip strong {
+      color: #ffffff;
+    }
+    .contact-cell {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .contact-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, rgba(255, 115, 0, 0.25) 0%, rgba(168, 85, 247, 0.25) 100%);
+      border: 1px solid rgba(255, 115, 0, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: #ffffff;
+      flex-shrink: 0;
+      font-family: var(--font-mono);
+      letter-spacing: -0.5px;
+    }
+    .contact-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+    .contact-name {
+      color: #ffffff;
+      font-size: 13.5px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .contact-email {
+      color: var(--text-muted);
+      font-size: 11.5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .badge-cro {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(14, 165, 233, 0.12);
+      border: 1px solid rgba(14, 165, 233, 0.3);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+    .badge-cro-uf {
+      color: #38bdf8;
+      font-weight: 700;
+    }
+    .badge-cro-num {
+      color: #e0f2fe;
+      font-weight: 500;
+    }
+    .badge-cro-empty {
+      display: inline-flex;
+      align-items: center;
+      background: rgba(148, 163, 184, 0.1);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      color: #94a3b8;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-style: italic;
+    }
+    .badge-specialty {
+      display: inline-flex;
+      align-items: center;
+      background: rgba(168, 85, 247, 0.12);
+      border: 1px solid rgba(168, 85, 247, 0.28);
+      color: #d8b4fe;
+      padding: 3px 9px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .vol-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+      color: #fbbf24;
+      padding: 3px 9px;
+      border-radius: 6px;
+      font-size: 11.5px;
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+    .score-badge-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 9px;
+      border-radius: 6px;
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+      font-size: 12px;
+    }
+    .score-badge-wrap.score-high {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      color: #34d399;
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.1);
+    }
+    .score-badge-wrap.score-mid {
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      color: #fbbf24;
+    }
+    .score-badge-wrap.score-low {
+      background: rgba(148, 163, 184, 0.12);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      color: #94a3b8;
+    }
+    .score-pts {
+      font-size: 10px;
+      opacity: 0.75;
+      font-weight: normal;
+    }
+    .contact-wa-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #cbd5e1;
+      text-decoration: none;
+      font-size: 12px;
+      font-family: var(--font-mono);
+      padding: 4px 8px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid transparent;
+      transition: all 0.18s ease;
+    }
+    .contact-wa-link:hover {
+      color: #22c55e;
+      background: rgba(34, 197, 94, 0.08);
+      border-color: rgba(34, 197, 94, 0.25);
+    }
+    .contact-actions-cell {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .contact-action-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #94a3b8;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .contact-action-btn:hover {
+      background: rgba(255, 115, 0, 0.15);
+      border-color: rgba(255, 115, 0, 0.4);
+      color: #ff7300;
+    }
+
     /* Sistema de Notificações Toast (Impeccable Design System) */
     .toast-container {
       position: fixed;
@@ -1627,7 +1872,7 @@
 
       <!-- View Contatos Odontológicos -->
       <section class="generic-view-container" id="contacts-view">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
           <div>
             <h2 style="font-size: 18px; color: white;">Base de Cirurgiões-Dentistas, Clínicas & Decisores</h2>
             <p style="color: var(--text-muted); font-size: 12.5px; margin-top: 2px;">Gestão cadastral com validação de CRO, especialidade cirúrgica e estimativa de implantes/mês.</p>
@@ -1637,22 +1882,43 @@
             <span>Novo Cirurgião / Contato</span>
           </button>
         </div>
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Cirurgião / Contato</th>
-              <th>CRO / UF</th>
-              <th>Especialidade</th>
-              <th>Clínica / Instituição</th>
-              <th>WhatsApp</th>
-              <th>Implantes/Mês</th>
-              <th>ICP Score</th>
-            </tr>
-          </thead>
-          <tbody id="contacts-tbody">
-            <!-- Injetado via JS -->
-          </tbody>
-        </table>
+
+        <!-- Barra de Ferramentas & Filtros Reativos -->
+        <div class="contacts-toolbar">
+          <div class="contacts-search-group">
+            <input type="text" id="contacts-search-input" class="contacts-search-input" placeholder="Buscar por nome, CRO, clínica ou e-mail..." oninput="handleContactsFilter()">
+            <select id="contacts-specialty-filter" class="contacts-select-filter" onchange="handleContactsFilter()">
+              <option value="">Todas Especialidades</option>
+              <option value="Implantodontia">Implantodontia</option>
+              <option value="Cirurgia Bucomaxilofacial">Cirurgia Bucomaxilofacial</option>
+              <option value="Periodontia">Periodontia</option>
+              <option value="Prótese Dentária">Prótese Dentária</option>
+            </select>
+          </div>
+          <div class="contacts-stats-bar" id="contacts-stats-bar">
+            <!-- Injetado dinamicamente via JS -->
+          </div>
+        </div>
+
+        <div style="background: rgba(14, 18, 27, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: var(--radius-md); overflow: hidden; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);">
+          <table class="data-table" style="border: none; border-radius: 0; background: transparent;">
+            <thead>
+              <tr>
+                <th style="min-width: 220px;">Cirurgião / Contato</th>
+                <th style="min-width: 130px;">CRO / UF</th>
+                <th style="min-width: 150px;">Especialidade</th>
+                <th style="min-width: 150px;">Clínica / Instituição</th>
+                <th style="min-width: 140px;">WhatsApp</th>
+                <th style="min-width: 120px;">Implantes/Mês</th>
+                <th style="min-width: 90px;">ICP Score</th>
+                <th style="min-width: 80px; text-align: center;">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="contacts-tbody">
+              <!-- Injetado via JS -->
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <!-- View Comunicações -->
@@ -4992,25 +5258,131 @@ Dr. Paulo Henrique Mendes;RJ-44606;RJ;Prótese & Reabilitação Oral;(21) 99666-
       });
     }
 
+    let CONTACTS_SEARCH_QUERY = '';
+    let CONTACTS_SPECIALTY_FILTER = '';
+
+    function handleContactsFilter() {
+      const searchInput = document.getElementById('contacts-search-input');
+      const specSelect = document.getElementById('contacts-specialty-filter');
+      CONTACTS_SEARCH_QUERY = searchInput ? searchInput.value.toLowerCase().trim() : '';
+      CONTACTS_SPECIALTY_FILTER = specSelect ? specSelect.value : '';
+      renderContacts();
+    }
+
+    function formatCroBadge(cro, uf) {
+      if (!cro || cro === 'Não Informado') {
+        return `<span class="badge-cro-empty">Não Informado</span>`;
+      }
+      const cleanNum = cro.replace(/^(CRO-?|[A-Z]{2}-?)/i, '').replace(/\s+/g, '').trim();
+      const state = (uf || (cro.match(/^[A-Z]{2}/i) ? cro.slice(0, 2) : 'SP')).toUpperCase();
+      return `<span class="badge-cro"><span class="badge-cro-uf">CRO-${state}</span><span class="badge-cro-num">${cleanNum || cro}</span></span>`;
+    }
+
+    function formatVolumeBadge(vol) {
+      if (!vol || vol === '—' || vol === '0') {
+        return `<span style="color: var(--text-muted); font-size: 12px;">—</span>`;
+      }
+      const clean = String(vol).replace(/\/?mês/gi, '').replace(/un/gi, '').trim();
+      return `<span class="vol-pill"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><strong>${clean}</strong> un/mês</span>`;
+    }
+
+    function formatScoreBadge(score) {
+      const s = parseInt(score) || 0;
+      let tierClass = 'score-low';
+      if (s >= 80) tierClass = 'score-high';
+      else if (s >= 60) tierClass = 'score-mid';
+      return `
+        <div class="score-badge-wrap ${tierClass}">
+          <span>${s}</span>
+          <span class="score-pts">pts</span>
+        </div>
+      `;
+    }
+
+    function getContactInitials(name) {
+      if (!name) return 'CD';
+      const clean = name.replace(/^(Dr\.|Dra\.|Prof\.|Profa\.)\s*/i, '').trim();
+      const parts = clean.split(/\s+/);
+      if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+
+    function formatPhoneWithWa(phone) {
+      if (!phone || phone === '—') return `<span style="color: var(--text-muted);">—</span>`;
+      const digits = phone.replace(/\D/g, '');
+      const fullDigits = digits.startsWith('55') ? digits : `55${digits}`;
+      return `
+        <a href="https://wa.me/${fullDigits}" target="_blank" rel="noopener noreferrer" class="contact-wa-link" title="Iniciar WhatsApp">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
+          <span>${phone}</span>
+        </a>
+      `;
+    }
+
     function renderContacts() {
       const tbody = document.getElementById('contacts-tbody');
       if (!tbody) return;
-      tbody.innerHTML = CONTACTS.map(c => `
+
+      // Filtragem reativa
+      const filtered = CONTACTS.filter(c => {
+        const matchesQuery = !CONTACTS_SEARCH_QUERY || (
+          (c.name && c.name.toLowerCase().includes(CONTACTS_SEARCH_QUERY)) ||
+          (c.email && c.email.toLowerCase().includes(CONTACTS_SEARCH_QUERY)) ||
+          (c.company && c.company.toLowerCase().includes(CONTACTS_SEARCH_QUERY)) ||
+          (c.cro && c.cro.toLowerCase().includes(CONTACTS_SEARCH_QUERY))
+        );
+        const matchesSpecialty = !CONTACTS_SPECIALTY_FILTER || (c.specialty === CONTACTS_SPECIALTY_FILTER);
+        return matchesQuery && matchesSpecialty;
+      });
+
+      // Atualiza barra de estatísticas
+      const statsBar = document.getElementById('contacts-stats-bar');
+      if (statsBar) {
+        const total = CONTACTS.length;
+        const withCro = CONTACTS.filter(c => c.cro && c.cro !== 'Não Informado').length;
+        const highIcp = CONTACTS.filter(c => (parseInt(c.score) || 0) >= 80).length;
+        statsBar.innerHTML = `
+          <span class="contacts-stat-chip">Total: <strong>${total}</strong></span>
+          <span class="contacts-stat-chip">CRO Ativo: <strong>${withCro}</strong></span>
+          <span class="contacts-stat-chip">Alto ICP: <strong>${highIcp}</strong></span>
+        `;
+      }
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="8" style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
+              Nenhum cirurgião ou contato localizado para os filtros selecionados.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(c => `
         <tr>
           <td>
-            <strong style="color: white; font-size: 13px;">${c.name}</strong>
-            <div style="font-size: 11px; color: var(--text-muted);">${c.email}</div>
+            <div class="contact-cell">
+              <div class="contact-avatar">${getContactInitials(c.name)}</div>
+              <div class="contact-info">
+                <span class="contact-name">${c.name}</span>
+                <span class="contact-email">${c.email || '—'}</span>
+              </div>
+            </div>
           </td>
-          <td>
-            <span style="background: rgba(0, 229, 255, 0.1); color: #00e5ff; font-family: var(--font-mono); font-size: 11px; padding: 2px 7px; border-radius: 4px; font-weight: 600;">
-              ${c.cro ? `CRO-${c.cro_uf || 'SP'} ${c.cro}` : 'Não Informado'}
-            </span>
-          </td>
-          <td><span style="background: rgba(168, 85, 247, 0.15); color: #c084fc; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500;">${c.specialty || 'Implantodontia'}</span></td>
+          <td>${formatCroBadge(c.cro, c.cro_uf)}</td>
+          <td><span class="badge-specialty">${c.specialty || 'Implantodontia'}</span></td>
           <td><span style="color: #cbd5e1; font-size: 12.5px;">${c.company || '—'}</span></td>
-          <td><span style="color: var(--text-muted); font-size: 12px;">${c.phone || '—'}</span></td>
-          <td><strong style="color: #facc15; font-family: var(--font-mono);">${c.monthly_implants_volume || 0} un/mês</strong></td>
-          <td><strong style="color: #34d399;">${c.score || 75} pts</strong></td>
+          <td>${formatPhoneWithWa(c.phone)}</td>
+          <td>${formatVolumeBadge(c.monthly_implants_volume)}</td>
+          <td>${formatScoreBadge(c.score)}</td>
+          <td style="text-align: center;">
+            <div class="contact-actions-cell" style="justify-content: center;">
+              <button class="contact-action-btn" title="Ver detalhes do cirurgião" onclick="showToast('Ficha cadastral de ${c.name} aberta', 'info')">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </td>
         </tr>
       `).join('');
     }
