@@ -1277,11 +1277,20 @@
       text-decoration: none;
       font-size: 12px;
       font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
       padding: 4px 8px;
       border-radius: 4px;
       background: rgba(255, 255, 255, 0.02);
       border: 1px solid transparent;
       transition: all 0.18s ease;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .contact-wa-link svg {
+      flex-shrink: 0;
+    }
+    .contact-wa-link span {
+      white-space: nowrap;
     }
     .contact-wa-link:hover {
       color: #22c55e;
@@ -1908,7 +1917,7 @@
                 <th style="min-width: 130px;">CRO / UF</th>
                 <th style="min-width: 150px;">Especialidade</th>
                 <th style="min-width: 150px;">Clínica / Instituição</th>
-                <th style="min-width: 140px;">WhatsApp</th>
+                <th style="min-width: 175px; white-space: nowrap;">WhatsApp</th>
                 <th style="min-width: 120px;">Implantes/Mês</th>
                 <th style="min-width: 90px;">ICP Score</th>
                 <th style="min-width: 80px; text-align: center;">Ações</th>
