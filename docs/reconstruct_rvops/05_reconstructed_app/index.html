@@ -1295,24 +1295,6 @@
           </div>
         </div>
 
-        <a class="nav-link" data-view="consignments" data-tooltip="Consignações Cirúrgicas" onclick="switchView('consignments')">
-          <div class="nav-item-left">
-            <span class="nav-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-            </span>
-            <span>Consignações Cirúrgicas</span>
-          </div>
-        </a>
-
-        <a class="nav-link" data-view="institutions" data-tooltip="Ensino & Kits Acadêmicos" onclick="switchView('institutions')">
-          <div class="nav-item-left">
-            <span class="nav-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"/></svg>
-            </span>
-            <span>Ensino & Kits Acadêmicos</span>
-          </div>
-        </a>
-
         <!-- SEÇÃO 2: OPERAÇÕES & CARTEIRA -->
         <div class="nav-section-title">Operações & Carteira</div>
 
@@ -1650,165 +1632,6 @@
             <!-- Injetado via JS -->
           </tbody>
         </table>
-      </section>
-
-      <!-- View Consignações Cirúrgicas -->
-      <section class="generic-view-container" id="consignments-view" style="display: none;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
-          <div>
-            <h2 style="font-size: 18px; color: white;">Estoque Consignado & Caixas Cirúrgicas em Campo</h2>
-            <p style="color: var(--text-muted); font-size: 12.5px; margin-top: 2px;">Rastreabilidade ANVISA de implantes e biomateriais alocados em hospitais e clínicas parceiras.</p>
-          </div>
-          <button class="btn-primary" onclick="openConsignmentConsumeModal()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-            <span>Registrar Baixa Cirúrgica</span>
-          </button>
-        </div>
-
-        <!-- Mini KPIs de Consignação -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 20px;">
-          <div style="background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 8px; padding: 16px;">
-            <div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase;">Caixas Cirúrgicas em Campo</div>
-            <div style="font-size: 22px; font-weight: 700; color: white; margin-top: 4px;" id="csg-kpi-boxes">3 caixas ativas</div>
-            <div style="font-size: 11.5px; color: var(--color-emerald); margin-top: 2px;">100% auditadas</div>
-          </div>
-          <div style="background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 8px; padding: 16px;">
-            <div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase;">Saldo Físico em Clínicas</div>
-            <div style="font-size: 22px; font-weight: 700; color: #38bdf8; margin-top: 4px;" id="csg-kpi-physical">74 unidades</div>
-            <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 2px;">Implantes + Biomateriais</div>
-          </div>
-          <div style="background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 8px; padding: 16px;">
-            <div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase;">Baixas Cirúrgicas / Reposição</div>
-            <div style="font-size: 22px; font-weight: 700; color: #ff7300; margin-top: 4px;" id="csg-kpi-consumed">11 consumidas</div>
-            <div style="font-size: 11.5px; color: #34d399; margin-top: 2px;">Ordens de reposição emitidas</div>
-          </div>
-        </div>
-
-        <!-- Tabela de Caixas Cirúrgicas -->
-        <div style="background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 8px; overflow: hidden; margin-bottom: 24px;">
-          <div style="padding: 14px 18px; border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center;">
-            <strong style="color: white; font-size: 14px;">Caixas Alocadas por Clínica e Hospital</strong>
-            <span style="font-size: 12px; color: var(--text-muted);">Sincronização em tempo real com SQLite WAL</span>
-          </div>
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Código Caixa</th>
-                <th>Clínica / Hospital</th>
-                <th>Alocados</th>
-                <th>Consumidos</th>
-                <th>Saldo Disponível</th>
-                <th>Última Auditoria</th>
-                <th>Status</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody id="consignments-tbody">
-              <!-- Injetado via JS -->
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Detalhe de Lotes ANVISA da Caixa Selecionada -->
-        <div style="background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 8px; padding: 18px;" id="consignment-items-panel">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-            <div>
-              <h3 style="font-size: 15px; color: white;" id="csg-items-title">Itens & Lotes ANVISA — Caixa Grand Morse Cirúrgica</h3>
-              <p style="font-size: 12px; color: var(--text-muted);">Rastreabilidade estrita de cada implante com número de lote para prontuário</p>
-            </div>
-            <span style="background: rgba(0,229,255,0.1); color: #00e5ff; font-family: var(--font-mono); font-size: 11.5px; padding: 3px 8px; border-radius: 4px;">ANVISA RDC 67/2007</span>
-          </div>
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>SKU</th>
-                <th>Produto / Descrição</th>
-                <th>Lote ANVISA</th>
-                <th>Alocado</th>
-                <th>Consumido</th>
-                <th>Saldo Físico</th>
-                <th>Valor Unit.</th>
-              </tr>
-            </thead>
-            <tbody id="consignment-items-tbody">
-              <!-- Injetado via JS -->
-            </tbody>
-                    </table>
-          <!-- Rodapé de Paginação de Colaboradores -->
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: rgba(255,255,255,0.02); border-top: 1px solid var(--border-subtle);">
-            <div id="users-pagination-info" style="font-size: 12px; color: var(--text-muted);">Carregando colaboradores...</div>
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <button class="btn-primary" id="btn-users-prev" onclick="changeUsersPage(-1)" style="padding: 5px 12px; font-size: 12px; background: rgba(255,255,255,0.06); box-shadow: none;">Anterior</button>
-              <span id="users-pagination-page" style="font-size: 12px; color: white; font-weight: 600; padding: 0 4px;">Página 1 de 1</span>
-              <button class="btn-primary" id="btn-users-next" onclick="changeUsersPage(1)" style="padding: 5px 12px; font-size: 12px; background: rgba(255,255,255,0.06); box-shadow: none;">Próximo</button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- View Instituições de Ensino -->
-      <section class="generic-view-container" id="institutions-view" style="display: none;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
-          <div>
-            <h2 style="font-size: 18px; color: white;">Instituições de Ensino, Cursos & Kits Acadêmicos</h2>
-            <p style="color: var(--text-muted); font-size: 12.5px; margin-top: 2px;">Gestão de convênios com faculdades (São Leopoldo Mandic, ABO, APCD) e turmas de pós-graduação.</p>
-          </div>
-          <button class="btn-primary" onclick="showToast('Formulário de credenciamento acadêmico pronto para novas turmas Mandic/ABO', 'info')">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            <span>Novo Convênio Acadêmico</span>
-          </button>
-        </div>
-
-        <!-- Mini KPIs de Ensino -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 20px;">
-          <div style="background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 8px; padding: 16px;">
-            <div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase;">Polos / Faculdades Conveniadas</div>
-            <div style="font-size: 22px; font-weight: 700; color: white; margin-top: 4px;" id="inst-kpi-count">4 polos</div>
-            <div style="font-size: 11.5px; color: var(--color-emerald); margin-top: 2px;">Mandic, ABO, APCD</div>
-          </div>
-          <div style="background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 8px; padding: 16px;">
-            <div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase;">Turmas de Especialização</div>
-            <div style="font-size: 22px; font-weight: 700; color: #a855f7; margin-top: 4px;">18 turmas</div>
-            <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 2px;">Implantodontia & Prótese</div>
-          </div>
-          <div style="background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 8px; padding: 16px;">
-            <div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase;">Kits Cirúrgicos Entregues</div>
-            <div style="font-size: 22px; font-weight: 700; color: #34d399; margin-top: 4px;">175 kits</div>
-            <div style="font-size: 11.5px; color: var(--color-emerald); margin-top: 2px;">Alunos ativos com kit próprio</div>
-          </div>
-        </div>
-
-        <div style="background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 8px; overflow: hidden;">
-          <div style="padding: 14px 18px; border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center;">
-            <strong style="color: white; font-size: 14px;">Instituições e Convênios de Ensino Ativos</strong>
-            <span style="font-size: 12px; color: var(--text-muted);">Formação de novos prescritores cirúrgicos</span>
-          </div>
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Instituição / Polo</th>
-                <th>Cidade / UF</th>
-                <th>Coordenador (KOL)</th>
-                <th>E-mail</th>
-                <th>Kits Cirúrgicos Alocados</th>
-                <th>Status do Convênio</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody id="institutions-tbody">
-              <!-- Injetado via JS -->
-            </tbody>
-                    </table>
-          <!-- Rodapé de Paginação de Colaboradores -->
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: rgba(255,255,255,0.02); border-top: 1px solid var(--border-subtle);">
-            <div id="users-pagination-info" style="font-size: 12px; color: var(--text-muted);">Carregando colaboradores...</div>
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <button class="btn-primary" id="btn-users-prev" onclick="changeUsersPage(-1)" style="padding: 5px 12px; font-size: 12px; background: rgba(255,255,255,0.06); box-shadow: none;">Anterior</button>
-              <span id="users-pagination-page" style="font-size: 12px; color: white; font-weight: 600; padding: 0 4px;">Página 1 de 1</span>
-              <button class="btn-primary" id="btn-users-next" onclick="changeUsersPage(1)" style="padding: 5px 12px; font-size: 12px; background: rgba(255,255,255,0.06); box-shadow: none;">Próximo</button>
-            </div>
-          </div>
-        </div>
       </section>
 
       <!-- View Comunicações -->
@@ -3301,52 +3124,6 @@ Dra. Camila Bittencourt;PR-88202;PR;Cirurgia Bucomaxilofacial;(41) 98222-3344;ca
     </div>
   </div>
 
-  <!-- Modal Registrar Baixa Cirúrgica (Consignação) -->
-  <div class="modal-overlay" id="consignment-consume-modal" onclick="if(event.target === this) closeConsignmentConsumeModal()">
-    <div class="modal-box">
-      <div class="modal-header">
-        <h3>Registrar Baixa Cirúrgica • Caixa Consignada</h3>
-        <button class="modal-close" onclick="closeConsignmentConsumeModal()">✕</button>
-      </div>
-      <form id="consignment-consume-form" onsubmit="handleConsignmentConsume(event)">
-        <div class="form-group">
-          <label>Caixa Cirúrgica Alocada *</label>
-          <select id="csg-consume-box-id" class="form-control" required onchange="handleBoxSelectChange(this.value)">
-            <!-- Opções populadas via JS -->
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Implante / Componente Protético *</label>
-          <select id="csg-consume-sku" class="form-control" required>
-            <!-- Opções populadas via JS -->
-          </select>
-        </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-          <div class="form-group">
-            <label>Quantidade Consumida *</label>
-            <input type="number" id="csg-consume-qty" class="form-control" value="1" min="1" max="50" required>
-          </div>
-          <div class="form-group">
-            <label>CRO do Cirurgião</label>
-            <input type="text" id="csg-consume-cro" class="form-control" placeholder="Ex: SP-88412">
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Identificador / Prontuário do Paciente (Opcional)</label>
-          <input type="text" id="csg-consume-patient" class="form-control" placeholder="Ex: PAC-2026-0941">
-        </div>
-        <div class="form-group">
-          <label>Observações Clínicas / Cirurgia</label>
-          <textarea id="csg-consume-notes" class="form-control" style="height: 70px;" placeholder="Ex: Implante em região 16 com carga imediata"></textarea>
-        </div>
-        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
-          <button type="button" class="btn-primary" style="background: rgba(255,255,255,0.1); box-shadow: none;" onclick="closeConsignmentConsumeModal()">Cancelar</button>
-          <button type="submit" class="btn-primary" style="background: #ff7300;">Confirmar Baixa & Faturamento</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
   <!-- Modal Criar Nova Campanha de Marketing -->
   <div class="modal-overlay" id="campaign-modal" onclick="if(event.target === this) closeCampaignModal()">
     <div class="modal-box">
@@ -3777,7 +3554,6 @@ Dra. Camila Bittencourt;PR-88202;PR;Cirurgia Bucomaxilofacial;(41) 98222-3344;ca
       showToast(`Escopo alterado para: ${label}`, 'info');
 
       // Recarrega dados com o novo escopo
-      fetchConsignments();
       fetchDeals();
       fetchContacts();
       const hierView = document.getElementById('hierarchy-view');
@@ -4277,8 +4053,6 @@ Dr. Paulo Henrique Mendes;RJ-44606;RJ;Prótese & Reabilitação Oral;(21) 99666-
       await fetchTasks();
       await fetchCampaigns();
       await fetchScoringRules();
-      await fetchConsignments();
-      await fetchInstitutions();
       await triggerRecalculateScores(false);
     }
 
@@ -4403,207 +4177,6 @@ Dr. Paulo Henrique Mendes;RJ-44606;RJ;Prótese & Reabilitação Oral;(21) 99666-
         }
       } catch (e) {}
     }
-
-    /* Módulo de Consignações Cirúrgicas (Lotes ANVISA) */
-    function openConsignmentConsumeModal(boxId = null) {
-      const modal = document.getElementById('consignment-consume-modal');
-      const boxSelect = document.getElementById('csg-consume-box-id');
-      if (boxSelect && CONSIGNMENTS.length > 0) {
-        boxSelect.innerHTML = CONSIGNMENTS.map(c => 
-          `<option value="${c.id}" ${boxId === c.id ? 'selected' : ''}>${c.box_code} • ${c.clinic_name}</option>`
-        ).join('');
-        handleBoxSelectChange(boxId || CONSIGNMENTS[0].id);
-      }
-      if (modal) modal.classList.add('active');
-    }
-
-    function closeConsignmentConsumeModal() {
-      const modal = document.getElementById('consignment-consume-modal');
-      if (modal) modal.classList.remove('active');
-    }
-
-    function handleBoxSelectChange(boxId) {
-      const box = CONSIGNMENTS.find(c => c.id === boxId);
-      const skuSelect = document.getElementById('csg-consume-sku');
-      if (!box || !skuSelect) return;
-      skuSelect.innerHTML = (box.items || []).map(i => {
-        const saldo = i.quantity_allocated - i.quantity_consumed;
-        return `<option value="${i.product_sku}">${i.product_sku} — ${i.product_name} (Lote: ${i.batch_number} | Saldo: ${saldo} un)</option>`;
-      }).join('');
-    }
-
-    async function handleConsignmentConsume(e) {
-      e.preventDefault();
-      const boxId = document.getElementById('csg-consume-box-id').value;
-      const sku = document.getElementById('csg-consume-sku').value;
-      const qty = parseInt(document.getElementById('csg-consume-qty').value, 10);
-      const patient = document.getElementById('csg-consume-patient').value;
-      const cro = document.getElementById('csg-consume-cro').value;
-      const notes = document.getElementById('csg-consume-notes').value;
-
-      try {
-        const res = await fetch(`${API_URL}/consignments/${boxId}/consume`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            product_sku: sku,
-            quantity: qty,
-            patient_ref: patient,
-            dentist_cro: cro,
-            notes: notes
-          })
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          closeConsignmentConsumeModal();
-          await fetchConsignments();
-          showToast(`Baixa cirúrgica de ${qty} un efetuada! Faturamento gerado (${formatBRL(data.total_billed)}).`, 'success', 5000);
-        } else {
-          const errData = await res.json().catch(() => ({}));
-          showToast(`Erro ao registrar baixa: ${errData.detail || 'Saldo insuficiente na caixa'}`, 'error');
-        }
-      } catch (err) {
-        showToast('Erro ao registrar baixa: ' + err.message, 'error');
-      }
-    }
-
-    async function fetchConsignments() {
-      try {
-        const res = await fetch(`${API_URL}/consignments`, {
-          headers: getAuthHeaders()
-        });
-        if (res.ok) {
-          CONSIGNMENTS = await res.json();
-          renderConsignments();
-        }
-      } catch (e) {
-        console.error('Erro ao buscar consignações:', e);
-      }
-    }
-
-    function renderConsignments() {
-      const tbody = document.getElementById('consignments-tbody');
-      if (!tbody) return;
-
-      let totalBoxes = CONSIGNMENTS.length;
-      let totalPhysical = 0;
-      let totalConsumed = 0;
-
-      CONSIGNMENTS.forEach(c => {
-        totalConsumed += (c.consumed_items || 0);
-        (c.items || []).forEach(i => {
-          totalPhysical += (i.quantity_allocated - i.quantity_consumed);
-        });
-      });
-
-      const kpiBoxes = document.getElementById('csg-kpi-boxes');
-      const kpiPhys = document.getElementById('csg-kpi-physical');
-      const kpiCons = document.getElementById('csg-kpi-consumed');
-      if (kpiBoxes) kpiBoxes.textContent = `${totalBoxes} caixas ativas`;
-      if (kpiPhys) kpiPhys.textContent = `${totalPhysical} unidades`;
-      if (kpiCons) kpiCons.textContent = `${totalConsumed} consumidas`;
-
-      if (CONSIGNMENTS.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 30px;">Nenhuma caixa consignada registrada.</td></tr>';
-        return;
-      }
-
-      tbody.innerHTML = CONSIGNMENTS.map(c => {
-        const allocated = c.total_items || 0;
-        const consumed = c.consumed_items || 0;
-        const available = allocated - consumed;
-        return `
-          <tr>
-            <td><strong style="color: #38bdf8; font-family: var(--font-mono);">${c.box_code}</strong></td>
-            <td><strong style="color: white;">${c.clinic_name}</strong></td>
-            <td>${allocated} un</td>
-            <td><span style="color: #ff7300; font-weight: 600;">${consumed} un</span></td>
-            <td><strong style="color: #34d399;">${available} un</strong></td>
-            <td><span style="color: var(--text-muted); font-size: 11.5px;">${c.last_audit_date || '2026-10-15'}</span></td>
-            <td><span style="background: rgba(52, 211, 153, 0.15); color: #34d399; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">Ativa</span></td>
-            <td>
-              <div style="display: flex; gap: 6px;">
-                <button class="btn-primary" style="padding: 3px 8px; font-size: 11px; background: rgba(255,115,0,0.15); color: #ff7300; border: 1px solid rgba(255,115,0,0.3);" onclick="openConsignmentConsumeModal('${c.id}')">Baixa</button>
-                <button class="btn-primary" style="padding: 3px 8px; font-size: 11px; background: rgba(255,255,255,0.08); box-shadow: none;" onclick="showConsignmentLotes('${c.id}')">Lotes</button>
-              </div>
-            </td>
-          </tr>
-        `;
-      }).join('');
-
-      if (CONSIGNMENTS.length > 0 && !SELECTED_CONSIGNMENT) {
-        showConsignmentLotes(CONSIGNMENTS[0].id);
-      }
-    }
-
-    function showConsignmentLotes(boxId) {
-      const box = CONSIGNMENTS.find(c => c.id === boxId);
-      if (!box) return;
-      SELECTED_CONSIGNMENT = box;
-
-      const title = document.getElementById('csg-items-title');
-      if (title) title.textContent = `Itens & Lotes ANVISA — ${box.box_code} (${box.clinic_name})`;
-
-      const tbody = document.getElementById('consignment-items-tbody');
-      if (!tbody) return;
-
-      tbody.innerHTML = (box.items || []).map(i => {
-        const saldo = i.quantity_allocated - i.quantity_consumed;
-        return `
-          <tr>
-            <td><code style="color: #38bdf8; font-size: 12px;">${i.product_sku}</code></td>
-            <td><strong style="color: white; font-size: 12.5px;">${i.product_name}</strong></td>
-            <td><span style="background: rgba(255,255,255,0.06); padding: 2px 7px; border-radius: 4px; font-family: var(--font-mono); font-size: 11.5px; color: #a5f3fc;">${i.batch_number}</span></td>
-            <td>${i.quantity_allocated}</td>
-            <td style="color: #ff7300;">${i.quantity_consumed}</td>
-            <td><strong style="color: #34d399;">${saldo} un</strong></td>
-            <td style="font-family: var(--font-mono); color: var(--text-muted);">${formatBRL(i.unit_price)}</td>
-          </tr>
-        `;
-      }).join('');
-    }
-
-    /* Módulo de Instituições de Ensino */
-    async function fetchInstitutions() {
-      try {
-        const res = await fetch(`${API_URL}/institutions`);
-        if (res.ok) {
-          INSTITUTIONS = await res.json();
-          renderInstitutions();
-        }
-      } catch (e) {
-        console.error('Erro ao buscar instituições:', e);
-      }
-    }
-
-    function renderInstitutions() {
-      const tbody = document.getElementById('institutions-tbody');
-      if (!tbody) return;
-
-      const kpiCount = document.getElementById('inst-kpi-count');
-      if (kpiCount) kpiCount.textContent = `${INSTITUTIONS.length} polos`;
-
-      if (INSTITUTIONS.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 30px;">Nenhuma instituição cadastrada.</td></tr>';
-        return;
-      }
-
-      tbody.innerHTML = INSTITUTIONS.map(inst => `
-        <tr>
-          <td><strong style="color: white; font-size: 13.5px;">${inst.name}</strong></td>
-          <td><span style="background: rgba(255,255,255,0.06); padding: 2px 8px; border-radius: 4px; font-size: 11.5px;">${inst.city || '—'} / ${inst.state || '—'}</span></td>
-          <td><strong style="color: #a855f7;">${inst.coordinator_name || '—'}</strong></td>
-          <td><span style="color: var(--text-muted); font-size: 12px;">${inst.email || '—'}</span></td>
-          <td><strong style="color: #34d399; font-family: var(--font-mono);">${inst.academic_kits_allocated || 0} kits</strong></td>
-          <td><span style="background: rgba(52, 211, 153, 0.15); color: #34d399; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">Conveniada</span></td>
-          <td>
-            <button class="btn-primary" style="padding: 3px 8px; font-size: 11px; background: rgba(255,255,255,0.08); box-shadow: none;" onclick="showToast('Polo: ${inst.name} — Coordenador: ${inst.coordinator_name}', 'info')">Ver Contrato</button>
-          </td>
-        </tr>
-      `).join('');
-    }
-
 
     /* Módulo de Tickets (Kanban & Tabela) */
     let CURRENT_TICKET_VIEW = 'kanban';
@@ -5422,8 +4995,6 @@ Dr. Paulo Henrique Mendes;RJ-44606;RJ;Prótese & Reabilitação Oral;(21) 99666-
       'deals-table-view',
       'contacts-view',
       'contacts-segments-view',
-      'consignments-view',
-      'institutions-view',
       'inbox-view',
       'tickets-view',
       'tasks-view',
@@ -5444,8 +5015,6 @@ Dr. Paulo Henrique Mendes;RJ-44606;RJ;Prótese & Reabilitação Oral;(21) 99666-
       'deals': { id: 'deals-view', title: 'Cirurgiões & Venda Direta / Consignação', showKpis: true },
       'contacts': { id: 'contacts-view', title: 'Base de Cirurgiões-Dentistas, Clínicas & Decisores', showKpis: false },
       'contacts-segments': { id: 'contacts-segments-view', title: 'Contatos • Segmentos Inteligentes & Especialidades', showKpis: false },
-      'consignments': { id: 'consignments-view', title: 'Estoque Consignado & Caixas Cirúrgicas em Campo', showKpis: false },
-      'institutions': { id: 'institutions-view', title: 'Instituições de Ensino, Cursos & Kits Acadêmicos', showKpis: false },
       'inbox': { id: 'inbox-view', title: 'Caixa de Entrada Omnichannel (WhatsApp)', showKpis: false },
       'tickets': { id: 'tickets-view', title: 'Central de Tickets & Atendimento Cirúrgico', showKpis: false },
       'tasks': { id: 'tasks-view', title: 'Tarefas Operacionais & Checklist de Fechamento', showKpis: false },

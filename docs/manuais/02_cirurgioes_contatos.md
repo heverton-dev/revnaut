@@ -66,3 +66,10 @@ Gerenciar a carteira central de cirurgiões-dentistas, implantodontistas, clíni
 [FILTROS: Nao existe implementacao de filtro por nome, CRO, cidade ou UF]
 
 [ACESSAR CONTATO: Nao existe implementacao para acessar contato rápido via WhatsApp ou ligação direta]
+
+[DADOS: Clicar no registro deveria abrir modal com todos os dados, score, histórico de compras e oportunidades de cada cirurgião]
+
+[DUVIDA: Subrota Segmentos & Especialidades podem ser criadas dinamicamente ou sao fixas? sao individuais por BU ou por perfil/usuario?]
+
+[REDIRECIONAMENTO: clicar no card de segmento direciona para um funil de oportunidades com status e etapa]
+

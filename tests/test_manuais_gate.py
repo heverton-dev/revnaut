@@ -27,7 +27,7 @@ def test_api_quarteto_manuais_list_and_detail():
     assert res.status_code == 200
     data = res.json()
     assert "total" in data
-    assert data["total"] >= 16
+    assert data["total"] >= 14
     assert "manuals" in data
     
     # Testar detalhe de um manual específico

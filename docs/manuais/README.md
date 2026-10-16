@@ -20,8 +20,6 @@ Cada manual segue rigorosamente a estrutura canônica de governança:
 | 00 | [Autenticação & Login](00_autenticacao_login.md) | `/#login` | Todos os Usuários / Super Admin |
 | 01 | [Comercial, Vendas & Funis](01_comercial_vendas_funis.md) | `/#deals` | Consultores, Gerentes e Diretores |
 | 02 | [Cirurgiões & Base de Contatos](02_cirurgioes_contatos.md) | `/#contacts`, `/#contacts-segments` | Força de Vendas e SDRs |
-| 03 | [Consignações Cirúrgicas](03_consignacoes_cirurgicas.md) | `/#consignments` | Logística, Instrumentadores e Consultores |
-| 04 | [Ensino & Instituições Acadêmicas](04_ensino_instituicoes_academicas.md) | `/#institutions` | Consultores Mandic/ABO e Key Accounts |
 | 05 | [Importador Universal de Carteiras](05_importador_carteiras_clientes.md) | `/#import-contacts` | Super Admin e Operações Comerciais |
 | 06 | [Inbox de Mensagens WhatsApp](06_comunicacao_inbox_whatsapp.md) | `/#inbox` | Atendimento, SDRs e Consultores |
 | 07 | [Central de Tickets & Suporte](07_tickets_suporte_cirurgico.md) | `/#tickets` | SAC Cirúrgico e Pós-Venda |
