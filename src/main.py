@@ -22,7 +22,6 @@ from src.features.tasks.router import router as tasks_router
 from src.features.campaigns.router import router as campaigns_router
 from src.features.scoring.router import router as scoring_router
 from src.features.institutions.router import router as institutions_router
-from src.features.consignments.router import router as consignments_router
 from src.features.webhooks.router import router as webhooks_router
 from src.features.quarteto.router import router as quarteto_router
 from src.features.hierarchy.router import router as hierarchy_router
@@ -73,7 +72,6 @@ app.include_router(tasks_router)
 app.include_router(campaigns_router)
 app.include_router(scoring_router)
 app.include_router(institutions_router)
-app.include_router(consignments_router)
 app.include_router(webhooks_router)
 app.include_router(quarteto_router)
 app.include_router(hierarchy_router)

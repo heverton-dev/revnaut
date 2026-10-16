@@ -1,22 +1,27 @@
 # Status de Retomada — Próxima Sessão (Revnaut Dental Ops)
 
-**Data do Ponto de Restauração:** 16/10/2026 08:20 BRT  
+**Data do Ponto de Restauração:** 16/10/2026 08:35 BRT  
 **ID da Conversa:** `f1bbcd99-64df-4a50-a2e8-1a221672f2dd`  
 **Repositório GitHub:** `https://github.com/heverton-dev/revnaut` (Privado)  
 **Ambiente Ativo:** Local Monolith / VPS Swarm (`https://revnaut.vpsconexao.org`)  
 **Backend:** FastAPI + SQLite WAL (`data/revops.db`)  
 **Frontend:** `docs/reconstruct_rvops/05_reconstructed_app/index.html` (Servido na raiz `/`)  
-**Testes Automatizados:** 45/45 passaram com 100% de sucesso (`pytest -q`)  
+**Testes Automatizados:** 44/44 passaram com 100% de sucesso (`pytest -q`)  
 **Quality Gates AIDD:** 12/12 gates aprovados em exit code 0 (`G_TESTES_REAIS`, `G_BLOQUEAR_SEGREDOS`, `G_CYBERSECURITY_OWASP`, `G_QUARTETO_SINE_QUA_NON`, `G_CONTRACTS`, `G_STACK_PADRAO_OURO`, `G_SAIDA_BINARIA`, `G_DETERMINISMO_LEI_1`, `G_ESTRUTURA_AST`, `G_HARNESS_COMPAT`, `G_INJECT`, `G_PERFORMANCE`)
 
 ---
 
-## 1. O que foi Entregue e Homologado (Motor RBAC, Data Scoping & Extensão Completa)
+## 1. O que foi Entregue e Homologado (RevOps Puro: RBAC, Data Scoping, Funis & Hierarquia)
+
+- [x] **Expurgo e Blindagem Arquitetural de Escopo (Alinhamento Key Partners):**
+  - Remoção de todo o código e tabelas de estoque físico consignado (`consignments`, `consignment_items`, `surgery_replacements`).
+  - O projeto `proj_revops` foca estritamente em **Revenue Operations (CRM B2B, Funis Comerciais, Hierarquia de Vendas e RBAC)**.
+  - As operações cirúrgicas físicas, bipagem e devolução permanecem 100% sob responsabilidade do **`proj_portal_ka`** (Key Partners).
 
 - [x] **Modelagem Relacional DDL no SQLite WAL (TICKET-01):**
   - Criação das tabelas `business_units`, `teams`, `roles`, `role_permissions`.
   - Injeção das colunas `team_id`, `role_id`, `custom_data_scope`, `is_superadmin` na tabela `users`.
-  - Injeção das colunas de isolamento `owner_id` e `team_id` em `consignments`, `deals`, `contacts`, `institutions`.
+  - Injeção das colunas de isolamento `owner_id` e `team_id` em `deals`, `contacts`, `institutions`.
   - Testes: `tests/test_hierarchy_ddl.py` (3/3 aprovados).
 
 - [x] **Motor de Presets Plug & Play e CRUD de Hierarquia (TICKET-02):**
@@ -32,29 +37,23 @@
 - [x] **Motor Central de Data Scoping no Backend (TICKET-03):**
   - Módulo `src/core/security.py` com resolução SQL determinística via CTE recursiva nativa do SQLite WAL.
   - Suporte tipado aos 5 escopos de isolamento de dados: `self`, `team`, `subtree`, `business_unit`, `tenant_global` e `superadmin`.
-  - Testes: `tests/test_data_scoping.py` (4/4 aprovados).
+  - Testes: `tests/test_data_scoping.py` (4/4 aprovados) e `tests/test_deals_contacts_scoping.py` (4/4 aprovados).
 
 - [x] **Interface Visual de Organograma e Seletor de Escopo (TICKET-04):**
   - Aba e view `#hierarchy-view` no frontend dark enterprise (`index.html`).
   - Cards interativos dos 4 Presets Plug & Play com provisionamento em 1 clique.
   - Painel com lista de Business Units e árvore de equipes (DAG) aninhada.
   - Seletor de simulação de escopo na topbar (`#user-scope-select`) persistido em `localStorage`, injetando `X-User-Id` nas requisições.
-  - Teste de frontend: `test_hierarchy_frontend_view_and_scope_elements` em `tests/test_backend.py`.
-
-- [x] **Extensão do Data Scoping para Deals & Contacts:**
-  - Injeção de `X-User-Id` em `GET /api/v1/deals` e `GET /api/v1/contacts`.
-  - Sincronização automática no frontend ao alternar o seletor da topbar.
-  - Testes dedicados: `tests/test_deals_contacts_scoping.py` (4/4 aprovados).
 
 - [x] **Matriz Granular de Permissionamento RBAC (VER & REALIZAR):**
-  - Catálogo formal de recursos odontológicos (`consignments`, `deals`, `contacts`, `hierarchy`, `campaigns`) em `src/features/hierarchy/service.py`.
+  - Catálogo formal de recursos odontológicos (`deals`, `contacts`, `institutions`, `hierarchy`, `campaigns`) em `src/features/hierarchy/service.py`.
   - Suporte total ao Tenant Admin para personalizar permissões por cargo em runtime sem tocar no código fonte.
-  - Portão Inviolável Lei #13: Verificação de `enforce_user_permission` em endpoints críticos (`consignments:consume`, `deals:write`, `contacts:write`) retornando 403 Forbidden para usuários não autorizados.
-  - Aba interativa "Matriz Granular de Permissões (RBAC)" no frontend em `#hierarchy-view` com seletor de cargo, badge de escopo RLS e tabela de checkboxes por recurso com salvamento atômico via `PUT /api/v1/hierarchy/roles/{id}/permissions`.
+  - Portão Inviolável Lei #13: Verificação de `enforce_user_permission` em endpoints críticos (`deals:write`, `contacts:write`) retornando 403 Forbidden para usuários não autorizados.
+  - Aba interativa "Matriz Granular de Permissões (RBAC)" no frontend em `#hierarchy-view` com seletor de cargo, badge de escopo RLS e tabela de checkboxes por recurso.
   - Testes dedicados: `tests/test_rbac_permissions_matrix.py` (4/4 aprovados).
 
 - [x] **Auditoria Completa dos Quality Gates AIDD (TICKET-05):**
-  - Suíte completa de 45 testes reais passando em 100% GREEN.
+  - Suíte completa de 44 testes reais passando em 100% GREEN.
   - 12 Quality Gates executados com exit code 0.
 
 ---

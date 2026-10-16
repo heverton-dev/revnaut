@@ -26,12 +26,12 @@ def test_hierarchy_tables_exist():
 
 
 def test_entities_have_owner_and_team_id():
-    """Valida se consignments, deals e contacts possuem owner_id e team_id."""
+    """Valida se deals, contacts e institutions possuem owner_id e team_id."""
     init_db()
     conn = get_connection()
     cur = conn.cursor()
 
-    entities = ["consignments", "deals", "contacts"]
+    entities = ["deals", "contacts", "institutions"]
     for entity in entities:
         cur.execute(f"PRAGMA table_info({entity})")
         cols = [col[1] for col in cur.fetchall()]

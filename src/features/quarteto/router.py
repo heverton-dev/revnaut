@@ -43,27 +43,24 @@ def mcp_studio():
                 "parameters": {"type": "object", "properties": {}}
             },
             {
-                "name": "revnaut_consultar_consignado",
-                "description": "Consulta caixas cirúrgicas consignadas, saldos e lotes ANVISA em clínicas",
+                "name": "revnaut_consultar_oportunidades",
+                "description": "Consulta oportunidades de vendas nos funis odontológicos (Cirurgiões, Distribuidores, Ensino)",
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "consignment_id": {"type": "string", "description": "ID da caixa consignada (ex: csg_neodent_01)"}
+                        "pipeline_id": {"type": "integer", "description": "ID do funil comercial"},
+                        "stage_id": {"type": "integer", "description": "ID da etapa comercial"}
                     }
                 }
             },
             {
-                "name": "revnaut_registrar_baixa_cirurgica",
-                "description": "Registra consumo cirúrgico de implante/componente em caixa consignada",
+                "name": "revnaut_qualificar_cirurgiao",
+                "description": "Consulta dados cadastrais, CRO, especialidade e Lead Score de um cirurgião ou clínica",
                 "parameters": {
                     "type": "object",
-                    "required": ["consignment_id", "product_sku", "quantity"],
                     "properties": {
-                        "consignment_id": {"type": "string", "description": "ID da caixa consignada"},
-                        "product_sku": {"type": "string", "description": "Código SKU do produto consumido"},
-                        "quantity": {"type": "integer", "description": "Quantidade consumida na cirurgia"},
-                        "patient_ref": {"type": "string", "description": "Referência ou prontuário do paciente"},
-                        "dentist_cro": {"type": "string", "description": "CRO do cirurgião responsável"}
+                        "contact_id": {"type": "integer", "description": "ID do contato"},
+                        "cro": {"type": "string", "description": "Número do CRO com UF"}
                     }
                 }
             },

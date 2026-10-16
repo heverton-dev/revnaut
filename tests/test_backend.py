@@ -380,51 +380,17 @@ def test_institutions_api_crud():
     assert created["city"] == "Bauru"
 
 
-def test_consignments_api_and_surgery_consumption():
-    """Testa gestão de caixas cirúrgicas consignadas e baixa de implante com reposição."""
-    # 0. Garante saldo físico disponível (idempotência de teste)
+def test_dental_specialized_pipelines():
+    """Valida se os funis de vendas estao especializados para a industria odontologica."""
     conn = get_connection()
-    with conn:
-        conn.execute("UPDATE consignment_items SET quantity_consumed = 3 WHERE consignment_id = 'box-1' AND product_sku = 'IMP-GM-375-10'")
+    cur = conn.cursor()
+    cur.execute("SELECT name FROM pipelines ORDER BY id")
+    names = [r["name"] for r in cur.fetchall()]
     conn.close()
-
-    # 1. Listagem de caixas em campo
-    res = client.get("/api/v1/consignments")
-    assert res.status_code == 200
-    boxes = res.json()
-    assert len(boxes) >= 3
-    assert any("Grand Morse" in b["box_code"] for b in boxes)
-
-    # 2. Detalhes de caixa com itens e lotes ANVISA
-    res_detail = client.get("/api/v1/consignments/box-1")
-    assert res_detail.status_code == 200
-    detail = res_detail.json()
-    assert len(detail["items"]) >= 4
-
-    # 3. Baixa cirúrgica de implante (abertura de envelope estéril)
-    consume_payload = {
-        "product_sku": "IMP-GM-375-10",
-        "quantity": 1,
-        "patient_protocol": "PRONT-CIR-2026-901"
-    }
-    res_consume = client.post("/api/v1/consignments/box-1/consume", json=consume_payload)
-    assert res_consume.status_code == 200
-    consume_data = res_consume.json()
-    assert consume_data["status"] == "consumed"
-    assert consume_data["product_sku"] == "IMP-GM-375-10"
-    assert consume_data["replacement_order_triggered"] is True
-    assert consume_data["total_billed"] == 380.00
-
-
-def test_consignments_gate_morde_excessive_quantity():
-    """Lei #13: Prova que a API rejeita baixa cirúrgica que exceda o saldo físico da caixa (HTTP 400)."""
-    bad_consume = {
-        "product_sku": "IMP-GM-375-10",
-        "quantity": 999  # Saldo impossível
-    }
-    res = client.post("/api/v1/consignments/box-1/consume", json=bad_consume)
-    assert res.status_code == 400
-    assert "excede o saldo físico" in res.json()["detail"]
+    assert any("Cirurgiões" in n for n in names)
+    assert any("Instituições de Ensino" in n for n in names)
+    assert any("Distribuidores" in n for n in names)
+    assert any("Key Opinion Leaders" in n for n in names)
 
 
 def test_contacts_dental_fields():

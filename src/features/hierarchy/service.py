@@ -326,16 +326,6 @@ def get_permission_catalog() -> List[Dict[str, Any]]:
     """Catálogo determinístico de recursos e ações do setor odontológico."""
     return [
         {
-            "resource": "consignments",
-            "resource_label": "Consignações & Lotes ANVISA",
-            "actions": [
-                {"code": "consignments:read", "label": "Visualizar Caixas e Estoque"},
-                {"code": "consignments:consume", "label": "Registrar Baixa Cirúrgica"},
-                {"code": "consignments:create", "label": "Cadastrar Nova Caixa"},
-                {"code": "consignments:audit", "label": "Auditar Saldo Físico na Clínica"}
-            ]
-        },
-        {
             "resource": "deals",
             "resource_label": "Funil de Vendas & Oportunidades",
             "actions": [

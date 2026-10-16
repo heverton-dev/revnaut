@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
 Testes TDD - TICKET-03: Motor Central de Data Scoping no Backend
-Valida a restrição matemática em nível de linha (Row-Level Security)
-entre Consultores, Gestores Regionais, Distritais e Super Admin.
+Valida a restrição matemática em nível de linha (Row-Level Security) no CRM
+entre Consultores, Gestores Regionais, Distritais e Super Admin sobre as Oportunidades (Deals).
 """
 
 from fastapi.testclient import TestClient
@@ -13,7 +13,7 @@ client = TestClient(app)
 
 
 def setup_scoping_fixture():
-    """Configura fixture hierárquica completa para testes de isolamento."""
+    """Configura fixture hierárquica completa para testes de isolamento de Deals."""
     conn = get_connection()
     with conn:
         cur = conn.cursor()
@@ -44,63 +44,63 @@ def setup_scoping_fixture():
         cur.execute("INSERT OR REPLACE INTO users (id, account_id, team_id, role_id, name, email, custom_data_scope, is_superadmin) VALUES "
                     "('u_gdist_sp', ?, 'tm_dist_sp', 'r_gdist', 'Gestor Distrital SP', 'gdist@empresa.com', 'subtree', 0)", (acc,))
 
-        # 5. Caixas Consignadas atribuídas
-        cur.execute("INSERT OR REPLACE INTO consignments (id, account_id, contact_id, clinic_name, box_code, total_items, consumed_items, owner_id, team_id) VALUES "
-                    "('box-scope-cap-1', ?, 1, 'Clínica Capital A', 'BOX-CAP-1', 50, 0, 'u_cons_capital_1', 'tm_reg_capital')", (acc,))
-        cur.execute("INSERT OR REPLACE INTO consignments (id, account_id, contact_id, clinic_name, box_code, total_items, consumed_items, owner_id, team_id) VALUES "
-                    "('box-scope-cap-2', ?, 2, 'Clínica Capital B', 'BOX-CAP-2', 50, 0, 'u_cons_capital_2', 'tm_reg_capital')", (acc,))
-        cur.execute("INSERT OR REPLACE INTO consignments (id, account_id, contact_id, clinic_name, box_code, total_items, consumed_items, owner_id, team_id) VALUES "
-                    "('box-scope-int-1', ?, 3, 'Clínica Interior A', 'BOX-INT-1', 50, 0, 'u_cons_interior_1', 'tm_reg_interior')", (acc,))
+        # 5. Deals atribuídos às equipes e consultores
+        cur.execute("INSERT OR REPLACE INTO deals (id, account_id, pipeline_id, stage_id, title, value, company, contact_name, priority, owner_id, team_id) VALUES "
+                    "('d-scope-cap-1', ?, 1, 101, 'Contrato Implantes Capital A', 50000.0, 'Clínica Capital A', 'Dr. Alencar', 'alta', 'u_cons_capital_1', 'tm_reg_capital')", (acc,))
+        cur.execute("INSERT OR REPLACE INTO deals (id, account_id, pipeline_id, stage_id, title, value, company, contact_name, priority, owner_id, team_id) VALUES "
+                    "('d-scope-cap-2', ?, 1, 101, 'Contrato Implantes Capital B', 75000.0, 'Clínica Capital B', 'Dra. Beatriz', 'media', 'u_cons_capital_2', 'tm_reg_capital')", (acc,))
+        cur.execute("INSERT OR REPLACE INTO deals (id, account_id, pipeline_id, stage_id, title, value, company, contact_name, priority, owner_id, team_id) VALUES "
+                    "('d-scope-int-1', ?, 1, 101, 'Contrato Implantes Interior A', 30000.0, 'Clínica Interior A', 'Dr. Carlos', 'baixa', 'u_cons_interior_1', 'tm_reg_interior')", (acc,))
     conn.close()
 
 
-def test_consultor_sees_only_own_consignments():
-    """Valida escopo 'self': Consultor Capital 1 vê apenas sua caixa 'BOX-CAP-1'."""
+def test_consultor_sees_only_own_deals():
+    """Valida escopo 'self': Consultor Capital 1 vê apenas seu deal 'd-scope-cap-1'."""
     setup_scoping_fixture()
     headers = {"X-User-Id": "u_cons_capital_1"}
-    res = client.get("/api/v1/consignments", headers=headers)
+    res = client.get("/api/v1/deals", headers=headers)
     assert res.status_code == 200
-    boxes = res.json()
-    box_codes = [b["box_code"] for b in boxes]
-    assert "BOX-CAP-1" in box_codes
-    assert "BOX-CAP-2" not in box_codes
-    assert "BOX-INT-1" not in box_codes
+    deals = res.json()["deals"]
+    deal_ids = [d["id"] for d in deals]
+    assert "d-scope-cap-1" in deal_ids
+    assert "d-scope-cap-2" not in deal_ids
+    assert "d-scope-int-1" not in deal_ids
 
 
-def test_regional_manager_sees_all_team_consignments():
-    """Valida escopo 'team': Gestor Regional Capital vê caixas do Consultor 1 e 2, mas não do Interior."""
+def test_regional_manager_sees_all_team_deals():
+    """Valida escopo 'team': Gestor Regional Capital vê deals do Consultor 1 e 2, mas não do Interior."""
     setup_scoping_fixture()
     headers = {"X-User-Id": "u_greg_capital"}
-    res = client.get("/api/v1/consignments", headers=headers)
+    res = client.get("/api/v1/deals", headers=headers)
     assert res.status_code == 200
-    boxes = res.json()
-    box_codes = [b["box_code"] for b in boxes]
-    assert "BOX-CAP-1" in box_codes
-    assert "BOX-CAP-2" in box_codes
-    assert "BOX-INT-1" not in box_codes
+    deals = res.json()["deals"]
+    deal_ids = [d["id"] for d in deals]
+    assert "d-scope-cap-1" in deal_ids
+    assert "d-scope-cap-2" in deal_ids
+    assert "d-scope-int-1" not in deal_ids
 
 
-def test_district_manager_sees_recursive_subtree_consignments():
-    """Valida escopo 'subtree': Gestor Distrital vê caixas de Capital E Interior recursivamente."""
+def test_district_manager_sees_recursive_subtree_deals():
+    """Valida escopo 'subtree': Gestor Distrital vê deals de Capital E Interior recursivamente."""
     setup_scoping_fixture()
     headers = {"X-User-Id": "u_gdist_sp"}
-    res = client.get("/api/v1/consignments", headers=headers)
+    res = client.get("/api/v1/deals", headers=headers)
     assert res.status_code == 200
-    boxes = res.json()
-    box_codes = [b["box_code"] for b in boxes]
-    assert "BOX-CAP-1" in box_codes
-    assert "BOX-CAP-2" in box_codes
-    assert "BOX-INT-1" in box_codes
+    deals = res.json()["deals"]
+    deal_ids = [d["id"] for d in deals]
+    assert "d-scope-cap-1" in deal_ids
+    assert "d-scope-cap-2" in deal_ids
+    assert "d-scope-int-1" in deal_ids
 
 
 def test_superadmin_god_sees_everything():
     """Valida que o Super Admin (User God) tem bypass irrestrito de escopo."""
     setup_scoping_fixture()
     headers = {"X-User-Id": "usr-superadmin-god"}
-    res = client.get("/api/v1/consignments", headers=headers)
+    res = client.get("/api/v1/deals", headers=headers)
     assert res.status_code == 200
-    boxes = res.json()
-    box_codes = [b["box_code"] for b in boxes]
-    assert "BOX-CAP-1" in box_codes
-    assert "BOX-CAP-2" in box_codes
-    assert "BOX-INT-1" in box_codes
+    deals = res.json()["deals"]
+    deal_ids = [d["id"] for d in deals]
+    assert "d-scope-cap-1" in deal_ids
+    assert "d-scope-cap-2" in deal_ids
+    assert "d-scope-int-1" in deal_ids

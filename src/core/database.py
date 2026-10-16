@@ -198,32 +198,9 @@ def init_db() -> None:
             FOREIGN KEY (account_id) REFERENCES accounts(id)
         );
 
-        CREATE TABLE IF NOT EXISTS consignments (
-            id TEXT PRIMARY KEY,
-            account_id TEXT NOT NULL,
-            contact_id INTEGER NOT NULL,
-            clinic_name TEXT NOT NULL,
-            box_code TEXT NOT NULL,
-            total_items INTEGER NOT NULL,
-            consumed_items INTEGER DEFAULT 0,
-            last_audit_date TEXT,
-            status TEXT DEFAULT 'ativo',
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (account_id) REFERENCES accounts(id),
-            FOREIGN KEY (contact_id) REFERENCES contacts(id)
-        );
-
-        CREATE TABLE IF NOT EXISTS consignment_items (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            consignment_id TEXT NOT NULL,
-            product_sku TEXT NOT NULL,
-            product_name TEXT NOT NULL,
-            batch_number TEXT NOT NULL,
-            quantity_allocated INTEGER NOT NULL,
-            quantity_consumed INTEGER DEFAULT 0,
-            unit_price REAL NOT NULL,
-            FOREIGN KEY (consignment_id) REFERENCES consignments(id)
-        );
+        DROP TABLE IF EXISTS surgery_replacements;
+        DROP TABLE IF EXISTS consignment_items;
+        DROP TABLE IF EXISTS consignments;
 
         CREATE TABLE IF NOT EXISTS business_units (
             id TEXT PRIMARY KEY,
@@ -440,38 +417,8 @@ def init_db() -> None:
                 insts_data
             )
 
-        # Seed idempotente de Caixas Cirúrgicas Consignadas e Itens
-        cur.execute("SELECT COUNT(*) FROM consignments")
-        if cur.fetchone()[0] == 0:
-            consignments_data = [
-                ("box-1", "0f14ffff", 1, "Clínica Mendonça Implantes & Estética", "BOX-CM-042 (Kit Cirúrgico Grand Morse)", 60, 8, "14/Out/2026", "ativo"),
-                ("box-2", "0f14ffff", 2, "Hospital Cirúrgico Alencar Bucomaxilo", "BOX-BLX-018 (Kit Straumann BLX Titanium)", 40, 5, "12/Out/2026", "ativo"),
-                ("box-3", "0f14ffff", 4, "Centro Odontológico Barra da Tijuca", "BOX-ROG-007 (Gaveteiro Biomateriais Geistlich/Critéria)", 30, 4, "15/Out/2026", "auditoria_pendente")
-            ]
-            cur.executemany(
-                "INSERT INTO consignments (id, account_id, contact_id, clinic_name, box_code, total_items, consumed_items, last_audit_date, status) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                consignments_data
-            )
-
-            items_data = [
-                ("box-1", "IMP-GM-375-10", "Implante Grand Morse Helix 3.75x10mm", "LOTE-2026-088A", 15, 3, 380.00),
-                ("box-1", "IMP-GM-400-11", "Implante Grand Morse Helix 4.0x11.5mm", "LOTE-2026-088B", 15, 2, 380.00),
-                ("box-1", "PIL-CM-33-02", "Pilar Protético Cone Morse Universal 3.3x2mm", "LOTE-2026-091A", 15, 2, 195.00),
-                ("box-1", "BIO-OSSO-05G", "Enxerto Ósseo Granulado 0.5g (Critéria)", "LOTE-2026-BIO1", 15, 1, 240.00),
-                ("box-2", "IMP-BLX-40-10", "Implante Straumann BLX Roxolid SLActive 4.0x10mm", "LOTE-CH-9921", 20, 3, 980.00),
-                ("box-2", "PIL-BLX-ANG", "Pilar Angulado TorcFit Straumann", "LOTE-CH-9944", 20, 2, 340.00),
-                ("box-3", "MEM-COL-2030", "Membrana de Colágeno Reabsorvível 20x30mm", "LOTE-BIO-441", 15, 2, 450.00),
-                ("box-3", "OSSO-BOV-10G", "Biomaterial Ósseo Bovino Inorgânico 1.0g", "LOTE-BIO-442", 15, 2, 380.00)
-            ]
-            cur.executemany(
-                "INSERT INTO consignment_items (consignment_id, product_sku, product_name, batch_number, quantity_allocated, quantity_consumed, unit_price) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?)",
-                items_data
-            )
-
         # Atualização canônica dos nomes dos pipelines para a Indústria Dental
-        cur.execute("UPDATE pipelines SET name = 'Cirurgiões & Venda Direta / Consignação' WHERE id = 1")
+        cur.execute("UPDATE pipelines SET name = 'Cirurgiões & Venda Direta' WHERE id = 1")
         cur.execute("UPDATE pipelines SET name = 'Instituições de Ensino & Kits Acadêmicos (Mandic)' WHERE id = 2")
         cur.execute("UPDATE pipelines SET name = 'Distribuidores & Contratos Atacado (Sell-In / Sell-Out)' WHERE id = 3")
         cur.execute("UPDATE pipelines SET name = 'Key Opinion Leaders (KOLs), Speakers & CIOSP' WHERE id = 4")
@@ -491,7 +438,7 @@ def init_db() -> None:
                 cur.execute(f"ALTER TABLE users ADD COLUMN {col} {col_t};")
 
         # Migração de owner_id e team_id em entidades de dados
-        for table in ["consignments", "deals", "contacts", "institutions"]:
+        for table in ["deals", "contacts", "institutions"]:
             cur.execute(f"PRAGMA table_info({table});")
             tbl_cols = {row[1] for row in cur.fetchall()}
             if "owner_id" not in tbl_cols:
