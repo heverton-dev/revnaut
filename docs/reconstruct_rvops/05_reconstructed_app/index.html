@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Revnaut Dental Ops • Enterprise CRM & Consignações Cirúrgicas</title>
+  <title>Revnaut Dental Ops • Enterprise CRM Odontológico</title>
   <!-- Favicon Oficial Revnaut -->
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="alternate icon" href="/favicon.ico">
@@ -1509,7 +1509,7 @@
           <button class="topbar-menu-toggle" id="topbar-menu-toggle" onclick="toggleSidebarCollapse()" title="Alternar Menu Lateral">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
           </button>
-          <h1 class="page-title" id="topbar-title">Funil Comercial • Cirurgiões & Venda Direta</h1>
+          <h1 class="page-title" id="topbar-title">Funil Comercial & Gestão de Pipelines Odontológicos</h1>
           <select class="pipeline-selector" id="pipeline-selector" onchange="handlePipelineChange(this.value)" title="Alternar Funil Setorial Odontológico">
             <option value="1">Cirurgiões & Venda Direta</option>
             <option value="2">Prospecção & SDR Outbound</option>
@@ -2924,7 +2924,7 @@ Dra. Camila Bittencourt;PR-88202;PR;Cirurgia Bucomaxilofacial;(41) 98222-3344;ca
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <div>
             <strong style="color: #fbbf24; font-size: 13px;">Trava de Limite de Crédito Ativa (> R$ 150.000)</strong>
-            <p style="color: #cbd5e1; font-size: 12px; margin-top: 2px;">Este negócio requer homologação formal de crédito antes do fechamento/consignação.</p>
+            <p style="color: #cbd5e1; font-size: 12px; margin-top: 2px;">Este negócio requer homologação formal de crédito antes do fechamento comercial.</p>
           </div>
           <button id="btn-approve-credit-timeline" class="btn-primary" style="background: #f59e0b; color: #0f172a; font-weight: 600; font-size: 11.5px; padding: 6px 12px;" onclick="handleApproveCreditFromModal()">Homologar Crédito</button>
         </div>
@@ -2957,7 +2957,7 @@ Dra. Camila Bittencourt;PR-88202;PR;Cirurgia Bucomaxilofacial;(41) 98222-3344;ca
       <div style="padding: 16px 0;">
         <div style="background: rgba(245, 158, 11, 0.08); border-left: 3px solid #f59e0b; padding: 12px 14px; margin-bottom: 16px; border-radius: 0 6px 6px 0;">
           <p style="color: #fde68a; font-size: 13px; font-weight: 500; line-height: 1.4;">
-            Operações acima de <strong>R$ 150.000,00</strong> exigem parecer favorável e liberação de limite pela Controladoria antes de avançar para os estágios de Consignação Liberada ou Fechamento.
+            Operações acima de <strong>R$ 150.000,00</strong> exigem parecer favorável e liberação de limite pela Controladoria antes de avançar para os estágios de Fechamento.
           </p>
         </div>
         <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 14px; font-size: 13px; line-height: 1.8;">
@@ -5209,7 +5209,7 @@ Dr. Paulo Henrique Mendes;RJ-44606;RJ;Prótese & Reabilitação Oral;(21) 99666-
       document.getElementById('credit-lock-deal-title').textContent = deal.title;
       document.getElementById('credit-lock-deal-company').textContent = deal.company || '—';
       document.getElementById('credit-lock-deal-value').textContent = formatBRL(deal.value);
-      const stage = STAGES.find(s => s.id === targetStageId) || { name: 'Consignação / Fechamento' };
+      const stage = STAGES.find(s => s.id === targetStageId) || { name: 'Fechamento Comercial' };
       document.getElementById('credit-lock-deal-stage').textContent = stage.name;
       document.getElementById('modal-deal-credit-approval').classList.add('active');
     }
