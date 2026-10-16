@@ -61,3 +61,8 @@ Gerenciar a carteira central de cirurgiões-dentistas, implantodontistas, clíni
 * Integração com a API do CFO (Conselho Federal de Odontologia) para validação cadastral automática da situação da inscrição do CRO.
 * Geolocalização de consultórios no mapa para planejamento de rotas de visitas dos consultores.
 * Histórico clínico de preferências de instrumentais (tipos de chaves cirúrgicas, conexões protéticas preferidas).
+
+
+[FILTROS: Nao existe implementacao de filtro por nome, CRO, cidade ou UF]
+
+[ACESSAR CONTATO: Nao existe implementacao para acessar contato rápido via WhatsApp ou ligação direta]

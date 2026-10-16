@@ -59,3 +59,4 @@ Centralizar o controle de acesso seguro à plataforma Revnaut Dental, autentican
 * Fluxo de auto-recuperação de senha ("Esqueci minha senha") via envio de link temporário com token JWT por e-mail ou WhatsApp.
 * Bloqueio temporário por rate-limiting após 5 tentativas consecutivas incorretas (proteção contra força bruta).
 * Suporte a Single Sign-On (SSO) corporativo via OpenID Connect (Google Workspace / Microsoft Azure AD).
+* **Segurança de Produção:** Remoção/bloqueio estrito do botão `FAST_FILL_SUPERADMIN` em ambiente de produção (restringido exclusivamente a `localhost`/staging).

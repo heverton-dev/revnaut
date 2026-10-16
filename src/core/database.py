@@ -275,7 +275,28 @@ def init_db() -> None:
             FOREIGN KEY (account_id) REFERENCES accounts(id),
             FOREIGN KEY (role_id) REFERENCES roles(id)
         );
+
+        CREATE TABLE IF NOT EXISTS deal_audit_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            deal_id TEXT NOT NULL,
+            user_id TEXT,
+            author_name TEXT NOT NULL,
+            action TEXT NOT NULL,
+            old_value TEXT,
+            new_value TEXT,
+            comment TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (deal_id) REFERENCES deals(id)
+        );
         """)
+
+        # Migração idempotente para colunas complementares em deals
+        cur = conn.cursor()
+        cur.execute("PRAGMA table_info(deals)")
+        existing_cols = {row["name"] for row in cur.fetchall()}
+        if "expected_close_date" not in existing_cols:
+            cur.execute("ALTER TABLE deals ADD COLUMN expected_close_date TEXT DEFAULT NULL")
+
 
         # Seed determinístico inicial se conta padrão não existir
         cur = conn.cursor()

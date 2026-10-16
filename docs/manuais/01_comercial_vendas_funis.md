@@ -57,15 +57,36 @@ Operar o pipeline comercial e o funil de receitas da indústria de implantes e b
 1. Localize o card da oportunidade desejada.
 2. Clique e arraste o card para a coluna de destino (ex: de "Proposta Enviada" para "Fechado / Ganho").
 3. O sistema calcula automaticamente o recalculo de comissões e dispara o webhook correspondente.
+4. Caso a oportunidade possua valor superior a R$ 150.000,00 e o destino seja Consignação/Fechamento, a Trava de Limite de Crédito entra em ação exigindo parecer e homologação pela Controladoria.
 
-### Alternância para Modo Tabela
-1. No canto superior direito da tela de negócios, clique no botão de lista/tabela ("Tabela").
-2. A listagem completa de negócios será exibida com colunas detalhadas de cirurgião, clínica, valor formatado em BRL e prioridade clínica.
+### Edição Inline de Valores e Prazos (Modo Tabela)
+1. No canto superior direito da tela de negócios, clique no botão "Tabela".
+2. Localize a oportunidade desejada nas linhas da tabela.
+3. Edite diretamente o campo de valor numérico em Reais ou o seletor de data de previsão de fechamento.
+4. A alteração é persistida imediatamente via API com registro auditado na linha do tempo.
+
+### Linha do Tempo e Histórico de Auditoria
+1. Na visualização Kanban ou Tabela, clique no botão "Timeline" associado à oportunidade.
+2. O modal exibe todos os eventos cronológicos: movimentações de estágio, reajustes de valores, aprovações de crédito e notas de consultores.
+3. Utilize o campo no rodapé do modal para registrar uma nova nota formal de auditoria.
+
+### Exportação do Pipeline Comercial em CSV
+1. No canto superior direito da tabela de negócios, clique no botão "Exportar CSV".
+2. O sistema gera e descarrega a planilha estruturada contendo todos os negócios, cirurgiões, estágios, valores e previsões.
 
 ---
 
 ## 6. O Que Falta Implementar (Roadmap & Gaps)
-* Edição inline de valores e prazos diretamente na tabela sem abrir modais.
-* Histórico de auditoria e linha do tempo (timeline) de cada oportunidade registrando alterações de estágio e comentários dos consultores.
-* Gatilhos automáticos de trava de limite de crédito antes de permitir mover para o estágio de "Consignação Liberada".
-* Exportação do pipeline ativo para planilhas Excel / CSV.
+* Suporte nativo a múltiplos pipelines simultâneos dinâmicos por categoria odontológica (implantes, próteses, ortodontia e equipamentos cirúrgicos pesados).
+* Aplicativo complementar PWA/Mobile offline-first otimizado para consultores cirúrgicos em trânsito e hospitais.
+* Vinculação granular de regras de comissionamento híbrido para negócios sob escopo de múltiplos gerentes de carteira e SDRs compartilhados.
+
+---
+
+## 7. Pareceres Técnicos às Anotações do Revisor
+
+* [CHANGE_PIPELINE 4 funis setoriais odontológicos]: Atualmente o motor suporta funil unificado com estágios customizados. A expansão para seleção ativa de múltiplos pipelines por divisão de negócios está mapeada para a próxima iteração arquitetural.
+* [DUVIDA MOBILE FIRST]: A aplicação possui layout responsivo via media-queries CSS com drawer retrátil da barra lateral para smartphones. Contudo, em centros cirúrgicos sem conectividade de rede, recomenda-se a extensão offline-first via Service Workers PWA.
+* [DUVIDA PWA]: O manifesto PWA e service workers de cache offline ainda não foram instanciados no build estático; a arquitetura atual opera como SPA web altamente otimizada.
+* [DUVIDA PIPELINE]: Na matriz RBAC atual, a criação e reordenação de estágios de pipeline é restrita ao Super Admin e Gerente Comercial para preservar a consistência analítica das métricas de conversão.
+* [DUVIDA CARTEIRA]: Todo novo negócio criado herda o vínculo do consultor logado (`owner_id` / `user_id`). Gerentes de equipe visualizam automaticamente todas as oportunidades dos consultores sob sua hierarquia (Data Scoping RBAC). Leads sem carteira atribuída permanecem no pool geral de prospecção SDR até a distribuição territorial formal.

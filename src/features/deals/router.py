@@ -35,6 +35,10 @@ from src.core.database import get_connection
 from src.core.security import enforce_user_permission
 
 
+from fastapi.responses import Response
+from src.features.deals.schemas import DealCreate, DealMove, DealUpdate
+
+
 @router.post("/api/v1/deals", status_code=status.HTTP_201_CREATED, summary="Criar Nova Oportunidade com Validação RBAC")
 def create_deal(
     payload: DealCreate,
@@ -49,9 +53,60 @@ def create_deal(
     return service.create_deal(payload)
 
 
-@router.put("/api/v1/deals/{deal_id}/stage", summary="Mover Oportunidade de Estágio")
-def move_deal(deal_id: str, payload: DealMove):
-    success = service.move_deal_stage(deal_id, payload.stage_id)
+@router.put("/api/v1/deals/{deal_id}/stage", summary="Mover Oportunidade de Estágio com Validação de Crédito")
+def move_deal(
+    deal_id: str, 
+    payload: DealMove,
+    x_user_id: Optional[str] = Header(None)
+):
+    try:
+        success = service.move_deal_stage(deal_id, payload.stage_id, user_id=x_user_id)
+        if not success:
+            raise HTTPException(status_code=404, detail="Negócio não encontrado.")
+        return {"deal_id": deal_id, "new_stage_id": payload.stage_id, "status": "updated"}
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+
+
+@router.put("/api/v1/deals/{deal_id}", summary="Edição Inline de Oportunidade (Valor, Título, Prazo)")
+def update_deal_inline(
+    deal_id: str,
+    payload: DealUpdate,
+    x_user_id: Optional[str] = Header(None)
+):
+    try:
+        updated = service.update_deal(deal_id, payload.model_dump(exclude_unset=True), user_id=x_user_id)
+        return updated
+    except KeyError:
+        raise HTTPException(status_code=404, detail="Negócio não encontrado.")
+
+
+@router.get("/api/v1/deals/{deal_id}/timeline", summary="Histórico de Auditoria e Linha do Tempo do Negócio")
+def get_deal_timeline(deal_id: str):
+    return {"deal_id": deal_id, "timeline": service.get_deal_timeline(deal_id)}
+
+
+@router.post("/api/v1/deals/{deal_id}/approve-credit", summary="Aprovar Limite de Crédito para Liberação de Consignação")
+def approve_deal_credit(
+    deal_id: str,
+    x_user_id: Optional[str] = Header(None)
+):
+    success = service.approve_deal_credit_limit(deal_id, approver_name="Controladoria Financeira", user_id=x_user_id)
     if not success:
         raise HTTPException(status_code=404, detail="Negócio não encontrado.")
-    return {"deal_id": deal_id, "new_stage_id": payload.stage_id, "status": "updated"}
+    return {"deal_id": deal_id, "credit_approved": True, "message": "Limite de crédito liberado com sucesso."}
+
+
+@router.get("/api/v1/deals/export/csv", summary="Exportar Pipeline Comercial Ativo em CSV")
+def export_deals_csv(
+    pipeline_id: Optional[int] = None,
+    account_id: str = "0f14ffff",
+    x_user_id: Optional[str] = Header(None)
+):
+    csv_content = service.export_deals_csv(pipeline_id=pipeline_id, account_id=account_id, user_id=x_user_id)
+    return Response(
+        content=csv_content,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=pipeline_revnaut_dental.csv"}
+    )
+

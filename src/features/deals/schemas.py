@@ -18,3 +18,12 @@ class DealCreate(BaseModel):
 
 class DealMove(BaseModel):
     stage_id: int = Field(..., description="Novo ID de estágio no funil")
+
+
+class DealUpdate(BaseModel):
+    title: str | None = Field(default=None, description="Título da oportunidade comercial")
+    value: float | None = Field(default=None, gt=0, description="Novo valor do negócio em Reais")
+    priority: str | None = Field(default=None, pattern="^(baixa|media|alta)$")
+    expected_close_date: str | None = Field(default=None, description="Data estimada de fechamento (AAAA-MM-DD)")
+    comment: str | None = Field(default=None, description="Comentário para auditoria")
+

@@ -1595,7 +1595,13 @@
             <h2 style="font-size: 18px; color: white;">Lista Consolidada de Negócios (Pipeline B2B)</h2>
             <p style="color: var(--text-muted); font-size: 12.5px; margin-top: 2px;">Visão tabular de todas as oportunidades ativas com estágios e valores.</p>
           </div>
-          <button class="btn-primary" onclick="openDealModal()">+ Novo Negócio</button>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button class="btn-primary" style="background: rgba(255,255,255,0.06); box-shadow: none;" onclick="exportDealsToCSV()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span>Exportar CSV</span>
+            </button>
+            <button class="btn-primary" onclick="openDealModal()">+ Novo Negócio</button>
+          </div>
         </div>
         <table class="data-table">
           <thead>
@@ -1604,7 +1610,8 @@
               <th>Empresa</th>
               <th>Contato Principal</th>
               <th>Estágio / Pipeline</th>
-              <th>Valor (R$)</th>
+              <th style="min-width: 135px;">Valor (R$) [Inline]</th>
+              <th style="min-width: 140px;">Previsão Fechamento</th>
               <th>Prioridade</th>
               <th>Ações</th>
             </tr>
@@ -2763,7 +2770,7 @@
             <p style="font-size: 12.5px; color: var(--text-muted); margin-top: 5px;">Acesso Corporativo Seguro • Revenue Operations B2B</p>
           </div>
 
-          <button type="button" onclick="fillSuperAdminCredentials();" class="btn-primary" style="background: rgba(255, 115, 0, 0.12); border: 1px solid rgba(255, 115, 0, 0.35); color: #ff9e42; width: 100%; justify-content: center; font-size: 12.5px; margin-bottom: 18px; padding: 10px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+          <button type="button" onclick="fillSuperAdminCredentials();" class="btn-primary dev-fast-fill" style="background: rgba(255, 115, 0, 0.12); border: 1px solid rgba(255, 115, 0, 0.35); color: #ff9e42; width: 100%; justify-content: center; font-size: 12.5px; margin-bottom: 18px; padding: 10px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 8px;">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-1-1l-3 3m2-2l-2 2m-1-1l-3 3M3 21l9-9M3 21l3-1 6-6-2-2-6 6-1 3z"/></svg>
             <span>Preencher Super Admin (Heverton)</span>
           </button>
@@ -3036,6 +3043,72 @@ Dra. Camila Bittencourt;PR-88202;PR;Cirurgia Bucomaxilofacial;(41) 98222-3344;ca
           <button type="submit" class="btn-primary">Criar Oportunidade</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Modal Linha do Tempo & Auditoria de Negócio -->
+  <div class="modal-overlay" id="modal-deal-timeline" onclick="if(event.target === this) closeDealTimelineModal()">
+    <div class="modal-box" style="max-width: 650px; width: 95%;">
+      <div class="modal-header">
+        <div>
+          <h3 id="timeline-modal-title">Linha do Tempo & Auditoria</h3>
+          <p id="timeline-modal-subtitle" style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Carregando histórico do negócio...</p>
+        </div>
+        <button class="modal-close" onclick="closeDealTimelineModal()">✕</button>
+      </div>
+      
+      <!-- Painel de Alerta de Trava de Crédito quando aplicável -->
+      <div id="timeline-credit-alert" style="display: none; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 6px; padding: 12px; margin-bottom: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <strong style="color: #fbbf24; font-size: 13px;">Trava de Limite de Crédito Ativa (> R$ 150.000)</strong>
+            <p style="color: #cbd5e1; font-size: 12px; margin-top: 2px;">Este negócio requer homologação formal de crédito antes do fechamento/consignação.</p>
+          </div>
+          <button id="btn-approve-credit-timeline" class="btn-primary" style="background: #f59e0b; color: #0f172a; font-weight: 600; font-size: 11.5px; padding: 6px 12px;" onclick="handleApproveCreditFromModal()">Homologar Crédito</button>
+        </div>
+      </div>
+
+      <!-- Container de Eventos Cronológicos -->
+      <div id="timeline-events-container" style="max-height: 380px; overflow-y: auto; padding-right: 6px; display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
+        <!-- Injetado dinamicamente -->
+      </div>
+
+      <!-- Formulário de Comentário Rápido de Auditoria -->
+      <form id="timeline-comment-form" onsubmit="handleAddTimelineComment(event)" style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 14px; display: flex; gap: 8px;">
+        <input type="hidden" id="timeline-current-deal-id">
+        <input type="text" id="timeline-comment-input" class="form-control" placeholder="Adicionar nota de auditoria ou alinhamento com consultor..." required style="flex: 1; font-size: 12.5px;">
+        <button type="submit" class="btn-primary" style="font-size: 12px; padding: 8px 14px;">Registrar</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Trava de Limite de Crédito -->
+  <div class="modal-overlay" id="modal-deal-credit-approval" onclick="if(event.target === this) closeCreditApprovalModal()">
+    <div class="modal-box" style="max-width: 520px; width: 95%;">
+      <div class="modal-header">
+        <div>
+          <h3 style="color: #fbbf24;">Trava de Risco: Limite de Crédito Comercial</h3>
+          <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Governança Financeira & Regras Setoriais Odontológicas</p>
+        </div>
+        <button class="modal-close" onclick="closeCreditApprovalModal()">✕</button>
+      </div>
+      <div style="padding: 16px 0;">
+        <div style="background: rgba(245, 158, 11, 0.08); border-left: 3px solid #f59e0b; padding: 12px 14px; margin-bottom: 16px; border-radius: 0 6px 6px 0;">
+          <p style="color: #fde68a; font-size: 13px; font-weight: 500; line-height: 1.4;">
+            Operações acima de <strong>R$ 150.000,00</strong> exigem parecer favorável e liberação de limite pela Controladoria antes de avançar para os estágios de Consignação Liberada ou Fechamento.
+          </p>
+        </div>
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 14px; font-size: 13px; line-height: 1.8;">
+          <div><span style="color: var(--text-muted);">Negócio:</span> <strong id="credit-lock-deal-title" style="color: white;">—</strong></div>
+          <div><span style="color: var(--text-muted);">Empresa / Clínica:</span> <strong id="credit-lock-deal-company" style="color: white;">—</strong></div>
+          <div><span style="color: var(--text-muted);">Valor da Operação:</span> <strong id="credit-lock-deal-value" style="color: var(--color-emerald); font-family: var(--font-mono);">—</strong></div>
+          <div><span style="color: var(--text-muted);">Estágio Solicitado:</span> <strong id="credit-lock-deal-stage" style="color: #38bdf8;">—</strong></div>
+        </div>
+      </div>
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+        <button type="button" class="btn-primary" style="background: rgba(255,255,255,0.08); box-shadow: none;" onclick="closeCreditApprovalModal()">Cancelar</button>
+        <button type="button" class="btn-primary" style="background: #f59e0b; color: #0f172a; font-weight: 600;" onclick="confirmCreditApproval()">Homologar Limite & Liberar</button>
+      </div>
     </div>
   </div>
 
@@ -3512,8 +3585,8 @@ Dra. Camila Bittencourt;PR-88202;PR;Cirurgia Bucomaxilofacial;(41) 98222-3344;ca
         <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Acesso Corporativo Seguro • Revenue Operations B2B</p>
       </div>
 
-      <!-- Botão de 1 Clique: Preencher Credencial Super Admin -->
-      <button type="button" onclick="fillSuperAdminCredentials()" class="btn-primary" style="background: rgba(255, 115, 0, 0.12); border: 1px solid rgba(255, 115, 0, 0.35); color: #ff9e42; width: 100%; justify-content: center; font-size: 12px; margin-bottom: 16px; padding: 9px; border-radius: 6px; cursor: pointer;">
+      <!-- Botão de 1 Clique: Preencher Credencial Super Admin (Dev/Staging) -->
+      <button type="button" onclick="fillSuperAdminCredentials()" class="btn-primary dev-fast-fill" style="background: rgba(255, 115, 0, 0.12); border: 1px solid rgba(255, 115, 0, 0.35); color: #ff9e42; width: 100%; justify-content: center; font-size: 12px; margin-bottom: 16px; padding: 9px; border-radius: 6px; cursor: pointer;">
         Preencher Super Admin (Heverton)
       </button>
 
@@ -5247,20 +5320,37 @@ Dr. Paulo Henrique Mendes;RJ-44606;RJ;Prótese & Reabilitação Oral;(21) 99666-
             <div class="col-total">${formatBRL(stageTotal)}</div>
           </div>
           <div class="col-cards-list" ondragover="event.preventDefault()" ondrop="handleDrop(event, ${stage.id})">
-            ${stageDeals.map(d => `
-              <div class="deal-card" draggable="true" ondragstart="event.dataTransfer.setData('text/plain', '${d.id}')">
-                <div class="deal-title">${d.title}</div>
-                <div class="deal-company">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:3px;vertical-align:-1px;"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="9" y1="22" x2="9" y2="22.01"/><line x1="15" y1="22" x2="15" y2="22.01"/><line x1="9" y1="18" x2="9" y2="18.01"/><line x1="15" y1="18" x2="15" y2="18.01"/></svg>${d.company}
-                  <span style="opacity:0.4;margin:0 4px;">•</span>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:3px;vertical-align:-1px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>${d.contact_name}
+            ${stageDeals.map(d => {
+              const hasCreditLock = (d.value || 0) > 150000;
+              return `
+                <div class="deal-card" draggable="true" ondragstart="event.dataTransfer.setData('text/plain', '${d.id}')">
+                  <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+                    <div class="deal-title" style="margin-bottom: 4px;">${d.title}</div>
+                    <button type="button" onclick="event.stopPropagation(); openDealTimelineModal('${d.id}')" title="Ver Linha do Tempo e Auditoria" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #38bdf8; border-radius: 4px; padding: 3px 5px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    </button>
+                  </div>
+                  <div class="deal-company">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:3px;vertical-align:-1px;"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="9" y1="22" x2="9" y2="22.01"/><line x1="15" y1="22" x2="15" y2="22.01"/><line x1="9" y1="18" x2="9" y2="18.01"/><line x1="15" y1="18" x2="15" y2="18.01"/></svg>${d.company}
+                    <span style="opacity:0.4;margin:0 4px;">•</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:3px;vertical-align:-1px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>${d.contact_name}
+                  </div>
+                  ${d.expected_close_date ? `
+                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px; display: flex; align-items: center; gap: 4px;">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                      <span>Previsão: ${d.expected_close_date}</span>
+                    </div>
+                  ` : ''}
+                  <div class="deal-footer">
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                      <span class="deal-value">${formatBRL(d.value)}</span>
+                      ${hasCreditLock ? '<span style="font-size: 9.5px; color: #f59e0b; background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 3px; padding: 1px 4px; font-weight: 600;">Trava R$ 150k</span>' : ''}
+                    </div>
+                    <span class="priority-badge priority-${d.priority || 'media'}">${d.priority || 'média'}</span>
+                  </div>
                 </div>
-                <div class="deal-footer">
-                  <span class="deal-value">${formatBRL(d.value)}</span>
-                  <span class="priority-badge priority-${d.priority || 'media'}">${d.priority || 'média'}</span>
-                </div>
-              </div>
-            `).join('')}
+              `;
+            }).join('')}
           </div>
         `;
         container.appendChild(col);
@@ -5295,17 +5385,33 @@ Dr. Paulo Henrique Mendes;RJ-44606;RJ;Prótese & Reabilitação Oral;(21) 99666-
       const dealId = e.dataTransfer.getData('text/plain');
       const deal = DEALS.find(d => d.id === dealId);
       if (deal && deal.stage_id !== newStageId) {
+        const oldStageId = deal.stage_id;
         deal.stage_id = newStageId;
         renderKanban();
         try {
-          await fetch(`${API_URL}/deals/${dealId}/stage`, {
+          const res = await fetch(`${API_URL}/deals/${dealId}/stage`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
             body: JSON.stringify({ stage_id: newStageId })
           });
+          if (!res.ok) {
+            const err = await res.json();
+            deal.stage_id = oldStageId;
+            renderKanban();
+            if (res.status === 422 && err.detail && err.detail.includes('Trava de Limite de Crédito')) {
+              showCreditApprovalModal(deal, newStageId);
+            } else {
+              showToast(err.detail || 'Falha ao mover estágio do negócio', 'error');
+            }
+            return;
+          }
           fetchMetrics();
+          showToast('Estágio atualizado com sucesso!', 'success');
         } catch (err) {
+          deal.stage_id = oldStageId;
+          renderKanban();
           console.error('Erro ao mover deal:', err);
+          showToast('Erro de conexão ao atualizar estágio', 'error');
         }
       }
     }
@@ -5384,15 +5490,19 @@ Dr. Paulo Henrique Mendes;RJ-44606;RJ;Prótese & Reabilitação Oral;(21) 99666-
       const tbody = document.getElementById('deals-table-tbody');
       if (!tbody) return;
       if (!DEALS || DEALS.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 30px;">Nenhum negócio cadastrado no momento.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 30px;">Nenhum negócio cadastrado no momento.</td></tr>';
         return;
       }
 
       tbody.innerHTML = DEALS.map(d => {
         const stage = STAGES.find(s => s.id === d.stage_id) || { name: 'Qualificação', color: '#38bdf8' };
+        const hasCreditLock = (d.value || 0) > 150000;
         return `
           <tr>
-            <td><strong style="color: white; font-size: 13.5px;">${d.title}</strong></td>
+            <td>
+              <strong style="color: white; font-size: 13.5px;">${d.title}</strong>
+              <div style="font-size: 11px; color: var(--text-muted);">ID: ${d.id}</div>
+            </td>
             <td>${d.company || '—'}</td>
             <td>${d.contact_name || '—'}</td>
             <td>
@@ -5401,14 +5511,226 @@ Dr. Paulo Henrique Mendes;RJ-44606;RJ;Prótese & Reabilitação Oral;(21) 99666-
                 ${stage.name}
               </span>
             </td>
-            <td><strong style="color: var(--color-emerald); font-family: var(--font-mono); font-size: 13px;">${formatBRL(d.value)}</strong></td>
+            <td>
+              <div style="display: flex; align-items: center; gap: 4px;">
+                <span style="color: var(--text-muted); font-size: 11px; font-family: var(--font-mono);">R$</span>
+                <input type="number" step="500" value="${d.value || 0}" 
+                  style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); color: var(--color-emerald); font-family: var(--font-mono); font-weight: 600; font-size: 12.5px; width: 110px; padding: 4px 6px; border-radius: 4px;"
+                  onchange="inlineUpdateDeal('${d.id}', 'value', this.value)"
+                  title="Edição direta de valor (salva automaticamente ao alterar)">
+              </div>
+              ${hasCreditLock ? '<span style="display: inline-block; font-size: 9.5px; color: #f59e0b; background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 3px; padding: 1px 4px; margin-top: 3px; font-weight: 600;">Trava > R$ 150k</span>' : ''}
+            </td>
+            <td>
+              <input type="date" value="${d.expected_close_date || ''}" 
+                style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); color: #cbd5e1; font-size: 11.5px; padding: 4px 6px; border-radius: 4px; color-scheme: dark;"
+                onchange="inlineUpdateDeal('${d.id}', 'expected_close_date', this.value)"
+                title="Edição direta do prazo estimado de fechamento">
+            </td>
             <td><span class="priority-badge priority-${d.priority || 'media'}">${d.priority || 'média'}</span></td>
             <td>
-              <button class="btn-primary" style="padding: 4px 10px; font-size: 11px; background: rgba(255,255,255,0.08); box-shadow: none;" onclick="showToast('Negócio #${d.id}: ${d.title} (${stage.name})', 'info')">Detalhes</button>
+              <div style="display: flex; gap: 6px;">
+                <button class="btn-primary" style="padding: 4px 8px; font-size: 11px; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.3); color: #38bdf8; box-shadow: none;" onclick="openDealTimelineModal('${d.id}')">Timeline</button>
+                <button class="btn-primary" style="padding: 4px 8px; font-size: 11px; background: rgba(255,255,255,0.08); box-shadow: none;" onclick="showToast('Negócio #${d.id}: ${d.title} (${stage.name})', 'info')">Detalhes</button>
+              </div>
             </td>
           </tr>
         `;
       }).join('');
+    }
+
+    /* Suporte a Recursos Avançados do Funil de Negócios */
+    async function inlineUpdateDeal(dealId, field, rawValue) {
+      const deal = DEALS.find(d => d.id === dealId);
+      if (!deal) return;
+      const val = field === 'value' ? parseFloat(rawValue) : rawValue;
+      try {
+        const payload = { [field]: val, comment: `Edição inline de ${field} via tabela consolidada` };
+        const res = await fetch(`${API_URL}/deals/${dealId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          deal[field] = val;
+          showToast(`Negócio atualizado: ${field === 'value' ? formatBRL(val) : val}`, 'success');
+          fetchMetrics();
+        } else {
+          const err = await res.json();
+          showToast(err.detail || 'Erro ao atualizar negócio', 'error');
+          renderDealsTable();
+        }
+      } catch (e) {
+        showToast('Erro de conexão ao atualizar negócio', 'error');
+        renderDealsTable();
+      }
+    }
+
+    let PENDING_CREDIT_APPROVAL_DEAL = null;
+    let PENDING_TARGET_STAGE = null;
+
+    function showCreditApprovalModal(deal, targetStageId) {
+      PENDING_CREDIT_APPROVAL_DEAL = deal;
+      PENDING_TARGET_STAGE = targetStageId;
+      document.getElementById('credit-lock-deal-title').textContent = deal.title;
+      document.getElementById('credit-lock-deal-company').textContent = deal.company || '—';
+      document.getElementById('credit-lock-deal-value').textContent = formatBRL(deal.value);
+      const stage = STAGES.find(s => s.id === targetStageId) || { name: 'Consignação / Fechamento' };
+      document.getElementById('credit-lock-deal-stage').textContent = stage.name;
+      document.getElementById('modal-deal-credit-approval').classList.add('active');
+    }
+
+    function closeCreditApprovalModal() {
+      document.getElementById('modal-deal-credit-approval').classList.remove('active');
+      PENDING_CREDIT_APPROVAL_DEAL = null;
+      PENDING_TARGET_STAGE = null;
+    }
+
+    async function confirmCreditApproval() {
+      if (!PENDING_CREDIT_APPROVAL_DEAL) return;
+      const dealId = PENDING_CREDIT_APPROVAL_DEAL.id;
+      const targetStage = PENDING_TARGET_STAGE;
+      try {
+        const res = await fetch(`${API_URL}/deals/${dealId}/approve-credit`, {
+          method: 'POST',
+          headers: getAuthHeaders()
+        });
+        if (res.ok) {
+          showToast('Limite de crédito homologado pela Controladoria!', 'success');
+          closeCreditApprovalModal();
+          if (targetStage) {
+            await fetch(`${API_URL}/deals/${dealId}/stage`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+              body: JSON.stringify({ stage_id: targetStage })
+            });
+            await fetchDeals();
+            await fetchMetrics();
+          }
+        } else {
+          showToast('Erro ao homologar crédito', 'error');
+        }
+      } catch (e) {
+        showToast('Erro de conexão ao homologar crédito: ' + e.message, 'error');
+      }
+    }
+
+    async function handleApproveCreditFromModal() {
+      const dealId = document.getElementById('timeline-current-deal-id').value;
+      if (!dealId) return;
+      try {
+        const res = await fetch(`${API_URL}/deals/${dealId}/approve-credit`, {
+          method: 'POST',
+          headers: getAuthHeaders()
+        });
+        if (res.ok) {
+          showToast('Limite de crédito aprovado com sucesso!', 'success');
+          document.getElementById('timeline-credit-alert').style.display = 'none';
+          await openDealTimelineModal(dealId);
+          await fetchDeals();
+        } else {
+          showToast('Falha na aprovação de crédito', 'error');
+        }
+      } catch (e) {
+        showToast('Erro de conexão: ' + e.message, 'error');
+      }
+    }
+
+    async function openDealTimelineModal(dealId) {
+      const deal = DEALS.find(d => d.id === dealId);
+      if (!deal) return;
+      document.getElementById('timeline-current-deal-id').value = dealId;
+      document.getElementById('timeline-modal-title').textContent = `Linha do Tempo: ${deal.title}`;
+      document.getElementById('timeline-modal-subtitle').textContent = `ID: ${deal.id} • Empresa: ${deal.company || '—'} • Valor: ${formatBRL(deal.value)}`;
+      
+      const creditAlert = document.getElementById('timeline-credit-alert');
+      if (deal.value > 150000) {
+        creditAlert.style.display = 'block';
+      } else {
+        creditAlert.style.display = 'none';
+      }
+
+      const container = document.getElementById('timeline-events-container');
+      container.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 20px;">Carregando histórico auditado...</div>';
+      document.getElementById('modal-deal-timeline').classList.add('active');
+
+      try {
+        const res = await fetch(`${API_URL}/deals/${dealId}/timeline`, {
+          headers: getAuthHeaders()
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const logs = data.timeline || [];
+          if (logs.length === 0) {
+            container.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 20px;">Nenhum evento registrado na linha do tempo ainda.</div>';
+          } else {
+            container.innerHTML = logs.map(l => {
+              const dt = l.created_at ? new Date(l.created_at).toLocaleString('pt-BR') : 'Recentemente';
+              let actionBadge = '<span style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; padding: 2px 6px; border-radius: 4px; font-size: 11px;">Movimentação</span>';
+              if (l.action === 'CREDIT_LIMIT_APPROVED') {
+                actionBadge = '<span style="background: rgba(34, 197, 94, 0.15); color: #22c55e; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 600;">Crédito Aprovado</span>';
+              } else if (l.action === 'VALUE_UPDATE') {
+                actionBadge = '<span style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; padding: 2px 6px; border-radius: 4px; font-size: 11px;">Ajuste de Valor</span>';
+              } else if (l.action === 'CLOSE_DATE_UPDATE') {
+                actionBadge = '<span style="background: rgba(168, 85, 247, 0.15); color: #c084fc; padding: 2px 6px; border-radius: 4px; font-size: 11px;">Novo Prazo</span>';
+              }
+              return `
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; padding: 10px 12px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      ${actionBadge}
+                      <span style="font-weight: 600; color: white; font-size: 12px;">${l.author_name || 'Consultor'}</span>
+                    </div>
+                    <span style="color: var(--text-muted); font-size: 11px; font-family: var(--font-mono);">${dt}</span>
+                  </div>
+                  <p style="color: #cbd5e1; font-size: 12.5px; margin: 4px 0 0 0;">${l.comment || 'Atualização no registro do negócio.'}</p>
+                  ${l.old_value && l.new_value ? `
+                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+                      De: <span style="color: #94a3b8;">${l.old_value}</span> ➔ Para: <strong style="color: white;">${l.new_value}</strong>
+                    </div>
+                  ` : ''}
+                </div>
+              `;
+            }).join('');
+          }
+        }
+      } catch (err) {
+        container.innerHTML = '<div style="color: #f87171; padding: 20px; text-align: center;">Erro ao carregar linha do tempo.</div>';
+      }
+    }
+
+    function closeDealTimelineModal() {
+      document.getElementById('modal-deal-timeline').classList.remove('active');
+    }
+
+    async function handleAddTimelineComment(e) {
+      e.preventDefault();
+      const dealId = document.getElementById('timeline-current-deal-id').value;
+      const input = document.getElementById('timeline-comment-input');
+      const comment = input.value.trim();
+      if (!dealId || !comment) return;
+
+      try {
+        const res = await fetch(`${API_URL}/deals/${dealId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+          body: JSON.stringify({ comment })
+        });
+        if (res.ok) {
+          input.value = '';
+          showToast('Nota de auditoria registrada!', 'success');
+          await openDealTimelineModal(dealId);
+        } else {
+          showToast('Erro ao registrar nota', 'error');
+        }
+      } catch (err) {
+        showToast('Erro de conexão ao registrar nota', 'error');
+      }
+    }
+
+    function exportDealsToCSV() {
+      window.open(`${API_URL}/deals/export/csv`, '_blank');
+      showToast('Exportando pipeline comercial em CSV...', 'info');
     }
 
     /* Roteador Visual de Telas com Suporte a Hash e Auth Mode */
@@ -6220,6 +6542,11 @@ Dr. Paulo Henrique Mendes;RJ-44606;RJ;Prótese & Reabilitação Oral;(21) 99666-
         switchView(currentHash);
       } else {
         switchView('deals');
+      }
+
+      // Segurança de Produção: oculta botões de preenchimento rápido fora de localhost
+      if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        document.querySelectorAll('.dev-fast-fill').forEach(el => el.style.display = 'none');
       }
 
       window.addEventListener('hashchange', () => {

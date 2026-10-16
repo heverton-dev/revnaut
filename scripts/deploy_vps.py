@@ -42,6 +42,14 @@ def make_tarball(source_dir: Path, output_filename: str):
         if static_src.exists():
             tar.add(str(static_src), arcname="static")
 
+        manuais_src = source_dir / "docs" / "manuais"
+        if manuais_src.exists():
+            tar.add(str(manuais_src), arcname="docs/manuais")
+
+        gates_src = source_dir / "gates"
+        if gates_src.exists():
+            tar.add(str(gates_src), arcname="gates")
+
 
 def deploy():
     print("=================================================================")
