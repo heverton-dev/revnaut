@@ -1,0 +1,53 @@
+{
+  "benchmark_segment": "B2B SaaS / CRM & RevOps",
+  "data_coleta": "2026-10-15T14:26:00-03:00",
+  "referencias_elite": [
+    {
+      "app_name": "Unify",
+      "mobbin_url": "https://mobbin.com/screens/67175309-e399-4414-9467-ad79bc4c7037",
+      "arquetipo": "pipeline_kanban_matrix",
+      "pontos_fortes": [
+        "Cards com densidade progressiva de informação",
+        "Arrasto suave com drag & drop nativo e indicação de probabilidade",
+        "Ações rápidas inline (WhatsApp, Email, Agendamento) no hover do deal"
+      ]
+    },
+    {
+      "app_name": "Square",
+      "mobbin_url": "https://mobbin.com/screens/dd50f28f-b9c7-44f2-9454-60ebe953b9ff",
+      "arquetipo": "financial_analytics_table",
+      "pontos_fortes": [
+        "Filtros combinados com pills e contadores dinâmicos",
+        "Tipografia tabular monospace para valores e faturamento",
+        "Totalizadores fixos no rodapé da tabela com sticky header"
+      ]
+    },
+    {
+      "app_name": "Gumloop",
+      "mobbin_url": "https://mobbin.com/screens/9b8698ae-6a68-4cb3-b79d-9be2f61afaac",
+      "arquetipo": "automation_builder_canvas",
+      "pontos_fortes": [
+        "Canvas de automação e campanhas com mini-mapa",
+        "Conexões visuais claras de gatilho -> condição -> ação",
+        "Feedback visual de nós ativos e logs de execução"
+      ]
+    }
+  ],
+  "correcoes_anatomicas_rvops": [
+    {
+      "modulo": "Negócios / Funil",
+      "original_falha": "Header denso com menus suspensos bootstrap legados e filtros pouco intuitivos",
+      "solucao_mobbin": "Segmented Control limpo (Lista vs. Kanban), pills de filtro rápido (Meu Funil, Esta Semana, Sem Atividade) e métrica total do estágio no cabeçalho da coluna."
+    },
+    {
+      "modulo": "Caixa de Entrada / Chat",
+      "original_falha": "Ausência de indicação visual de canal (WhatsApp vs Chat Web) nos cards de conversa rápida",
+      "solucao_mobbin": "Badges de canal padronizados, preview da última mensagem com horário relativo ('há 5 min') e atalho para qualificar lead diretamente na conversa."
+    },
+    {
+      "modulo": "Contatos",
+      "original_falha": "Tabela sem sticky column para ações e paginação com reload completo de página",
+      "solucao_mobbin": "Infinite scroll ou paginação assíncrona, avatar com iniciais automáticas, chips de tags coloridos e preview lateral em Drawer (Sheet)."
+    }
+  ]
+}

@@ -79,7 +79,9 @@ def main(argv: list[str] | None = None) -> int:
     for message in result.messages:
         print(f"[G_TESTES_REAIS] {message}")
 
-    return 0 if result.passed else 1
+    if not result.passed:
+        return 1
+    return 0
 
 
 if __name__ == "__main__":
