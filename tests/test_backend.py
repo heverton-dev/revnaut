@@ -439,6 +439,6 @@ def test_hierarchy_frontend_view_and_scope_elements():
     assert "Multinacional Enterprise" in html
     # 3. Seletor de Escopo de Usuário
     assert 'id="user-scope-select"' in html
-    assert "Thiago Hortolan (Super Admin" in html
+    assert "Heverton Eduardo Peres (Super Admin" in html
     # 4. Nav-link
     assert 'data-view="hierarchy"' in html

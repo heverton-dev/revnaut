@@ -463,6 +463,7 @@ def init_db() -> None:
             ("role_id", "TEXT"),
             ("phone", "TEXT"),
             ("custom_data_scope", "TEXT"),
+            ("password_hash", "TEXT"),
             ("is_active", "INTEGER DEFAULT 1"),
             ("is_superadmin", "INTEGER DEFAULT 0")
         ]:
@@ -478,15 +479,28 @@ def init_db() -> None:
             if "team_id" not in tbl_cols:
                 cur.execute(f"ALTER TABLE {table} ADD COLUMN team_id TEXT;")
 
-        # Garantia determinística do Super Admin (User God único)
-        cur.execute("UPDATE users SET is_superadmin = 0 WHERE email != 'thiago@salesrocketbrasil.com.br' AND id != 'usr-superadmin-god'")
-        cur.execute("UPDATE users SET is_superadmin = 1 WHERE email = 'thiago@salesrocketbrasil.com.br' OR id = 'usr-superadmin-god'")
-        cur.execute("SELECT COUNT(*) FROM users WHERE is_superadmin = 1")
-        if cur.fetchone()[0] == 0:
+        # Garantia determinística do Super Admin (User God único - Heverton Eduardo Peres)
+        # Regra Inegociável: Nenhum outro usuário no sistema pode possuir is_superadmin = 1
+        superadmin_email = "hevertoneduardoperes@gmail.com"
+        superadmin_id = "usr-superadmin-god"
+        superadmin_name = "Heverton Eduardo Peres (Super Admin)"
+        superadmin_pwd_hash = "579ac58e034634060983ac3b0100617b0e10fa05438675d44bb19b1533cdb0a6"
+
+        cur.execute("UPDATE users SET is_superadmin = 0 WHERE email != ? AND id != ?", (superadmin_email, superadmin_id))
+        cur.execute("SELECT id FROM users WHERE email = ? OR id = ?", (superadmin_email, superadmin_id))
+        existing_god = cur.fetchone()
+        if existing_god:
             cur.execute(
-                "INSERT INTO users (id, account_id, name, email, role, is_superadmin) VALUES "
-                "('usr-superadmin-god', '0f14ffff', 'Thiago Hortolan (God)', 'thiago@salesrocketbrasil.com.br', 'Super Admin', 1)"
+                "UPDATE users SET name = ?, email = ?, role = 'Super Admin', is_superadmin = 1, password_hash = ? WHERE id = ?",
+                (superadmin_name, superadmin_email, superadmin_pwd_hash, existing_god[0])
             )
+        else:
+            cur.execute(
+                "INSERT INTO users (id, account_id, name, email, role, is_superadmin, password_hash) VALUES "
+                "(?, '0f14ffff', ?, ?, 'Super Admin', 1, ?)",
+                (superadmin_id, superadmin_name, superadmin_email, superadmin_pwd_hash)
+            )
+        cur.execute("UPDATE users SET is_superadmin = 0 WHERE email != ?", (superadmin_email,))
 
     conn.close()
 

@@ -42,14 +42,17 @@ def test_entities_have_owner_and_team_id():
 
 
 def test_superadmin_user_seed_exists():
-    """Valida se o usuário Super Admin (User God) inicial está registrado."""
+    """Valida se o usuário Super Admin (User God único) Heverton Eduardo Peres está registrado."""
     init_db()
     conn = get_connection()
     cur = conn.cursor()
 
-    cur.execute("SELECT id, name, is_superadmin FROM users WHERE is_superadmin = 1")
-    superadmin = cur.fetchone()
-    assert superadmin is not None, "Usuário Super Admin (User God) deve existir no banco"
+    cur.execute("SELECT id, name, email, is_superadmin FROM users WHERE is_superadmin = 1")
+    superadmins = cur.fetchall()
+    assert len(superadmins) == 1, "Regra inegociável: deve existir EXATAMENTE 1 usuário Super Admin (User God)"
+    superadmin = superadmins[0]
+    assert superadmin["email"] == "hevertoneduardoperes@gmail.com"
+    assert "Heverton Eduardo Peres" in superadmin["name"]
     assert superadmin["is_superadmin"] == 1
 
     conn.close()
