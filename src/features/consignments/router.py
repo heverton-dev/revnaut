@@ -26,9 +26,25 @@ def get_consignment(consignment_id: str):
     return box
 
 
+from src.core.database import get_connection
+from src.core.security import enforce_user_permission
+
+
 @router.post("/{consignment_id}/consume", response_model=ConsignmentConsumptionOut, summary="Registrar baixa cirúrgica e disparar reposição automática")
-def consume_item(consignment_id: str, data: ConsignmentConsumptionCreate):
+def consume_item(
+    consignment_id: str, 
+    data: ConsignmentConsumptionCreate,
+    account_id: str = "0f14ffff",
+    x_user_id: Optional[str] = Header(None)
+):
+    conn = get_connection()
+    try:
+        enforce_user_permission(conn, x_user_id, account_id, "consignments:consume")
+    finally:
+        conn.close()
+
     try:
         return service.log_consumption(consignment_id, data)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+

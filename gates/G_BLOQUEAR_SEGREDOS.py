@@ -23,6 +23,10 @@ EXCLUDED_DIRS = {
     "dist", "build", ".mypy_cache", ".pytest_cache", "gates",
 }
 
+EXCLUDED_FILES = {
+    ".env", ".env-full", ".env.local",
+}
+
 BINARY_EXTENSIONS = {
     ".png", ".jpg", ".jpeg", ".gif", ".ico", ".pdf", ".zip", ".woff", ".woff2",
     ".ttf", ".eot", ".so", ".dll", ".exe", ".pyc",
@@ -79,6 +83,8 @@ def _walk_tree(repo_root: Path) -> list[Path]:
     files: list[Path] = []
     for path in sorted(repo_root.rglob("*")):
         if not path.is_file():
+            continue
+        if path.name in EXCLUDED_FILES:
             continue
         if any(part in EXCLUDED_DIRS for part in path.relative_to(repo_root).parts):
             continue

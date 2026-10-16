@@ -89,3 +89,14 @@ class UserContext(BaseModel):
     permissions: List[str] = Field(default_factory=list)
     is_superadmin: bool = False
 
+
+class RolePermissionsUpdate(BaseModel):
+    permissions: List[str] = Field(..., description="Lista de códigos no formato 'recurso:acao'")
+
+
+class PermissionCatalogItem(BaseModel):
+    resource: str
+    resource_label: str
+    actions: List[Dict[str, str]]
+
+

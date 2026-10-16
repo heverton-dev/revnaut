@@ -31,8 +31,21 @@ def read_deals(
     return service.get_pipeline_and_deals(pipeline_id=pipeline_id, account_id=account_id, user_id=x_user_id)
 
 
-@router.post("/api/v1/deals", status_code=status.HTTP_201_CREATED, summary="Criar Nova Oportunidade")
-def create_deal(payload: DealCreate):
+from src.core.database import get_connection
+from src.core.security import enforce_user_permission
+
+
+@router.post("/api/v1/deals", status_code=status.HTTP_201_CREATED, summary="Criar Nova Oportunidade com Validação RBAC")
+def create_deal(
+    payload: DealCreate,
+    account_id: str = "0f14ffff",
+    x_user_id: Optional[str] = Header(None)
+):
+    conn = get_connection()
+    try:
+        enforce_user_permission(conn, x_user_id, account_id, "deals:write")
+    finally:
+        conn.close()
     return service.create_deal(payload)
 
 

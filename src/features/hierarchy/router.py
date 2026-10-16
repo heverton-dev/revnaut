@@ -8,7 +8,7 @@ from fastapi import APIRouter, HTTPException, Query, status
 
 from src.features.hierarchy.schemas import (
     BusinessUnitCreate, BusinessUnitOut, TeamCreate, TeamUpdateParent,
-    TeamOut, RoleCreate, RoleOut, PresetApplyRequest
+    TeamOut, RoleCreate, RoleOut, PresetApplyRequest, RolePermissionsUpdate
 )
 from src.features.hierarchy import service
 
@@ -62,3 +62,29 @@ def list_roles(account_id: str = "0f14ffff"):
 @router.post("/roles", response_model=RoleOut, status_code=status.HTTP_201_CREATED, summary="Cria Perfil de Acesso Customizado")
 def create_role(payload: RoleCreate, account_id: str = "0f14ffff"):
     return service.create_role(payload, account_id)
+
+
+@router.get("/catalog", summary="Catálogo de Permissões Granulares por Recurso")
+def get_permission_catalog():
+    return service.get_permission_catalog()
+
+
+@router.get("/roles/{role_id}/permissions", summary="Obter Permissões Ativas de uma Função")
+def get_role_permissions(role_id: str, account_id: str = "0f14ffff"):
+    role = service.get_role_permissions(role_id, account_id)
+    if not role:
+        raise HTTPException(status_code=404, detail="Função não encontrada.")
+    return role
+
+
+@router.put("/roles/{role_id}/permissions", summary="Atualizar Matriz de Permissões da Função")
+def update_role_permissions(
+    role_id: str, 
+    payload: RolePermissionsUpdate, 
+    account_id: str = "0f14ffff"
+):
+    try:
+        return service.update_role_permissions(role_id, payload.permissions, account_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+

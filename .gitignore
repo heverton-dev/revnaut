@@ -12,3 +12,12 @@ __pycache__/
 # OS
 .DS_Store
 Thumbs.db
+
+# Environment & Local Data
+.env
+.env*
+!.env.example
+data/*.db
+data/*.db-shm
+data/*.db-wal
+scratch/

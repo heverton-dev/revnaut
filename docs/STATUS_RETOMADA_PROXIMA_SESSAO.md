@@ -1,12 +1,12 @@
 # Status de Retomada — Próxima Sessão (Revnaut Dental Ops)
 
-**Data do Ponto de Restauração:** 16/10/2026 08:05 BRT  
+**Data do Ponto de Restauração:** 16/10/2026 08:20 BRT  
 **ID da Conversa:** `f1bbcd99-64df-4a50-a2e8-1a221672f2dd`  
 **Repositório GitHub:** `https://github.com/heverton-dev/revnaut` (Privado)  
 **Ambiente Ativo:** Local Monolith / VPS Swarm (`https://revnaut.vpsconexao.org`)  
 **Backend:** FastAPI + SQLite WAL (`data/revops.db`)  
 **Frontend:** `docs/reconstruct_rvops/05_reconstructed_app/index.html` (Servido na raiz `/`)  
-**Testes Automatizados:** 41/41 passaram com 100% de sucesso (`pytest -q`)  
+**Testes Automatizados:** 45/45 passaram com 100% de sucesso (`pytest -q`)  
 **Quality Gates AIDD:** 12/12 gates aprovados em exit code 0 (`G_TESTES_REAIS`, `G_BLOQUEAR_SEGREDOS`, `G_CYBERSECURITY_OWASP`, `G_QUARTETO_SINE_QUA_NON`, `G_CONTRACTS`, `G_STACK_PADRAO_OURO`, `G_SAIDA_BINARIA`, `G_DETERMINISMO_LEI_1`, `G_ESTRUTURA_AST`, `G_HARNESS_COMPAT`, `G_INJECT`, `G_PERFORMANCE`)
 
 ---
@@ -46,8 +46,15 @@
   - Sincronização automática no frontend ao alternar o seletor da topbar.
   - Testes dedicados: `tests/test_deals_contacts_scoping.py` (4/4 aprovados).
 
+- [x] **Matriz Granular de Permissionamento RBAC (VER & REALIZAR):**
+  - Catálogo formal de recursos odontológicos (`consignments`, `deals`, `contacts`, `hierarchy`, `campaigns`) em `src/features/hierarchy/service.py`.
+  - Suporte total ao Tenant Admin para personalizar permissões por cargo em runtime sem tocar no código fonte.
+  - Portão Inviolável Lei #13: Verificação de `enforce_user_permission` em endpoints críticos (`consignments:consume`, `deals:write`, `contacts:write`) retornando 403 Forbidden para usuários não autorizados.
+  - Aba interativa "Matriz Granular de Permissões (RBAC)" no frontend em `#hierarchy-view` com seletor de cargo, badge de escopo RLS e tabela de checkboxes por recurso com salvamento atômico via `PUT /api/v1/hierarchy/roles/{id}/permissions`.
+  - Testes dedicados: `tests/test_rbac_permissions_matrix.py` (4/4 aprovados).
+
 - [x] **Auditoria Completa dos Quality Gates AIDD (TICKET-05):**
-  - Suíte completa de 41 testes reais passando em 100% GREEN.
+  - Suíte completa de 45 testes reais passando em 100% GREEN.
   - 12 Quality Gates executados com exit code 0.
 
 ---

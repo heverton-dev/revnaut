@@ -2292,10 +2292,16 @@
               <span>🔄 Atualizar Estrutura</span>
             </button>
           </div>
+        <!-- Switcher de Abas no Organograma -->
+        <div class="view-toggle" style="margin-bottom: 22px; width: fit-content;">
+          <button class="toggle-btn active" id="btn-tab-hierarchy-tree" onclick="setHierarchyTab('tree')">🏢 Árvore Corporativa & BUs</button>
+          <button class="toggle-btn" id="btn-tab-hierarchy-matrix" onclick="setHierarchyTab('matrix')">🛡️ Matriz Granular de Permissões (RBAC)</button>
         </div>
 
-        <!-- Bloco 1: Presets Plug & Play Progressivos -->
-        <div style="margin-bottom: 28px;">
+        <!-- Conteúdo da Aba 1: Árvore Corporativa e BUs -->
+        <div id="tab-content-hierarchy-tree">
+          <!-- Bloco 1: Presets Plug & Play Progressivos -->
+          <div style="margin-bottom: 28px;">
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
             <div>
               <h3 style="font-size: 14px; font-weight: 700; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.5px;">Presets Plug & Play Setoriais (4 Camadas Progressivas)</h3>
@@ -2383,6 +2389,54 @@
             <div id="teams-tree-container" style="display: flex; flex-direction: column; gap: 8px;">
               <div style="text-align: center; color: var(--text-muted); padding: 20px; font-size: 12px;">Carregando organograma...</div>
             </div>
+          </div>
+        </div><!-- fim tab-content-hierarchy-tree -->
+
+        <!-- Conteúdo da Aba 2: Matriz Granular de Permissões RBAC -->
+        <div id="tab-content-hierarchy-matrix" style="display: none;">
+          <div style="background: var(--bg-card); border: 1px solid var(--border-card); border-radius: var(--radius-md); padding: 20px; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+              <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+                <div>
+                  <label style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 4px;">Cargo / Função Corporativa:</label>
+                  <select id="rbac-role-select" onchange="handleRbacRoleChange(this.value)" style="background: var(--bg-surface); color: white; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 7px 12px; font-size: 13px; font-weight: 600; min-width: 250px; outline: none;">
+                    <option value="">Carregando cargos...</option>
+                  </select>
+                </div>
+                <div id="role-scope-indicator" style="background: rgba(255,255,255,0.04); border: 1px solid var(--border-subtle); padding: 7px 14px; border-radius: var(--radius-sm); font-size: 12px;">
+                  <span style="color: var(--text-muted);">Escopo Territorial (RLS):</span> <strong id="role-scope-badge" style="color: var(--color-brand); margin-left: 4px;">self</strong>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <button class="btn-primary" style="background: rgba(255,255,255,0.06); box-shadow: none; font-size: 12px; padding: 6px 12px;" onclick="toggleAllCheckboxes(true)">
+                  <span>Marcar Todos</span>
+                </button>
+                <button class="btn-primary" style="background: rgba(255,255,255,0.06); box-shadow: none; font-size: 12px; padding: 6px 12px;" onclick="toggleAllCheckboxes(false)">
+                  <span>Desmarcar Todos</span>
+                </button>
+                <button class="btn-primary" onclick="saveRolePermissionsMatrix()" style="background: var(--color-brand); font-size: 12px; padding: 6px 14px;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  <span>Salvar Permissões</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Grade de Permissões Granulares por Módulo Odontológico -->
+          <div class="data-table-card" style="background: var(--bg-card); border: 1px solid var(--border-card); border-radius: var(--radius-md); overflow: hidden;">
+            <table class="data-table" id="rbac-matrix-table">
+              <thead>
+                <tr>
+                  <th style="width: 28%;">Módulo / Recurso</th>
+                  <th style="width: 32%;">Ação Operacional</th>
+                  <th style="width: 25%;">Código RBAC</th>
+                  <th style="width: 15%; text-align: center;">Status de Acesso</th>
+                </tr>
+              </thead>
+              <tbody id="rbac-matrix-tbody">
+                <tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 30px;">Carregando matriz de permissões...</td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </section>
@@ -4324,6 +4378,148 @@
         }
       } catch (e) {
         showToast('Erro ao conectar ao servidor: ' + e.message, 'error');
+      }
+    }
+
+    /* Controlador da Matriz de Permissões Granulares (Functional RBAC) */
+    let CURRENT_HIERARCHY_TAB = 'tree';
+    let RBAC_ROLES = [];
+    let RBAC_CATALOG = [];
+    let CURRENT_EDITING_ROLE_ID = null;
+
+    function setHierarchyTab(tab) {
+      CURRENT_HIERARCHY_TAB = tab;
+      const btnTree = document.getElementById('btn-tab-hierarchy-tree');
+      const btnMatrix = document.getElementById('btn-tab-hierarchy-matrix');
+      const contentTree = document.getElementById('tab-content-hierarchy-tree');
+      const contentMatrix = document.getElementById('tab-content-hierarchy-matrix');
+
+      if (btnTree) btnTree.classList.toggle('active', tab === 'tree');
+      if (btnMatrix) btnMatrix.classList.toggle('active', tab === 'matrix');
+
+      if (contentTree) contentTree.style.display = (tab === 'tree') ? 'block' : 'none';
+      if (contentMatrix) contentMatrix.style.display = (tab === 'matrix') ? 'block' : 'none';
+
+      if (tab === 'matrix') {
+        loadHierarchyRoles();
+      }
+    }
+
+    async function loadHierarchyRoles() {
+      try {
+        const [rolesRes, catRes] = await Promise.all([
+          fetch(`${API_URL}/hierarchy/roles`, { headers: getAuthHeaders() }),
+          fetch(`${API_URL}/hierarchy/catalog`, { headers: getAuthHeaders() })
+        ]);
+
+        if (rolesRes.ok) {
+          RBAC_ROLES = await rolesRes.json();
+          renderRbacRoleSelect();
+        }
+        if (catRes.ok) {
+          RBAC_CATALOG = await catRes.json();
+        }
+
+        if (RBAC_ROLES.length > 0 && !CURRENT_EDITING_ROLE_ID) {
+          handleRbacRoleChange(RBAC_ROLES[0].id);
+        } else if (CURRENT_EDITING_ROLE_ID) {
+          handleRbacRoleChange(CURRENT_EDITING_ROLE_ID);
+        }
+      } catch (e) {
+        console.error('Erro ao carregar roles e catálogo:', e);
+      }
+    }
+
+    function renderRbacRoleSelect() {
+      const select = document.getElementById('rbac-role-select');
+      if (!select) return;
+      select.innerHTML = RBAC_ROLES.map(r => `
+        <option value="${r.id}" ${r.id === CURRENT_EDITING_ROLE_ID ? 'selected' : ''}>
+          ${r.name} (${r.default_data_scope.toUpperCase()})${r.is_admin ? ' ★ Admin' : ''}
+        </option>
+      `).join('');
+    }
+
+    async function handleRbacRoleChange(roleId) {
+      CURRENT_EDITING_ROLE_ID = roleId;
+      const role = RBAC_ROLES.find(r => r.id === roleId);
+      const scopeBadge = document.getElementById('role-scope-badge');
+      if (scopeBadge && role) {
+        scopeBadge.textContent = `${role.default_data_scope} (Admin: ${role.is_admin ? 'Sim' : 'Não'})`;
+      }
+
+      if (!role) return;
+
+      try {
+        const res = await fetch(`${API_URL}/hierarchy/roles/${roleId}/permissions`, { headers: getAuthHeaders() });
+        let permissions = [];
+        if (res.ok) {
+          const data = await res.json();
+          permissions = data.permissions || [];
+        }
+        renderPermissionsMatrix(RBAC_CATALOG, permissions, role.is_admin);
+      } catch (err) {
+        console.error('Erro ao buscar permissões da role:', err);
+      }
+    }
+
+    function renderPermissionsMatrix(catalog, activePermissions = [], isAdmin = false) {
+      const tbody = document.getElementById('rbac-matrix-tbody');
+      if (!tbody) return;
+
+      if (!catalog || catalog.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 30px;">Catálogo de permissões não disponível.</td></tr>';
+        return;
+      }
+
+      const hasAll = activePermissions.includes('*:*') || isAdmin;
+
+      tbody.innerHTML = catalog.map(group => {
+        return group.actions.map((act, idx) => {
+          const isChecked = hasAll || activePermissions.includes(act.code) || activePermissions.includes(`${group.resource}:*`);
+          return `
+            <tr>
+              ${idx === 0 ? `<td rowspan="${group.actions.length}" style="vertical-align: top; font-weight: 700; color: white; background: rgba(255,255,255,0.01); border-right: 1px solid var(--border-subtle);"><span style="color: var(--color-brand); margin-right: 6px;">●</span>${group.resource_label}</td>` : ''}
+              <td><span style="font-weight: 500; color: var(--text-primary); font-size: 13px;">${act.label}</span></td>
+              <td><code style="font-family: var(--font-mono); font-size: 11px; background: rgba(255,255,255,0.05); padding: 2px 7px; border-radius: 3px; color: #38bdf8;">${act.code}</code></td>
+              <td style="text-align: center;">
+                <input type="checkbox" class="rbac-permission-check" data-perm="${act.code}" ${isChecked ? 'checked' : ''} style="cursor: pointer; width: 16px; height: 16px; accent-color: var(--color-brand);">
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }).join('');
+    }
+
+    function toggleAllCheckboxes(state) {
+      document.querySelectorAll('.rbac-permission-check').forEach(cb => cb.checked = state);
+    }
+
+    async function saveRolePermissionsMatrix() {
+      if (!CURRENT_EDITING_ROLE_ID) {
+        showToast('Nenhum cargo selecionado.', 'warning');
+        return;
+      }
+
+      const checkedPerms = Array.from(document.querySelectorAll('.rbac-permission-check:checked')).map(cb => cb.getAttribute('data-perm'));
+      
+      try {
+        const res = await fetch(`${API_URL}/hierarchy/roles/${CURRENT_EDITING_ROLE_ID}/permissions`, {
+          method: 'PUT',
+          headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ permissions: checkedPerms })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          showToast(`Permissões do cargo "${data.role_name}" salvas com sucesso! (${data.permissions_count} ativas)`, 'success');
+          await loadHierarchyRoles();
+        } else {
+          const err = await res.json().catch(() => ({}));
+          showToast(`Erro ao salvar permissões: ${err.detail || 'Falha na requisição'}`, 'error');
+        }
+      } catch (e) {
+        showToast('Erro ao comunicar com o servidor: ' + e.message, 'error');
       }
     }
 
