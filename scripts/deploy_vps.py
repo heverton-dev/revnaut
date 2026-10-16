@@ -58,8 +58,7 @@ def deploy():
     
     source_dir = Path(__file__).resolve().parent.parent
     
-    with tempfile.NamedTemporaryFile(suffix=".tar.gz", delete=False) as tmp_tar:
-        tar_path = tmp_tar.name
+    tar_path = str(source_dir / "deploy_package.tar.gz")
 
     try:
         print("[1/5] Compactando artefatos de produção...")
