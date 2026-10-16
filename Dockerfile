@@ -12,6 +12,7 @@ COPY src/ ./src/
 COPY backend/ ./backend/
 COPY data/ ./data/
 COPY static/ ./static/
+COPY docs/ ./docs/
 COPY run_server.py .
 
 EXPOSE 8000
