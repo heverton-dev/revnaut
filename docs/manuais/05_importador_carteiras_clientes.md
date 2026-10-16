@@ -53,3 +53,8 @@ Realizar a importação em massa de listas de cirurgiões-dentistas e clínicas 
 * Suporte nativo a upload direto de arquivos binários `.xlsx` (Excel) via drag-and-drop.
 * Mapeamento dinâmico visual de colunas (De -> Para) caso o arquivo do cliente utilize nomes de colunas diferentes do padrão.
 * Exportação do relatório de auditoria da importação contendo as falhas e linhas descartadas.
+
+---
+
+## ANOTAÇÕES DO HEVERTON
+

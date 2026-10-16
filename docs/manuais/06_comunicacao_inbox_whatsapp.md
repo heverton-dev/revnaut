@@ -44,3 +44,8 @@ Centralizar conversas, mensagens e interações de suporte comercial com cirurgi
 * Conector oficial com a API do WhatsApp Cloud / Gupshup / Z-API com webhooks bidirecionais ativos.
 * Transcrição automática de áudios enviados pelos cirurgiões utilizando modelo Whisper / Gemini.
 * Templates aprovados pela Meta para disparo de notificações de envio de caixas cirúrgicas.
+
+---
+
+## ANOTAÇÕES DO HEVERTON
+

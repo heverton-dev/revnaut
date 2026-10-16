@@ -58,3 +58,8 @@ Gerenciar a arquitetura corporativa completa da empresa:
 ## 6. O Que Falta Implementar (Roadmap & Gaps)
 * Exportação do arquivo de remessa bancária para pagamento de comissões (padrão CNAB ou folha de pagamento).
 * Travas de comissão vinculadas à efetiva liquidação financeira dos boletos das cirurgias pelo cliente (comissão pós-pagamento).
+
+---
+
+## ANOTAÇÕES DO HEVERTON
+

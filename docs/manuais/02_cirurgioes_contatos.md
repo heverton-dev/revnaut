@@ -62,6 +62,9 @@ Gerenciar a carteira central de cirurgiões-dentistas, implantodontistas, clíni
 * Geolocalização de consultórios no mapa para planejamento de rotas de visitas dos consultores.
 * Histórico clínico de preferências de instrumentais (tipos de chaves cirúrgicas, conexões protéticas preferidas).
 
+---
+
+## ANOTAÇÕES DO HEVERTON
 
 [FILTROS: Nao existe implementacao de filtro por nome, CRO, cidade ou UF]
 
@@ -72,4 +75,3 @@ Gerenciar a carteira central de cirurgiões-dentistas, implantodontistas, clíni
 [DUVIDA: Subrota Segmentos & Especialidades podem ser criadas dinamicamente ou sao fixas? sao individuais por BU ou por perfil/usuario?]
 
 [REDIRECIONAMENTO: clicar no card de segmento direciona para um funil de oportunidades com status e etapa]
-

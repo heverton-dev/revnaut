@@ -83,7 +83,7 @@ Operar o pipeline comercial e o funil de receitas da indústria de implantes e b
 
 ---
 
-## 7. Pareceres Técnicos às Anotações do Revisor
+## ANOTAÇÕES DO HEVERTON
 
 * [CHANGE_PIPELINE 4 funis setoriais odontológicos]: Atualmente o motor suporta funil unificado com estágios customizados. A expansão para seleção ativa de múltiplos pipelines por divisão de negócios está mapeada para a próxima iteração arquitetural.
 * [DUVIDA MOBILE FIRST]: A aplicação possui layout responsivo via media-queries CSS com drawer retrátil da barra lateral para smartphones. Contudo, em centros cirúrgicos sem conectividade de rede, recomenda-se a extensão offline-first via Service Workers PWA.

@@ -43,3 +43,8 @@ Coordenar as ações de atração e nutrição de cirurgiões-dentistas via rég
 ## 6. O Que Falta Implementar (Roadmap & Gaps)
 * Editor visual de templates de e-mail diretamente no dashboard.
 * Disparo de sequências automatizadas por gatilhos de WhatsApp integrado ao fluxo do Mautic.
+
+---
+
+## ANOTAÇÕES DO HEVERTON
+

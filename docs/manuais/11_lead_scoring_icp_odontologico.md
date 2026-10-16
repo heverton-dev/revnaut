@@ -52,3 +52,8 @@ Qualificar matematicamente a base de cirurgiões-dentistas através de regras de
 ## 6. O Que Falta Implementar (Roadmap & Gaps)
 * Machine Learning / Regressão Logística para sugerir automaticamente ajustes nos pesos com base nos negócios efetivamente ganhos nos últimos 12 meses.
 * Pontuação por engajamento digital (leitura de e-mails, visitas ao site de catálogos técnicos).
+
+---
+
+## ANOTAÇÕES DO HEVERTON
+

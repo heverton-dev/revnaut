@@ -40,3 +40,8 @@ Organizar as atividades diárias de campo dos consultores comerciais e assistent
 ## 6. O Que Falta Implementar (Roadmap & Gaps)
 * Sincronização bidirecional com Google Calendar e Microsoft Outlook.
 * Notificações push no smartphone no horário agendado da visita ao consultório.
+
+---
+
+## ANOTAÇÕES DO HEVERTON
+

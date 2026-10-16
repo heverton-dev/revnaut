@@ -68,3 +68,8 @@ Prover o painel de governança exclusiva de acessos do Super Admin (User God - H
 * Envio automático da nova senha provisória por e-mail ou WhatsApp corporativo com solicitação de troca obrigatória no primeiro acesso.
 * Registro de histórico de auditoria de quem redefiniu a senha e o timestamp exato da operação.
 * Política de complexidade de senha configurável (mínimo de caracteres especiais, números e maiúsculas).
+
+---
+
+## ANOTAÇÕES DO HEVERTON
+

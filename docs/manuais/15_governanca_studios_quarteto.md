@@ -46,3 +46,8 @@ Cumprir a Lei Canônica #10 de Governança AIDD, que exige que toda aplicação 
 ## 6. O Que Falta Implementar (Roadmap & Gaps)
 * Simulador visual interativo de webhook payloads diretamente no Webhook Studio com replay de requisições que falharam.
 * Exportação de SDKs tipados em TypeScript e Python gerados automaticamente a partir da especificação OpenAPI ativa.
+
+---
+
+## ANOTAÇÕES DO HEVERTON
+

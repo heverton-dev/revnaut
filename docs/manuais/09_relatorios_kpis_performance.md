@@ -44,3 +44,8 @@ Disponibilizar painéis analíticos e indicadores de Business Intelligence (BI) 
 ## 6. O Que Falta Implementar (Roadmap & Gaps)
 * Geração de relatórios executivos em formato PDF diagramado para apresentação a investidores e conselho.
 * Gráficos dinâmicos interativos com curvas de tendência temporal (usando biblioteca gráfica leve sem dependências pesadas).
+
+---
+
+## ANOTAÇÕES DO HEVERTON
+

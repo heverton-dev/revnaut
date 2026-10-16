@@ -38,3 +38,8 @@ Mapear e construir fluxos lógicos de regras condicionais automatizadas para dis
 ## 6. O Que Falta Implementar (Roadmap & Gaps)
 * Construtor visual drag-and-drop de nós de automação (Canvas com blocos: Gatilho -> Condição -> Ação).
 * Integração com webhooks de saída configuráveis para terceiros (ERP Protheus, Bling, Tiny).
+
+---
+
+## ANOTAÇÕES DO HEVERTON
+

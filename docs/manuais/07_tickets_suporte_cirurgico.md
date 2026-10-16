@@ -44,3 +44,8 @@ Gerenciar chamados técnicos, dúvidas de intercorrências cirúrgicas, solicita
 ## 6. O Que Falta Implementar (Roadmap & Gaps)
 * Gestão formal de SLA com contagem regressiva visual e alertas de estouro de prazo.
 * Integração com o módulo de qualidade para abertura automática de Não-Conformidade (RNC) quando o chamado envolver quebra em boca do paciente.
+
+---
+
+## ANOTAÇÕES DO HEVERTON
+
