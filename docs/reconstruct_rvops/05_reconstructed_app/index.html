@@ -2250,9 +2250,94 @@
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
               <span>+ Nova Regra ICP</span>
             </button>
-            <button class="btn-primary" onclick="triggerRecalculateScores()" style="background: var(--color-brand);">
+            <button class="btn-primary" onclick="triggerRecalculateScoresWithTiers()" style="background: var(--color-brand);">
               <span>🔄 Recalcular Base</span>
             </button>
+          </div>
+        </div>
+
+        <!-- Painel de Tiers Customizáveis & Presets Plug & Play de Scoring Odontológico -->
+        <div style="background: var(--bg-card); border: 1px solid var(--border-card); border-radius: var(--radius-md); padding: 18px; margin-bottom: 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; margin-bottom: 16px;">
+            <div>
+              <h3 style="font-size: 13px; font-weight: 700; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.5px;">Limiares de Tiers Customizáveis (Classificação de Leads)</h3>
+              <p style="font-size: 11.5px; color: var(--text-muted); margin-top: 2px;">Defina os pontos mínimos para corte dos Tiers A (Hot Lead), B (Warm Lead) e C (Nutrição):</p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span class="badge-status" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); font-size: 11px;">Tier A Mín:</span>
+                <input type="number" id="scoring-tier-a-min" value="80" min="1" max="100" style="width: 65px; background: var(--bg-surface); color: white; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 5px 8px; font-size: 12px; font-family: var(--font-mono); text-align: center;">
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span class="badge-status" style="background: rgba(234, 179, 8, 0.15); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.3); font-size: 11px;">Tier B Mín:</span>
+                <input type="number" id="scoring-tier-b-min" value="50" min="1" max="100" style="width: 65px; background: var(--bg-surface); color: white; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 5px 8px; font-size: 12px; font-family: var(--font-mono); text-align: center;">
+              </div>
+              <button class="btn-primary" onclick="triggerRecalculateScoresWithTiers()" style="font-size: 11.5px; padding: 6px 12px; background: rgba(255, 115, 0, 0.15); color: var(--color-brand); border: 1px solid rgba(255, 115, 0, 0.3); box-shadow: none;">
+                <span>Aplicar Tiers</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Presets Odontológicos Plug & Play -->
+          <div style="border-top: 1px solid var(--border-subtle); padding-top: 14px;">
+            <div style="margin-bottom: 10px;">
+              <span style="font-size: 12px; font-weight: 600; color: white;">🎯 Presets Odontológicos Plug & Play:</span>
+              <span style="font-size: 11.5px; color: var(--text-muted); margin-left: 6px;">Carregue matrizes pré-calibradas para nichos cirúrgicos e acadêmicos com 1 clique:</span>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px;" id="scoring-presets-container">
+              <!-- Preset 1 -->
+              <div class="kpi-card" style="padding: 12px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <strong style="color: #ff8c24; font-size: 12.5px;">💎 Implantes Premium</strong>
+                    <span style="font-size: 10px; color: var(--text-muted); font-family: var(--font-mono);">A: 80+ | B: 50+</span>
+                  </div>
+                  <p style="font-size: 11px; color: var(--text-secondary); line-height: 1.3; margin-bottom: 8px;">Foco em cirurgiões implantodontistas, bucomaxilos e volume > 30 implantes/mês.</p>
+                </div>
+                <button class="btn-primary" onclick="applyScoringPreset('implantes_premium')" style="font-size: 11px; padding: 5px 10px; width: 100%; justify-content: center; background: rgba(255, 115, 0, 0.1); color: var(--color-brand); border: 1px solid rgba(255, 115, 0, 0.25); box-shadow: none;">
+                  Carregar Preset
+                </button>
+              </div>
+              <!-- Preset 2 -->
+              <div class="kpi-card" style="padding: 12px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <strong style="color: #38bdf8; font-size: 12.5px;">🎓 Acadêmico & Mandic</strong>
+                    <span style="font-size: 10px; color: var(--text-muted); font-family: var(--font-mono);">A: 75+ | B: 45+</span>
+                  </div>
+                  <p style="font-size: 11px; color: var(--text-secondary); line-height: 1.3; margin-bottom: 8px;">Faculdades e institutos de pós-graduação cirúrgica (Mandic, USP, FOA).</p>
+                </div>
+                <button class="btn-primary" onclick="applyScoringPreset('academico_mandic')" style="font-size: 11px; padding: 5px 10px; width: 100%; justify-content: center; background: rgba(56, 189, 248, 0.1); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.25); box-shadow: none;">
+                  Carregar Preset
+                </button>
+              </div>
+              <!-- Preset 3 -->
+              <div class="kpi-card" style="padding: 12px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <strong style="color: #34d399; font-size: 12.5px;">🏢 Distribuidores & Redes</strong>
+                    <span style="font-size: 10px; color: var(--text-muted); font-family: var(--font-mono);">A: 70+ | B: 40+</span>
+                  </div>
+                  <p style="font-size: 11px; color: var(--text-secondary); line-height: 1.3; margin-bottom: 8px;">Distribuidores atacadistas e redes de franquias odontológicas com alto giro.</p>
+                </div>
+                <button class="btn-primary" onclick="applyScoringPreset('distribuidores_atacado')" style="font-size: 11px; padding: 5px 10px; width: 100%; justify-content: center; background: rgba(52, 211, 153, 0.1); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.25); box-shadow: none;">
+                  Carregar Preset
+                </button>
+              </div>
+              <!-- Preset 4 -->
+              <div class="kpi-card" style="padding: 12px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <strong style="color: #c084fc; font-size: 12.5px;">🏥 Multidisciplinar</strong>
+                    <span style="font-size: 10px; color: var(--text-muted); font-family: var(--font-mono);">A: 75+ | B: 45+</span>
+                  </div>
+                  <p style="font-size: 11px; color: var(--text-secondary); line-height: 1.3; margin-bottom: 8px;">Clínicas com prótese, periodontia e reabilitação oral integrada.</p>
+                </div>
+                <button class="btn-primary" onclick="applyScoringPreset('clinicas_multidisciplinares')" style="font-size: 11px; padding: 5px 10px; width: 100%; justify-content: center; background: rgba(192, 132, 252, 0.1); color: #c084fc; border: 1px solid rgba(192, 132, 252, 0.25); box-shadow: none;">
+                  Carregar Preset
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -2296,6 +2381,7 @@
         <div class="view-toggle" style="margin-bottom: 22px; width: fit-content;">
           <button class="toggle-btn active" id="btn-tab-hierarchy-tree" onclick="setHierarchyTab('tree')">🏢 Árvore Corporativa & BUs</button>
           <button class="toggle-btn" id="btn-tab-hierarchy-matrix" onclick="setHierarchyTab('matrix')">🛡️ Matriz Granular de Permissões (RBAC)</button>
+          <button class="toggle-btn" id="btn-tab-hierarchy-targets" onclick="setHierarchyTab('targets')">🎯 Metas & Comissões de Equipes</button>
         </div>
 
         <!-- Conteúdo da Aba 1: Árvore Corporativa e BUs -->
@@ -2437,6 +2523,120 @@
                 <tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 30px;">Carregando matriz de permissões...</td></tr>
               </tbody>
             </table>
+          </div>
+        </div>
+
+        <!-- Conteúdo da Aba 3: Metas & Comissões de Equipes -->
+        <div id="tab-content-hierarchy-targets" style="display: none;">
+          <!-- Topo: Sugestão Algorítmica Progressiva (+15%) & Provisionamento Top-Down -->
+          <div style="background: var(--bg-card); border: 1px solid var(--border-card); border-radius: var(--radius-md); padding: 20px; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
+              <div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <h3 style="font-size: 14px; font-weight: 700; color: white; text-transform: uppercase; letter-spacing: 0.5px;">Motor de Metas Comerciais & Provisionamento Top-Down</h3>
+                  <span class="badge-status" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); font-size: 11px;">Algoritmo Progressivo (+15%)</span>
+                </div>
+                <p style="font-size: 12px; color: var(--text-muted); margin-top: 3px;">C-Level define cotas macro que cascateiam para Regionais e Consultores com base em histórico real e crescimento contratual.</p>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <button class="btn-primary" onclick="openNewTargetModal()" style="font-size: 12px; padding: 6px 14px; background: var(--color-brand);">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                  <span>+ Definir Nova Meta</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Calculadora de Sugestão Algorítmica com 1 Clique -->
+            <div style="margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border-subtle); display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; align-items: end;">
+              <div>
+                <label style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 4px;">Consultor / Responsável:</label>
+                <select id="target-suggestion-user" style="background: var(--bg-surface); color: white; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 7px 10px; font-size: 12.5px; width: 100%; outline: none;" onchange="loadTargetSuggestion()">
+                  <option value="">Carregando consultores...</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 4px;">Taxa de Crescimento (%)</label>
+                <input type="number" id="target-suggestion-growth" value="15" min="0" max="100" step="1" style="background: var(--bg-surface); color: white; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 7px 10px; font-size: 12.5px; width: 100%; font-family: var(--font-mono); outline: none;" onchange="loadTargetSuggestion()">
+              </div>
+              <div>
+                <label style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 4px;">Histórico Real (Médio):</label>
+                <div id="target-suggestion-history" style="font-family: var(--font-mono); font-size: 13px; font-weight: 600; color: var(--text-secondary); padding: 7px 0;">R$ 0,00</div>
+              </div>
+              <div>
+                <label style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 4px;">Cota Sugerida Calculada:</label>
+                <div id="target-suggestion-value" style="font-family: var(--font-mono); font-size: 14px; font-weight: 700; color: var(--color-brand); padding: 7px 0;">R$ 0,00</div>
+              </div>
+              <div>
+                <button class="btn-primary" onclick="applyAlgorithmicSuggestion()" style="width: 100%; justify-content: center; font-size: 12px; padding: 7px 12px; background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); box-shadow: none;">
+                  Provisionar Cota com 1 Clique
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Grade de Atingimento de Metas em Tempo Real -->
+          <div style="margin-bottom: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <h3 style="font-size: 13.5px; font-weight: 700; color: white; text-transform: uppercase; letter-spacing: 0.5px;">Monitor de Atingimento de Cotas & Supermetas (Tempo Real)</h3>
+              <span id="targets-summary-badge" style="font-size: 12px; color: var(--text-secondary); font-family: var(--font-mono);">0 metas monitoradas</span>
+            </div>
+            <div class="data-table-card" style="background: var(--bg-card); border: 1px solid var(--border-card); border-radius: var(--radius-md); overflow: hidden;">
+              <table class="data-table" id="targets-table">
+                <thead>
+                  <tr>
+                    <th style="width: 25%;">Responsável</th>
+                    <th style="width: 15%;">Período</th>
+                    <th style="width: 16%;">Meta Alvo (Cota)</th>
+                    <th style="width: 16%;">Vendas Ganhas</th>
+                    <th style="width: 16%;">Atingimento (%)</th>
+                    <th style="width: 12%; text-align: center;">Status</th>
+                  </tr>
+                </thead>
+                <tbody id="targets-tbody">
+                  <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">Carregando metas comerciais...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Extrato Multinível de Comissões & Regras de Aceleradores -->
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 12px;">
+              <div>
+                <h3 style="font-size: 13.5px; font-weight: 700; color: white; text-transform: uppercase; letter-spacing: 0.5px;">Extrato Multinível de Comissões, Overrides & Acelerador de Supermeta</h3>
+                <p style="font-size: 11.5px; color: var(--text-muted); margin-top: 2px;">Comissão direta + override gerencial sobre equipe subordinada + bônus de supermeta (&gt;100%).</p>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <label style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Extrato de:</label>
+                <select id="commission-user-select" onchange="loadCommissionStatement(this.value)" style="background: var(--bg-surface); color: white; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 6px 10px; font-size: 12px; outline: none;">
+                  <option value="">Carregando...</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Cards de Comissionamento Consolidado -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin-bottom: 16px;">
+              <div class="kpi-card" style="padding: 14px; background: var(--bg-card); border: 1px solid var(--border-card); border-radius: var(--radius-md);">
+                <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Vendas Diretas:</span>
+                <div id="comm-direct-sales" style="font-size: 16px; font-weight: 700; color: white; font-family: var(--font-mono); margin-top: 4px;">R$ 0,00</div>
+                <div id="comm-direct-amount" style="font-size: 12px; color: #34d399; font-weight: 600; margin-top: 2px;">+ R$ 0,00 (0%)</div>
+              </div>
+              <div class="kpi-card" style="padding: 14px; background: var(--bg-card); border: 1px solid var(--border-card); border-radius: var(--radius-md);">
+                <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Vendas da Equipe (Sub-árvore):</span>
+                <div id="comm-team-sales" style="font-size: 16px; font-weight: 700; color: white; font-family: var(--font-mono); margin-top: 4px;">R$ 0,00</div>
+                <div id="comm-team-amount" style="font-size: 12px; color: #38bdf8; font-weight: 600; margin-top: 2px;">+ R$ 0,00 (0% override)</div>
+              </div>
+              <div class="kpi-card" style="padding: 14px; background: var(--bg-card); border: 1px solid var(--border-card); border-radius: var(--radius-md);">
+                <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Acelerador de Supermeta:</span>
+                <div id="comm-accelerator-rate" style="font-size: 16px; font-weight: 700; color: var(--color-brand); font-family: var(--font-mono); margin-top: 4px;">0.0%</div>
+                <div id="comm-accelerator-amount" style="font-size: 12px; color: #ff8c24; font-weight: 600; margin-top: 2px;">+ R$ 0,00</div>
+              </div>
+              <div class="kpi-card" style="padding: 14px; background: rgba(52, 211, 153, 0.08); border: 1px solid rgba(52, 211, 153, 0.25); border-radius: var(--radius-md);">
+                <span style="font-size: 11px; color: #34d399; text-transform: uppercase; font-weight: 700;">Total a Pagar (Comissão Líquida):</span>
+                <div id="comm-total-payout" style="font-size: 18px; font-weight: 800; color: #34d399; font-family: var(--font-mono); margin-top: 4px;">R$ 0,00</div>
+                <div id="comm-achievement-badge" style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">Atingimento: 0.0%</div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -2841,6 +3041,36 @@
         <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
           <button type="button" class="btn-primary" style="background: rgba(255,255,255,0.1); box-shadow: none;" onclick="closeScoringRuleModal()">Cancelar</button>
           <button type="submit" class="btn-primary">Salvar Regra ICP</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Criar Nova Meta Comercial Top-Down -->
+  <div class="modal-overlay" id="target-modal" onclick="if(event.target === this) closeNewTargetModal()">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Definir Meta Comercial (Top-Down)</h3>
+        <button class="modal-close" onclick="closeNewTargetModal()">✕</button>
+      </div>
+      <form id="target-form" onsubmit="handleCreateTarget(event)">
+        <div class="form-group">
+          <label>Consultor / Responsável *</label>
+          <select id="new-target-user" class="form-control" required></select>
+        </div>
+        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label>Período (AAAA-MM) *</label>
+            <input type="text" id="new-target-period" class="form-control" value="2026-10" required>
+          </div>
+          <div class="form-group">
+            <label>Meta Alvo / Cota (R$) *</label>
+            <input type="number" step="0.01" id="new-target-amount" class="form-control" placeholder="100000.00" required>
+          </div>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+          <button type="button" class="btn-primary" style="background: rgba(255,255,255,0.1); box-shadow: none;" onclick="closeNewTargetModal()">Cancelar</button>
+          <button type="submit" class="btn-primary" style="background: var(--color-brand);">Provisionar Meta</button>
         </div>
       </form>
     </div>
@@ -3911,14 +4141,51 @@
       }
     }
 
-    async function triggerRecalculateScores(showNotification = true) {
+    async function applyScoringPreset(presetKey) {
+      try {
+        const res = await fetch(`${API_URL}/scoring/presets/apply?preset_name=${encodeURIComponent(presetKey)}`, {
+          method: 'POST'
+        });
+        if (res.ok) {
+          const data = await res.json();
+          // Atualiza inputs com os tiers do preset se existirem
+          const inputA = document.getElementById('scoring-tier-a-min');
+          const inputB = document.getElementById('scoring-tier-b-min');
+          if (inputA && data.default_tier_a_min) inputA.value = data.default_tier_a_min;
+          if (inputB && data.default_tier_b_min) inputB.value = data.default_tier_b_min;
+
+          showToast(`Preset "${data.preset_name}" aplicado com sucesso! (${data.rules_applied} regras)`, 'success');
+          await fetchScoringRules();
+          await triggerRecalculateScoresWithTiers(true);
+        } else {
+          showToast('Erro ao aplicar preset de scoring', 'error');
+        }
+      } catch (err) {
+        showToast('Erro ao aplicar preset: ' + err.message, 'error');
+      }
+    }
+
+    async function triggerRecalculateScoresWithTiers(showNotification = true) {
+      const inputA = document.getElementById('scoring-tier-a-min');
+      const inputB = document.getElementById('scoring-tier-b-min');
+      const tier_a_min = inputA ? parseInt(inputA.value, 10) : 80;
+      const tier_b_min = inputB ? parseInt(inputB.value, 10) : 50;
+
+      await triggerRecalculateScores(showNotification, { tier_a_min, tier_b_min });
+    }
+
+    async function triggerRecalculateScores(showNotification = true, customTiers = null) {
       const btn = document.getElementById('btn-recalculate-scores');
       if (btn) btn.disabled = true;
 
       try {
-        const res = await fetch(`${API_URL}/scoring/recalculate`, {
-          method: 'POST'
-        });
+        const fetchOptions = { method: 'POST' };
+        if (customTiers) {
+          fetchOptions.headers = { 'Content-Type': 'application/json' };
+          fetchOptions.body = JSON.stringify(customTiers);
+        }
+
+        const res = await fetch(`${API_URL}/scoring/recalculate`, fetchOptions);
         if (res.ok) {
           const data = await res.json();
           RANKED_LEADS = data.ranked_leads;
@@ -3932,13 +4199,13 @@
           if (elA) elA.textContent = data.tier_a_count;
           if (elB) elB.textContent = data.tier_b_count;
           if (elC) elC.textContent = data.tier_c_count;
-          if (elAvg) elAvg.textContent = `Média da Base: ${data.avg_score} pts • ${data.recalculated_count} leads processados`;
+          if (elAvg) elAvg.textContent = `Média da Base: ${data.avg_score} pts • ${data.recalculated_count} leads processados (Tier A: ≥${data.tier_a_min} pts)`;
 
           renderScoringLeads();
           await fetchContacts(); // Sincroniza scores com tabela geral de contatos
 
           if (showNotification) {
-            showToast(`Recálculo concluído! ${data.tier_a_count} leads classificados como Hot Lead (Tier A).`, 'success');
+            showToast(`Recálculo concluído! ${data.tier_a_count} leads classificados como Hot Lead (Tier A ≥ ${data.tier_a_min} pts).`, 'success');
           }
         }
       } catch (err) {
@@ -4281,6 +4548,12 @@
           const treeData = await treeRes.json();
           renderTeamsTree(treeData.tree || []);
         }
+
+        if (CURRENT_HIERARCHY_TAB === 'matrix') {
+          await loadHierarchyRoles();
+        } else if (CURRENT_HIERARCHY_TAB === 'targets') {
+          await loadHierarchyTargets();
+        }
       } catch (err) {
         console.error('Erro ao carregar hierarquia:', err);
         showToast('Erro ao carregar organograma: ' + err.message, 'error');
@@ -4381,27 +4654,281 @@
       }
     }
 
-    /* Controlador da Matriz de Permissões Granulares (Functional RBAC) */
+    /* Controlador da Matriz de Permissões Granulares (Functional RBAC) & Metas/Comissões */
     let CURRENT_HIERARCHY_TAB = 'tree';
     let RBAC_ROLES = [];
     let RBAC_CATALOG = [];
     let CURRENT_EDITING_ROLE_ID = null;
+    let HIERARCHY_USERS = [];
+    let SALES_TARGETS = [];
 
     function setHierarchyTab(tab) {
       CURRENT_HIERARCHY_TAB = tab;
       const btnTree = document.getElementById('btn-tab-hierarchy-tree');
       const btnMatrix = document.getElementById('btn-tab-hierarchy-matrix');
+      const btnTargets = document.getElementById('btn-tab-hierarchy-targets');
       const contentTree = document.getElementById('tab-content-hierarchy-tree');
       const contentMatrix = document.getElementById('tab-content-hierarchy-matrix');
+      const contentTargets = document.getElementById('tab-content-hierarchy-targets');
 
       if (btnTree) btnTree.classList.toggle('active', tab === 'tree');
       if (btnMatrix) btnMatrix.classList.toggle('active', tab === 'matrix');
+      if (btnTargets) btnTargets.classList.toggle('active', tab === 'targets');
 
       if (contentTree) contentTree.style.display = (tab === 'tree') ? 'block' : 'none';
       if (contentMatrix) contentMatrix.style.display = (tab === 'matrix') ? 'block' : 'none';
+      if (contentTargets) contentTargets.style.display = (tab === 'targets') ? 'block' : 'none';
 
       if (tab === 'matrix') {
         loadHierarchyRoles();
+      }
+      if (tab === 'targets') {
+        loadHierarchyTargets();
+      }
+    }
+
+    async function loadHierarchyTargets() {
+      try {
+        const [targetsRes, usersRes] = await Promise.all([
+          fetch(`${API_URL}/hierarchy/targets`, { headers: getAuthHeaders() }),
+          fetch(`${API_URL}/hierarchy/users`, { headers: getAuthHeaders() }).catch(() => null)
+        ]);
+
+        if (targetsRes.ok) {
+          SALES_TARGETS = await targetsRes.json();
+          renderSalesTargetsTable();
+        }
+
+        if (usersRes && usersRes.ok) {
+          HIERARCHY_USERS = await usersRes.json();
+        } else {
+          HIERARCHY_USERS = [
+            { id: 'usr-admin-01', name: 'Thiago Hortolan', email: 'thiago@revnaut.com', role: 'Diretoria / C-Level' },
+            { id: 'usr-reg-sp', name: 'Gerente Regional SP', email: 'sp.gerente@revnaut.com', role: 'Gerente Regional' },
+            { id: 'usr-rep-01', name: 'Dr. Roberto Mendes (Closer)', email: 'roberto@revnaut.com', role: 'Consultor de Implantes' },
+            { id: 'usr-rep-02', name: 'Dra. Camila Duarte (SDR)', email: 'camila@revnaut.com', role: 'SDR Qualificação' }
+          ];
+        }
+        populateTargetsUserSelects();
+        await loadTargetSuggestion();
+        const commUserSelect = document.getElementById('commission-user-select');
+        if (commUserSelect && commUserSelect.value) {
+          await loadCommissionStatement(commUserSelect.value);
+        }
+      } catch (err) {
+        console.error('Erro ao carregar metas:', err);
+      }
+    }
+
+    function populateTargetsUserSelects() {
+      const selects = [
+        document.getElementById('target-suggestion-user'),
+        document.getElementById('new-target-user'),
+        document.getElementById('commission-user-select')
+      ];
+
+      selects.forEach(sel => {
+        if (!sel) return;
+        const curVal = sel.value;
+        sel.innerHTML = HIERARCHY_USERS.map(u => 
+          `<option value="${u.id}">${u.name} (${u.role || u.email})</option>`
+        ).join('');
+        if (curVal && Array.from(sel.options).some(o => o.value === curVal)) {
+          sel.value = curVal;
+        }
+      });
+    }
+
+    function renderSalesTargetsTable() {
+      const tbody = document.getElementById('targets-tbody');
+      const badge = document.getElementById('targets-summary-badge');
+      if (!tbody) return;
+
+      if (!SALES_TARGETS || SALES_TARGETS.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">Nenhuma meta comercial registrada. Utilize a calculadora acima para provisionar.</td></tr>';
+        if (badge) badge.textContent = '0 metas monitoradas';
+        return;
+      }
+
+      if (badge) badge.textContent = `${SALES_TARGETS.length} metas monitoradas • Tempo Real`;
+
+      tbody.innerHTML = SALES_TARGETS.map(t => {
+        const rate = t.achievement_rate || 0;
+        let statusBadge = '<span class="badge-status" style="background: rgba(234, 179, 8, 0.15); color: #facc15;">🟡 Em Risco</span>';
+        let barColor = '#facc15';
+
+        if (rate >= 100) {
+          statusBadge = '<span class="badge-status" style="background: rgba(52, 211, 153, 0.15); color: #34d399; font-weight: 700; border: 1px solid rgba(52, 211, 153, 0.3);">🚀 Supermeta</span>';
+          barColor = '#34d399';
+        } else if (rate >= 80) {
+          statusBadge = '<span class="badge-status" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">🟢 No Alvo</span>';
+          barColor = '#38bdf8';
+        }
+
+        const barWidth = Math.min(rate, 100);
+
+        return `
+          <tr>
+            <td>
+              <strong style="color: white; font-size: 13.5px;">${t.user_name || t.user_id}</strong>
+              <div style="font-size: 11px; color: var(--text-muted);">${t.user_role || t.user_email || 'Consultor'}</div>
+            </td>
+            <td>
+              <span class="chip-tag" style="background: rgba(255,255,255,0.06); font-family: var(--font-mono);">${t.period}</span>
+            </td>
+            <td>
+              <strong style="color: white; font-family: var(--font-mono);">${formatBRL(t.target_amount)}</strong>
+            </td>
+            <td>
+              <strong style="color: #34d399; font-family: var(--font-mono);">${formatBRL(t.achieved_amount)}</strong>
+            </td>
+            <td>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="flex: 1; height: 6px; background: rgba(255,255,255,0.08); border-radius: 999px; overflow: hidden;">
+                  <div style="width: ${barWidth}%; height: 100%; background: ${barColor}; border-radius: 999px;"></div>
+                </div>
+                <span style="font-family: var(--font-mono); font-size: 11.5px; font-weight: 600; color: ${barColor}; min-width: 45px;">${rate}%</span>
+              </div>
+            </td>
+            <td style="text-align: center;">${statusBadge}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function loadTargetSuggestion() {
+      const userSel = document.getElementById('target-suggestion-user');
+      const growthInp = document.getElementById('target-suggestion-growth');
+      if (!userSel || !userSel.value) return;
+
+      const userId = userSel.value;
+      const growthRate = (parseFloat(growthInp.value) || 15) / 100.0;
+
+      try {
+        const res = await fetch(`${API_URL}/hierarchy/targets/suggestion?user_id=${encodeURIComponent(userId)}&growth_rate=${growthRate}`, {
+          headers: getAuthHeaders()
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const elHist = document.getElementById('target-suggestion-history');
+          const elSugg = document.getElementById('target-suggestion-value');
+          if (elHist) elHist.textContent = formatBRL(data.historical_avg_sales);
+          if (elSugg) elSugg.textContent = formatBRL(data.suggested_target);
+        }
+      } catch (err) {
+        console.warn('Erro ao calcular sugestão de meta:', err);
+      }
+    }
+
+    async function applyAlgorithmicSuggestion() {
+      const userSel = document.getElementById('target-suggestion-user');
+      const growthInp = document.getElementById('target-suggestion-growth');
+      if (!userSel || !userSel.value) return;
+
+      const userId = userSel.value;
+      const growthRate = (parseFloat(growthInp.value) || 15) / 100.0;
+
+      try {
+        const suggRes = await fetch(`${API_URL}/hierarchy/targets/suggestion?user_id=${encodeURIComponent(userId)}&growth_rate=${growthRate}`, {
+          headers: getAuthHeaders()
+        });
+        if (!suggRes.ok) throw new Error('Falha ao obter sugestão');
+        const sugg = await suggRes.json();
+
+        const postRes = await fetch(`${API_URL}/hierarchy/targets`, {
+          method: 'POST',
+          headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({
+            user_id: userId,
+            period: '2026-10',
+            target_amount: sugg.suggested_target,
+            target_type: 'revenue'
+          })
+        });
+
+        if (postRes.ok) {
+          showToast(`Meta progressiva de ${formatBRL(sugg.suggested_target)} provisionada com sucesso!`, 'success');
+          await loadHierarchyTargets();
+        } else {
+          showToast('Erro ao provisionar meta algorítmica', 'error');
+        }
+      } catch (err) {
+        showToast('Erro ao provisionar cota: ' + err.message, 'error');
+      }
+    }
+
+    function openNewTargetModal() {
+      populateTargetsUserSelects();
+      document.getElementById('target-modal').classList.add('active');
+    }
+
+    function closeNewTargetModal() {
+      document.getElementById('target-modal').classList.remove('active');
+    }
+
+    async function handleCreateTarget(e) {
+      e.preventDefault();
+      const payload = {
+        user_id: document.getElementById('new-target-user').value,
+        period: document.getElementById('new-target-period').value,
+        target_amount: parseFloat(document.getElementById('new-target-amount').value),
+        target_type: 'revenue'
+      };
+
+      try {
+        const res = await fetch(`${API_URL}/hierarchy/targets`, {
+          method: 'POST',
+          headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          closeNewTargetModal();
+          document.getElementById('target-form').reset();
+          showToast('Meta comercial cadastrada com sucesso!', 'success');
+          await loadHierarchyTargets();
+        } else {
+          showToast('Erro ao cadastrar meta', 'error');
+        }
+      } catch (err) {
+        showToast('Erro ao cadastrar meta: ' + err.message, 'error');
+      }
+    }
+
+    async function loadCommissionStatement(userId) {
+      if (!userId) {
+        const sel = document.getElementById('commission-user-select');
+        if (sel && sel.value) userId = sel.value;
+        else return;
+      }
+
+      try {
+        const res = await fetch(`${API_URL}/hierarchy/commissions/statement?user_id=${encodeURIComponent(userId)}&period=2026-10`, {
+          headers: getAuthHeaders()
+        });
+
+        if (res.ok) {
+          const s = await res.json();
+          const elDirectSales = document.getElementById('comm-direct-sales');
+          const elDirectAmt = document.getElementById('comm-direct-amount');
+          const elTeamSales = document.getElementById('comm-team-sales');
+          const elTeamAmt = document.getElementById('comm-team-amount');
+          const elAccelRate = document.getElementById('comm-accelerator-rate');
+          const elAccelAmt = document.getElementById('comm-accelerator-amount');
+          const elTotalPayout = document.getElementById('comm-total-payout');
+          const elAchBadge = document.getElementById('comm-achievement-badge');
+
+          if (elDirectSales) elDirectSales.textContent = formatBRL(s.direct_sales_won);
+          if (elDirectAmt) elDirectAmt.textContent = `+ ${formatBRL(s.direct_commission_amount)} (${s.direct_commission_rate}%)`;
+          if (elTeamSales) elTeamSales.textContent = formatBRL(s.team_sales_won);
+          if (elTeamAmt) elTeamAmt.textContent = `+ ${formatBRL(s.override_commission_amount)} (${s.override_commission_rate}% override)`;
+          if (elAccelRate) elAccelRate.textContent = `+${s.accelerator_bonus_rate}%`;
+          if (elAccelAmt) elAccelAmt.textContent = `+ ${formatBRL(s.accelerator_bonus_amount)}`;
+          if (elTotalPayout) elTotalPayout.textContent = formatBRL(s.total_commission_payout);
+          if (elAchBadge) elAchBadge.textContent = `Atingimento: ${s.achievement_rate}% • Período: ${s.period}`;
+        }
+      } catch (err) {
+        console.warn('Erro ao carregar extrato de comissões:', err);
       }
     }
 

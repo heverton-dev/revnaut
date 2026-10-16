@@ -4,12 +4,33 @@ Vertical Slice: Scoring Router (FastAPI)
 """
 
 from __future__ import annotations
-from typing import List
-from fastapi import APIRouter, HTTPException, status
-from src.features.scoring.schemas import ScoringRuleCreate, ScoringRuleUpdate, ScoringRuleOut, RecalculateResponse
+from typing import List, Optional
+from fastapi import APIRouter, HTTPException, status, Body
+from src.features.scoring.schemas import (
+    ScoringRuleCreate,
+    ScoringRuleUpdate,
+    ScoringRuleOut,
+    RecalculateRequest,
+    RecalculateResponse,
+    ScoringPresetOut,
+    ScoringPresetApply
+)
 from src.features.scoring import service
 
 router = APIRouter(prefix="/api/v1/scoring", tags=["Lead Scoring & ICP"])
+
+
+@router.get("/presets", response_model=List[ScoringPresetOut], summary="Listar Presets Plug & Play de Lead Scoring Odontológico")
+def get_presets():
+    return service.list_presets()
+
+
+@router.post("/presets/apply", summary="Aplicar Preset Plug & Play de Lead Scoring")
+def apply_preset(data: ScoringPresetApply):
+    try:
+        return service.apply_preset(data.preset_key, overwrite_existing=data.overwrite_existing)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.get("/rules", response_model=List[ScoringRuleOut], summary="Listar regras e critérios de pontuação ICP")
@@ -38,6 +59,8 @@ def delete_rule(rule_id: str):
     return {"status": "deleted", "rule_id": rule_id}
 
 
-@router.post("/recalculate", response_model=RecalculateResponse, summary="Recalcular scores de toda a base de contatos")
-def recalculate_scores():
-    return service.recalculate_all_scores()
+@router.post("/recalculate", response_model=RecalculateResponse, summary="Recalcular scores de toda a base com tiers configuráveis")
+def recalculate_scores(payload: Optional[RecalculateRequest] = Body(default=None)):
+    tier_a = payload.tier_a_min if payload else 80
+    tier_b = payload.tier_b_min if payload else 50
+    return service.recalculate_all_scores(tier_a_min=tier_a, tier_b_min=tier_b)

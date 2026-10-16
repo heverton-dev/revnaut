@@ -482,3 +482,356 @@ def update_role_permissions(
     finally:
         conn.close()
 
+
+from src.features.hierarchy.schemas import SalesTargetCreate, CommissionRuleCreate
+
+
+def _get_team_subtree_ids(conn, team_id: str) -> List[str]:
+    """Retorna IDs do time e de todos os seus descendentes recursivos via CTE."""
+    cur = conn.cursor()
+    cur.execute("""
+        WITH RECURSIVE subteams AS (
+            SELECT id FROM teams WHERE id = ?
+            UNION ALL
+            SELECT t.id FROM teams t
+            JOIN subteams s ON t.parent_id = s.id
+        )
+        SELECT id FROM subteams;
+    """, (team_id,))
+    return [r[0] for r in cur.fetchall()]
+
+
+def _get_bu_team_ids(conn, bu_id: str) -> List[str]:
+    """Retorna todos os time_ids vinculados a uma Business Unit."""
+    cur = conn.cursor()
+    cur.execute("SELECT id FROM teams WHERE business_unit_id = ?", (bu_id,))
+    return [r[0] for r in cur.fetchall()]
+
+
+def list_targets(
+    account_id: str = "0f14ffff",
+    period: Optional[str] = None
+) -> List[Dict[str, Any]]:
+    """Lista metas comerciais calculando o atingimento real em tempo real a partir dos deals ganhos."""
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        query = "SELECT * FROM sales_targets WHERE account_id = ?"
+        params: List[Any] = [account_id]
+        if period:
+            query += " AND period = ?"
+            params.append(period)
+        query += " ORDER BY created_at DESC"
+        cur.execute(query, tuple(params))
+        targets = [dict(r) for r in cur.fetchall()]
+
+        for t in targets:
+            entity_name = "Meta Geral"
+            achieved = 0.0
+
+            if t.get("user_id"):
+                cur.execute("SELECT name FROM users WHERE id = ?", (t["user_id"],))
+                u = cur.fetchone()
+                entity_name = u["name"] if u else t["user_id"]
+                cur.execute(
+                    "SELECT COALESCE(SUM(value), 0.0) FROM deals WHERE owner_id = ? AND stage_id = 105",
+                    (t["user_id"],)
+                )
+                achieved = float(cur.fetchone()[0])
+            elif t.get("team_id"):
+                cur.execute("SELECT name FROM teams WHERE id = ?", (t["team_id"],))
+                tm = cur.fetchone()
+                entity_name = tm["name"] if tm else t["team_id"]
+                team_ids = _get_team_subtree_ids(conn, t["team_id"])
+                if team_ids:
+                    placeholders = ",".join(["?"] * len(team_ids))
+                    cur.execute(
+                        f"SELECT COALESCE(SUM(value), 0.0) FROM deals WHERE team_id IN ({placeholders}) AND stage_id = 105",
+                        tuple(team_ids)
+                    )
+                    achieved = float(cur.fetchone()[0])
+            elif t.get("business_unit_id"):
+                cur.execute("SELECT name FROM business_units WHERE id = ?", (t["business_unit_id"],))
+                bu = cur.fetchone()
+                entity_name = bu["name"] if bu else t["business_unit_id"]
+                team_ids = _get_bu_team_ids(conn, t["business_unit_id"])
+                if team_ids:
+                    placeholders = ",".join(["?"] * len(team_ids))
+                    cur.execute(
+                        f"SELECT COALESCE(SUM(value), 0.0) FROM deals WHERE team_id IN ({placeholders}) AND stage_id = 105",
+                        tuple(team_ids)
+                    )
+                    achieved = float(cur.fetchone()[0])
+
+            target_val = float(t.get("target_amount") or 1.0)
+            rate = round((achieved / target_val) * 100, 2) if target_val > 0 else 0.0
+
+            t["entity_name"] = entity_name
+            t["achieved_amount"] = achieved
+            t["achievement_rate_pct"] = rate
+
+        return targets
+    finally:
+        conn.close()
+
+
+def create_target(
+    data: SalesTargetCreate,
+    account_id: str = "0f14ffff",
+    created_by: Optional[str] = None
+) -> Dict[str, Any]:
+    """Cria uma nova meta comercial vinculada a consultor, equipe ou BU."""
+    if not any([data.business_unit_id, data.team_id, data.user_id]):
+        raise ValueError("Ao menos uma entidade (user_id, team_id ou business_unit_id) deve ser informada para a meta.")
+
+    target_id = f"tgt-{uuid.uuid4().hex[:8]}"
+    conn = get_connection()
+    try:
+        with conn:
+            conn.execute(
+                "INSERT INTO sales_targets (id, account_id, period, business_unit_id, team_id, user_id, "
+                "target_amount, created_by, calculation_basis, growth_rate_pct) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    target_id, account_id, data.period, data.business_unit_id, data.team_id, data.user_id,
+                    data.target_amount, created_by, data.calculation_basis, data.growth_rate_pct
+                )
+            )
+        targets = list_targets(account_id=account_id, period=data.period)
+        return next((t for t in targets if t["id"] == target_id), {})
+    finally:
+        conn.close()
+
+
+def get_target_suggestion(
+    entity_type: str,
+    entity_id: str,
+    period: str = "2026-Q4",
+    growth_rate_pct: float = 15.0,
+    account_id: str = "0f14ffff"
+) -> Dict[str, Any]:
+    """Calcula deterministicamente a sugestão algorítmica de meta com taxa de evolução crescente."""
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        historical_base = 0.0
+        entity_name = entity_id
+
+        if entity_type == "user":
+            cur.execute("SELECT name FROM users WHERE id = ?", (entity_id,))
+            u = cur.fetchone()
+            if u:
+                entity_name = u["name"]
+            cur.execute(
+                "SELECT COALESCE(SUM(value), 0.0) FROM deals WHERE owner_id = ? AND stage_id = 105",
+                (entity_id,)
+            )
+            historical_base = float(cur.fetchone()[0])
+            if historical_base == 0.0:
+                historical_base = 50000.0  # Baseline inicial de consultor odontológico
+
+        elif entity_type == "team":
+            cur.execute("SELECT name FROM teams WHERE id = ?", (entity_id,))
+            tm = cur.fetchone()
+            if tm:
+                entity_name = tm["name"]
+            team_ids = _get_team_subtree_ids(conn, entity_id)
+            if team_ids:
+                placeholders = ",".join(["?"] * len(team_ids))
+                cur.execute(
+                    f"SELECT COALESCE(SUM(value), 0.0) FROM deals WHERE team_id IN ({placeholders}) AND stage_id = 105",
+                    tuple(team_ids)
+                )
+                historical_base = float(cur.fetchone()[0])
+            if historical_base == 0.0:
+                historical_base = 200000.0  # Baseline regional
+
+        elif entity_type == "bu":
+            cur.execute("SELECT name FROM business_units WHERE id = ?", (entity_id,))
+            bu = cur.fetchone()
+            if bu:
+                entity_name = bu["name"]
+            team_ids = _get_bu_team_ids(conn, entity_id)
+            if team_ids:
+                placeholders = ",".join(["?"] * len(team_ids))
+                cur.execute(
+                    f"SELECT COALESCE(SUM(value), 0.0) FROM deals WHERE team_id IN ({placeholders}) AND stage_id = 105",
+                    tuple(team_ids)
+                )
+                historical_base = float(cur.fetchone()[0])
+            if historical_base == 0.0:
+                historical_base = 800000.0  # Baseline divisão de produtos
+
+        suggested = round(historical_base * (1.0 + (growth_rate_pct / 100.0)), 2)
+        explanation = (
+            f"Base histórica realizada de R$ {historical_base:,.2f} com aplicação de fator "
+            f"de aceleração de mercado de +{growth_rate_pct}% para o ciclo {period}."
+        )
+
+        return {
+            "entity_type": entity_type,
+            "entity_id": entity_id,
+            "entity_name": entity_name,
+            "period": period,
+            "historical_base": historical_base,
+            "growth_rate_pct": growth_rate_pct,
+            "suggested_target": suggested,
+            "explanation": explanation
+        }
+    finally:
+        conn.close()
+
+
+def list_commission_rules(account_id: str = "0f14ffff") -> List[Dict[str, Any]]:
+    """Lista as regras de comissionamento por cargo ativas na empresa."""
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT cr.id, cr.account_id, cr.role_id, r.name as role_name,
+                   cr.base_percentage, cr.accelerator_threshold_pct, cr.accelerator_percentage,
+                   cr.is_active, cr.created_at
+            FROM commission_rules cr
+            JOIN roles r ON cr.role_id = r.id
+            WHERE cr.account_id = ?
+            ORDER BY cr.base_percentage DESC
+        """, (account_id,))
+        return [dict(r) for r in cur.fetchall()]
+    finally:
+        conn.close()
+
+
+def create_commission_rule(
+    data: CommissionRuleCreate,
+    account_id: str = "0f14ffff"
+) -> Dict[str, Any]:
+    """Cria ou atualiza uma regra de comissionamento para uma função/cargo."""
+    rule_id = f"crule-{uuid.uuid4().hex[:6]}"
+    conn = get_connection()
+    try:
+        with conn:
+            cur = conn.cursor()
+            cur.execute("SELECT id FROM roles WHERE id = ? AND account_id = ?", (data.role_id, account_id))
+            if not cur.fetchone():
+                raise ValueError(f"Cargo '{data.role_id}' não encontrado na conta.")
+
+            # Remove regra prévia para manter 1 regra ativa por cargo
+            cur.execute("DELETE FROM commission_rules WHERE role_id = ? AND account_id = ?", (data.role_id, account_id))
+            cur.execute("""
+                INSERT INTO commission_rules (id, account_id, role_id, base_percentage, accelerator_threshold_pct, accelerator_percentage)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (rule_id, account_id, data.role_id, data.base_percentage, data.accelerator_threshold_pct, data.accelerator_percentage))
+
+        rules = list_commission_rules(account_id)
+        return next((r for r in rules if r["role_id"] == data.role_id), {})
+    finally:
+        conn.close()
+
+
+def get_commission_statement(
+    user_id: str,
+    period: str = "2026-Q4",
+    account_id: str = "0f14ffff"
+) -> Dict[str, Any]:
+    """Gera o extrato determinístico de comissões calculando atingimento, overrides e acelerador de meta."""
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        # 1. Obter usuário e cargo
+        cur.execute("""
+            SELECT u.id, u.name, u.team_id, u.role_id, r.name as role_name, r.default_data_scope
+            FROM users u
+            LEFT JOIN roles r ON u.role_id = r.id
+            WHERE u.id = ? AND u.account_id = ?
+        """, (user_id, account_id))
+        user_row = cur.fetchone()
+        if not user_row:
+            raise ValueError(f"Usuário '{user_id}' não encontrado.")
+
+        role_name = user_row["role_name"] or "Consultor"
+        data_scope = user_row["default_data_scope"] or "self"
+
+        # 2. Obter regra de comissão aplicável
+        cur.execute("SELECT * FROM commission_rules WHERE role_id = ? AND account_id = ?", (user_row["role_id"], account_id))
+        rule = cur.fetchone()
+        if rule:
+            base_pct = float(rule["base_percentage"])
+            accel_thresh = float(rule["accelerator_threshold_pct"])
+            accel_pct = float(rule["accelerator_percentage"])
+        else:
+            # Defaults de mercado se não houver regra configurada
+            if "Gerente Regional" in role_name:
+                base_pct, accel_thresh, accel_pct = 1.5, 100.0, 2.5
+            elif "Gerente Distrital" in role_name:
+                base_pct, accel_thresh, accel_pct = 0.8, 100.0, 1.5
+            else:
+                base_pct, accel_thresh, accel_pct = 5.0, 100.0, 7.5
+
+        # 3. Obter meta do período
+        cur.execute(
+            "SELECT target_amount FROM sales_targets WHERE user_id = ? AND period = ? AND account_id = ?",
+            (user_id, period, account_id)
+        )
+        target_row = cur.fetchone()
+        target_amount = float(target_row["target_amount"]) if target_row else 100000.0
+
+        # 4. Obter deals elegíveis conforme hierarquia do usuário
+        deals_query = ""
+        params: List[Any] = []
+        payout_type = "direta"
+
+        if data_scope == "self" or "Consultor" in role_name:
+            deals_query = "SELECT id, title, value FROM deals WHERE owner_id = ? AND stage_id = 105"
+            params = [user_id]
+            payout_type = "direta"
+        elif data_scope in ("team", "subtree") and user_row["team_id"]:
+            team_ids = _get_team_subtree_ids(conn, user_row["team_id"])
+            placeholders = ",".join(["?"] * len(team_ids))
+            deals_query = f"SELECT id, title, value FROM deals WHERE team_id IN ({placeholders}) AND stage_id = 105"
+            params = list(team_ids)
+            payout_type = "override_regional" if data_scope == "team" else "override_distrital"
+        else:
+            deals_query = "SELECT id, title, value FROM deals WHERE stage_id = 105"
+            params = []
+            payout_type = "direta"
+
+        cur.execute(deals_query, tuple(params))
+        deals_won = [dict(d) for d in cur.fetchall()]
+
+        achieved_amount = sum(float(d["value"]) for d in deals_won)
+        achievement_rate = round((achieved_amount / target_amount) * 100, 2) if target_amount > 0 else 0.0
+        is_accelerated = achievement_rate >= accel_thresh
+
+        rate_applied = accel_pct if is_accelerated else base_pct
+
+        items: List[Dict[str, Any]] = []
+        total_commission = 0.0
+
+        for d in deals_won:
+            val = float(d["value"])
+            comm = round(val * (rate_applied / 100.0), 2)
+            total_commission += comm
+            items.append({
+                "deal_id": d["id"],
+                "deal_title": d["title"],
+                "deal_value": val,
+                "commission_rate_pct": rate_applied,
+                "commission_amount": comm,
+                "payout_type": payout_type
+            })
+
+        return {
+            "user_id": user_id,
+            "user_name": user_row["name"],
+            "role_id": user_row["role_id"] or "",
+            "role_name": role_name,
+            "period": period,
+            "target_amount": target_amount,
+            "achieved_amount": achieved_amount,
+            "achievement_rate_pct": achievement_rate,
+            "is_accelerated": is_accelerated,
+            "total_commission": round(total_commission, 2),
+            "items": items
+        }
+    finally:
+        conn.close()
+

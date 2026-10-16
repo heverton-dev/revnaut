@@ -8,7 +8,9 @@ from fastapi import APIRouter, HTTPException, Query, status
 
 from src.features.hierarchy.schemas import (
     BusinessUnitCreate, BusinessUnitOut, TeamCreate, TeamUpdateParent,
-    TeamOut, RoleCreate, RoleOut, PresetApplyRequest, RolePermissionsUpdate
+    TeamOut, RoleCreate, RoleOut, PresetApplyRequest, RolePermissionsUpdate,
+    SalesTargetCreate, SalesTargetOut, AlgorithmicTargetSuggestion,
+    CommissionRuleCreate, CommissionRuleOut, CommissionStatementOut
 )
 from src.features.hierarchy import service
 
@@ -87,4 +89,70 @@ def update_role_permissions(
         return service.update_role_permissions(role_id, payload.permissions, account_id)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+
+# --- Metas Comerciais & Comissionamento Multinível ---
+
+@router.get("/targets", response_model=List[SalesTargetOut], summary="Listar Metas Comerciais com Atingimento em Tempo Real")
+def list_targets(
+    period: Optional[str] = None,
+    account_id: str = "0f14ffff"
+):
+    return service.list_targets(account_id=account_id, period=period)
+
+
+@router.post("/targets", response_model=SalesTargetOut, status_code=status.HTTP_201_CREATED, summary="Criar Meta Comercial (Cascateada ou Manual)")
+def create_target(
+    payload: SalesTargetCreate,
+    account_id: str = "0f14ffff"
+):
+    try:
+        return service.create_target(payload, account_id=account_id)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.get("/targets/suggestion", response_model=AlgorithmicTargetSuggestion, summary="Calcular Sugestão Algorítmica de Meta com Crescimento Progressivo")
+def get_target_suggestion(
+    entity_type: str = Query(..., description="'user', 'team' ou 'bu'"),
+    entity_id: str = Query(..., description="ID da entidade"),
+    period: str = "2026-Q4",
+    growth_rate_pct: float = 15.0,
+    account_id: str = "0f14ffff"
+):
+    return service.get_target_suggestion(
+        entity_type=entity_type,
+        entity_id=entity_id,
+        period=period,
+        growth_rate_pct=growth_rate_pct,
+        account_id=account_id
+    )
+
+
+@router.get("/commissions/rules", response_model=List[CommissionRuleOut], summary="Listar Regras de Comissionamento por Cargo")
+def list_commission_rules(account_id: str = "0f14ffff"):
+    return service.list_commission_rules(account_id=account_id)
+
+
+@router.post("/commissions/rules", response_model=CommissionRuleOut, status_code=status.HTTP_201_CREATED, summary="Criar ou Atualizar Regra de Comissionamento")
+def create_commission_rule(
+    payload: CommissionRuleCreate,
+    account_id: str = "0f14ffff"
+):
+    try:
+        return service.create_commission_rule(payload, account_id=account_id)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.get("/commissions/statement", response_model=CommissionStatementOut, summary="Extrato Consolidado de Comissões do Vendedor/Gestor")
+def get_commission_statement(
+    user_id: str = Query(..., description="ID do usuário"),
+    period: str = "2026-Q4",
+    account_id: str = "0f14ffff"
+):
+    try:
+        return service.get_commission_statement(user_id=user_id, period=period, account_id=account_id)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 

@@ -243,6 +243,38 @@ def init_db() -> None:
             permission_code TEXT NOT NULL,
             FOREIGN KEY (role_id) REFERENCES roles(id)
         );
+
+        CREATE TABLE IF NOT EXISTS sales_targets (
+            id TEXT PRIMARY KEY,
+            account_id TEXT NOT NULL,
+            period TEXT NOT NULL,
+            business_unit_id TEXT,
+            team_id TEXT,
+            user_id TEXT,
+            target_amount REAL NOT NULL,
+            created_by TEXT,
+            calculation_basis TEXT DEFAULT 'manual',
+            growth_rate_pct REAL DEFAULT 15.0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (account_id) REFERENCES accounts(id),
+            FOREIGN KEY (business_unit_id) REFERENCES business_units(id),
+            FOREIGN KEY (team_id) REFERENCES teams(id),
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS commission_rules (
+            id TEXT PRIMARY KEY,
+            account_id TEXT NOT NULL,
+            role_id TEXT NOT NULL,
+            base_percentage REAL NOT NULL,
+            accelerator_threshold_pct REAL DEFAULT 100.0,
+            accelerator_percentage REAL DEFAULT 7.5,
+            is_active INTEGER DEFAULT 1,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (account_id) REFERENCES accounts(id),
+            FOREIGN KEY (role_id) REFERENCES roles(id)
+        );
         """)
 
         # Seed determinístico inicial se conta padrão não existir

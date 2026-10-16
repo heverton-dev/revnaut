@@ -49,6 +49,14 @@ class LeadRankItem(BaseModel):
     score: int
     tier: str
     tags: List[str]
+    cro: Optional[str] = None
+    specialty: Optional[str] = None
+    monthly_implants_volume: Optional[str] = None
+
+
+class RecalculateRequest(BaseModel):
+    tier_a_min: int = Field(default=80, ge=1, le=100, description="Nota mínima para Tier A")
+    tier_b_min: int = Field(default=50, ge=1, le=100, description="Nota mínima para Tier B")
 
 
 class RecalculateResponse(BaseModel):
@@ -58,3 +66,25 @@ class RecalculateResponse(BaseModel):
     tier_c_count: int
     avg_score: float
     ranked_leads: List[LeadRankItem]
+
+
+class ScoringPresetRuleItem(BaseModel):
+    name: str
+    category: str
+    condition_key: str
+    condition_val: str
+    points: int
+    impact_description: str
+
+
+class ScoringPresetOut(BaseModel):
+    preset_key: str
+    name: str
+    description: str
+    target_segment: str
+    rules: List[ScoringPresetRuleItem]
+
+
+class ScoringPresetApply(BaseModel):
+    preset_key: str = Field(..., description="Chave do preset: 'implantes_cirurgia_premium', 'ensino_academico', 'distribuidores_atacado', 'clinicas_multidisciplinares'")
+    overwrite_existing: bool = Field(default=True, description="Se True, substitui as regras anteriores")
