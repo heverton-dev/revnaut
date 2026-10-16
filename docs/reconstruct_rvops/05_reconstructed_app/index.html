@@ -617,25 +617,28 @@
     }
 
     .pipeline-selector {
-      background: rgba(255, 115, 0, 0.12);
-      color: var(--color-brand);
+      background: rgba(255, 115, 0, 0.1);
+      color: #ff9e42;
       border: 1px solid rgba(255, 115, 0, 0.35);
-      padding: 5px 12px;
+      padding: 6px 14px;
       border-radius: var(--radius-sm);
-      font-size: 11.5px;
+      font-size: 12px;
       font-weight: 600;
       cursor: pointer;
       outline: none;
       transition: all var(--transition-fast);
-      max-width: 240px;
+      max-width: 260px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
     }
     .pipeline-selector:hover, .pipeline-selector:focus {
-      background: rgba(255, 115, 0, 0.22);
+      background: rgba(255, 115, 0, 0.18);
       border-color: var(--color-brand);
+      box-shadow: 0 0 12px rgba(255, 115, 0, 0.25);
     }
     .pipeline-selector option {
-      background: #131722;
+      background: #0f1420;
       color: #ffffff;
+      padding: 6px;
     }
 
     .topbar-right {
@@ -776,57 +779,74 @@
     }
 
     .kanban-col {
-      width: 290px;
-      min-width: 280px;
-      background: rgba(14, 17, 24, 0.5);
-      border: 1px solid var(--border-subtle);
+      width: 300px;
+      min-width: 290px;
+      background: linear-gradient(180deg, rgba(14, 17, 24, 0.7) 0%, rgba(10, 13, 19, 0.85) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: var(--radius-md);
       display: flex;
       flex-direction: column;
       height: 100%;
       flex-shrink: 0;
+      backdrop-filter: blur(8px);
     }
 
     .col-header {
-      padding: 14px 16px;
-      border-bottom: 1px solid var(--border-card);
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
       display: flex;
       justify-content: space-between;
       align-items: center;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: var(--radius-md) var(--radius-md) 0 0;
     }
 
     .col-title-group {
       display: flex;
       align-items: center;
       gap: 8px;
+      min-width: 0;
     }
 
     .col-dot {
       width: 8px;
       height: 8px;
       border-radius: 50%;
+      flex-shrink: 0;
     }
 
     .col-title {
-      font-size: 13.5px;
-      font-weight: 600;
+      font-size: 13px;
+      font-weight: 700;
       color: #ffffff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      letter-spacing: -0.2px;
+    }
+
+    .col-meta-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+      flex-shrink: 0;
     }
 
     .col-count {
-      font-size: 11px;
-      background: rgba(255, 255, 255, 0.08);
       color: var(--text-secondary);
-      padding: 2px 7px;
-      border-radius: 10px;
-      font-weight: 600;
+      font-weight: 700;
     }
 
     .col-total {
-      font-size: 11.5px;
-      color: var(--text-muted);
-      font-family: var(--font-mono);
-      font-weight: 500;
+      color: #38bdf8;
+      font-weight: 600;
     }
 
     .col-cards-list {
@@ -856,22 +876,23 @@
     }
 
     .deal-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-card);
+      background: linear-gradient(180deg, #131722 0%, #0e121a 100%);
+      border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: var(--radius-sm);
-      padding: 14px;
+      padding: 13px 14px;
       cursor: grab;
-      transition: all var(--transition-fast);
+      transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.18s ease, box-shadow 0.18s ease;
       display: flex;
       flex-direction: column;
       gap: 8px;
+      position: relative;
     }
 
     .deal-card:hover {
-      background: var(--bg-card-hover);
-      border-color: rgba(255, 115, 0, 0.3);
+      background: linear-gradient(180deg, #171d2b 0%, #111622 100%);
+      border-color: rgba(255, 115, 0, 0.45);
       transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+      box-shadow: 0 10px 24px -6px rgba(0, 0, 0, 0.6), 0 0 12px rgba(255, 115, 0, 0.12);
     }
 
     .deal-title {
@@ -1488,7 +1509,7 @@
           <button class="topbar-menu-toggle" id="topbar-menu-toggle" onclick="toggleSidebarCollapse()" title="Alternar Menu Lateral">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
           </button>
-          <h1 class="page-title" id="topbar-title">Cirurgiões & Venda Direta / Consignação</h1>
+          <h1 class="page-title" id="topbar-title">Funil Comercial • Cirurgiões & Venda Direta</h1>
           <select class="pipeline-selector" id="pipeline-selector" onchange="handlePipelineChange(this.value)" title="Alternar Funil Setorial Odontológico">
             <option value="1">Cirurgiões & Venda Direta</option>
             <option value="2">Prospecção & SDR Outbound</option>
@@ -1592,7 +1613,7 @@
               <th>Empresa</th>
               <th>Contato Principal</th>
               <th>Estágio / Pipeline</th>
-              <th style="min-width: 135px;">Valor (R$) [Inline]</th>
+              <th style="min-width: 140px;">Valor Previsto (BRL)</th>
               <th style="min-width: 140px;">Previsão Fechamento</th>
               <th>Prioridade</th>
               <th>Ações</th>
@@ -4134,12 +4155,14 @@ Dr. Paulo Henrique Mendes;RJ-44606;RJ;Prótese & Reabilitação Oral;(21) 99666-
 
     async function handlePipelineChange(pipeId) {
       CURRENT_PIPELINE_ID = parseInt(pipeId);
-      await fetchDeals(CURRENT_PIPELINE_ID);
       const pipeSelect = document.getElementById('pipeline-selector');
-      if (pipeSelect) {
-        const text = pipeSelect.options[pipeSelect.selectedIndex]?.text || '';
-        showToast(`Funil selecionado: ${text}`, 'info');
+      const text = pipeSelect ? (pipeSelect.options[pipeSelect.selectedIndex]?.text || '') : '';
+      const topTitle = document.getElementById('topbar-title');
+      if (topTitle && text) {
+        topTitle.textContent = `Funil Comercial • ${text}`;
       }
+      await fetchDeals(CURRENT_PIPELINE_ID);
+      showToast(`Funil selecionado: ${text}`, 'info');
     }
 
     async function fetchDeals(pipelineId = CURRENT_PIPELINE_ID) {
@@ -4921,12 +4944,15 @@ Dr. Paulo Henrique Mendes;RJ-44606;RJ;Prótese & Reabilitação Oral;(21) 99666-
         col.className = 'kanban-col';
         col.innerHTML = `
           <div class="col-header">
-            <div class="col-title-group">
+            <div class="col-title-group" title="${stage.name}">
               <span class="col-dot" style="background: ${stage.color}; box-shadow: 0 0 8px ${stage.color};"></span>
               <span class="col-title">${stage.name}</span>
-              <span class="col-count">${stageDeals.length}</span>
             </div>
-            <div class="col-total">${formatBRL(stageTotal)}</div>
+            <div class="col-meta-pill">
+              <span class="col-count">${stageDeals.length}</span>
+              <span style="opacity: 0.35;">•</span>
+              <span class="col-total">${formatBRL(stageTotal)}</span>
+            </div>
           </div>
           <div class="col-cards-list" ondragover="event.preventDefault()" ondrop="handleDrop(event, ${stage.id})">
             ${stageDeals.map(d => {
@@ -5105,38 +5131,41 @@ Dr. Paulo Henrique Mendes;RJ-44606;RJ;Prótese & Reabilitação Oral;(21) 99666-
         return `
           <tr>
             <td>
-              <strong style="color: white; font-size: 13.5px;">${d.title}</strong>
-              <div style="font-size: 11px; color: var(--text-muted);">ID: ${d.id}</div>
+              <strong style="color: white; font-size: 13.5px; font-weight: 600;">${d.title}</strong>
+              <div style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); margin-top: 2px;">#${d.id}</div>
             </td>
-            <td>${d.company || '—'}</td>
-            <td>${d.contact_name || '—'}</td>
+            <td style="color: #e2e8f0; font-weight: 500;">${d.company || '—'}</td>
+            <td style="color: #94a3b8;">${d.contact_name || '—'}</td>
             <td>
-              <span style="display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.06); padding: 3px 10px; border-radius: 4px; font-size: 11.5px; font-weight: 500;">
-                <span style="width: 7px; height: 7px; border-radius: 50%; background: ${stage.color}; box-shadow: 0 0 6px ${stage.color};"></span>
+              <span style="display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); padding: 4px 10px; border-radius: 20px; font-size: 11.5px; font-weight: 500; white-space: nowrap;">
+                <span style="width: 7px; height: 7px; border-radius: 50%; background: ${stage.color}; box-shadow: 0 0 8px ${stage.color};"></span>
                 ${stage.name}
               </span>
             </td>
             <td>
-              <div style="display: flex; align-items: center; gap: 4px;">
+              <div style="display: inline-flex; align-items: center; gap: 4px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.12); border-radius: 6px; padding: 4px 8px; transition: border-color 0.15s;">
                 <span style="color: var(--text-muted); font-size: 11px; font-family: var(--font-mono);">R$</span>
                 <input type="number" step="500" value="${d.value || 0}" 
-                  style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); color: var(--color-emerald); font-family: var(--font-mono); font-weight: 600; font-size: 12.5px; width: 110px; padding: 4px 6px; border-radius: 4px;"
+                  style="background: transparent; border: none; color: var(--color-emerald); font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-weight: 700; font-size: 13px; width: 95px; outline: none; padding: 0;"
                   onchange="inlineUpdateDeal('${d.id}', 'value', this.value)"
-                  title="Edição direta de valor (salva automaticamente ao alterar)">
+                  title="Edição direta de valor">
               </div>
-              ${hasCreditLock ? '<span style="display: inline-block; font-size: 9.5px; color: #f59e0b; background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 3px; padding: 1px 4px; margin-top: 3px; font-weight: 600;">Trava > R$ 150k</span>' : ''}
+              ${hasCreditLock ? '<div style="margin-top: 4px;"><span style="display: inline-block; font-size: 9.5px; color: #f59e0b; background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 4px; padding: 1px 5px; font-weight: 600; text-transform: uppercase;">Trava > R$ 150k</span></div>' : ''}
             </td>
             <td>
               <input type="date" value="${d.expected_close_date || ''}" 
-                style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); color: #cbd5e1; font-size: 11.5px; padding: 4px 6px; border-radius: 4px; color-scheme: dark;"
+                style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.12); color: #cbd5e1; font-size: 11.5px; padding: 4px 8px; border-radius: 6px; color-scheme: dark; outline: none; font-family: var(--font-mono);"
                 onchange="inlineUpdateDeal('${d.id}', 'expected_close_date', this.value)"
-                title="Edição direta do prazo estimado de fechamento">
+                title="Prazo estimado de fechamento">
             </td>
-            <td><span class="priority-badge priority-${d.priority || 'media'}">${d.priority || 'média'}</span></td>
+            <td><span class="priority-badge priority-${d.priority || 'media'}">${(d.priority || 'média').toUpperCase()}</span></td>
             <td>
-              <div style="display: flex; gap: 6px;">
-                <button class="btn-primary" style="padding: 4px 8px; font-size: 11px; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.3); color: #38bdf8; box-shadow: none;" onclick="openDealTimelineModal('${d.id}')">Timeline</button>
-                <button class="btn-primary" style="padding: 4px 8px; font-size: 11px; background: rgba(255,255,255,0.08); box-shadow: none;" onclick="showToast('Negócio #${d.id}: ${d.title} (${stage.name})', 'info')">Detalhes</button>
+              <div style="display: flex; gap: 6px; align-items: center;">
+                <button class="btn-primary" style="padding: 4px 8px; font-size: 11px; font-weight: 600; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.3); color: #38bdf8; box-shadow: none; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;" onclick="openDealTimelineModal('${d.id}')" title="Linha do Tempo e Auditoria">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  Timeline
+                </button>
+                <button class="btn-primary" style="padding: 4px 8px; font-size: 11px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: var(--text-secondary); box-shadow: none; border-radius: 4px;" onclick="showToast('Negócio #${d.id}: ${d.title} (${stage.name})', 'info')">Detalhes</button>
               </div>
             </td>
           </tr>

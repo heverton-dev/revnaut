@@ -40,6 +40,11 @@ def list_teams(account_id: str = "0f14ffff"):
     return service.list_teams(account_id)
 
 
+@router.get("/tree", response_model=List[TeamOut], summary="Árvore Hierárquica de Equipes (Alias)")
+def get_hierarchy_tree(account_id: str = "0f14ffff"):
+    return service.list_teams(account_id)
+
+
 @router.post("/teams", response_model=TeamOut, status_code=status.HTTP_201_CREATED, summary="Cria Equipe")
 def create_team(payload: TeamCreate, account_id: str = "0f14ffff"):
     try:
