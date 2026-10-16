@@ -1269,33 +1269,26 @@
       opacity: 0.75;
       font-weight: normal;
     }
-    .contact-wa-link {
+    .contact-wa-icon-btn {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      color: #cbd5e1;
-      text-decoration: none;
-      font-size: 12px;
-      font-family: var(--font-mono);
-      font-variant-numeric: tabular-nums;
-      padding: 4px 8px;
-      border-radius: 4px;
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid transparent;
-      transition: all 0.18s ease;
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-    .contact-wa-link svg {
-      flex-shrink: 0;
-    }
-    .contact-wa-link span {
-      white-space: nowrap;
-    }
-    .contact-wa-link:hover {
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: rgba(34, 197, 94, 0.12);
+      border: 1px solid rgba(34, 197, 94, 0.3);
       color: #22c55e;
-      background: rgba(34, 197, 94, 0.08);
-      border-color: rgba(34, 197, 94, 0.25);
+      text-decoration: none;
+      transition: all 0.18s ease;
+      cursor: pointer;
+    }
+    .contact-wa-icon-btn:hover {
+      background: rgba(34, 197, 94, 0.25);
+      border-color: rgba(34, 197, 94, 0.6);
+      color: #4ade80;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25);
     }
     .contact-actions-cell {
       display: flex;
@@ -1913,14 +1906,14 @@
           <table class="data-table" style="border: none; border-radius: 0; background: transparent;">
             <thead>
               <tr>
-                <th style="min-width: 220px;">Cirurgião / Contato</th>
-                <th style="min-width: 130px;">CRO / UF</th>
-                <th style="min-width: 150px;">Especialidade</th>
-                <th style="min-width: 150px;">Clínica / Instituição</th>
-                <th style="min-width: 175px; white-space: nowrap;">WhatsApp</th>
-                <th style="min-width: 120px;">Implantes/Mês</th>
-                <th style="min-width: 90px;">ICP Score</th>
-                <th style="min-width: 80px; text-align: center;">Ações</th>
+                <th style="min-width: 210px;">Cirurgião / Contato</th>
+                <th style="min-width: 120px;">CRO / UF</th>
+                <th style="min-width: 140px;">Especialidade</th>
+                <th style="min-width: 140px;">Clínica / Instituição</th>
+                <th style="width: 70px; text-align: center;">WhatsApp</th>
+                <th style="min-width: 125px;">Implantes/Mês</th>
+                <th style="width: 85px; text-align: center;">ICP Score</th>
+                <th style="width: 70px; text-align: center;">Ações</th>
               </tr>
             </thead>
             <tbody id="contacts-tbody">
@@ -5316,15 +5309,16 @@ Dr. Paulo Henrique Mendes;RJ-44606;RJ;Prótese & Reabilitação Oral;(21) 99666-
       return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
     }
 
-    function formatPhoneWithWa(phone) {
-      if (!phone || phone === '—') return `<span style="color: var(--text-muted);">—</span>`;
+    function formatPhoneWithWa(phone, name) {
+      if (!phone || phone === '—') return `<div style="text-align: center;"><span style="color: rgba(255,255,255,0.2); font-size: 11px;">—</span></div>`;
       const digits = phone.replace(/\D/g, '');
       const fullDigits = digits.startsWith('55') ? digits : `55${digits}`;
       return `
-        <a href="https://wa.me/${fullDigits}" target="_blank" rel="noopener noreferrer" class="contact-wa-link" title="Iniciar WhatsApp">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
-          <span>${phone}</span>
-        </a>
+        <div style="display: flex; justify-content: center; align-items: center;">
+          <a href="https://wa.me/${fullDigits}" target="_blank" rel="noopener noreferrer" class="contact-wa-icon-btn" title="Conversar com ${name || 'cirurgião'} via WhatsApp">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
+          </a>
+        </div>
       `;
     }
 
@@ -5382,9 +5376,9 @@ Dr. Paulo Henrique Mendes;RJ-44606;RJ;Prótese & Reabilitação Oral;(21) 99666-
           <td>${formatCroBadge(c.cro, c.cro_uf)}</td>
           <td><span class="badge-specialty">${c.specialty || 'Implantodontia'}</span></td>
           <td><span style="color: #cbd5e1; font-size: 12.5px;">${c.company || '—'}</span></td>
-          <td>${formatPhoneWithWa(c.phone)}</td>
+          <td style="text-align: center;">${formatPhoneWithWa(c.phone, c.name)}</td>
           <td>${formatVolumeBadge(c.monthly_implants_volume)}</td>
-          <td>${formatScoreBadge(c.score)}</td>
+          <td style="text-align: center;">${formatScoreBadge(c.score)}</td>
           <td style="text-align: center;">
             <div class="contact-actions-cell" style="justify-content: center;">
               <button class="contact-action-btn" title="Ver detalhes do cirurgião" onclick="showToast('Ficha cadastral de ${c.name} aberta', 'info')">
