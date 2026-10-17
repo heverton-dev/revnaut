@@ -441,6 +441,9 @@ def get_role_permissions(role_id: str, account_id: str = "0f14ffff") -> Dict[str
             (role_id,)
         )
         role_data["permissions"] = [p[0] for p in cur.fetchall()]
+        role_data["role_id"] = role_data["id"]
+        role_data["role_name"] = role_data["name"]
+        role_data["success"] = True
         return role_data
     finally:
         conn.close()

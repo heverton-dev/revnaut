@@ -10,19 +10,21 @@ from src.features.hierarchy.schemas import (
     BusinessUnitCreate, BusinessUnitOut, TeamCreate, TeamUpdateParent,
     TeamOut, RoleCreate, RoleOut, PresetApplyRequest, RolePermissionsUpdate,
     SalesTargetCreate, SalesTargetOut, AlgorithmicTargetSuggestion,
-    CommissionRuleCreate, CommissionRuleOut, CommissionStatementOut
+    CommissionRuleCreate, CommissionRuleOut, CommissionStatementOut,
+    PresetApplyResponse, PermissionCatalogItem, RolePermissionsResponse
 )
 from src.features.hierarchy import service
 
 router = APIRouter(prefix="/api/v1/hierarchy", tags=["Hierarquia Organizacional & RBAC"])
 
 
-@router.post("/presets/apply", summary="Aplica Preset Organizacional Odontológico")
+@router.post("/presets/apply", response_model=PresetApplyResponse, summary="Aplica Preset Organizacional Odontológico")
 def apply_preset(payload: PresetApplyRequest, account_id: str = "0f14ffff"):
     try:
         return service.apply_hierarchy_preset(account_id, payload.preset_name)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
 
 
 @router.get("/business-units", response_model=List[BusinessUnitOut], summary="Lista Business Units")
@@ -71,12 +73,12 @@ def create_role(payload: RoleCreate, account_id: str = "0f14ffff"):
     return service.create_role(payload, account_id)
 
 
-@router.get("/catalog", summary="Catálogo de Permissões Granulares por Recurso")
+@router.get("/catalog", response_model=List[PermissionCatalogItem], summary="Catálogo de Permissões Granulares por Recurso")
 def get_permission_catalog():
     return service.get_permission_catalog()
 
 
-@router.get("/roles/{role_id}/permissions", summary="Obter Permissões Ativas de uma Função")
+@router.get("/roles/{role_id}/permissions", response_model=RolePermissionsResponse, summary="Obter Permissões Ativas de uma Função")
 def get_role_permissions(role_id: str, account_id: str = "0f14ffff"):
     role = service.get_role_permissions(role_id, account_id)
     if not role:
@@ -84,7 +86,7 @@ def get_role_permissions(role_id: str, account_id: str = "0f14ffff"):
     return role
 
 
-@router.put("/roles/{role_id}/permissions", summary="Atualizar Matriz de Permissões da Função")
+@router.put("/roles/{role_id}/permissions", response_model=RolePermissionsResponse, summary="Atualizar Matriz de Permissões da Função")
 def update_role_permissions(
     role_id: str, 
     payload: RolePermissionsUpdate, 
@@ -94,6 +96,7 @@ def update_role_permissions(
         return service.update_role_permissions(role_id, payload.permissions, account_id)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
 
 
 # --- Metas Comerciais & Comissionamento Multinível ---

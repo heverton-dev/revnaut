@@ -179,3 +179,26 @@ class CommissionStatementOut(BaseModel):
     items: List[CommissionPayoutItem]
 
 
+class PresetApplyResponse(BaseModel):
+    success: bool
+    preset: str
+    business_units_count: int
+    teams_count: int
+    roles_count: int
+
+
+class PermissionCatalogResponse(BaseModel):
+    resources: List[Dict[str, Any]]
+
+
+class RolePermissionsResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    role_id: Optional[str] = None
+    role_name: Optional[str] = None
+    id: Optional[str] = None
+    name: Optional[str] = None
+    permissions: List[str] = Field(default_factory=list)
+    success: bool = True
+
+
+

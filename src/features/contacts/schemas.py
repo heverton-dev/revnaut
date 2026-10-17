@@ -57,3 +57,48 @@ class ContactImportResponse(BaseModel):
     items_preview: List[dict]
 
 
+class ContactOut(BaseModel):
+    model_config = {"extra": "allow"}
+    id: int
+    name: str
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    company: Optional[str] = None
+    score: Optional[int] = 50
+    cro: Optional[str] = None
+    cro_uf: Optional[str] = None
+    specialty: Optional[str] = None
+    work_model: Optional[str] = None
+    monthly_implants_volume: Optional[str] = None
+    customer_type: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    owner_id: Optional[str] = None
+    team_id: Optional[str] = None
+
+
+class ContactProfileResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    id: int
+    name: str
+    email: Optional[str] = None
+    company: Optional[str] = None
+    deals: List[dict] = []
+    timeline: List[dict] = []
+    score: int = 50
+
+
+
+class ContactTimelineResponse(BaseModel):
+    contact_id: int
+    timeline: List[dict]
+
+
+class ContactTimelineCommentResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    status: Optional[str] = None
+    id: Optional[int] = None
+    message: Optional[str] = None
+
+
+

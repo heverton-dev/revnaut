@@ -13,6 +13,33 @@ class MessageSend(BaseModel):
     text: str = Field(..., min_length=1, description="Texto da mensagem")
 
 
+class ConversationOut(BaseModel):
+    model_config = {"extra": "allow"}
+    id: str
+    contact_name: str | None = None
+    company: str | None = None
+    channel: str = "whatsapp"
+    unread: int = 0
+
+
+class MessageItemOut(BaseModel):
+    model_config = {"extra": "allow"}
+    id: int
+    conversation_id: str
+    sender: str
+    text: str
+
+
+class MessageSentOut(BaseModel):
+    model_config = {"extra": "allow"}
+    id: int
+    conversation_id: str
+    sender: str
+    text: str
+    status: str
+
+
+
 def list_conversations() -> List[Dict[str, Any]]:
     conn = get_connection()
     cur = conn.cursor()

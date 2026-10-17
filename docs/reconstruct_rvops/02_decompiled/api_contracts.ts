@@ -166,3 +166,160 @@ export interface AccountUsageLimit {
   max_limit: number;
   percentage: number;
 }
+
+// ==========================================
+// Contratos Canônicos — Revnaut Dental Ops
+// ==========================================
+
+export type DataScopeEnum = 'self' | 'team' | 'subtree' | 'business_unit' | 'tenant_global';
+
+export interface UserContext {
+  user_id: string;
+  account_id: string;
+  role_id: string;
+  team_id?: string | null;
+  business_unit_id?: string | null;
+  data_scope: DataScopeEnum;
+  permissions: string[];
+  is_superadmin: boolean;
+}
+
+export interface DentalContact extends Contact {
+  cro: string;
+  cro_uf: string;
+  specialty: string;
+  work_model: string;
+  monthly_implants_volume: string;
+  customer_type: 'Cirurgião' | 'Professor/KOL' | 'Aluno Especialização' | 'Clínica/DSO';
+  city?: string;
+  state?: string;
+}
+
+export interface ConsignmentBoxItem {
+  id: string;
+  sku: string;
+  description: string;
+  batch_number: string;
+  expiry_date: string;
+  quantity: number;
+  unit_price: number;
+}
+
+export interface ConsignmentBox {
+  id: string;
+  account_id: string;
+  contact_id: number | string;
+  clinic_name: string;
+  cro: string;
+  box_status: 'em_campo' | 'em_cirurgia' | 'fechamento_pendente' | 'faturada_totvs';
+  total_items: number;
+  total_value: number;
+  items: ConsignmentBoxItem[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TotvsOrderItem {
+  item_code: string; // SC6 B1_COD
+  quantity: number;  // SC6 C6_QTD
+  unit_price: number; // SC6 C6_PRCVEN
+  total_value: number; // SC6 C6_VALOR
+}
+
+export interface TotvsOrderPayload {
+  order_id: string;
+  deal_id?: string;
+  account_id: string;
+  customer_code: string; // SA1 A1_COD
+  customer_branch: string; // SA1 A1_LOJA
+  customer_tax_id: string; // SA1 A1_CGC (CPF ou CNPJ)
+  cro?: string;
+  cro_uf?: string;
+  total_amount: number;
+  items: TotvsOrderItem[];
+  payment_condition: string;
+  sales_channel: string;
+  idempotency_key: string;
+}
+
+export interface HierarchyPreset {
+  name: 'fabrica_enxuta' | 'nacional_expansao' | 'multidivisao_produtos' | 'multinacional_enterprise';
+  title: string;
+  description: string;
+  business_units_count: number;
+  teams_count: number;
+  roles_count: number;
+}
+
+export type RelationshipTypeEnum = 'operates_at' | 'partner_cadcam' | 'teaches_at' | 'kol_speaker';
+
+export interface ContactInstitution {
+  id: string;
+  account_id: string;
+  contact_id: number;
+  institution_id: string;
+  relationship_type: RelationshipTypeEnum;
+  role_title?: string;
+  is_kol: boolean;
+  notes?: string;
+  created_at: string;
+  institution_name?: string;
+  institution_type?: string;
+  contact_name?: string;
+  contact_cro?: string;
+}
+
+export interface ClinicalGraphNode {
+  id: string;
+  label: string;
+  node_type: 'surgeon' | 'clinic' | 'cadcam_lab' | 'university' | 'radiology';
+  metadata?: Record<string, any>;
+}
+
+export interface ClinicalGraphEdge {
+  source: string;
+  target: string;
+  relationship: string;
+  is_kol: boolean;
+  label: string;
+}
+
+export interface ClinicalGraphResponse {
+  nodes: ClinicalGraphNode[];
+  edges: ClinicalGraphEdge[];
+  total_nodes: number;
+  total_edges: number;
+  kol_speakers_count: number;
+}
+
+export interface ChurnRiskItem {
+  contact_id: number;
+  name: string;
+  cro?: string;
+  clinic_name?: string;
+  uf?: string;
+  tier: string;
+  monthly_implant_volume: number;
+  avg_reorder_interval_days: number;
+  days_since_last_order: number;
+  days_overdue: number;
+  last_order_date?: string;
+  churn_risk_score: number;
+  churn_risk_level: 'baixo' | 'medio' | 'alto' | 'critico';
+  recommended_action: string;
+}
+
+export interface ChurnRiskSummary {
+  total_monitored: number;
+  critical_count: number;
+  high_risk_count: number;
+  medium_risk_count: number;
+  low_risk_count: number;
+}
+
+export interface ChurnRiskResponse {
+  summary: ChurnRiskSummary;
+  radar: ChurnRiskItem[];
+}
+
+

@@ -3,15 +3,21 @@
 Vertical Slice: Contacts Router
 """
 
-from typing import Optional
-from fastapi import APIRouter, Header, status
-from src.features.contacts.schemas import ContactCreate, ContactImportRequest, ContactImportResponse
+from typing import Optional, List
+from fastapi import APIRouter, Header, status, HTTPException
+from src.features.contacts.schemas import (
+    ContactCreate, ContactImportRequest, ContactImportResponse,
+    ContactOut, ContactProfileResponse, ContactTimelineResponse,
+    ContactTimelineCommentResponse
+)
 from src.features.contacts import service
+from src.core.database import get_connection
+from src.core.security import enforce_user_permission
 
 router = APIRouter(tags=["Contatos & Leads"])
 
 
-@router.get("/api/v1/contacts", summary="Buscar e Listar Contatos com Escopo Hierárquico")
+@router.get("/api/v1/contacts", response_model=List[ContactOut], summary="Buscar e Listar Contatos com Escopo Hierárquico")
 def read_contacts(
     q: Optional[str] = None,
     account_id: str = "0f14ffff",
@@ -20,11 +26,7 @@ def read_contacts(
     return service.list_contacts(query=q, account_id=account_id, user_id=x_user_id)
 
 
-from src.core.database import get_connection
-from src.core.security import enforce_user_permission
-
-
-@router.post("/api/v1/contacts", status_code=status.HTTP_201_CREATED, summary="Criar Contato com Validação RBAC")
+@router.post("/api/v1/contacts", response_model=ContactOut, status_code=status.HTTP_201_CREATED, summary="Criar Contato com Validação RBAC")
 def create_contact(
     payload: ContactCreate,
     account_id: str = "0f14ffff",
@@ -58,21 +60,20 @@ class ContactTimelineCommentCreate(BaseModel):
     author_name: Optional[str] = "Consultor Especialista"
 
 
-@router.get("/api/v1/contacts/{contact_id}/profile", summary="Perfil Completo, Histórico & Oportunidades do Contato")
+@router.get("/api/v1/contacts/{contact_id}/profile", response_model=ContactProfileResponse, summary="Perfil Completo, Histórico & Oportunidades do Contato")
 def get_contact_profile(contact_id: int):
     profile = service.get_contact_full_profile(contact_id)
     if not profile:
-        from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="Contato não localizado")
     return profile
 
 
-@router.get("/api/v1/contacts/{contact_id}/timeline", summary="Histórico e Linha do Tempo do Contato")
+@router.get("/api/v1/contacts/{contact_id}/timeline", response_model=ContactTimelineResponse, summary="Histórico e Linha do Tempo do Contato")
 def get_contact_timeline(contact_id: int):
     return {"contact_id": contact_id, "timeline": service.get_contact_timeline(contact_id)}
 
 
-@router.post("/api/v1/contacts/{contact_id}/timeline/comments", status_code=status.HTTP_201_CREATED, summary="Adicionar Nota de Auditoria na Timeline do Contato")
+@router.post("/api/v1/contacts/{contact_id}/timeline/comments", response_model=ContactTimelineCommentResponse, status_code=status.HTTP_201_CREATED, summary="Adicionar Nota de Auditoria na Timeline do Contato")
 def add_timeline_comment(
     contact_id: int, 
     payload: ContactTimelineCommentCreate,
@@ -84,5 +85,6 @@ def add_timeline_comment(
         user_id=x_user_id, 
         author_name=payload.author_name or "Consultor Especialista"
     )
+
 
 

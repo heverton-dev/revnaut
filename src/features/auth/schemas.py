@@ -69,3 +69,16 @@ class ResetPasswordRequest(BaseModel):
 
 class UpdateUserStatusRequest(BaseModel):
     is_active: bool
+
+
+class UserStatusResponse(BaseModel):
+    id: str
+    is_active: bool
+    success: bool = True
+
+
+class ResetPasswordResponse(BaseModel):
+    id: str
+    success: bool = True
+    message: str
+

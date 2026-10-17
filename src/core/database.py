@@ -11,11 +11,14 @@ from src.core.config import DB_PATH
 
 
 def get_connection() -> sqlite3.Connection:
-    conn = sqlite3.connect(str(DB_PATH), timeout=10.0)
+    conn = sqlite3.connect(str(DB_PATH), timeout=10.0, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL;")
     conn.execute("PRAGMA synchronous=NORMAL;")
     conn.execute("PRAGMA foreign_keys=ON;")
+    conn.execute("PRAGMA busy_timeout=5000;")
+    conn.execute("PRAGMA temp_store=MEMORY;")
+    conn.execute("PRAGMA cache_size=-32000;")
     return conn
 
 
@@ -301,14 +304,68 @@ def init_db() -> None:
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (contact_id) REFERENCES contacts(id)
         );
+
+        CREATE TABLE IF NOT EXISTS integration_outbox (
+            id TEXT PRIMARY KEY,
+            account_id TEXT NOT NULL,
+            integration_type TEXT NOT NULL,
+            idempotency_key TEXT NOT NULL UNIQUE,
+            payload TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'pending',
+            attempts INTEGER NOT NULL DEFAULT 0,
+            last_error TEXT,
+            response_body TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (account_id) REFERENCES accounts(id)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_outbox_idempotency ON integration_outbox(idempotency_key);
+        CREATE INDEX IF NOT EXISTS idx_outbox_status ON integration_outbox(status);
+
+        CREATE TABLE IF NOT EXISTS contact_institutions (
+            id TEXT PRIMARY KEY,
+            account_id TEXT NOT NULL,
+            contact_id INTEGER NOT NULL,
+            institution_id TEXT NOT NULL,
+            relationship_type TEXT NOT NULL DEFAULT 'operates_at',
+            role_title TEXT,
+            is_kol INTEGER NOT NULL DEFAULT 0,
+            notes TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (account_id) REFERENCES accounts(id),
+            FOREIGN KEY (contact_id) REFERENCES contacts(id),
+            FOREIGN KEY (institution_id) REFERENCES institutions(id)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_contact_institutions_contact ON contact_institutions(contact_id);
+        CREATE INDEX IF NOT EXISTS idx_contact_institutions_inst ON contact_institutions(institution_id);
         """)
 
-        # Migração idempotente para colunas complementares em deals
+
+        # Migração idempotente para colunas complementares em deals e contacts
         cur = conn.cursor()
         cur.execute("PRAGMA table_info(deals)")
         existing_cols = {row["name"] for row in cur.fetchall()}
         if "expected_close_date" not in existing_cols:
             cur.execute("ALTER TABLE deals ADD COLUMN expected_close_date TEXT DEFAULT NULL")
+
+        cur.execute("PRAGMA table_info(contacts)")
+        contact_cols = {row["name"] for row in cur.fetchall()}
+        for col_name, col_def in [
+            ("owner_id", "TEXT DEFAULT NULL"),
+            ("team_id", "TEXT DEFAULT NULL"),
+            ("business_unit_id", "TEXT DEFAULT NULL"),
+            ("cro", "TEXT DEFAULT NULL"),
+            ("uf", "TEXT DEFAULT NULL"),
+            ("specialty", "TEXT DEFAULT NULL"),
+            ("clinic_name", "TEXT DEFAULT NULL"),
+            ("monthly_implant_volume", "INTEGER DEFAULT 0"),
+            ("reorder_cycle_days", "INTEGER DEFAULT 20"),
+            ("last_order_date", "TEXT DEFAULT NULL")
+        ]:
+            if col_name not in contact_cols:
+                cur.execute(f"ALTER TABLE contacts ADD COLUMN {col_name} {col_def}")
 
 
         # Seed determinístico inicial se conta padrão não existir
@@ -506,14 +563,22 @@ def init_db() -> None:
             if col not in user_cols:
                 cur.execute(f"ALTER TABLE users ADD COLUMN {col} {col_t};")
 
-        # Migração de owner_id e team_id em entidades de dados
-        for table in ["deals", "contacts", "institutions"]:
+        # Migração de owner_id, team_id e business_unit_id em entidades de dados
+        for table in ["deals", "contacts", "conversations", "institutions"]:
             cur.execute(f"PRAGMA table_info({table});")
             tbl_cols = {row[1] for row in cur.fetchall()}
             if "owner_id" not in tbl_cols:
                 cur.execute(f"ALTER TABLE {table} ADD COLUMN owner_id TEXT;")
             if "team_id" not in tbl_cols:
                 cur.execute(f"ALTER TABLE {table} ADD COLUMN team_id TEXT;")
+            if "business_unit_id" not in tbl_cols:
+                cur.execute(f"ALTER TABLE {table} ADD COLUMN business_unit_id TEXT;")
+
+        # Índices compostos obrigatórios de alta performance (SPEC_RBAC_DATA_SCOPING_HIERARQUICO)
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_teams_hierarchy ON teams(account_id, parent_id);")
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_deals_scope ON deals(account_id, team_id, owner_id);")
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_contacts_scope ON contacts(account_id, team_id, owner_id);")
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_conversations_scope ON conversations(account_id, team_id, owner_id);")
 
         # Garantia determinística do Super Admin (User God único - Heverton Eduardo Peres)
         # Regra Inegociável: Nenhum outro usuário no sistema pode possuir is_superadmin = 1

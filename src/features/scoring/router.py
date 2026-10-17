@@ -13,7 +13,9 @@ from src.features.scoring.schemas import (
     RecalculateRequest,
     RecalculateResponse,
     ScoringPresetOut,
-    ScoringPresetApply
+    ScoringPresetApply,
+    ScoringPresetApplyResponse,
+    DeleteRuleResponse
 )
 from src.features.scoring import service
 
@@ -25,7 +27,7 @@ def get_presets():
     return service.list_presets()
 
 
-@router.post("/presets/apply", summary="Aplicar Preset Plug & Play de Lead Scoring")
+@router.post("/presets/apply", response_model=ScoringPresetApplyResponse, summary="Aplicar Preset Plug & Play de Lead Scoring")
 def apply_preset(data: ScoringPresetApply):
     try:
         return service.apply_preset(data.preset_key, overwrite_existing=data.overwrite_existing)
@@ -51,12 +53,13 @@ def update_rule(rule_id: str, data: ScoringRuleUpdate):
     return rule
 
 
-@router.delete("/rules/{rule_id}", summary="Remover regra de pontuação")
+@router.delete("/rules/{rule_id}", response_model=DeleteRuleResponse, summary="Remover regra de pontuação")
 def delete_rule(rule_id: str):
     ok = service.delete_rule(rule_id)
     if not ok:
         raise HTTPException(status_code=404, detail="Regra de pontuação não encontrada")
     return {"status": "deleted", "rule_id": rule_id}
+
 
 
 @router.post("/recalculate", response_model=RecalculateResponse, summary="Recalcular scores de toda a base com tiers configuráveis")

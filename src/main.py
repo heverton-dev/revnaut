@@ -26,8 +26,15 @@ from src.features.webhooks.router import router as webhooks_router
 from src.features.quarteto.router import router as quarteto_router
 from src.features.hierarchy.router import router as hierarchy_router
 from src.features.auth import auth_router
+from src.features.integrations.totvs.router import router as totvs_router
+from src.features.integrations.omnichannel.router import router as omnichannel_router
+from src.features.automations.router import router as automations_router
+from src.features.intelligence.router import router as intelligence_router
 
 # Inicializa schema e seed SQLite WAL
+
+
+
 
 init_db()
 
@@ -48,8 +55,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from pydantic import BaseModel
+
+class HealthResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    status: str
+    sqlite_journal_mode: str
+    accounts_online: int
+    timestamp: float | None = None
+
 # Health Check do Monólito
-@app.get("/api/v1/health", tags=["Sistema"])
+@app.get("/api/v1/health", response_model=HealthResponse, tags=["Sistema"])
 def health_check():
     conn = get_connection()
     cur = conn.cursor()
@@ -78,6 +94,10 @@ app.include_router(webhooks_router)
 app.include_router(quarteto_router)
 app.include_router(hierarchy_router)
 app.include_router(auth_router)
+app.include_router(totvs_router)
+app.include_router(omnichannel_router)
+app.include_router(automations_router)
+app.include_router(intelligence_router)
 
 # Montagem de Estáticos e Frontend Root
 _possible_static_paths = [

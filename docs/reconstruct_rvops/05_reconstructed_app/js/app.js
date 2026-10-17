@@ -1,13 +1,24 @@
 /**
- * Rvops Reconstructed — Frontend Application Controller
- * Pure Vanilla JavaScript, zero frameworks, deterministic reactivity.
+ * Rvops Reconstructed — Frontend Application Controller (ES Module)
+ * Pure Vanilla JavaScript with modular ES Modules architecture.
  */
+
+import { api, getAuthToken, setAuthToken, clearAuthToken } from './modules/api-client.js';
+import * as rbacTree from './modules/rbac-tree.js';
+import * as kanbanDeals from './modules/kanban-deals.js';
+import * as consignments from './modules/consignments.js';
+
+if (typeof window !== 'undefined') {
+  window.RevnautModules = { api, rbacTree, kanbanDeals, consignments };
+  window.RVOPS_DATA = window.RVOPS_DATA || {};
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   const data = window.RVOPS_DATA;
   let currentView = 'deals';
   let dealViewMode = 'kanban';
   let activeChatId = 'chat-1';
+
 
   const API_URL = (window.location.protocol === 'file:' || window.location.origin === 'null')
     ? 'http://localhost:8000/api/v1'

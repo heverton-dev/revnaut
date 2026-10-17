@@ -28,3 +28,65 @@ class DealUpdate(BaseModel):
     expected_close_date: str | None = Field(default=None, description="Data estimada de fechamento (AAAA-MM-DD)")
     comment: str | None = Field(default=None, description="Comentário para auditoria")
 
+
+class PipelineItemOut(BaseModel):
+    id: int
+    name: str
+
+
+class PipelineMetricsOut(BaseModel):
+    mrr: float
+    pipelineTotal: float
+    closedWonMRR: float = 0.0
+    totalDeals: int = 0
+    conversionRate: float = 0.0
+
+
+class DealsListResponse(BaseModel):
+    stages: list[dict]
+    deals: list[dict]
+
+
+class DealCreateResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    status: str
+    id: str
+    title: str | None = None
+    value: float | None = None
+    company: str | None = None
+    contact_name: str | None = None
+    pipeline_id: int | None = None
+    stage_id: int | None = None
+    priority: str | None = None
+    owner_id: str | None = None
+    team_id: str | None = None
+
+
+
+class DealMoveResponse(BaseModel):
+    status: str
+    deal_id: str
+    new_stage_id: int
+
+
+class DealDetailOut(BaseModel):
+    model_config = {"extra": "allow"}
+    id: str | None = None
+    value: float | None = None
+    priority: str | None = None
+    expected_close_date: str | None = None
+
+
+class DealTimelineResponse(BaseModel):
+    deal_id: str
+    timeline: list[dict]
+
+
+class DealApproveCreditResponse(BaseModel):
+    deal_id: str
+    credit_approved: bool = True
+    message: str
+    credit_limit: float | None = None
+
+
+

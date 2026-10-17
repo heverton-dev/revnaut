@@ -163,6 +163,7 @@ def create_collaborator(
 
     return {
         "id": new_user_id,
+        "account_id": account_id,
         "name": data.name.strip(),
         "email": email_clean,
         "role": data.role,

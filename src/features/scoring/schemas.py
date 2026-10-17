@@ -42,13 +42,14 @@ class ScoringRuleOut(BaseModel):
 
 
 class LeadRankItem(BaseModel):
+    model_config = {"extra": "allow"}
     id: int
     name: str
-    company: str
-    email: str
+    company: Optional[str] = None
+    email: Optional[str] = None
     score: int
     tier: str
-    tags: List[str]
+    tags: List[str] = Field(default_factory=list)
     cro: Optional[str] = None
     specialty: Optional[str] = None
     monthly_implants_volume: Optional[str] = None
@@ -88,3 +89,16 @@ class ScoringPresetOut(BaseModel):
 class ScoringPresetApply(BaseModel):
     preset_key: str = Field(..., description="Chave do preset: 'implantes_cirurgia_premium', 'ensino_academico', 'distribuidores_atacado', 'clinicas_multidisciplinares'")
     overwrite_existing: bool = Field(default=True, description="Se True, substitui as regras anteriores")
+
+
+class ScoringPresetApplyResponse(BaseModel):
+    success: bool
+    preset_key: str
+    name: str
+    rules_applied: int
+
+
+class DeleteRuleResponse(BaseModel):
+    status: str
+    rule_id: str
+

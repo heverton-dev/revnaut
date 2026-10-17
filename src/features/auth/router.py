@@ -97,7 +97,21 @@ def list_users(current_user: UserProfileOut = Depends(get_current_user)):
     return list_all_users(account_id=current_user.account_id)
 
 
-@router.post("/users", summary="Cadastrar novo colaborador (Super Admin exclusivo)")
+from src.features.auth.schemas import (
+    LoginRequest,
+    LoginResponse,
+    UserProfileOut,
+    LogoutResponse,
+    UserListItem,
+    CreateCollaboratorRequest,
+    ResetPasswordRequest,
+    UpdateUserStatusRequest,
+    UserStatusResponse,
+    ResetPasswordResponse
+)
+
+
+@router.post("/users", response_model=UserProfileOut, summary="Cadastrar novo colaborador (Super Admin exclusivo)")
 def create_user(payload: CreateCollaboratorRequest, current_user: UserProfileOut = Depends(get_current_user)):
     return create_collaborator(
         data=payload,
@@ -106,7 +120,7 @@ def create_user(payload: CreateCollaboratorRequest, current_user: UserProfileOut
     )
 
 
-@router.put("/users/{user_id}/status", summary="Alterar status de ativação de colaborador")
+@router.put("/users/{user_id}/status", response_model=UserStatusResponse, summary="Alterar status de ativação de colaborador")
 def change_status(
     user_id: str,
     payload: UpdateUserStatusRequest,
@@ -119,7 +133,7 @@ def change_status(
     )
 
 
-@router.post("/users/{user_id}/reset-password", summary="Redefinir senha de colaborador (Super Admin exclusivo)")
+@router.post("/users/{user_id}/reset-password", response_model=ResetPasswordResponse, summary="Redefinir senha de colaborador (Super Admin exclusivo)")
 def reset_password(
     user_id: str,
     payload: ResetPasswordRequest,
@@ -130,4 +144,5 @@ def reset_password(
         new_password=payload.new_password,
         current_user=current_user.model_dump()
     )
+
 

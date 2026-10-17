@@ -61,11 +61,27 @@ def mcp_studio():
     }
 
 
-@router.get("/api/v1/quarteto/manuais", summary="Catálogo de Manuais de Rotas (JSON)")
+from pydantic import BaseModel
+
+class ManualItem(BaseModel):
+    filename: str
+    title: str
+    path: str
+
+class ManualsListResponse(BaseModel):
+    total: int
+    manuals: list[ManualItem]
+
+class ManualContentResponse(BaseModel):
+    filename: str
+    content: str
+
+
+@router.get("/api/v1/quarteto/manuais", response_model=ManualsListResponse, summary="Catálogo de Manuais de Rotas (JSON)")
 def list_manuals():
     """Retorna lista de manuais disponíveis e seus conteúdos para consumo por agentes e IAs."""
     if not MANUAIS_DIR.exists():
-        return {"manuals": []}
+        return {"total": 0, "manuals": []}
 
     files = sorted(list(MANUAIS_DIR.glob("*.md")))
     result = []
@@ -78,7 +94,7 @@ def list_manuals():
     return {"total": len(result), "manuals": result}
 
 
-@router.get("/api/v1/quarteto/manuais/{filename}", summary="Obter Conteúdo do Manual")
+@router.get("/api/v1/quarteto/manuais/{filename}", response_model=ManualContentResponse, summary="Obter Conteúdo do Manual")
 def get_manual_content(filename: str):
     """Retorna o texto markdown do manual especificado."""
     # Sanitização básica de caminho
@@ -90,6 +106,7 @@ def get_manual_content(filename: str):
         "filename": safe_name,
         "content": file_path.read_text(encoding="utf-8")
     }
+
 
 
 @router.get("/docs/guia", response_class=HTMLResponse, summary="Guia do Usuário Dinâmico")
