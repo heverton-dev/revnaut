@@ -86,3 +86,39 @@ def test_cold_lead_does_not_trigger_overflow():
     assert data["status"] == "warm_or_nurturing"
     assert data["deal_id"] is None
     assert data["task_id"] is None
+
+
+def test_automation_flows_list_toggle_and_test():
+    """Valida listagem de fluxos, toggle de status e disparo de teste manual."""
+    # 1. Listagem dos fluxos cadastrados
+    list_res = client.get("/api/v1/automations/flows")
+    assert list_res.status_code == 200
+    flows = list_res.json()
+    assert len(flows) >= 4
+    flow_ids = [f["id"] for f in flows]
+    assert "flow-brocas" in flow_ids
+    assert "flow-totvs-sc5" in flow_ids
+
+    # 2. Toggle de status do fluxo de brocas
+    toggle_res = client.put("/api/v1/automations/flows/flow-brocas/toggle")
+    assert toggle_res.status_code == 200
+    assert toggle_res.json()["is_active"] is False
+
+    # Toggle novamente para reativar
+    toggle_back = client.put("/api/v1/automations/flows/flow-brocas/toggle")
+    assert toggle_back.status_code == 200
+    assert toggle_back.json()["is_active"] is True
+
+    # 3. Disparo de teste manual
+    test_res = client.post("/api/v1/automations/flows/flow-totvs-sc5/test")
+    assert test_res.status_code == 200
+    t_data = test_res.json()
+    assert t_data["status"] == "success"
+    assert "Simulação manual" in t_data["summary"]
+
+    # 4. Consulta de logs
+    logs_res = client.get("/api/v1/automations/logs")
+    assert logs_res.status_code == 200
+    logs = logs_res.json()
+    assert len(logs) >= 1
+    assert logs[0]["flow_id"] == "flow-totvs-sc5"

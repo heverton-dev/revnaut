@@ -19,3 +19,37 @@ class HotLeadEvaluationResponse(BaseModel):
     sla_minutes: int = 15
     status: str
     message: str
+
+
+class AutomationFlowOut(BaseModel):
+    id: str
+    account_id: str
+    name: str
+    category: str
+    trigger_event: str
+    action_description: str
+    is_active: bool
+    execution_count: int
+    last_run_at: Optional[str] = None
+
+
+class AutomationFlowToggleResponse(BaseModel):
+    id: str
+    is_active: bool
+    message: str
+
+
+class AutomationTestResponse(BaseModel):
+    flow_id: str
+    status: str
+    summary: str
+    execution_count: int
+    executed_at: str
+
+
+class AutomationLogOut(BaseModel):
+    id: int
+    flow_id: str
+    result_summary: str
+    status: str
+    executed_at: str

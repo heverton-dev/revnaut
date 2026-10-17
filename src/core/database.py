@@ -340,6 +340,31 @@ def init_db() -> None:
 
         CREATE INDEX IF NOT EXISTS idx_contact_institutions_contact ON contact_institutions(contact_id);
         CREATE INDEX IF NOT EXISTS idx_contact_institutions_inst ON contact_institutions(institution_id);
+
+        CREATE TABLE IF NOT EXISTS automation_flows (
+            id TEXT PRIMARY KEY,
+            account_id TEXT NOT NULL,
+            name TEXT NOT NULL,
+            category TEXT NOT NULL,
+            trigger_event TEXT NOT NULL,
+            action_description TEXT NOT NULL,
+            is_active INTEGER NOT NULL DEFAULT 1,
+            execution_count INTEGER NOT NULL DEFAULT 0,
+            last_run_at TIMESTAMP,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (account_id) REFERENCES accounts(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS automation_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            account_id TEXT NOT NULL,
+            flow_id TEXT NOT NULL,
+            trigger_payload TEXT,
+            result_summary TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'success',
+            executed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (flow_id) REFERENCES automation_flows(id)
+        );
         """)
 
 
@@ -441,9 +466,9 @@ def init_db() -> None:
 
         # Seed idempotente de múltiplos pipelines enterprise (Pipelines 2, 3 e 4)
         extra_pipelines = [
-            (2, "0f14ffff", "Outbound & Pré-Vendas SDR"),
-            (3, "0f14ffff", "Parcerias & Canais Indiretos"),
-            (4, "0f14ffff", "CS, Expansão & Renovações")
+            (2, "0f14ffff", "Prospecção & SDR Outbound (Instituições & Clínicas)"),
+            (3, "0f14ffff", "Distribuidores & Contratos de Atacado"),
+            (4, "0f14ffff", "CS, Expansão & KOLs (Pós-Venda Cirúrgica)")
         ]
         cur.executemany("INSERT OR IGNORE INTO pipelines (id, account_id, name) VALUES (?, ?, ?)", extra_pipelines)
 
@@ -542,11 +567,54 @@ def init_db() -> None:
                 insts_data
             )
 
+        # Seed idempotente de Fluxos de Automação Cirúrgica
+        cur.execute("SELECT COUNT(*) FROM automation_flows")
+        if cur.fetchone()[0] == 0:
+            flows_data = [
+                (
+                    "flow-brocas", "0f14ffff",
+                    "Alerta de Reposição de Brocas Cirúrgicas",
+                    "Consignação",
+                    "Caixa consignada > 15 dias sem consumo",
+                    "Notificação WhatsApp via Evolution API para reposição de kit cirúrgico",
+                    1, 14, "2026-10-15 14:30:00"
+                ),
+                (
+                    "flow-transbordo-tier-a", "0f14ffff",
+                    "Transbordo Automático de Leads Hot (Tier A)",
+                    "Receita",
+                    "Cirurgião atinge pontuação Tier A (>= 75 pts + CRO ativo)",
+                    "Alocação do Closer regional pelo território/UF e geração de Task com SLA de 15 min",
+                    1, 28, "2026-10-16 09:15:00"
+                ),
+                (
+                    "flow-totvs-sc5", "0f14ffff",
+                    "Faturamento Automático no TOTVS Protheus",
+                    "ERP",
+                    "Negócio movido para o estágio Fechado & Ganho",
+                    "Emissão de pedido de venda SC5 com itens SC6 na fila de saída idempotente",
+                    1, 9, "2026-10-16 17:45:00"
+                ),
+                (
+                    "flow-anti-churn", "0f14ffff",
+                    "Radar Anti-Churn & Recompra de Implantes",
+                    "Retenção",
+                    "Dias sem compras > 1.5x ciclo médio de consumo da clínica",
+                    "Alerta visual no Kanban e agendamento automático de visita técnica preventiva",
+                    1, 6, "2026-10-17 08:00:00"
+                )
+            ]
+            cur.executemany(
+                "INSERT INTO automation_flows (id, account_id, name, category, trigger_event, action_description, is_active, execution_count, last_run_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                flows_data
+            )
+
         # Atualização canônica dos nomes dos pipelines para a Indústria Dental (RevOps Puro)
-        cur.execute("UPDATE pipelines SET name = 'Cirurgiões & Venda Direta' WHERE id = 1")
-        cur.execute("UPDATE pipelines SET name = 'Prospecção & SDR Outbound' WHERE id = 2")
-        cur.execute("UPDATE pipelines SET name = 'Distribuidores & Contratos Atacado' WHERE id = 3")
-        cur.execute("UPDATE pipelines SET name = 'CS, Expansão & Key Accounts' WHERE id = 4")
+        cur.execute("UPDATE pipelines SET name = 'Cirurgiões & Venda Direta / Consignação de Caixas' WHERE id = 1")
+        cur.execute("UPDATE pipelines SET name = 'Prospecção & SDR Outbound (Instituições & Clínicas)' WHERE id = 2")
+        cur.execute("UPDATE pipelines SET name = 'Distribuidores & Contratos de Atacado' WHERE id = 3")
+        cur.execute("UPDATE pipelines SET name = 'CS, Expansão & KOLs (Pós-Venda Cirúrgica)' WHERE id = 4")
 
         # Migração de colunas de hierarquia e escopo em users
         cur.execute("PRAGMA table_info(users);")

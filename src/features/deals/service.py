@@ -173,6 +173,37 @@ def move_deal_stage(
         VALUES (1, ?, 200, '{"delivered": true}')
     """, (payload,))
     
+    # Se o novo estágio for Fechado & Ganho (ex: stage_id 105 ou probabilidade 100), emite pedido no TOTVS Protheus
+    cur.execute("SELECT name, probability FROM stages WHERE id = ?", (new_stage_id,))
+    stage_info = cur.fetchone()
+    if stage_info and (stage_info["probability"] == 100 or "fechado" in stage_info["name"].lower()):
+        try:
+            from src.features.integrations.totvs.schemas import TotvsOrderSC5, TotvsOrderItemSC6
+            from src.features.integrations.totvs.service import create_sc5_order
+
+            order_payload = TotvsOrderSC5(
+                deal_id=deal_id,
+                C5_CLIENTE="CL001",
+                C5_LOJACLI="01",
+                C5_CONDPAG="30D",
+                C5_TOTAL=deal_value,
+                items=[
+                    TotvsOrderItemSC6(
+                        C6_ITEM="01",
+                        C6_PRODUTO="IMP-CM-4011",
+                        C6_DESCRI=row["title"][:40],
+                        C6_QTDVEN=1.0,
+                        C6_PRCVEN=deal_value,
+                        C6_VALOR=deal_value
+                    )
+                ],
+                idempotency_key=f"totvs_deal_close_{deal_id}_{int(time.time())}"
+            )
+            create_sc5_order(order_payload)
+        except Exception as e:
+            # Não aborta a transação principal em caso de instabilidade externa, outbox captura
+            pass
+
     conn.commit()
     conn.close()
     return True

@@ -41,9 +41,41 @@ def verify_session_token(token: str) -> Optional[str]:
     return None
 
 
+_failed_login_attempts: Dict[str, list[float]] = {}
+RATE_LIMIT_WINDOW_SECONDS = 900  # 15 minutos
+MAX_FAILED_ATTEMPTS = 5
+
+
+def _check_rate_limit(email_clean: str):
+    now = time.time()
+    attempts = _failed_login_attempts.get(email_clean, [])
+    # Limpa tentativas mais velhas que 15 min
+    valid_attempts = [t for t in attempts if now - t < RATE_LIMIT_WINDOW_SECONDS]
+    _failed_login_attempts[email_clean] = valid_attempts
+    if len(valid_attempts) >= MAX_FAILED_ATTEMPTS:
+        raise HTTPException(
+            status_code=429,
+            detail="Muitas tentativas de login incorretas. Conta bloqueada temporariamente por 15 minutos (Proteção contra força bruta)."
+        )
+
+
+def _record_failed_attempt(email_clean: str):
+    now = time.time()
+    if email_clean not in _failed_login_attempts:
+        _failed_login_attempts[email_clean] = []
+    _failed_login_attempts[email_clean].append(now)
+
+
+def _clear_failed_attempts(email_clean: str):
+    if email_clean in _failed_login_attempts:
+        _failed_login_attempts.pop(email_clean, None)
+
+
 def authenticate_user(email: str, password: str) -> Dict[str, Any]:
-    """Autentica usuário por e-mail e senha no SQLite WAL."""
+    """Autentica usuário por e-mail e senha no SQLite WAL com rate limiting contra força bruta."""
     email_clean = email.strip().lower()
+    _check_rate_limit(email_clean)
+
     pwd_hash = hash_password(password)
 
     conn = get_connection()
@@ -57,6 +89,7 @@ def authenticate_user(email: str, password: str) -> Dict[str, Any]:
     conn.close()
 
     if not user:
+        _record_failed_attempt(email_clean)
         raise HTTPException(status_code=401, detail="E-mail ou senha incorretos")
 
     if user["is_active"] == 0:
@@ -66,14 +99,18 @@ def authenticate_user(email: str, password: str) -> Dict[str, Any]:
     stored_hash = user["password_hash"]
     if stored_hash:
         if not hmac.compare_digest(stored_hash, pwd_hash):
+            _record_failed_attempt(email_clean)
             raise HTTPException(status_code=401, detail="E-mail ou senha incorretos")
     else:
         # Para usuários de demonstração legados sem hash cadastrado,
         # permite senha padrão 'revnaut123' ou atualiza hash se for a primeira entrada
         default_demo_hash = hash_password("revnaut123")
         if not (hmac.compare_digest(default_demo_hash, pwd_hash) or password == "revnaut123"):
+            _record_failed_attempt(email_clean)
             raise HTTPException(status_code=401, detail="E-mail ou senha incorretos")
 
+    # Sucesso: limpa tentativas falhas
+    _clear_failed_attempts(email_clean)
     return dict(user)
 
 
@@ -218,4 +255,79 @@ def reset_user_password(target_user_id: str, new_password: str, current_user: Di
     conn.commit()
     conn.close()
     return {"id": target_user_id, "success": True, "message": "Senha redefinida com sucesso."}
+
+
+def request_password_reset(email: str) -> Dict[str, Any]:
+    """Gera token de recuperação temporário (1 hora) para auto-recuperação de senha."""
+    email_clean = email.strip().lower()
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, name, is_active FROM users WHERE lower(email) = ?", (email_clean,))
+    user = cur.fetchone()
+    conn.close()
+
+    if not user:
+        # Por segurança corporativa, não revela se o e-mail existe ou não
+        return {
+            "success": True,
+            "message": "Se o e-mail estiver cadastrado, o link de recuperação foi gerado.",
+            "reset_token": None
+        }
+
+    if user["is_active"] == 0:
+        raise HTTPException(status_code=403, detail="Conta inativa. Contate o administrador.")
+
+    # Gera token de reset temporário com validade de 1 hora
+    now = int(time.time())
+    payload = f"reset:{user['id']}:{now}".encode("utf-8")
+    sig = hmac.new(SECRET_KEY.encode("utf-8"), payload, hashlib.sha256).hexdigest()
+    reset_token = f"rst.{user['id']}.{now}.{sig}"
+
+    return {
+        "success": True,
+        "message": "Link de recuperação gerado com sucesso. Válido por 60 minutos.",
+        "reset_token": reset_token
+    }
+
+
+def reset_password_with_token(token: str, new_password: str) -> Dict[str, Any]:
+    """Consome token temporário e atualiza senha do usuário."""
+    if not token or not token.startswith("rst."):
+        raise HTTPException(status_code=400, detail="Token de recuperação inválido.")
+
+    parts = token.split(".")
+    if len(parts) != 4:
+        raise HTTPException(status_code=400, detail="Formato de token inválido.")
+
+    _, user_id, timestamp_str, sig = parts
+    try:
+        ts = int(timestamp_str)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Timestamp do token corrompido.")
+
+    # Validade de 3600 segundos (1 hora)
+    if time.time() - ts > 3600:
+        raise HTTPException(status_code=400, detail="O link de recuperação expirou. Solicite um novo.")
+
+    payload = f"reset:{user_id}:{ts}".encode("utf-8")
+    expected_sig = hmac.new(SECRET_KEY.encode("utf-8"), payload, hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(sig, expected_sig):
+        raise HTTPException(status_code=400, detail="Assinatura criptográfica do token inválida.")
+
+    if not new_password or len(new_password) < 6:
+        raise HTTPException(status_code=400, detail="A nova senha deve ter no mínimo 6 caracteres.")
+
+    new_hash = hash_password(new_password)
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id FROM users WHERE id = ?", (user_id,))
+    if not cur.fetchone():
+        conn.close()
+        raise HTTPException(status_code=404, detail="Usuário do token não encontrado.")
+
+    cur.execute("UPDATE users SET password_hash = ? WHERE id = ?", (new_hash, user_id))
+    conn.commit()
+    conn.close()
+
+    return {"success": True, "message": "Senha alterada com sucesso! Você já pode realizar o login."}
 

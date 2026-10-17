@@ -82,3 +82,23 @@ class ResetPasswordResponse(BaseModel):
     success: bool = True
     message: str
 
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+
+class ForgotPasswordResponse(BaseModel):
+    success: bool = True
+    message: str
+    reset_token: Optional[str] = None
+
+
+class ResetPasswordWithTokenRequest(BaseModel):
+    token: str
+    new_password: str
+
+
+class ResetPasswordWithTokenResponse(BaseModel):
+    success: bool = True
+    message: str
+

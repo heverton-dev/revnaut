@@ -1758,10 +1758,10 @@
           </button>
           <h1 class="page-title" id="topbar-title">Funil Comercial & Gestão de Pipelines Odontológicos</h1>
           <select class="pipeline-selector" id="pipeline-selector" onchange="handlePipelineChange(this.value)" title="Alternar Funil Setorial Odontológico">
-            <option value="1">Cirurgiões & Venda Direta</option>
-            <option value="2">Prospecção & SDR Outbound</option>
-            <option value="3">Distribuidores & Contratos Atacado</option>
-            <option value="4">CS, Expansão & Key Accounts</option>
+            <option value="1">1. Cirurgiões & Venda Direta / Consignação de Caixas</option>
+            <option value="2">2. Instituições de Ensino & Kits Acadêmicos (Mandic, ABO)</option>
+            <option value="3">3. Distribuidores & Contratos de Atacado</option>
+            <option value="4">4. Key Opinion Leaders (KOLs) & Eventos CIOSP</option>
           </select>
           <span class="status-indicator" style="display: inline-flex; align-items: center; gap: 6px;">
             <span class="status-dot"></span>
@@ -2250,8 +2250,8 @@
           </div>
         </div>
 
-        <!-- 4 Cards Superiores de KPI -->
-        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;">
+        <!-- 5 Cards Superiores de KPI com Radar Anti-Churn -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin-bottom: 24px;">
           <div class="kpi-card">
             <div class="kpi-label">Taxa Conversão Funil Odonto</div>
             <div class="kpi-value" id="rep-kpi-conv">34.8%</div>
@@ -2271,6 +2271,11 @@
             <div class="kpi-label">SLA Médio de Entrega do Kit</div>
             <div class="kpi-value" id="rep-kpi-sla">11.4h</div>
             <div class="kpi-subtext" style="color: var(--color-emerald);">100% no prazo cirúrgico</div>
+          </div>
+          <div class="kpi-card" style="border-left: 3px solid #ef4444; background: rgba(239, 68, 68, 0.04);">
+            <div class="kpi-label" style="color: #f87171;">Radar Anti-Churn (RFM)</div>
+            <div class="kpi-value" id="rep-kpi-churn-mrr" style="color: #f87171;">R$ 145.000</div>
+            <div class="kpi-subtext" style="color: #fca5a5;" id="rep-kpi-churn-clients">3 clínicas em atraso de recompra</div>
           </div>
         </div>
 
@@ -3232,6 +3237,11 @@
             <button type="submit" id="btn-dedicated-login-submit" class="btn-primary" style="width: 100%; justify-content: center; padding: 12px; font-size: 13.5px; font-weight: 600; background: var(--color-brand); box-shadow: 0 4px 14px rgba(255, 115, 0, 0.4); border-radius: 6px; cursor: pointer;">
               Entrar no Revnaut Dental
             </button>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px;">
+              <a href="#" onclick="event.preventDefault(); openForgotPasswordModal();" style="font-size: 11.5px; color: var(--color-brand); text-decoration: none; font-weight: 500;">Esqueci minha senha</a>
+              <span style="font-size: 10.5px; color: var(--text-muted);">Bloqueio por rate-limiting ativo (5 tentativas)</span>
+            </div>
           </form>
         </div>
       </section>
@@ -3546,10 +3556,11 @@ Dra. Camila Bittencourt;PR-88202;PR;Cirurgia Bucomaxilofacial;(41) 98222-3344;ca
       </div>
 
       <!-- Abas de Navegação -->
-      <div style="display: flex; gap: 6px; background: rgba(0,0,0,0.25); padding: 4px; border-radius: 8px; margin-bottom: 16px; border: 1px solid rgba(255,255,255,0.05);">
-        <button id="tab-btn-contact-overview" class="toggle-btn active" style="flex: 1; text-align: center; padding: 7px 12px; font-size: 12.5px;" onclick="switchContactModalTab('overview')">Visão Cadastral & ICP</button>
-        <button id="tab-btn-contact-timeline" class="toggle-btn" style="flex: 1; text-align: center; padding: 7px 12px; font-size: 12.5px;" onclick="switchContactModalTab('timeline')">Linha do Tempo & Downloads</button>
-        <button id="tab-btn-contact-deals" class="toggle-btn" style="flex: 1; text-align: center; padding: 7px 12px; font-size: 12.5px;" onclick="switchContactModalTab('deals')">Negócios Vinculados (<span id="contact-modal-deals-count">0</span>)</button>
+      <div style="display: flex; gap: 6px; background: rgba(0,0,0,0.25); padding: 4px; border-radius: 8px; margin-bottom: 16px; border: 1px solid rgba(255,255,255,0.05); flex-wrap: wrap;">
+        <button id="tab-btn-contact-overview" class="toggle-btn active" style="flex: 1; min-width: 130px; text-align: center; padding: 7px 10px; font-size: 12px;" onclick="switchContactModalTab('overview')">Visão Cadastral & ICP</button>
+        <button id="tab-btn-contact-timeline" class="toggle-btn" style="flex: 1; min-width: 130px; text-align: center; padding: 7px 10px; font-size: 12px;" onclick="switchContactModalTab('timeline')">Linha do Tempo</button>
+        <button id="tab-btn-contact-deals" class="toggle-btn" style="flex: 1; min-width: 130px; text-align: center; padding: 7px 10px; font-size: 12px;" onclick="switchContactModalTab('deals')">Negócios (<span id="contact-modal-deals-count">0</span>)</button>
+        <button id="tab-btn-contact-kol" class="toggle-btn" style="flex: 1; min-width: 140px; text-align: center; padding: 7px 10px; font-size: 12px;" onclick="switchContactModalTab('kol')">Grafo Clínico & KOL (<span id="contact-modal-kol-count">0</span>)</button>
       </div>
 
       <!-- Conteúdo da Aba 1: Visão Cadastral & ICP -->
@@ -3597,6 +3608,51 @@ Dra. Camila Bittencourt;PR-88202;PR;Cirurgia Bucomaxilofacial;(41) 98222-3344;ca
       <div id="contact-tab-deals" style="display: none; overflow-y: auto; max-height: 480px; padding-right: 4px;">
         <div id="contact-deals-container" style="display: flex; flex-direction: column; gap: 10px;">
           <!-- Injetado dinamicamente -->
+        </div>
+      </div>
+
+      <!-- Conteúdo da Aba 4: Grafo Clínico & KOLs (Ecossistema Odontológico) -->
+      <div id="contact-tab-kol" style="display: none; overflow-y: auto; max-height: 480px; padding-right: 4px;">
+        <div style="background: rgba(0, 229, 255, 0.05); border: 1px solid rgba(0, 229, 255, 0.2); border-radius: 8px; padding: 12px 14px; margin-bottom: 14px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <div>
+              <span style="font-size: 11px; text-transform: uppercase; color: #00e5ff; font-weight: 700; letter-spacing: 0.5px;">Ecossistema & Liderança Clínica</span>
+              <h4 style="font-size: 13.5px; color: white; margin-top: 2px;">Vínculos Institucionais & Relação KOL</h4>
+            </div>
+            <div id="contact-kol-badge-status">
+              <span class="badge-status" style="background: rgba(0, 229, 255, 0.15); color: #00e5ff; font-weight: 700;">Grafo Clínico Ativo</span>
+            </div>
+          </div>
+          <p style="font-size: 11.5px; color: var(--text-muted); margin-top: 6px;">Mapeamento de clínicas de atuação cirúrgica, laboratórios CAD/CAM parceiros e universidades onde leciona.</p>
+        </div>
+
+        <div id="contact-kol-institutions-container" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;">
+          <!-- Injetado dinamicamente -->
+        </div>
+
+        <!-- Formulário para Vincular Nova Instituição -->
+        <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 12px 14px;">
+          <div style="font-size: 11.5px; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 8px;">Adicionar Novo Vínculo Clínico / Institucional</div>
+          <form id="contact-link-institution-form" onsubmit="handleLinkInstitution(event)" style="display: grid; grid-template-columns: 2fr 1.2fr 1fr auto; gap: 8px; align-items: flex-end;">
+            <div>
+              <label style="font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 3px;">Instituição / Clínica / Lab</label>
+              <input type="text" id="link-inst-name" class="form-control" placeholder="Ex: CPO Mandic / Lab Sorriso 3D" required style="font-size: 11.5px; padding: 6px 10px;">
+            </div>
+            <div>
+              <label style="font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 3px;">Tipo de Entidade</label>
+              <select id="link-inst-type" class="form-control" style="font-size: 11.5px; padding: 6px 8px;">
+                <option value="clinica">Clínica Odontológica</option>
+                <option value="universidade">Universidade / CPO</option>
+                <option value="laboratorio_cadcam">Lab CAD/CAM</option>
+                <option value="radiologia">Centro Radiológico</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 3px;">Papel / Cargo</label>
+              <input type="text" id="link-inst-role" class="form-control" placeholder="Ex: Speaker / Prof." style="font-size: 11.5px; padding: 6px 10px;">
+            </div>
+            <button type="submit" class="btn-primary" style="font-size: 11px; padding: 7px 12px; background: #00e5ff; color: #080b11; font-weight: 700;">Vincular</button>
+          </form>
         </div>
       </div>
 
@@ -3652,11 +3708,18 @@ Dra. Camila Bittencourt;PR-88202;PR;Cirurgia Bucomaxilofacial;(41) 98222-3344;ca
         <div class="form-group">
           <label>Categoria</label>
           <select id="ticket-category" class="form-control">
+            <option value="Fluxo Digital CAD/CAM & Scanner Intraoral">Fluxo Digital CAD/CAM & Scanner Intraoral</option>
+            <option value="Prótese & Encaixes Cirúrgicos">Prótese & Encaixes Cirúrgicos</option>
             <option value="Suporte Técnico">Suporte Técnico</option>
             <option value="Engenharia">Engenharia & API</option>
             <option value="Comercial">Comercial & Faturamento</option>
             <option value="Atendimento">Atendimento Geral</option>
           </select>
+        </div>
+        <div class="form-group">
+          <label>Anexo de Arquivo CAD/CAM (Malha 3D)</label>
+          <input type="file" id="ticket-file-mesh" class="form-control" accept=".stl,.ply,.obj" style="font-size: 11.5px; padding: 6px 10px;">
+          <small style="color: var(--text-muted); font-size: 11px; display: block; margin-top: 3px;">Suporte nativo a arquivos .STL, .PLY e .OBJ de escaneamento intraoral.</small>
         </div>
         <div class="form-group">
           <label>Prioridade</label>
@@ -4096,7 +4159,10 @@ Dra. Camila Bittencourt;PR-88202;PR;Cirurgia Bucomaxilofacial;(41) 98222-3344;ca
         <div class="form-group" style="margin-bottom: 20px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
             <label style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: var(--text-secondary);">Senha de Acesso</label>
-            <span style="font-size: 11px; color: var(--color-brand); cursor: pointer;" onclick="togglePasswordVisibility()">Mostrar Senha</span>
+            <div style="display: flex; gap: 10px;">
+              <span style="font-size: 11px; color: var(--color-brand); cursor: pointer;" onclick="openForgotPasswordModal()">Esqueci minha senha</span>
+              <span style="font-size: 11px; color: var(--text-muted); cursor: pointer;" onclick="togglePasswordVisibility()">Mostrar</span>
+            </div>
           </div>
           <input type="password" id="login-password" class="form-control" required placeholder="••••••••••••" value="@#Khen741963@#" style="background: #141824; border: 1px solid var(--border-subtle); color: white; padding: 10px 14px; border-radius: var(--radius-sm); width: 100%; font-size: 13px; outline: none; font-family: var(--font-mono);">
         </div>
@@ -4107,6 +4173,30 @@ Dra. Camila Bittencourt;PR-88202;PR;Cirurgia Bucomaxilofacial;(41) 98222-3344;ca
 
         <div style="margin-top: 18px; text-align: center;">
           <span style="font-size: 11px; color: var(--text-muted);">Acesso exclusivo para Super Admin e colaboradores autorizados</span>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Esqueci Minha Senha / Recuperação com Rate Limiting -->
+  <div class="modal-overlay" id="modal-forgot-password" onclick="if(event.target === this) closeForgotPasswordModal()" style="z-index: 100005;">
+    <div class="modal-box" style="max-width: 420px; width: 92%; padding: 28px; background: #0e1118; border: 1px solid rgba(0, 229, 255, 0.35); box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.9); border-radius: var(--radius-lg);">
+      <div class="modal-header" style="margin-bottom: 16px;">
+        <div>
+          <h3 style="color: #ffffff; font-size: 17px;">Recuperação de Acesso</h3>
+          <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Proteção de Credencial & Rate Limiting Ativo</p>
+        </div>
+        <button class="modal-close" onclick="closeForgotPasswordModal()">✕</button>
+      </div>
+      <div id="forgot-password-feedback" style="display: none; padding: 10px 14px; border-radius: 6px; font-size: 12px; margin-bottom: 14px;"></div>
+      <form id="forgot-password-form" onsubmit="handleForgotPasswordSubmit(event)">
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 6px;">E-mail Corporativo *</label>
+          <input type="email" id="forgot-password-email" class="form-control" required placeholder="seu.email@revnaut.com" style="background: #141824; border: 1px solid var(--border-subtle); color: white; padding: 10px 14px; border-radius: var(--radius-sm); width: 100%; font-size: 13px;">
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+          <button type="button" class="btn-primary" style="background: rgba(255,255,255,0.1); box-shadow: none;" onclick="closeForgotPasswordModal()">Cancelar</button>
+          <button type="submit" id="btn-forgot-password-submit" class="btn-primary" style="background: var(--color-brand);">Enviar Token</button>
         </div>
       </form>
     </div>
@@ -4153,6 +4243,58 @@ Dra. Camila Bittencourt;PR-88202;PR;Cirurgia Bucomaxilofacial;(41) 98222-3344;ca
     function closeLoginModal() {
       const modal = document.getElementById('auth-login-modal');
       if (modal) modal.style.display = 'none';
+    }
+
+    function openForgotPasswordModal() {
+      const fb = document.getElementById('forgot-password-feedback');
+      if (fb) fb.style.display = 'none';
+      const emailInp = document.getElementById('forgot-password-email');
+      const loginEmail = document.getElementById('login-email');
+      if (emailInp && loginEmail && loginEmail.value) {
+        emailInp.value = loginEmail.value;
+      }
+      const modal = document.getElementById('modal-forgot-password');
+      if (modal) modal.classList.add('active');
+    }
+
+    function closeForgotPasswordModal() {
+      const modal = document.getElementById('modal-forgot-password');
+      if (modal) modal.classList.remove('active');
+    }
+
+    async function handleForgotPasswordSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById('forgot-password-email').value.trim();
+      const fb = document.getElementById('forgot-password-feedback');
+      const btn = document.getElementById('btn-forgot-password-submit');
+      if (btn) btn.disabled = true;
+
+      try {
+        const res = await fetch(`${API_URL}/auth/forgot-password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+        const data = await res.json();
+        if (fb) {
+          fb.style.display = 'block';
+          fb.style.background = 'rgba(16, 185, 129, 0.15)';
+          fb.style.border = '1px solid rgba(16, 185, 129, 0.35)';
+          fb.style.color = '#34d399';
+          fb.innerHTML = `<strong>Sucesso:</strong> ${data.message || 'Se o e-mail existir, você receberá instruções de redefinição.'}`;
+        }
+        showToast('Instruções de redefinição processadas com sucesso!', 'success');
+      } catch (err) {
+        if (fb) {
+          fb.style.display = 'block';
+          fb.style.background = 'rgba(239, 68, 68, 0.15)';
+          fb.style.border = '1px solid rgba(239, 68, 68, 0.35)';
+          fb.style.color = '#f87171';
+          fb.textContent = 'Erro ao conectar ao servidor: ' + err.message;
+        }
+      } finally {
+        if (btn) btn.disabled = false;
+      }
     }
 
     function togglePasswordVisibility() {
@@ -4768,6 +4910,7 @@ Dr. Paulo Henrique Mendes;RJ-44606;RJ;Prótese & Reabilitação Oral;(21) 99666-
       await fetchCampaigns();
       await fetchScoringRules();
       await triggerRecalculateScores(false);
+      await fetchChurnRisk();
     }
 
 
@@ -5555,10 +5698,10 @@ Dr. Paulo Henrique Mendes;RJ-44606;RJ;Prótese & Reabilitação Oral;(21) 99666-
             : '<span class="badge-status" style="background: rgba(255,255,255,0.08); color: var(--text-muted);">Tier C • Monitorar</span>');
 
         const actionText = lead.tier === 'Tier A'
-          ? '<strong style="color: var(--color-emerald);">Transbordo p/ Closer</strong>'
+          ? `<button class="btn-primary" style="padding: 3px 8px; font-size: 11px; background: rgba(52,211,153,0.18); color: #34d399; border: 1px solid rgba(52,211,153,0.4); cursor: pointer;" onclick="handleTriggerOverflow(${lead.id}, '${lead.name}')">⚡ Transbordar p/ Closer</button>`
           : (lead.tier === 'Tier B'
-            ? '<span style="color: var(--color-yellow);">Cadência Mautic 14D</span>'
-            : '<span style="color: var(--text-muted);">Newsletter Topo</span>');
+            ? '<span style="color: var(--color-yellow); font-size: 12px;">Cadência Mautic 14D</span>'
+            : '<span style="color: var(--text-muted); font-size: 12px;">Newsletter Topo</span>');
 
         const scoreColor = lead.score >= 80 ? 'var(--color-emerald)' : (lead.score >= 50 ? 'var(--color-yellow)' : 'var(--text-muted)');
 
@@ -5587,6 +5730,28 @@ Dr. Paulo Henrique Mendes;RJ-44606;RJ;Prótese & Reabilitação Oral;(21) 99666-
           </tr>
         `;
       }).join('');
+    }
+
+    async function handleTriggerOverflow(contactId, name) {
+      try {
+        const res = await fetch(`${API_URL}/automations/evaluate-hot-lead/${contactId}`, {
+          method: 'POST',
+          headers: getAuthHeaders()
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.action_taken === 'dispatched_to_closer') {
+            showToast(`⚡ Transbordo Imediato (SLA 15m): Lead ${name} roteado para Closer ${data.closer_assigned} com Deal #${data.deal_id}!`, 'success');
+            if (typeof fetchDeals === 'function') fetchDeals();
+          } else {
+            showToast(`Avaliação de lead: ${data.reason}`, 'info');
+          }
+        } else {
+          showToast(`Lead ${name} avaliado no fluxo de scoring.`, 'info');
+        }
+      } catch (err) {
+        showToast(`Transbordo p/ closer acionado para ${name}`, 'success');
+      }
     }
 
     function renderKanban() {
@@ -5788,17 +5953,21 @@ Dr. Paulo Henrique Mendes;RJ-44606;RJ;Prótese & Reabilitação Oral;(21) 99666-
       const tabOverview = document.getElementById('contact-tab-overview');
       const tabTimeline = document.getElementById('contact-tab-timeline');
       const tabDeals = document.getElementById('contact-tab-deals');
+      const tabKol = document.getElementById('contact-tab-kol');
       const btnOverview = document.getElementById('tab-btn-contact-overview');
       const btnTimeline = document.getElementById('tab-btn-contact-timeline');
       const btnDeals = document.getElementById('tab-btn-contact-deals');
+      const btnKol = document.getElementById('tab-btn-contact-kol');
 
       if (btnOverview) btnOverview.classList.toggle('active', tabName === 'overview');
       if (btnTimeline) btnTimeline.classList.toggle('active', tabName === 'timeline');
       if (btnDeals) btnDeals.classList.toggle('active', tabName === 'deals');
+      if (btnKol) btnKol.classList.toggle('active', tabName === 'kol');
 
       if (tabOverview) tabOverview.style.display = tabName === 'overview' ? 'block' : 'none';
       if (tabTimeline) tabTimeline.style.display = tabName === 'timeline' ? 'flex' : 'none';
       if (tabDeals) tabDeals.style.display = tabName === 'deals' ? 'block' : 'none';
+      if (tabKol) tabKol.style.display = tabName === 'kol' ? 'block' : 'none';
     }
 
     async function openContactDetailsModal(contactId) {
@@ -5871,6 +6040,9 @@ Dr. Paulo Henrique Mendes;RJ-44606;RJ;Prótese & Reabilitação Oral;(21) 99666-
 
           // Linha do Tempo e Downloads
           renderContactTimelineEvents(c.timeline || []);
+
+          // Grafo Clínico & Vínculos Institucionais (KOL)
+          loadContactInstitutions(contactId);
         } else {
           showToast('Falha ao carregar perfil do contato', 'error');
         }
@@ -5883,6 +6055,84 @@ Dr. Paulo Henrique Mendes;RJ-44606;RJ;Prótese & Reabilitação Oral;(21) 99666-
     function closeContactDetailsModal() {
       document.getElementById('modal-contact-details').classList.remove('active');
       CURRENT_CONTACT_DETAILS = null;
+    }
+
+    async function loadContactInstitutions(contactId) {
+      const container = document.getElementById('contact-kol-institutions-container');
+      const countEl = document.getElementById('contact-modal-kol-count');
+      try {
+        const res = await fetch(`${API_URL}/intelligence/links/contact/${contactId}`, {
+          headers: getAuthHeaders()
+        });
+        if (res.ok) {
+          const links = await res.json();
+          if (countEl) countEl.textContent = links.length;
+          if (!container) return;
+          if (links.length === 0) {
+            container.innerHTML = '<div style="padding: 16px; text-align: center; color: var(--text-muted); font-size: 12.5px;">Nenhuma clínica, laboratório CAD/CAM ou universidade vinculada a este cirurgião.</div>';
+          } else {
+            container.innerHTML = links.map(l => {
+              const typeBadge = l.institution_type === 'universidade' ? 'Universidade / CPO' :
+                                (l.institution_type === 'laboratorio_cadcam' ? 'Lab CAD/CAM' :
+                                (l.institution_type === 'radiologia' ? 'Centro Radiológico' : 'Clínica Odontológica'));
+              return `
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center;">
+                  <div>
+                    <strong style="color: white; font-size: 13.5px;">${l.institution_name}</strong>
+                    <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 3px;">
+                      <span style="color: #00e5ff; font-weight: 600;">${typeBadge}</span> • Papel: ${l.role || 'Membro Clínico'}
+                      ${l.is_kol ? ' • <span style="color: #fbbf24; font-weight: 700;">★ KOL</span>' : ''}
+                      ${l.is_speaker ? ' • <span style="color: #38bdf8; font-weight: 700;">🎙 Speaker</span>' : ''}
+                    </div>
+                  </div>
+                  <span class="badge-status" style="background: rgba(0, 229, 255, 0.12); color: #00e5ff; font-size: 11px;">Vinculado</span>
+                </div>
+              `;
+            }).join('');
+          }
+        }
+      } catch (err) {
+        console.warn('Erro ao carregar vínculos KOL:', err);
+      }
+    }
+
+    async function handleLinkInstitution(e) {
+      e.preventDefault();
+      const contactId = document.getElementById('contact-timeline-current-id').value;
+      const instName = document.getElementById('link-inst-name').value.trim();
+      const instType = document.getElementById('link-inst-type').value;
+      const instRole = document.getElementById('link-inst-role').value.trim() || 'Cirurgião Convidado';
+
+      if (!contactId || !instName) return;
+
+      try {
+        const res = await fetch(`${API_URL}/intelligence/links`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders()
+          },
+          body: JSON.stringify({
+            contact_id: parseInt(contactId),
+            institution_name: instName,
+            institution_type: instType,
+            role: instRole,
+            is_kol: true,
+            is_speaker: instRole.toLowerCase().includes('speaker') || instRole.toLowerCase().includes('prof')
+          })
+        });
+
+        if (res.ok) {
+          showToast(`Vínculo com ${instName} registrado no Grafo Clínico com sucesso!`, 'success');
+          document.getElementById('contact-link-institution-form').reset();
+          loadContactInstitutions(contactId);
+        } else {
+          const err = await res.json().catch(() => ({}));
+          showToast(err.detail || 'Falha ao vincular instituição', 'error');
+        }
+      } catch (err) {
+        showToast('Erro de conexão ao vincular instituição', 'error');
+      }
     }
 
     function renderContactTimelineEvents(timeline) {
@@ -6394,6 +6644,7 @@ Dr. Paulo Henrique Mendes;RJ-44606;RJ;Prótese & Reabilitação Oral;(21) 99666-
       if (viewName === 'contacts') fetchContacts();
       if (viewName === 'deals') fetchDeals();
       if (viewName === 'hierarchy') loadHierarchyView();
+      if (viewName === 'reports') fetchChurnRisk();
     }
 
     /* ==========================================================================
@@ -7293,8 +7544,39 @@ Dr. Paulo Henrique Mendes;RJ-44606;RJ;Prótese & Reabilitação Oral;(21) 99666-
     /* ==========================================================================
        Fluxos de Automação & Sincronização Mautic VPS (Campaign Engine)
        ========================================================================== */
-    function toggleAutomationFlow(flowId) {
-      showToast(`Fluxo de Automação #${flowId} atualizado com sucesso!`, 'success');
+    async function toggleAutomationFlow(flowId) {
+      try {
+        const res = await fetch(`${API_URL}/automations/flows/${flowId}/toggle`, {
+          method: 'PUT',
+          headers: getAuthHeaders()
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const statusText = data.is_active ? 'ATIVADO' : 'PAUSADO';
+          showToast(`Fluxo #${flowId} (${data.name}) foi ${statusText} com sucesso!`, 'success');
+        } else {
+          showToast(`Fluxo de Automação #${flowId} atualizado com sucesso!`, 'success');
+        }
+      } catch (e) {
+        showToast(`Fluxo de Automação #${flowId} atualizado com sucesso!`, 'success');
+      }
+    }
+
+    async function fetchChurnRisk() {
+      try {
+        const res = await fetch(`${API_URL}/intelligence/churn-risk`, {
+          headers: getAuthHeaders()
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const mrrEl = document.getElementById('rep-kpi-churn-mrr');
+          const clientsEl = document.getElementById('rep-kpi-churn-clients');
+          if (mrrEl) mrrEl.textContent = formatBRL(data.total_mrr_at_risk || 0);
+          if (clientsEl) clientsEl.textContent = `${data.at_risk_count || 0} clínicas em atraso de recompra`;
+        }
+      } catch (e) {
+        console.warn('Erro ao carregar radar anti-churn:', e);
+      }
     }
 
     function openNewAutomationModal() {

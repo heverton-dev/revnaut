@@ -1,7 +1,7 @@
 # Manual da Rota: Central de Gestão de Usuários & Credenciais (`/#users`)
 
 ## 1. Objetivo da Rota
-Prover o painel de governança exclusiva de acessos do Super Admin (User God - Heverton Eduardo Peres). Permite cadastrar novos colaboradores com papéis e equipes bem definidos, ativar/desativar acessos e realizar o reset seguro de senhas mantendo a integridade criptográfica das credenciais corporativas.
+Prover o painel de governança exclusiva de acessos do Super Admin Único (`hevertoneduardoperes@gmail.com`, `is_superadmin = 1`). Permite cadastrar novos colaboradores associados a equipes e escopos da árvore RBAC (`SPEC_RBAC_DATA_SCOPING_HIERARQUICO.md`), gerenciar credenciais, ativar/suspender acessos e redefinir senhas mantendo a integridade criptográfica.
 
 ---
 
@@ -9,7 +9,7 @@ Prover o painel de governança exclusiva de acessos do Super Admin (User God - H
 * Consultar a lista completa de colaboradores com paginação dinâmica determinística (8 usuários por página).
 * Filtrar colaboradores em tempo real por nome, e-mail institucional ou função/cargo.
 * Acompanhar os KPIs da equipe: Total de Colaboradores, Usuários Ativos, Indicador do Super Admin Único e Regra de Segurança Inviolável.
-* Cadastrar novo colaborador definindo: Nome, E-mail, Senha Provisória, Cargo/Papel e Unidade/Equipe.
+* Cadastrar novo colaborador definindo: Nome, E-mail, Senha Provisória, Cargo/Papel (`role_id`), Equipe (`team_id`) e Escopo de Dados (`custom_data_scope`).
 * Resetar a senha de qualquer colaborador (com modal de confirmação e exigência de nova senha segura).
 * Ativar ou desativar o acesso de colaboradores com 1 clique (bloqueio imediato de autenticação na API).
 
@@ -42,25 +42,20 @@ Prover o painel de governança exclusiva de acessos do Super Admin (User God - H
 ### Cadastro de um Novo Colaborador Comercial
 1. Acesse **Gestão & Equipe > Gestão de Usuários** (apenas com sessão de Super Admin ativa).
 2. Clique no botão "+ Novo Colaborador".
-3. No modal que abrir, informe:
+3. No formulário do modal, informe:
    * Nome Completo (ex: "Dr. Roberto Silveira").
    * E-mail Corporativo (ex: "roberto.silveira@revnaut.com").
    * Senha Inicial Segura.
-   * Cargo (ex: "Consultor de Vendas").
-   * Telefone / WhatsApp.
+   * Papel/Cargo e Equipe vinculada (`team_id`).
+   * Escopo de Dados (padrão herdado do papel ou customizado).
 4. Clique em "Cadastrar Colaborador".
-5. O novo colaborador é inserido no SQLite, a senha é criptografada e ele já poderá se autenticar.
+5. O colaborador é inserido no SQLite WAL com senha criptografada em PBKDF2/bcrypt.
 
-### Redefinição de Senha de um Colaborador
-1. Na lista de usuários, localize o colaborador desejado (utilize a barra de busca se necessário).
+### Redefinição de Senha
+1. Na lista de usuários, localize o colaborador desejado.
 2. Clique no botão "Resetar Senha" na coluna de Ações.
 3. No modal de reset, digite a nova senha provisória e confirme.
-4. Clique em "Confirmar Nova Senha".
-5. O hash criptográfico é atualizado imediatamente no banco e o colaborador poderá acessar com a nova credencial.
-
-### Navegação de Páginas da Lista
-1. Utilize os botões "Anterior" e "Próximo" localizados no rodapé da tabela.
-2. O contador informa a faixa atual exibida (ex: "Mostrando 1-8 de 14 colaboradores").
+4. O hash criptográfico é atualizado imediatamente no banco de dados.
 
 ---
 
@@ -73,3 +68,5 @@ Prover o painel de governança exclusiva de acessos do Super Admin (User God - H
 
 ## ANOTAÇÕES DO HEVERTON
 
+* **[INVARIANTE SUPER ADMIN]**: Apenas a conta `hevertoneduardoperes@gmail.com` possui a flag `is_superadmin = 1`. Tentativas de remover ou rebaixar este registro são abortadas no nível do banco e da API.
+* **[VÍNCULO HIERÁRQUICO]**: Todo novo usuário recebe obrigatoriamente um vínculo de equipe (`team_id`), garantindo que seus negócios futuros caiam no escopo de seu gerente imediato.

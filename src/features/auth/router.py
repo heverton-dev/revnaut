@@ -146,3 +146,25 @@ def reset_password(
     )
 
 
+from src.features.auth.schemas import (
+    ForgotPasswordRequest,
+    ForgotPasswordResponse,
+    ResetPasswordWithTokenRequest,
+    ResetPasswordWithTokenResponse
+)
+from src.features.auth.service import (
+    request_password_reset,
+    reset_password_with_token
+)
+
+
+@router.post("/forgot-password", response_model=ForgotPasswordResponse, summary="Solicitar link temporário de recuperação de senha")
+def forgot_password(payload: ForgotPasswordRequest):
+    return request_password_reset(payload.email)
+
+
+@router.post("/reset-password-with-token", response_model=ResetPasswordWithTokenResponse, summary="Redefinir senha utilizando token temporário de recuperação")
+def reset_with_token(payload: ResetPasswordWithTokenRequest):
+    return reset_password_with_token(token=payload.token, new_password=payload.new_password)
+
+

@@ -193,3 +193,59 @@ def test_users_management_crud_and_security_invariants():
     assert "Super Admin único não pode ser desativado" in super_deact_res.json()["detail"]
 
 
+def test_login_rate_limiting_brute_force():
+    """Testa bloqueio por rate limiting após 5 tentativas falhas de login."""
+    test_email = "bruteforce.target@revnaut.com"
+    # 5 tentativas com senha errada
+    for i in range(5):
+        res = client.post("/api/v1/auth/login", json={
+            "email": test_email,
+            "password": f"wrongpass{i}"
+        })
+        assert res.status_code == 401
+
+    # 6ª tentativa deve ser bloqueada com 429 Too Many Requests
+    blocked_res = client.post("/api/v1/auth/login", json={
+        "email": test_email,
+        "password": "wrongpass_blocked"
+    })
+    assert blocked_res.status_code == 429
+    assert "Muitas tentativas" in blocked_res.json()["detail"]
+
+
+def test_forgot_password_and_reset_token_flow():
+    """Testa fluxo de recuperação de senha com token temporário."""
+    # 1. Solicita link/token de recuperação
+    req_res = client.post("/api/v1/auth/forgot-password", json={
+        "email": "hevertoneduardoperes@gmail.com"
+    })
+    assert req_res.status_code == 200
+    data = req_res.json()
+    assert data["success"] is True
+    assert data["reset_token"] is not None
+    token = data["reset_token"]
+
+    # 2. Reseta senha usando o token
+    reset_res = client.post("/api/v1/auth/reset-password-with-token", json={
+        "token": token,
+        "new_password": "NovaSenhaSeguraHeverton2026!"
+    })
+    assert reset_res.status_code == 200
+    assert reset_res.json()["success"] is True
+
+    # 3. Loga com a nova senha
+    login_res = client.post("/api/v1/auth/login", json={
+        "email": "hevertoneduardoperes@gmail.com",
+        "password": "NovaSenhaSeguraHeverton2026!"
+    })
+    assert login_res.status_code == 200
+    assert "access_token" in login_res.json()
+
+    # 4. Restaura senha de teste original para não quebrar outros testes
+    restore_res = client.post("/api/v1/auth/reset-password-with-token", json={
+        "token": client.post("/api/v1/auth/forgot-password", json={"email": "hevertoneduardoperes@gmail.com"}).json()["reset_token"],
+        "new_password": "superadmin_dental_2026"
+    })
+    assert restore_res.status_code == 200
+
+
