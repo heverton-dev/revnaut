@@ -14,6 +14,8 @@ Cumprir a Lei Canônica #10 de Governança AIDD, que exige que toda aplicação 
   * Interface e discovery de endpoints para Model Context Protocol (MCP), permitindo que agentes LLM e ferramentas operem o CRM de forma controlada.
 * **Pilar IV: Guia do Usuário (`/docs/guia`):**
   * Catálogo operacional vivo e navegável da plataforma acessível a toda a equipe comercial e diretoria.
+* **Central de Conectores & Integrações (`integrations`):**
+  * Painel visual para monitoramento dos conectores TOTVS Protheus (tabelas SA1, SC5, SC6), WhatsApp Evolution API, Mautic VPS e Meta CAPI, com auditoria em tempo real da fila Outbox.
 * **Sincronizador Tipado de Contratos (`api_contracts.ts`):**
   * Sincronização automática entre os schemas FastAPI/Pydantic e os contratos TypeScript do Frontend, auditados pelo teste de regressão `test_api_contracts_sync.py`.
 
@@ -27,6 +29,7 @@ Cumprir a Lei Canônica #10 de Governança AIDD, que exige que toda aplicação 
 | Webhook Studio | `/webhooks` | Equipe de TI e Engenharia | Autenticação de Operações |
 | MCP Studio | `/mcp` | Agentes de IA e Automação | Token de API de Sistema |
 | Guia do Usuário | `/docs/guia` | Colaboradores Comerciais | Aberto para leitura corporativa |
+| Central de Conectores | `integrations` | Gestores e Administradores | Visualização e Operação de Integrações |
 
 ---
 
@@ -35,14 +38,16 @@ Cumprir a Lei Canônica #10 de Governança AIDD, que exige que toda aplicação 
 * `WEBHOOK_SIMULATION`: Enviar webhooks de teste com payload de simulação de venda para URLs configuradas.
 * `MCP_TOOL_DISCOVERY`: Listagem dinâmica de ferramentas e schemas para modelos de linguagem.
 * `VERIFY_CONTRACTS`: Validação de 100% dos response models Pydantic via Quality Gate `G_CONTRACTS`.
+* `INTEGRATION_MANAGEMENT`: Testar conectores ERP TOTVS Protheus, auditar sessão WhatsApp e inspecionar a fila transacional Outbox.
 
 ---
 
 ## 5. Como o Usuário Realiza as Ações (Passo a Passo)
-1. No menu lateral, role até o bloco **Governança AIDD**.
-2. Clique no link desejado (ex: "Swagger Studio").
-3. A ferramenta será aberta em uma nova aba do navegador sem interromper o trabalho no CRM.
-4. Para autenticar no Swagger, clique em "Authorize" e informe o token Bearer gerado na tela de login.
+1. No menu lateral, role até o bloco **Governança AIDD** ou clique em **Central de Integrações**.
+2. Clique no link desejado (ex: "Swagger Studio" ou "Central de Integrações").
+3. As ferramentas de estúdio serão abertas em nova aba; a Central de Integrações carrega os cards dos conectores e a tabela da fila Outbox diretamente na aplicação.
+4. Para testar a comunicação com o ERP, clique em "Testar Ping ERP" ou "Sincronizar Cliente SA1 (TOTVS)".
+5. Para autenticar no Swagger, clique em "Authorize" e informe o token Bearer gerado na tela de login.
 
 ---
 

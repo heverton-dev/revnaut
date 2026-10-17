@@ -1,0 +1,18 @@
+{
+  "fase": 5,
+  "nome": "criador",
+  "status": "spec_only",
+  "status_nota": "Fase 100% deterministica, sem gate subjetivo. Script ainda nao existe.",
+  "script_esperado": "scripts/phases/05_criador.py",
+  "modelo": null,
+  "tokens_orcamento": 0,
+  "gates": ["E1_arquivos_existem", "E2_git_commit_real", "E3_sqlite_com_dados", "E4_permissoes", "E5_readme_nao_vazio", "S1_auditoria_seguranca"],
+  "output_esperado": "estrutura completa do projeto + estado_projeto.db",
+  "depende_de": ["fase_3_designer", "fase_4_decisor"],
+  "usado_por": ["fase_6_documentador", "fase_7_autocritica"],
+  "artefatos": {
+    "spec": "SPEC.md", "skill": "SKILL.md", "mcp": "MCP.md", "hook": "HOOK.md",
+    "rules": "RULES.md", "commands": "../../../../commands/aidd-criador.md",
+    "agents": "AGENTS.md", "fluxo": "FLUXO.md"
+  }
+}

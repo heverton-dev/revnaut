@@ -1,0 +1,24 @@
+{
+  "fase": 1,
+  "nome": "pesquisador",
+  "status": "spec_only",
+  "status_nota": "SPEC/RULES/FLUXO definidos. scripts/phases/01_pesquisador.py NAO existe ainda no skill aidd-project-generator.",
+  "script_esperado": "scripts/phases/01_pesquisador.py",
+  "modelo": null,
+  "modelo_nota": "Fase 100% determinística, sem chamada de LLM.",
+  "tokens_orcamento": 0,
+  "gates": ["R1_http_200", "R2_atividade_recente", "R3_estrutura_valida", "R4_minimo_5_referencias"],
+  "output_esperado": ".aidd/cache/_phase_01_index.json",
+  "depende_de": [],
+  "usado_por": ["fase_2_analisador"],
+  "artefatos": {
+    "spec": "SPEC.md",
+    "skill": "SKILL.md",
+    "mcp": "MCP.md",
+    "hook": "HOOK.md",
+    "rules": "RULES.md",
+    "commands": "../../../../commands/aidd-pesquisador.md",
+    "agents": "AGENTS.md",
+    "fluxo": "FLUXO.md"
+  }
+}

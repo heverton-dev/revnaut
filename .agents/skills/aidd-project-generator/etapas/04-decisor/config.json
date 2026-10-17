@@ -1,0 +1,18 @@
+{
+  "fase": 4,
+  "nome": "decisor",
+  "status": "spec_only",
+  "status_nota": "Corrige o modal mockado encontrado em auditoria de codigo real anterior (_apresentar_modal_mock sempre retornava dict fixo).",
+  "script_esperado": "scripts/phases/04_decisor.py",
+  "modelo": "env:LLM_MODEL (default anthropic/claude-haiku-4-5), so usado em --nao-interativo",
+  "tokens_orcamento": 3000,
+  "gates": ["C1_valores_validos", "C2_symlinks_resolvem_de_verdade"],
+  "output_esperado": ".aidd/cache/_phase_04_index.json",
+  "depende_de": ["fase_3_designer"],
+  "usado_por": ["fase_5_criador"],
+  "artefatos": {
+    "spec": "SPEC.md", "skill": "SKILL.md", "mcp": "MCP.md", "hook": "HOOK.md",
+    "rules": "RULES.md", "commands": "../../../../commands/aidd-decisor.md",
+    "agents": "AGENTS.md", "fluxo": "FLUXO.md"
+  }
+}

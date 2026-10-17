@@ -114,7 +114,7 @@ def evaluate_hot_lead_and_overflow(
 
             # 3. Cria Task com SLA de 15 minutos
             task_id = f"task_hot_{uuid.uuid4().hex[:6]}"
-            task_title = f"⚡ SLA 15min: Contatar Lead Hot Tier A - Dr(a). {contact['name']} ({uf})"
+            task_title = f"[SLA 15min] Contatar Lead Hot Tier A - Dr(a). {contact['name']} ({uf})"
             cur.execute("""
                 INSERT INTO tasks (id, account_id, title, due_date, assignee, priority, completed)
                 VALUES (?, ?, ?, 'Em 15 minutos (SLA Hot Lead)', ?, 'alta', 0)

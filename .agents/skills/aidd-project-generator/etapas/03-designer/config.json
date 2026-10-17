@@ -1,0 +1,18 @@
+{
+  "fase": 3,
+  "nome": "designer",
+  "status": "spec_only",
+  "status_nota": "Corrige a versao fabricada do SKILL.md antigo (5 subagentes paralelos, 30k tokens). Desenho real: dict fixo + 1 chamada LLM.",
+  "script_esperado": "scripts/phases/03_designer.py",
+  "modelo": "env:LLM_MODEL (default anthropic/claude-haiku-4-5)",
+  "tokens_orcamento": 3000,
+  "gates": ["D1_5_camadas", "D2_nomes_especificos_dominio", "D3_economia_real"],
+  "output_esperado": ".aidd/cache/_phase_03_index.json",
+  "depende_de": ["fase_2_analisador"],
+  "usado_por": ["fase_4_decisor", "fase_5_criador"],
+  "artefatos": {
+    "spec": "SPEC.md", "skill": "SKILL.md", "mcp": "MCP.md", "hook": "HOOK.md",
+    "rules": "RULES.md", "commands": "../../../../commands/aidd-designer.md",
+    "agents": "AGENTS.md", "fluxo": "FLUXO.md"
+  }
+}

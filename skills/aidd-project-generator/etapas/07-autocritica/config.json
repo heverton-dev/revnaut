@@ -1,0 +1,18 @@
+{
+  "fase": 7,
+  "nome": "autocritica",
+  "status": "spec_only",
+  "status_nota": "Substitui a narrativa fabricada de DEMO-7-PHASES.md (score/roadmap/investimento hardcoded), confirmada como fabricacao em PLANO-REAL-8-FASES.md. Renomeada de 07_analisador.py (colidia com fase 2) para 07_autocritica.py.",
+  "script_esperado": "scripts/phases/07_autocritica.py",
+  "modelo": null,
+  "tokens_orcamento": 0,
+  "gates": ["A7_score_recalculavel"],
+  "output_esperado": ".aidd/cache/_phase_07_index.json",
+  "depende_de": ["fase_1_pesquisador", "fase_2_analisador", "fase_3_designer", "fase_4_decisor", "fase_5_criador", "fase_6_documentador"],
+  "usado_por": [],
+  "artefatos": {
+    "spec": "SPEC.md", "skill": "SKILL.md", "mcp": "MCP.md", "hook": "HOOK.md",
+    "rules": "RULES.md", "commands": "../../../../commands/aidd-autocritica.md",
+    "agents": "AGENTS.md", "fluxo": "FLUXO.md"
+  }
+}

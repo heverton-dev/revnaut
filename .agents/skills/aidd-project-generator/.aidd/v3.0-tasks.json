@@ -1,0 +1,37 @@
+{
+  "versao": "v3.0",
+  "score_target": 75,
+  "status": "em_andamento",
+  "user_stories": [
+    {
+      "id": "US-3.1",
+      "titulo": "Feedback Loop Framework",
+      "horas": 40
+    },
+    {
+      "id": "US-3.2",
+      "titulo": "Self-Correction",
+      "horas": 50
+    },
+    {
+      "id": "US-3.3",
+      "titulo": "Error Recovery Strategies",
+      "horas": 70
+    },
+    {
+      "id": "US-3.4",
+      "titulo": "Honest Uncertainty Communication",
+      "horas": 40
+    },
+    {
+      "id": "US-3.5",
+      "titulo": "Multi-Turn Conversations",
+      "horas": 50
+    }
+  ],
+  "total_horas": 250,
+  "progresso": {
+    "completo": 0,
+    "percentual": 0
+  }
+}

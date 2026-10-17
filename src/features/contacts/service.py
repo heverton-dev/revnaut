@@ -321,6 +321,39 @@ def get_contact_timeline(contact_id: int) -> List[Dict[str, Any]]:
         
         logs = [
             {
+                "id": f"seed-7-{contact_id}",
+                "contact_id": contact_id,
+                "user_id": "usr_sdr",
+                "author_name": "Juliana Santos (SDR)",
+                "action": "Chamada Telefônica / Alinhamento",
+                "old_value": "Tentativa",
+                "new_value": "Contato Efetivo",
+                "comment": "Cirurgião demonstrou interesse em testar kit cirúrgico de implantes cone morse na próxima semana.",
+                "created_at": "2026-10-17 14:20:00"
+            },
+            {
+                "id": f"seed-6-{contact_id}",
+                "contact_id": contact_id,
+                "user_id": "usr_exec",
+                "author_name": "Roberto Faria (Closer)",
+                "action": "Apresentação de Linha Cirúrgica",
+                "old_value": None,
+                "new_value": "Demonstração Realizada",
+                "comment": "Apresentação técnica dos componentes protéticos e protocolo de fresagem guiada.",
+                "created_at": "2026-10-16 16:45:00"
+            },
+            {
+                "id": f"seed-5-{contact_id}",
+                "contact_id": contact_id,
+                "user_id": "usr_sdr",
+                "author_name": "Juliana Santos (SDR)",
+                "action": "Qualificação SDR Concluída",
+                "old_value": "Novo Lead",
+                "new_value": "Oportunidade Qualificada",
+                "comment": f"Demanda confirmada de implantes cirúrgicos mensais para a clínica própria em {contact.get('city', 'São Paulo')}.",
+                "created_at": "2026-10-16 09:30:00"
+            },
+            {
                 "id": f"seed-4-{contact_id}",
                 "contact_id": contact_id,
                 "user_id": "system",
@@ -329,7 +362,7 @@ def get_contact_timeline(contact_id: int) -> List[Dict[str, Any]]:
                 "old_value": "0 pts",
                 "new_value": f"{score} pts",
                 "comment": f"Cirurgião avaliado como {'Alto ICP (Decisor Clínico)' if score >= 80 else 'Médio ICP'}. Especialidade prioritária ({specialty}).",
-                "created_at": created_at
+                "created_at": "2026-10-15 17:10:00"
             },
             {
                 "id": f"seed-3-{contact_id}",
@@ -340,7 +373,7 @@ def get_contact_timeline(contact_id: int) -> List[Dict[str, Any]]:
                 "old_value": None,
                 "new_value": "Whitepaper Cone Morse 2026",
                 "comment": "Baixou o Catálogo Técnico e Tabela Comparativa de Torque Cirúrgico.",
-                "created_at": created_at
+                "created_at": "2026-10-15 14:15:00"
             },
             {
                 "id": f"seed-2-{contact_id}",
@@ -351,7 +384,7 @@ def get_contact_timeline(contact_id: int) -> List[Dict[str, Any]]:
                 "old_value": "Pendente",
                 "new_value": "Ativo / Regular",
                 "comment": f"Inscrição {contact.get('cro', 'CRO')} validada com sucesso na base do Conselho Regional de Odontologia.",
-                "created_at": created_at
+                "created_at": "2026-10-15 11:05:00"
             },
             {
                 "id": f"seed-1-{contact_id}",
@@ -362,7 +395,7 @@ def get_contact_timeline(contact_id: int) -> List[Dict[str, Any]]:
                 "old_value": None,
                 "new_value": name,
                 "comment": "Origem: Campanha Digital / Landing Page Implantes Odontológicos.",
-                "created_at": created_at
+                "created_at": "2026-10-15 08:30:00"
             }
         ]
     conn.close()

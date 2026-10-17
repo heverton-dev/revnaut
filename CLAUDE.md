@@ -36,6 +36,7 @@
 11. **Padrão-Ouro de Stack Tecnológica:** Frontend em TanStack Start / TanStack Router + React + TypeScript + Tailwind CSS (Next.js é formalmente abolido — Lei #11); Backend em Python puro + SQLite WAL + OpenAPI 3.1.
 12. **Anti-Docs Rot & Canonical Ingestion:** Never ingest stale docs. Living docs reside in `docs/protocolos/` and active schemas.
 13. **Todo Portão Deve Provar que Morde:** Every quality gate must prove it blocks invalid inputs with exit 1 in automated tests.
+14. **Zero Emojis & UI Design Hygiene (Lei #14):** É TERMINANTEMENTE PROIBIDO o uso de emojis Unicode em qualquer elemento de interface do usuário, código frontend, botões, badges, modais, alertas ou filtros. Utilize estritamente ícones vetoriais SVG inline (padrão shadcn / Lucide) com dimensões controladas e `stroke="currentColor"` quando representações visuais forem necessárias.
 
 ---
 

@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
         isApiOnline = true;
         const badge = document.querySelector('.tenant-badge');
         if (badge) {
-          badge.textContent = '🟢 API Python SQLite WAL Ativa';
+          badge.innerHTML = '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#10b981;margin-right:6px;"></span>API Python SQLite WAL Ativa';
           badge.style.backgroundColor = 'hsl(148, 50%, 92%)';
           badge.style.color = 'hsl(148, 50%, 30%)';
         }
@@ -128,11 +128,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 2. Renderização do Dashboard
   function renderDashboard() {
-    const m = data.metrics;
-    document.getElementById('metric-mrr').textContent = formatBRL(m.mrr);
-    document.getElementById('metric-pipeline').textContent = formatBRL(m.pipelineTotal);
-    document.getElementById('metric-deals-count').textContent = m.dealsCount;
-    document.getElementById('metric-win-rate').textContent = m.winRate;
+    const m = data && data.metrics;
+    if (!m) return;
+    const mrrEl = document.getElementById('metric-mrr');
+    if (mrrEl) mrrEl.textContent = formatBRL(m.mrr);
+    const pipeEl = document.getElementById('metric-pipeline');
+    if (pipeEl) pipeEl.textContent = formatBRL(m.pipelineTotal);
+    const dealsEl = document.getElementById('metric-deals-count');
+    if (dealsEl) dealsEl.textContent = m.dealsCount;
+    const winEl = document.getElementById('metric-win-rate');
+    if (winEl) winEl.textContent = m.winRate;
   }
 
   // 3. Renderização de Deals / Funil

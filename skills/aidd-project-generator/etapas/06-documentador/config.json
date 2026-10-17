@@ -1,0 +1,18 @@
+{
+  "fase": 6,
+  "nome": "documentador",
+  "status": "spec_only",
+  "status_nota": "Corrige bug real auditado: _renderizar_formatos() reportava pdf_gerado=True sem escrever arquivo. Script ainda nao existe.",
+  "script_esperado": "scripts/phases/06_documentador.py",
+  "modelo": null,
+  "tokens_orcamento": 0,
+  "gates": ["F1_html_existe", "F2_pdf_existe_de_fato", "F3_markdown_valido"],
+  "output_esperado": "docs/arquitetura.{html,md,pdf}",
+  "depende_de": ["fase_1_pesquisador", "fase_2_analisador", "fase_3_designer", "fase_4_decisor", "fase_5_criador"],
+  "usado_por": ["fase_7_autocritica"],
+  "artefatos": {
+    "spec": "SPEC.md", "skill": "SKILL.md", "mcp": "MCP.md", "hook": "HOOK.md",
+    "rules": "RULES.md", "commands": "../../../../commands/aidd-documentador.md",
+    "agents": "AGENTS.md", "fluxo": "FLUXO.md"
+  }
+}

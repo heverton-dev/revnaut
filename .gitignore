@@ -22,3 +22,17 @@ data/*.db-shm
 data/*.db-wal
 scratch/
 .gemini_active_dev
+
+# Media, Screenshots & Ephemeral Visual Audits (Anti-Bloat)
+.playwright-mcp/
+screenshots/
+audits/
+tmp/
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.gif
+*.mp4
+*.webm
+*.bmp

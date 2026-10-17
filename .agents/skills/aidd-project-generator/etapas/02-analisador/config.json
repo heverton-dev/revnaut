@@ -1,0 +1,18 @@
+{
+  "fase": 2,
+  "nome": "analisador",
+  "status": "spec_only",
+  "status_nota": "SPEC/RULES/FLUXO definidos com base no design corrigido (PLANO-REAL-9-FASES.md), nao no SKILL.md antigo. Script nao existe ainda.",
+  "script_esperado": "scripts/phases/02_analisador.py",
+  "modelo": "env:LLM_MODEL (default anthropic/claude-haiku-4-5)",
+  "tokens_orcamento": 5000,
+  "gates": ["A1_schema_valido", "A2_zero_alucinacao", "A3_5_aspectos", "A4_qualidade_textual_NAO_MECANICO"],
+  "output_esperado": ".aidd/cache/_phase_02_index.json",
+  "depende_de": ["fase_1_pesquisador"],
+  "usado_por": ["fase_3_designer"],
+  "artefatos": {
+    "spec": "SPEC.md", "skill": "SKILL.md", "mcp": "MCP.md", "hook": "HOOK.md",
+    "rules": "RULES.md", "commands": "../../../../commands/aidd-analisador.md",
+    "agents": "AGENTS.md", "fluxo": "FLUXO.md"
+  }
+}
