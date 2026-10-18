@@ -38,3 +38,16 @@ class MauticWebhookPayload(BaseModel):
     event: str = Field(..., description="Tipo do evento Mautic (ex: 'lead.changepoints')")
     lead: Optional[Dict[str, Any]] = None
     points: Optional[int] = None
+
+
+class MauticCampaignActionResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    success: bool = True
+    action: str
+    campaign_id: Optional[int] = None
+    contact_id: Optional[int] = None
+    consultant_id: Optional[str] = None
+    dispatched_instance: Optional[str] = None
+    rendered_message: Optional[str] = None
+    timestamp: Optional[float] = None
+

@@ -77,3 +77,31 @@ async def mautic_webhook(
         raise HTTPException(status_code=400, detail="Payload JSON malformado.")
 
     return service.process_mautic_webhook(payload)
+
+
+from src.features.integrations.omnichannel.schemas import MauticCampaignActionResponse
+from src.features.campaigns.mautic_bridge import process_mautic_campaign_action
+
+
+@router.post("/mautic/campaign-action", response_model=MauticCampaignActionResponse, summary="Despachante Determinístico de Ações de Campanha do Mautic")
+async def mautic_campaign_action_endpoint(
+    request: Request,
+    x_mautic_signature: Optional[str] = Header(None, alias="X-Mautic-Signature"),
+    x_hub_signature_256: Optional[str] = Header(None, alias="X-Hub-Signature-256")
+):
+    body_bytes = await request.body()
+    sig = x_mautic_signature or x_hub_signature_256
+    if not sig or not service.verify_hmac_signature(body_bytes, sig):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Assinatura HMAC inválida ou ausente para Mautic Campaign Action."
+        )
+
+    try:
+        payload = json.loads(body_bytes.decode("utf-8"))
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Payload JSON malformado.")
+
+    result = process_mautic_campaign_action(payload)
+    return MauticCampaignActionResponse(**result)
+
