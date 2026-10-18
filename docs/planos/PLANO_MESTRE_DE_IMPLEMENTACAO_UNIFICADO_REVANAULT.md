@@ -416,7 +416,7 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
 - **Validation Command:** `python -m pytest tests/test_dentgo_lastmile_custody.py -q`
 - **Blocked by:** TICKET-01, TICKET-19
 
-#### [TICKET-21] Sinergia Automática KeyPartners $\leftrightarrow$ DENTGO (Reposição On-Demand e Resgate de Ociosos)
+#### [TICKET-21] [x] DONE - Sinergia Automática KeyPartners $\leftrightarrow$ DENTGO (Reposição On-Demand e Resgate de Ociosos)
 - **Descrição:** Integração direta entre os motores **KeyPartners** e **DENTGO** (`src/features/dentgo/keypartners_synergy.py`) para que baixas pós-cirúrgicas disparem ordens automáticas de reposição de estoque consignado via courier, e alertas de kits ociosos gerem ordens de coleta reversa para realocação em outro cirurgião da mesma cidade.
 - **Como Implementar (Detalhes Técnicos):**
   1. Escutar o evento `keypartners.postop_reported` no Redis Streams: quando um cirurgião consome $N$ implantes de sua caixa consignada fixa, gerar automaticamente uma ordem de reposição `REPLENISHMENT_ORDER` no DENTGO apontando para o Hub mais próximo.

@@ -18,6 +18,8 @@ from src.features.keypartners.schemas import (
     KolConsumptionRecordResponse, KolEvidenceSubmitRequest,
     KolEvidenceSubmitResponse, KolContractOut
 )
+from src.features.dentgo.schemas import TriggerDentgoPickupRequest, TriggerDentgoPickupResponse
+from src.features.dentgo import keypartners_synergy
 from src.features.keypartners import service
 from src.features.keypartners import surgical_cycle
 from src.features.keypartners import kol_management
@@ -188,4 +190,19 @@ def get_kol(contract_id: str, account_id: str = "0f14ffff"):
         return kol_management.get_kol_contract(contract_id=contract_id, account_id=account_id)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.post("/consignments/{kit_serial}/trigger-dentgo-pickup", response_model=TriggerDentgoPickupResponse, summary="Acionar resgate/coleta reversa express via DENTGO")
+def trigger_dentgo_pickup(kit_serial: str, payload: TriggerDentgoPickupRequest):
+    try:
+        return keypartners_synergy.trigger_dentgo_reverse_pickup(
+            kit_serial=kit_serial,
+            target_agreement_id=payload.target_agreement_id,
+            pickup_address=payload.pickup_address,
+            destination_address=payload.destination_address,
+            account_id=payload.account_id or "0f14ffff"
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 

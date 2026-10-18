@@ -140,3 +140,30 @@ class OrderDeliveryVerifyRequest(BaseModel):
     proof_photo_r2_key: str = Field(..., description="Chave R2 da foto comprovante de entrega (POD)")
     recipient_name: str = Field(..., description="Nome do recebedor na clínica")
     account_id: Optional[str] = Field(default="0f14ffff", description="ID da conta tenant")
+
+
+class TriggerDentgoPickupRequest(BaseModel):
+    target_agreement_id: Optional[str] = Field(default=None, description="Acordo de parceria da clínica destino para realocação")
+    pickup_address: Optional[str] = Field(default="Endereço da clínica de origem", description="Endereço de coleta")
+    destination_address: Optional[str] = Field(default="Endereço da clínica de destino", description="Endereço de entrega após hub")
+    account_id: Optional[str] = Field(default="0f14ffff", description="ID da conta tenant")
+
+
+class TriggerDentgoPickupResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    success: bool
+    status: str
+    pickup_order_id: str
+    kit_serial: str
+    origin_agreement_id: str
+    target_agreement_id: Optional[str] = None
+
+
+class ReplenishmentOrderResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    status: str
+    replenishment_order_id: str
+    agreement_id: str
+    hub_id: str
+    items_count: int
+
