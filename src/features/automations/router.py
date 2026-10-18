@@ -3,7 +3,7 @@
 Router FastAPI para Automações e Gatilhos de Receita.
 """
 
-from typing import List
+from typing import List, Optional
 from datetime import datetime
 from fastapi import APIRouter, HTTPException, status
 from src.core.database import get_connection
@@ -12,9 +12,15 @@ from src.features.automations.schemas import (
     AutomationFlowOut,
     AutomationFlowToggleResponse,
     AutomationTestResponse,
-    AutomationLogOut
+    AutomationLogOut,
+    PostOpCareStartRequest,
+    PostOpCareScheduleOut,
+    PostOpFeedbackRequest,
+    PostOpFeedbackResponse
 )
 from src.features.automations.revenue_triggers import evaluate_hot_lead_and_overflow
+from src.features.automations import postop_patient_care
+
 
 router = APIRouter(prefix="/api/v1/automations", tags=["Automações & Gatilhos de Receita"])
 
@@ -138,3 +144,66 @@ def evaluate_hot_lead(contact_id: int, account_id: str = "0f14ffff"):
     if res.get("status") == "not_found":
         raise HTTPException(status_code=404, detail="Contato não encontrado.")
     return res
+
+
+@router.post(
+    "/postop-care/start",
+    response_model=PostOpCareScheduleOut,
+    status_code=status.HTTP_201_CREATED,
+    summary="Iniciar régua de acompanhamento pós-operatório cirúrgico B2C"
+)
+def start_postop_care(payload: PostOpCareStartRequest):
+    try:
+        return postop_patient_care.start_postop_care_schedule(
+            patient_name=payload.patient_name,
+            patient_phone=payload.patient_phone,
+            surgeon_name=payload.surgeon_name,
+            surgeon_phone=payload.surgeon_phone,
+            procedure_name=payload.procedure_name,
+            surgery_date=payload.surgery_date,
+            account_id=payload.account_id or "0f14ffff"
+        )
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post(
+    "/postop-care/{schedule_id}/feedback",
+    response_model=PostOpFeedbackResponse,
+    summary="Processar feedback do paciente no marco pós-operatório (texto/áudio)"
+)
+def post_patient_feedback(schedule_id: str, payload: PostOpFeedbackRequest):
+    try:
+        return postop_patient_care.process_patient_feedback(
+            schedule_id=schedule_id,
+            feedback_text=payload.feedback_text,
+            milestone_code=payload.milestone_code,
+            account_id=payload.account_id or "0f14ffff"
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.get(
+    "/postop-care",
+    response_model=List[PostOpCareScheduleOut],
+    summary="Listar réguas pós-operatórias ativas"
+)
+def list_postop_care_schedules(
+    status: Optional[str] = None,
+    account_id: str = "0f14ffff"
+):
+    return postop_patient_care.list_postop_schedules(account_id=account_id, status=status)
+
+
+@router.get(
+    "/postop-care/{schedule_id}",
+    response_model=PostOpCareScheduleOut,
+    summary="Consultar detalhes de uma régua pós-operatória"
+)
+def get_postop_care_schedule(schedule_id: str, account_id: str = "0f14ffff"):
+    sched = postop_patient_care.get_postop_schedule(schedule_id=schedule_id, account_id=account_id)
+    if not sched:
+        raise HTTPException(status_code=404, detail="Régua pós-operatória não encontrada.")
+    return sched
+

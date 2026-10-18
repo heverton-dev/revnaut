@@ -500,7 +500,7 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
 - **Validation Command:** `python -m pytest tests/test_anvisa_technovigilance_rma.py -q`
 - **Blocked by:** TICKET-01, TICKET-16, TICKET-20
 
-#### [TICKET-28] Réguas Automatizadas de Acompanhamento Pós-Operatório Clínico B2C (24h / 48h / 72h / 7d)
+#### [TICKET-28] [x] DONE - Réguas Automatizadas de Acompanhamento Pós-Operatório Clínico B2C (24h / 48h / 72h / 7d)
 - **Descrição:** Para clínicas, franquias e consultórios particulares que utilizam o REVNAULT, implementar a régua ativa de cuidado pós-cirúrgico do paciente (`src/features/automations/postop_patient_care.py`), monitorando sinais de dor, edema, sangramento e adesão medicamentosa via WhatsApp após cirurgias de implante ou enxerto.
 - **Como Implementar (Detalhes Técnicos):**
   1. Ao registrar a conclusão de uma cirurgia clínica, agendar disparos automáticos via Redis/Evolution API em $+24\text{ h}$, $+48\text{ h}$, $+72\text{ h}$ e $+7\text{ dias}$ (remoção de sutura).

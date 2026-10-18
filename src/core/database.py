@@ -882,7 +882,29 @@ def init_db() -> None:
 
         CREATE UNIQUE INDEX IF NOT EXISTS idx_anvisa_quar_acc_batch ON anvisa_batch_quarantines(account_id, batch_number);
 
+        CREATE TABLE IF NOT EXISTS postop_patient_care_schedules (
+            id TEXT PRIMARY KEY,
+            account_id TEXT NOT NULL,
+            patient_name TEXT NOT NULL,
+            patient_phone TEXT NOT NULL,
+            surgeon_name TEXT NOT NULL,
+            surgeon_phone TEXT NOT NULL,
+            procedure_name TEXT NOT NULL,
+            surgery_date TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'ACTIVE',
+            milestones_json TEXT NOT NULL,
+            alert_ticket_id TEXT,
+            last_interaction_notes TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (account_id) REFERENCES accounts(id)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_postop_patient_phone ON postop_patient_care_schedules(patient_phone);
+        CREATE INDEX IF NOT EXISTS idx_postop_status ON postop_patient_care_schedules(status);
+
         CREATE TABLE IF NOT EXISTS whatsapp_instances (
+
 
             id TEXT PRIMARY KEY,
             account_id TEXT NOT NULL,
