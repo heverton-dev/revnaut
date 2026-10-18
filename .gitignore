@@ -1,5 +1,7 @@
 # AIDD Framework - Repository Hygiene
 node_modules/
+dist/
+frontend/dist/
 
 # Environments & Python
 .venv/

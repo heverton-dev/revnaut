@@ -8,11 +8,12 @@ import { DicomStl3DViewer } from "@/features/imaging/DicomStl3DViewer";
 import { RbacHierarchyTree } from "@/features/rbac/RbacHierarchyTree";
 import { CredentialsVaultPage } from "@/features/settings/CredentialsVaultPage";
 import { GranolaCopilotCard } from "@/features/deals/components/GranolaCopilotCard";
-import { CroVerifiedInput } from "@/features/contacts/components/CroVerifiedInput";
 import { LiveKitDealRoomModal } from "@/features/communications/LiveKitDealRoomModal";
 import { IcpScoringDashboard } from "@/features/scoring/IcpScoringDashboard";
-import { R2DirectUploader } from "@/components/shared/R2DirectUploader";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
+import { ContactsCrmWorkspace } from "@/features/contacts/ContactsCrmWorkspace";
+import { ContractsDocumensoWorkspace } from "@/features/contracts/ContractsDocumensoWorkspace";
+import { SupportAnvisaWorkspace } from "@/features/support/SupportAnvisaWorkspace";
+import { CalcomReactivationWorkspace } from "@/features/scheduling/CalcomReactivationWorkspace";
 
 export type AppRoute =
   | "dashboard"
@@ -50,22 +51,7 @@ export const AppRouter: React.FC<RouterProps> = ({ currentRoute, defaultComponen
     case "deals":
       return <>{defaultComponent}</>;
     case "contacts":
-      return (
-        <div className="space-y-6 max-w-5xl mx-auto">
-          <Card className="border-border">
-            <CardHeader>
-              <CardTitle>Base de Cirurgiões-Dentistas & Compliance CRO/CFO</CardTitle>
-              <CardDescription>
-                Validação determinística em tempo real junto ao Conselho Regional de Odontologia e score preditivo ICP.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <CroVerifiedInput required />
-            </CardContent>
-          </Card>
-          <IcpScoringDashboard />
-        </div>
-      );
+      return <ContactsCrmWorkspace />;
     case "keypartners":
       return <ConsignmentSurgicalBoard />;
     case "dentgo":
@@ -81,9 +67,20 @@ export const AppRouter: React.FC<RouterProps> = ({ currentRoute, defaultComponen
           </div>
         </div>
       );
-    case "analytics":
     case "dashboard":
-      return <SupersetEmbeddedDashboard userId="usr-director-br" dashboardId="dash-revops-executivo-01" />;
+      return (
+        <SupersetEmbeddedDashboard
+          mode="executive_cockpit"
+          title="Cockpit Executivo RevOps & Inteligência de Carteira"
+        />
+      );
+    case "analytics":
+      return (
+        <SupersetEmbeddedDashboard
+          mode="bi_studio"
+          title="Estúdio BI Superset RLS & Agente Analítico Text-to-SQL"
+        />
+      );
     case "video_sos":
       return (
         <div className="space-y-6 max-w-5xl mx-auto">
@@ -98,21 +95,7 @@ export const AppRouter: React.FC<RouterProps> = ({ currentRoute, defaultComponen
     case "imaging":
       return <DicomStl3DViewer studyId="study-demo-01" />;
     case "contracts":
-      return (
-        <div className="space-y-6 max-w-5xl mx-auto">
-          <Card className="border-border">
-            <CardHeader>
-              <CardTitle>Contratos Digitais Documenso & Custódia R2</CardTitle>
-              <CardDescription>
-                Assinatura eletrônica com manifesto criptográfico SHA-256 e arquivamento direto no Cloudflare R2.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <R2DirectUploader module="contracts" accept=".pdf" />
-            </CardContent>
-          </Card>
-        </div>
-      );
+      return <ContractsDocumensoWorkspace />;
     case "intelligence":
       return (
         <div className="space-y-6 max-w-5xl mx-auto">
@@ -120,32 +103,9 @@ export const AppRouter: React.FC<RouterProps> = ({ currentRoute, defaultComponen
         </div>
       );
     case "scheduling":
-      return (
-        <div className="space-y-6 max-w-5xl mx-auto">
-          <SupersetEmbeddedDashboard
-            userId="usr-director-br"
-            dashboardId="dash-calcom-reativacao-01"
-            dashboardType="clinic_chair"
-            title="Motor Cal.com • Reativação Preventiva de Pacientes (6/12/18m)"
-          />
-        </div>
-      );
+      return <CalcomReactivationWorkspace />;
     case "support":
-      return (
-        <div className="space-y-6 max-w-5xl mx-auto">
-          <Card className="border-border">
-            <CardHeader>
-              <CardTitle>Tecnovigilância ANVISA, RMA & Laudos Tomográficos</CardTitle>
-              <CardDescription>
-                Abertura de garantia de osseointegração com anexação de evidências radiográficas e bloqueio preventivo de lote.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <R2DirectUploader module="dicom" accept=".dcm,.stl,.ply,.pdf,.jpg,.png" />
-            </CardContent>
-          </Card>
-        </div>
-      );
+      return <SupportAnvisaWorkspace />;
     case "scoring":
       return <IcpScoringDashboard />;
     case "marketing":

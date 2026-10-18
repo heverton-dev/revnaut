@@ -18,6 +18,9 @@ export interface DataTableProps<T> {
   emptyDescription?: string;
   onRowClick?: (item: T) => void;
   className?: string;
+  pageSizeOptions?: number[];
+  defaultPageSize?: number;
+  enablePagination?: boolean;
 }
 
 export function DataTable<T extends { id?: string | number }>({
@@ -28,7 +31,17 @@ export function DataTable<T extends { id?: string | number }>({
   emptyDescription = "Não existem dados disponíveis para os filtros atuais.",
   onRowClick,
   className,
+  pageSizeOptions = [25, 50],
+  defaultPageSize = 25,
+  enablePagination = true,
 }: DataTableProps<T>) {
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [pageSize, setPageSize] = React.useState(defaultPageSize);
+
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [data.length, pageSize]);
+
   if (isLoading) {
     return (
       <div className={cn("w-full overflow-hidden rounded-lg border border-border bg-surface-card", className)}>
@@ -54,37 +67,107 @@ export function DataTable<T extends { id?: string | number }>({
     return <EmptyState title={emptyTitle} description={emptyDescription} className={className} />;
   }
 
+  const totalItems = data.length;
+  const totalPages = enablePagination ? Math.max(1, Math.ceil(totalItems / pageSize)) : 1;
+  const safePage = Math.min(currentPage, totalPages);
+  const startIdx = enablePagination ? (safePage - 1) * pageSize : 0;
+  const endIdx = enablePagination ? Math.min(startIdx + pageSize, totalItems) : totalItems;
+  const paginatedData = enablePagination ? data.slice(startIdx, endIdx) : data;
+
   return (
-    <div className={cn("w-full overflow-x-auto rounded-lg border border-border bg-surface-card shadow-card", className)}>
-      <table className="w-full text-left text-sm border-collapse">
-        <thead className="bg-surface-bg/60 text-xs font-semibold uppercase tracking-wider text-text-secondary border-b border-border">
-          <tr>
-            {columns.map((col) => (
-              <th key={col.key} className={cn("px-4 py-3.5", col.className)}>
-                {col.header}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border-subtle text-text-main">
-          {data.map((item, index) => (
-            <tr
-              key={item.id ?? index}
-              onClick={() => onRowClick && onRowClick(item)}
-              className={cn(
-                "transition-colors hover:bg-surface-bg/50",
-                onRowClick && "cursor-pointer"
-              )}
-            >
-              {columns.map((col) => (
-                <td key={col.key} className={cn("px-4 py-3.5 align-middle", col.className)}>
-                  {col.render ? col.render(item) : (item as Record<string, any>)[col.key]}
-                </td>
+    <div className={cn("w-full rounded-lg border border-border bg-surface-card shadow-card overflow-hidden", className)}>
+      <div className="w-full overflow-x-auto">
+        <table className="w-full table-fixed sm:table-auto text-left text-xs sm:text-sm border-collapse">
+          <thead className="bg-surface-bg/60 text-[11px] font-semibold uppercase tracking-wider text-text-secondary border-b border-border">
+            <tr>
+              {columns.map((col, colIdx) => (
+                <th
+                  key={col.key}
+                  className={cn(
+                    "px-2.5 sm:px-4 py-3 break-words",
+                    colIdx >= 3 && "hidden md:table-cell",
+                    col.className
+                  )}
+                >
+                  {col.header}
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-border-subtle text-text-main">
+            {paginatedData.map((item, index) => (
+              <tr
+                key={item.id ?? startIdx + index}
+                onClick={() => onRowClick && onRowClick(item)}
+                className={cn(
+                  "transition-colors hover:bg-surface-bg/50",
+                  onRowClick && "cursor-pointer"
+                )}
+              >
+                {columns.map((col, colIdx) => (
+                  <td
+                    key={col.key}
+                    className={cn(
+                      "px-2.5 sm:px-4 py-3 align-middle break-words",
+                      colIdx >= 3 && "hidden md:table-cell",
+                      col.className
+                    )}
+                  >
+                    {col.render ? col.render(item) : (item as Record<string, any>)[col.key]}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {enablePagination && totalItems > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-2 px-3 sm:px-4 py-2.5 border-t border-border bg-surface-bg/40 text-xs text-text-secondary">
+          <div className="flex items-center gap-2">
+            <span>
+              Exibindo <strong className="text-text-main">{startIdx + 1}</strong>–
+              <strong className="text-text-main">{endIdx}</strong> de{" "}
+              <strong className="text-text-main">{totalItems}</strong> registros
+            </span>
+            <select
+              aria-label="Itens por página"
+              value={pageSize}
+              onChange={(e) => setPageSize(Number(e.target.value))}
+              className="rounded border border-border bg-surface-card px-2 py-1 text-xs text-text-main focus:outline-none"
+            >
+              {pageSizeOptions.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt} / pág
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              disabled={safePage <= 1}
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              className="rounded border border-border bg-surface-card px-2.5 py-1 text-xs font-medium text-text-main hover:bg-surface-bg disabled:opacity-40"
+            >
+              Anterior
+            </button>
+            <span className="px-2 font-medium text-text-main">
+              Pág. {safePage} / {totalPages}
+            </span>
+            <button
+              type="button"
+              disabled={safePage >= totalPages}
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              className="rounded border border-border bg-surface-card px-2.5 py-1 text-xs font-medium text-text-main hover:bg-surface-bg disabled:opacity-40"
+            >
+              Próxima
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+

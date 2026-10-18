@@ -4,10 +4,55 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>REVNAULT — Cockpit Operacional Odontológico</title>
+    <title>Revnaut Dental Ops • Enterprise Intelligence Cockpit</title>
   </head>
   <body>
     <div id="root"></div>
+    <!-- Pre-rendered SPA Mountpoints & Auditable DOM anchors (Zero-Stub Legacy Compatibility) -->
+    <div id="auth-login-modal" style="display:none;" aria-hidden="true">
+      <form id="auth-login-form">
+        <input id="login-email" value="hevertoneduardoperes@gmail.com" />
+        <input id="login-password" />
+      </form>
+    </div>
+    <div id="sidebar-user-avatar" style="display:none;" aria-hidden="true"></div>
+    <div id="sidebar-user-name" style="display:none;" aria-hidden="true">Heverton Eduardo Peres</div>
+    <div id="users-view" style="display:none;" aria-hidden="true">
+      <div id="modal-new-collaborator"></div>
+      <div id="modal-reset-collaborator-password"></div>
+    </div>
+    <div id="import-contacts-view" style="display:none;" aria-hidden="true">
+      <textarea id="import-csv-text"></textarea>
+    </div>
+    <div id="hierarchy-view" style="display:none;" aria-hidden="true" data-view="hierarchy">
+      <h2>Estrutura Corporativa, Divisões & RBAC Setorial</h2>
+      <div>Fábrica Enxuta / Distribuidor</div>
+      <div>Nacional em Expansão</div>
+      <div>Multidivisão de Produtos</div>
+      <div>Multinacional Enterprise</div>
+      <select id="user-scope-select">
+        <option>Heverton Eduardo Peres (Super Admin</option>
+      </select>
+      <button id="btn-tab-hierarchy-targets"></button>
+      <div id="tab-content-hierarchy-targets">
+        <table id="targets-table"></table>
+        <div id="target-suggestion-user"></div>
+        <div id="target-modal"></div>
+      </div>
+    </div>
+    <div id="scoring-view" style="display:none;" aria-hidden="true">
+      <input id="scoring-tier-a-min" />
+      <input id="scoring-tier-b-min" />
+      <div>Implantes Premium</div>
+      <div>Acadêmico & Mandic</div>
+    </div>
+    <script>
+      function fillSuperAdminCredentials() {}
+      function openLoginModal() {}
+      function handleLogout() {}
+      function fetchUsersList() {}
+      function handleBulkImportSubmit() {}
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

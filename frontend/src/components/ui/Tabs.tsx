@@ -15,7 +15,7 @@ export interface TabsProps {
 
 export function Tabs({ tabs, activeTab, onChange, className }: TabsProps) {
   return (
-    <div className={cn("flex border-b border-border space-x-1", className)}>
+    <div className={cn("flex flex-wrap border-b border-border gap-1", className)}>
       {tabs.map((tab) => {
         const isActive = tab.id === activeTab;
         return (
