@@ -1,6 +1,5 @@
 import * as React from "react";
 import { UploadCloud, CheckCircle2, AlertCircle, File, X } from "lucide-react";
-import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
 export interface R2DirectUploaderProps {

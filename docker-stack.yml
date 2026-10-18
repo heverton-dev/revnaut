@@ -16,18 +16,74 @@ networks:
 volumes:
   sqlite_data:
   postgres_data:
+  postgres_replica_data:
   redis_data:
+  evolution_data:
+  chatwoot_data:
+  mautic_data:
   listmonk_data:
   orthanc_data:
   traefik_certificates:
 
 services:
+  traefik:
+    image: traefik:v3.0
+    command:
+      - "--api.insecure=false"
+      - "--providers.docker=true"
+      - "--providers.docker.swarmMode=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.letsencryptresolver.acme.tlschallenge=true"
+      - "--certificatesresolvers.letsencryptresolver.acme.email=devops@vpsconexao.org"
+      - "--certificatesresolvers.letsencryptresolver.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - network_conexao
+      - revnault_edge
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_certificates:/letsencrypt
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+      restart_policy:
+        condition: on-failure
+
+  frontend:
+    image: rvops_frontend:latest
+    environment:
+      - NODE_ENV=production
+      - VITE_API_BASE_URL=https://revnaut.vpsconexao.org/api/v1
+    networks:
+      - network_conexao
+      - revnault_edge
+      - revnault_app
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+      restart_policy:
+        condition: on-failure
+
   app:
     image: rvops_app:latest
     environment:
       - PORT=8000
       - REDIS_URL=redis://redis:6379/0
-      - DATABASE_URL=sqlite+aiosqlite:////app/data/revnaut.db
+      - DATABASE_URL=postgresql+asyncpg://revnaut_admin:${PG_PASSWORD:-revnaut_pg_pass}@postgres:5432/revnaut
+      - READ_DATABASE_URL=postgresql+asyncpg://revnaut_admin:${PG_PASSWORD:-revnaut_pg_pass}@postgres-replica:5432/revnaut
     networks:
       - network_conexao
       - revnault_edge
@@ -49,25 +105,17 @@ services:
       labels:
         - "traefik.enable=true"
         - "traefik.docker.network=network_conexao"
-        
-        # Router HTTPS (websecure)
         - "traefik.http.routers.revnaut.entrypoints=websecure"
         - "traefik.http.routers.revnaut.rule=Host(`revnaut.vpsconexao.org`) || Host(`rvops.vpsconexao.org`)"
         - "traefik.http.routers.revnaut.service=revnaut"
         - "traefik.http.routers.revnaut.tls.certresolver=letsencryptresolver"
-        
-        # Router HTTP com Redirecionamento permanente para HTTPS
         - "traefik.http.routers.revnaut-http.entrypoints=web"
         - "traefik.http.routers.revnaut-http.rule=Host(`revnaut.vpsconexao.org`) || Host(`rvops.vpsconexao.org`)"
         - "traefik.http.routers.revnaut-http.middlewares=revnaut-redirect-https"
         - "traefik.http.middlewares.revnaut-redirect-https.redirectscheme.scheme=https"
         - "traefik.http.middlewares.revnaut-redirect-https.redirectscheme.permanent=true"
-        
-        # Servico backend
         - "traefik.http.services.revnaut.loadbalancer.server.port=8000"
         - "traefik.http.services.revnaut.loadbalancer.passHostHeader=true"
-
-        # Rate Limiting & Security Headers Middleware
         - "traefik.http.routers.revnaut.middlewares=revnaut-ratelimit,revnaut-security-headers"
         - "traefik.http.middlewares.revnaut-ratelimit.ratelimit.average=100"
         - "traefik.http.middlewares.revnaut-ratelimit.ratelimit.burst=50"
@@ -79,33 +127,12 @@ services:
       timeout: 5s
       retries: 3
 
-  redis:
-    image: redis:7-alpine
-    command: redis-server --appendonly yes
-    networks:
-      - revnault_data
-    volumes:
-      - /opt/rvops/redis:/data
-    deploy:
-      replicas: 1
-      resources:
-        limits:
-          cpus: "1.0"
-          memory: 512M
-      restart_policy:
-        condition: on-failure
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 3
-
   worker:
     image: rvops_app:latest
     command: python -m src.workers.runner
     environment:
       - REDIS_URL=redis://redis:6379/0
-      - DATABASE_URL=sqlite+aiosqlite:////app/data/revnaut.db
+      - DATABASE_URL=postgresql+asyncpg://revnaut_admin:${PG_PASSWORD:-revnaut_pg_pass}@postgres:5432/revnaut
     networks:
       - revnault_app
       - revnault_data
@@ -146,6 +173,120 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  postgres-replica:
+    image: pgvector/pgvector:pg16
+    environment:
+      - POSTGRES_DB=revnaut
+      - POSTGRES_USER=revnaut_admin
+      - POSTGRES_PASSWORD=${PG_PASSWORD:-revnaut_pg_pass}
+    networks:
+      - revnault_data
+    volumes:
+      - postgres_replica_data:/var/lib/postgresql/data
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: "1.5"
+          memory: 1536M
+      restart_policy:
+        condition: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U revnaut_admin -d revnaut"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    networks:
+      - revnault_data
+    volumes:
+      - /opt/rvops/redis:/data
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+      restart_policy:
+        condition: on-failure
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  evolution-api:
+    image: atendai/evolution-api:v2.1.1
+    environment:
+      - SERVER_URL=http://evolution-api:8080
+      - CACHE_REDIS_ENABLED=true
+      - CACHE_REDIS_URI=redis://redis:6379/1
+      - DATABASE_ENABLED=true
+      - DATABASE_PROVIDER=postgresql
+      - DATABASE_CONNECTION_URI=postgresql://revnaut_admin:${PG_PASSWORD:-revnaut_pg_pass}@postgres:5432/revnaut
+    networks:
+      - revnault_edge
+      - revnault_app
+      - revnault_data
+    volumes:
+      - evolution_data:/evolution/instances
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: "1.5"
+          memory: 1536M
+      restart_policy:
+        condition: on-failure
+
+  chatwoot:
+    image: chatwoot/chatwoot:v3.14.0
+    environment:
+      - RAILS_ENV=production
+      - REDIS_URL=redis://redis:6379/2
+      - POSTGRES_HOST=postgres
+      - POSTGRES_USERNAME=revnaut_admin
+      - POSTGRES_PASSWORD=${PG_PASSWORD:-revnaut_pg_pass}
+      - POSTGRES_DATABASE=revnaut
+    networks:
+      - revnault_edge
+      - revnault_app
+      - revnault_data
+    volumes:
+      - chatwoot_data:/app/storage
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: "1.5"
+          memory: 1536M
+      restart_policy:
+        condition: on-failure
+
+  mautic:
+    image: mautic/mautic:5-apache
+    environment:
+      - MAUTIC_DB_HOST=postgres
+      - MAUTIC_DB_USER=revnaut_admin
+      - MAUTIC_DB_PASSWORD=${PG_PASSWORD:-revnaut_pg_pass}
+      - MAUTIC_DB_NAME=revnaut
+    networks:
+      - revnault_app
+      - revnault_data
+    volumes:
+      - mautic_data:/var/www/html
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1024M
+      restart_policy:
+        condition: on-failure
 
   listmonk-db:
     image: postgres:16-alpine
@@ -254,7 +395,7 @@ services:
     environment:
       - SUPERSET_SECRET_KEY=${SUPERSET_SECRET_KEY:-revnaut_superset_secret_key_default}
       - DATABASE_DB=revnaut
-      - DATABASE_HOST=postgres
+      - DATABASE_HOST=postgres-replica
       - DATABASE_PORT=5432
       - DATABASE_USER=revnaut_admin
       - DATABASE_PASSWORD=${PG_PASSWORD:-revnaut_pg_pass}

@@ -5,17 +5,17 @@
  * Totalmente aderente à Lei #14 (Zero Emojis Unicode — estritamente SVGs inline).
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 
-interface SupersetEmbeddedProps {
-  userId: string;
+export interface SupersetEmbeddedProps {
+  userId?: string;
   dashboardId: string;
-  dashboardType?: 'industry_consignment' | 'clinic_chair' | 'dentgo_sla' | 'anvisa_quality_gate';
+  dashboardType?: "industry_consignment" | "clinic_chair" | "dentgo_sla" | "anvisa_quality_gate";
   accountId?: string;
   title?: string;
 }
 
-interface GuestTokenData {
+export interface GuestTokenData {
   token: string;
   dashboard_id: string;
   dashboard_type: string;
@@ -25,11 +25,11 @@ interface GuestTokenData {
 }
 
 export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
-  userId,
+  userId = "usr-director-br",
   dashboardId,
-  dashboardType = 'industry_consignment',
-  accountId = '0f14ffff',
-  title = 'Painel Analítico de Inteligência Cirúrgica'
+  dashboardType = "industry_consignment",
+  accountId = "0f14ffff",
+  title = "Painel Analítico de Inteligência Cirúrgica",
 }) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [tokenData, setTokenData] = useState<GuestTokenData | null>(null);
@@ -42,15 +42,15 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
     setLoading(true);
     setError(null);
 
-    fetch('/api/v1/intelligence/bi/guest-token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    fetch("/api/v1/intelligence/bi/guest-token", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         user_id: userId,
         dashboard_id: dashboardId,
         dashboard_type: dashboardType,
-        account_id: accountId
-      })
+        account_id: accountId,
+      }),
     })
       .then(async (res) => {
         if (!res.ok) {
@@ -66,7 +66,7 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
       })
       .catch((err) => {
         if (isMounted) {
-          setError(err.message || 'Erro de conexão com o servidor de BI.');
+          setError(err.message || "Erro de conexão com o servidor de BI.");
           setLoading(false);
         }
       });
@@ -76,23 +76,26 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
     };
   }, [userId, dashboardId, dashboardType, accountId]);
 
-  const handleExportDataset = async (format: 'csv' | 'parquet') => {
+  const handleExportDataset = async (format: "csv" | "parquet") => {
     setExporting(true);
     setExportSuccess(null);
     try {
-      const res = await fetch('/api/v1/intelligence/bi/export-dataset', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/v1/intelligence/bi/export-dataset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          dataset_name: dashboardType === 'industry_consignment' ? 'consignment_turnover' : 'deals_funnel',
+          dataset_name:
+            dashboardType === "industry_consignment" ? "consignment_turnover" : "deals_funnel",
           user_id: userId,
           format: format,
-          account_id: accountId
-        })
+          account_id: accountId,
+        }),
       });
-      if (!res.ok) throw new Error('Erro ao exportar dataset');
+      if (!res.ok) throw new Error("Erro ao exportar dataset");
       const data = await res.json();
-      setExportSuccess(`Dataset exportado para R2: ${data.r2_storage_key} (${data.record_count} registros)`);
+      setExportSuccess(
+        `Dataset exportado para R2: ${data.r2_storage_key} (${data.record_count} registros)`
+      );
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -101,66 +104,85 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full w-full bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
-      {/* Header do Dashboard com Ações e Badges */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950/60 backdrop-blur">
+    <div className="flex flex-col h-full w-full bg-surface-card border border-border rounded-xl overflow-hidden shadow-card">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-surface-bg">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+          <div className="p-2 rounded-lg bg-brand-navy-subtle border border-border text-brand-navy">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+              />
             </svg>
           </div>
           <div>
-            <h2 className="text-base font-semibold text-slate-100">{title}</h2>
-            <p className="text-xs text-slate-400">Apache Superset 3.1 Embedded com Row-Level Security (RLS) ativo</p>
+            <h2 className="text-base font-semibold text-text-main">{title}</h2>
+            <p className="text-xs text-text-secondary">
+              Apache Superset 3.1 Embedded com Row-Level Security (RLS) ativo
+            </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           {tokenData && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono font-medium bg-status-success-subtle text-status-success border border-status-success/20">
+              <span className="w-1.5 h-1.5 rounded-full bg-status-success animate-pulse"></span>
               RLS: {tokenData.rls_clause}
             </span>
           )}
 
           <button
-            onClick={() => handleExportDataset('csv')}
+            onClick={() => handleExportDataset("csv")}
             disabled={exporting || loading}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-text-main bg-surface-card hover:bg-surface-bg border border-border rounded-lg transition-colors disabled:opacity-50"
           >
-            <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            <svg className="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+              />
             </svg>
-            {exporting ? 'Exportando...' : 'Exportar CSV (R2)'}
+            {exporting ? "Exportando..." : "Exportar CSV (R2)"}
           </button>
         </div>
       </div>
 
       {exportSuccess && (
-        <div className="px-6 py-2 bg-emerald-950/40 border-b border-emerald-800/40 text-xs text-emerald-300">
+        <div className="px-6 py-2 bg-status-success-subtle border-b border-status-success/30 text-xs text-status-success">
           {exportSuccess}
         </div>
       )}
 
-      {/* Conteúdo Principal do Dashboard */}
-      <div className="flex-1 relative min-h-[640px] bg-slate-950">
+      <div className="flex-1 relative min-h-[640px] bg-surface-bg">
         {loading && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-slate-950/80 z-10">
-            <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-sm text-slate-400 font-medium">Autenticando Guest Token e aplicando cláusula RLS...</p>
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-surface-bg/90 z-10">
+            <div className="w-8 h-8 border-2 border-brand-primary border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-sm text-text-secondary font-medium">
+              Autenticando Guest Token e aplicando cláusula RLS...
+            </p>
           </div>
         )}
 
         {error && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 text-center">
-            <div className="p-3 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400">
+            <div className="p-3 rounded-full bg-status-danger-subtle border border-status-danger/20 text-status-danger">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
               </svg>
             </div>
-            <h3 className="text-sm font-semibold text-slate-200">Não foi possível carregar o dashboard</h3>
-            <p className="text-xs text-slate-400 max-w-md">{error}</p>
+            <h3 className="text-sm font-semibold text-text-main">
+              Não foi possível carregar o dashboard
+            </h3>
+            <p className="text-xs text-text-secondary max-w-md">{error}</p>
           </div>
         )}
 

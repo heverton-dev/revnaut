@@ -5,11 +5,10 @@ import {
   Plus,
   Trash2,
   Lock,
-  Eye,
-  EyeOff,
   CheckCircle2,
   FileKey,
   Server,
+  AlertCircle,
   RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -20,7 +19,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Dialog } from "@/components/ui/Dialog";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { cn } from "@/lib/utils";
 
 export interface VaultCredential {
   id: string;
@@ -32,56 +30,69 @@ export interface VaultCredential {
 }
 
 export function CredentialsVaultPage() {
-  const [credentials, setCredentials] = React.useState<VaultCredential[]>([
-    {
-      id: "cred-evo-01",
-      service_name: "evolution_api_v2",
-      credential_type: "api_token",
-      masked_value: "****89a1",
-      metadata: { cluster: "1000_instancias_sp" },
-      created_at: "2026-10-15 11:30:00",
-    },
-    {
-      id: "cred-a1-totvs",
-      service_name: "totvs_protheus",
-      credential_type: "certificado_fiscal_a1",
-      masked_value: "****c4d2",
-      metadata: { validade: "2027-10-01" },
-      created_at: "2026-10-16 09:45:00",
-    },
-    {
-      id: "cred-wh-sec",
-      service_name: "mautic_webhook",
-      credential_type: "hmac_sha256_secret",
-      masked_value: "****ef33",
-      metadata: { status: "ativo" },
-      created_at: "2026-10-17 14:20:00",
-    },
-  ]);
-
-  const [isLoading, setIsLoading] = React.useState(false);
+  const [credentials, setCredentials] = React.useState<VaultCredential[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [serviceName, setServiceName] = React.useState("evolution_api_v2");
   const [credentialType, setCredentialType] = React.useState("api_token");
   const [secretPayload, setSecretPayload] = React.useState("");
 
-  const handleSave = () => {
+  const fetchCredentials = React.useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/v1/auth/credentials");
+      if (!res.ok) {
+        throw new Error(`Falha ao consultar cofre de credenciais (HTTP ${res.status})`);
+      }
+      const data = await res.json();
+      setCredentials(Array.isArray(data) ? data : data.credentials || data.data || []);
+    } catch (err: any) {
+      setError(err.message || "Erro ao carregar credenciais cifradas.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    fetchCredentials();
+  }, [fetchCredentials]);
+
+  const handleSave = async () => {
     if (!secretPayload) return;
-    const last4 = secretPayload.slice(-4);
-    const newCred: VaultCredential = {
-      id: `cred-${Date.now().toString(36)}`,
-      service_name: serviceName,
-      credential_type: credentialType,
-      masked_value: `****${last4}`,
-      created_at: new Date().toISOString().replace("T", " ").slice(0, 19),
-    };
-    setCredentials((prev) => [newCred, ...prev]);
-    setSecretPayload("");
-    setIsDialogOpen(false);
+    try {
+      const res = await fetch("/api/v1/auth/credentials", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          service_name: serviceName,
+          credential_type: credentialType,
+          secret_value: secretPayload,
+        }),
+      });
+      if (!res.ok) {
+        throw new Error("Falha ao cifrar e salvar credencial no cofre.");
+      }
+      setSecretPayload("");
+      setIsDialogOpen(false);
+      await fetchCredentials();
+    } catch (err: any) {
+      setError(err.message);
+    }
   };
 
-  const handleDelete = (id: string) => {
-    setCredentials((prev) => prev.filter((c) => c.id !== id));
+  const handleDelete = async (id: string) => {
+    try {
+      const res = await fetch(`/api/v1/auth/credentials/${id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setCredentials((prev) => prev.filter((c) => c.id !== id));
+      }
+    } catch {
+      // erro tratado na camada de rede
+    }
   };
 
   return (
@@ -96,10 +107,16 @@ export function CredentialsVaultPage() {
             Criptografia simétrica em repouso AES-256-GCM (PBKDF2 SHA-256) com isolamento estrito multi-tenant.
           </p>
         </div>
-        <Button onClick={() => setIsDialogOpen(true)} size="sm" className="inline-flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          Nova Credencial Cifrada
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" size="sm" onClick={fetchCredentials} className="gap-1.5">
+            <RefreshCw className="h-4 w-4" />
+            Atualizar
+          </Button>
+          <Button onClick={() => setIsDialogOpen(true)} size="sm" className="inline-flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Nova Credencial Cifrada
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -146,6 +163,17 @@ export function CredentialsVaultPage() {
           <div className="space-y-3">
             <Skeleton className="h-12 w-full" />
             <Skeleton className="h-12 w-full" />
+          </div>
+        </Card>
+      ) : error ? (
+        <Card className="p-8 border-status-danger/30 text-center">
+          <div className="flex flex-col items-center gap-3">
+            <AlertCircle className="h-8 w-8 text-status-danger" />
+            <h4 className="text-sm font-semibold text-text-main">{error}</h4>
+            <Button size="sm" onClick={fetchCredentials} className="gap-1.5">
+              <RefreshCw className="h-4 w-4" />
+              Tentar Novamente
+            </Button>
           </div>
         </Card>
       ) : credentials.length === 0 ? (
@@ -202,7 +230,6 @@ export function CredentialsVaultPage() {
         </Card>
       )}
 
-      {/* Modal de Cadastro de Credencial */}
       <Dialog
         isOpen={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}

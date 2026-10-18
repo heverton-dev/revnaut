@@ -1,4 +1,3 @@
-import * as React from "react";
 import { LucideIcon, Inbox } from "lucide-react";
 import { Button } from "./Button";
 import { cn } from "@/lib/utils";

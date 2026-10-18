@@ -2,18 +2,17 @@ import * as React from "react";
 import {
   Users,
   Briefcase,
-  Shield,
   Layers,
   ChevronRight,
   ChevronDown,
   Building2,
   Percent,
   CheckCircle2,
-  UserCheck,
+  AlertCircle,
+  RefreshCw,
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
@@ -29,78 +28,87 @@ export interface HierarchyNode {
 }
 
 export interface RbacHierarchyTreeProps {
+  accountId?: string;
   isLoading?: boolean;
   isEmpty?: boolean;
   className?: string;
 }
 
 export function RbacHierarchyTree({
-  isLoading = false,
-  isEmpty = false,
+  accountId = "0f14ffff",
+  isLoading: externalLoading,
+  isEmpty: externalEmpty,
   className,
 }: RbacHierarchyTreeProps) {
-  const [expandedNodes, setExpandedNodes] = React.useState<Record<string, boolean>>({
-    bu_sp: true,
-    team_sp_field: true,
-    team_sp_inside: true,
-  });
+  const [treeData, setTreeData] = React.useState<HierarchyNode[]>([]);
+  const [loading, setLoading] = React.useState<boolean>(true);
+  const [error, setError] = React.useState<string | null>(null);
+  const [expandedNodes, setExpandedNodes] = React.useState<Record<string, boolean>>({});
 
-  const sampleTree: HierarchyNode = {
-    id: "bu_sp",
-    name: "Diretoria Regional São Paulo & Sul",
-    role: "Diretor Comercial Regional",
-    type: "business_unit",
-    children: [
-      {
-        id: "team_sp_field",
-        name: "Mesa Externa — Field Sales Cirúrgico",
-        role: "Gerente Regional de Campo",
-        type: "team",
-        commissionPct: 70,
-        children: [
-          {
-            id: "usr_field_a",
-            name: "Dr. Carlos Mendonça (Consultor Titular SP Capital)",
-            role: "Consultor Sênior de Campo",
-            type: "field_sales",
-            dealCount: 14,
-            commissionPct: 70,
-          },
-          {
-            id: "usr_field_b",
-            name: "Mariana Alencar (Consultora Titular Campinas & Interior)",
-            role: "Consultora Plena de Campo",
-            type: "field_sales",
-            dealCount: 9,
-            commissionPct: 70,
-          },
-        ],
-      },
-      {
-        id: "team_sp_inside",
-        name: "Mesa Interna — Inside Sales & Backoffice Cirúrgico",
-        role: "Coordenador de Operações & SDR",
-        type: "team",
-        commissionPct: 30,
-        children: [
-          {
-            id: "usr_inside_sp",
-            name: "Patrícia Diniz (Analista Inside SP & Triagem DENTGO)",
-            role: "Analista de Suporte & Fechamento",
-            type: "inside_sales",
-            dealCount: 23,
-            commissionPct: 30,
-          },
-        ],
-      },
-    ],
-  };
+  const fetchHierarchyTree = React.useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/v1/hierarchy/tree?account_id=${encodeURIComponent(accountId)}`);
+      if (!res.ok) {
+        throw new Error(`Falha ao carregar árvore hierárquica (HTTP ${res.status})`);
+      }
+      const data = await res.json();
+      const rawNodes = Array.isArray(data)
+        ? data
+        : data.tree || data.business_units || data.nodes || [];
+
+      const normalized: HierarchyNode[] = rawNodes.map((n: any) => ({
+        id: String(n.id || n.unit_id || n.team_id || "root"),
+        name: n.name || n.title || "Unidade Organizacional",
+        role: n.role || n.description || "Escopo Regional Dual",
+        type: (n.type as HierarchyNode["type"]) || "business_unit",
+        commissionPct: n.commission_pct ?? n.commissionPct,
+        dealCount: n.deal_count ?? n.dealCount,
+        children: Array.isArray(n.children || n.teams)
+          ? (n.children || n.teams).map((child: any) => ({
+              id: String(child.id || child.team_id),
+              name: child.name || "Equipe Regional",
+              role: child.role || child.scope || "Equipe Dual",
+              type: (child.type as HierarchyNode["type"]) || "team",
+              commissionPct: child.commission_pct ?? child.commissionPct,
+              dealCount: child.deal_count ?? child.dealCount,
+              children: Array.isArray(child.children || child.members)
+                ? (child.children || child.members).map((m: any) => ({
+                    id: String(m.id || m.user_id),
+                    name: m.name || "Consultor",
+                    role: m.role || "Consultor Comercial",
+                    type: (m.type as HierarchyNode["type"]) || "field_sales",
+                    commissionPct: m.commission_pct ?? m.commissionPct,
+                    dealCount: m.deal_count ?? m.dealCount,
+                  }))
+                : [],
+            }))
+          : [],
+      }));
+
+      setTreeData(normalized);
+      const initialExpanded: Record<string, boolean> = {};
+      normalized.forEach((n) => {
+        initialExpanded[n.id] = true;
+      });
+      setExpandedNodes(initialExpanded);
+    } catch (err: any) {
+      setError(err.message || "Erro ao consultar organograma RBAC.");
+    } finally {
+      setLoading(false);
+    }
+  }, [accountId]);
+
+  React.useEffect(() => {
+    fetchHierarchyTree();
+  }, [fetchHierarchyTree]);
 
   const toggleNode = (nodeId: string) => {
     setExpandedNodes((prev) => ({ ...prev, [nodeId]: !prev[nodeId] }));
   };
 
-  if (isLoading) {
+  if (externalLoading || loading) {
     return (
       <Card className={cn("p-6", className)}>
         <Skeleton className="h-6 w-48 mb-4" />
@@ -113,14 +121,32 @@ export function RbacHierarchyTree({
     );
   }
 
-  if (isEmpty) {
+  if (error) {
+    return (
+      <Card className={cn("p-8 text-center border-status-danger/30", className)}>
+        <div className="flex flex-col items-center gap-3">
+          <AlertCircle className="h-8 w-8 text-status-danger" />
+          <h4 className="text-sm font-semibold text-text-main">{error}</h4>
+          <button
+            onClick={fetchHierarchyTree}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-brand-primary text-text-inverse text-xs font-medium"
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            Tentar Novamente
+          </button>
+        </div>
+      </Card>
+    );
+  }
+
+  if (externalEmpty || treeData.length === 0) {
     return (
       <EmptyState
         icon={Users}
         title="Nenhuma hierarquia configurada"
         description="Defina os nós de Diretoria, Field Sales e Inside Sales para habilitar a árvore dual."
-        actionLabel="Configurar Organograma"
-        onAction={() => {}}
+        actionLabel="Recarregar Organograma"
+        onAction={fetchHierarchyTree}
         className={className}
       />
     );
@@ -136,6 +162,8 @@ export function RbacHierarchyTree({
       field_sales: { variant: "default" as const, label: "Field Sales (Campo)" },
       inside_sales: { variant: "navy" as const, label: "Inside Sales (Mesa)" },
     };
+
+    const badgeInfo = typeBadges[node.type] || typeBadges.team;
 
     return (
       <div key={node.id} className="space-y-2">
@@ -183,8 +211,8 @@ export function RbacHierarchyTree({
                 {node.dealCount} Oportunidades
               </Badge>
             )}
-            <Badge variant={typeBadges[node.type].variant} className="text-[10px]">
-              {typeBadges[node.type].label}
+            <Badge variant={badgeInfo.variant} className="text-[10px]">
+              {badgeInfo.label}
             </Badge>
           </div>
         </div>
@@ -216,7 +244,9 @@ export function RbacHierarchyTree({
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-3">{renderNode(sampleTree)}</CardContent>
+      <CardContent className="space-y-3">
+        {treeData.map((rootNode) => renderNode(rootNode))}
+      </CardContent>
     </Card>
   );
 }

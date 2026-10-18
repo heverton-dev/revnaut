@@ -3,7 +3,6 @@ import {
   BarChart3,
   Users,
   Briefcase,
-  Layers,
   MessageSquare,
   Package,
   Truck,
