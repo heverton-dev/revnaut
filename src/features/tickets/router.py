@@ -10,10 +10,13 @@ from src.features.tickets.schemas import (
     TicketCreate, TicketStatusUpdate, TicketOut,
     SurgicalSosTriggerRequest, SurgicalSosResponse,
     SurgicalSosDentgoDispatchRequest, SurgicalSosDentgoDispatchResponse,
-    SurgicalSosTicketOut
+    SurgicalSosTicketOut,
+    AnvisaRmaClaimCreate, AnvisaRmaClaimOut, AnvisaBatchQuarantineOut
 )
 from src.features.tickets import service
 from src.features.tickets import surgical_sos
+from src.features.tickets import anvisa_technovigilance
+
 
 router = APIRouter(prefix="/api/v1/tickets", tags=["Tickets"])
 
@@ -69,4 +72,80 @@ def get_sos(ticket_id: str, account_id: str = "0f14ffff"):
         return surgical_sos.get_surgical_sos_ticket(ticket_id=ticket_id, account_id=account_id)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.post(
+    "/anvisa-rma",
+    response_model=AnvisaRmaClaimOut,
+    status_code=status.HTTP_201_CREATED,
+    summary="Registrar queixa técnica e pedido de reposição em garantia ANVISA"
+)
+def create_anvisa_rma(payload: AnvisaRmaClaimCreate):
+    try:
+        return anvisa_technovigilance.submit_anvisa_rma_claim(
+            surgeon_cro_uf=payload.surgeon_cro_uf,
+            product_id=payload.product_id,
+            product_name=payload.product_name,
+            batch_number=payload.batch_number,
+            fdi_tooth_region=payload.fdi_tooth_region,
+            insertion_torque_ncm=payload.insertion_torque_ncm,
+            surgery_date=payload.surgery_date,
+            explant_date=payload.explant_date,
+            failure_reason=payload.failure_reason,
+            radiograph_r2_key=payload.radiograph_r2_key,
+            surgeon_name=payload.surgeon_name,
+            agreement_id=payload.agreement_id,
+            patient_identifier=payload.patient_identifier,
+            serial_number=payload.serial_number,
+            notes=payload.notes,
+            account_id=payload.account_id or "0f14ffff"
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get(
+    "/anvisa-rma",
+    response_model=List[AnvisaRmaClaimOut],
+    summary="Listar queixas técnicas regulatórias ANVISA"
+)
+def list_anvisa_rma(
+    batch_number: Optional[str] = None,
+    account_id: str = "0f14ffff"
+):
+    return anvisa_technovigilance.list_anvisa_rma_claims(
+        account_id=account_id,
+        batch_number=batch_number
+    )
+
+
+@router.get(
+    "/anvisa-rma/quarantine/{batch_number}",
+    response_model=Optional[AnvisaBatchQuarantineOut],
+    summary="Verificar status sanitário e quarentena de lote fabril"
+)
+def get_quarantine_status(batch_number: str, account_id: str = "0f14ffff"):
+    info = anvisa_technovigilance.get_batch_quarantine_info(
+        batch_number=batch_number,
+        account_id=account_id
+    )
+    if not info:
+        raise HTTPException(status_code=404, detail=f"Lote {batch_number} não está em quarentena.")
+    return info
+
+
+@router.get(
+    "/anvisa-rma/{claim_id}",
+    response_model=AnvisaRmaClaimOut,
+    summary="Obter detalhes de queixa técnica por ID"
+)
+def get_anvisa_rma(claim_id: str, account_id: str = "0f14ffff"):
+    claim = anvisa_technovigilance.get_anvisa_rma_claim(
+        claim_id=claim_id,
+        account_id=account_id
+    )
+    if not claim:
+        raise HTTPException(status_code=404, detail="Processo de RMA não encontrado.")
+    return claim
+
 

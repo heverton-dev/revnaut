@@ -832,7 +832,58 @@ def init_db() -> None:
         CREATE INDEX IF NOT EXISTS idx_dentgo_splits_order ON dentgo_financial_splits(order_id);
         CREATE INDEX IF NOT EXISTS idx_dentgo_splits_acc ON dentgo_financial_splits(account_id);
 
+        CREATE TABLE IF NOT EXISTS anvisa_rma_claims (
+            id TEXT PRIMARY KEY,
+            account_id TEXT NOT NULL,
+            ticket_id TEXT NOT NULL,
+            agreement_id TEXT,
+            surgeon_name TEXT,
+            surgeon_cro_uf TEXT NOT NULL,
+            patient_identifier TEXT,
+            product_id TEXT NOT NULL,
+            product_name TEXT NOT NULL,
+            batch_number TEXT NOT NULL,
+            serial_number TEXT,
+            fdi_tooth_region TEXT NOT NULL,
+            insertion_torque_ncm REAL NOT NULL,
+            surgery_date TEXT NOT NULL,
+            explant_date TEXT NOT NULL,
+            failure_reason TEXT NOT NULL,
+            radiograph_r2_key TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'SUBMITTED',
+            warranty_approved INTEGER NOT NULL DEFAULT 0,
+            replacement_order_id TEXT,
+            quarantine_triggered INTEGER NOT NULL DEFAULT 0,
+            notes TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (account_id) REFERENCES accounts(id),
+            FOREIGN KEY (ticket_id) REFERENCES tickets(id) ON DELETE CASCADE
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_anvisa_rma_batch ON anvisa_rma_claims(batch_number);
+        CREATE INDEX IF NOT EXISTS idx_anvisa_rma_ticket ON anvisa_rma_claims(ticket_id);
+        CREATE INDEX IF NOT EXISTS idx_anvisa_rma_status ON anvisa_rma_claims(status);
+
+        CREATE TABLE IF NOT EXISTS anvisa_batch_quarantines (
+            id TEXT PRIMARY KEY,
+            account_id TEXT NOT NULL,
+            batch_number TEXT NOT NULL,
+            product_id TEXT,
+            total_distributed INTEGER NOT NULL DEFAULT 0,
+            total_failures INTEGER NOT NULL DEFAULT 0,
+            failure_rate_percent REAL NOT NULL DEFAULT 0.0,
+            status TEXT NOT NULL DEFAULT 'QUARANTINE_BLOCKED',
+            reason TEXT NOT NULL,
+            blocked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            unblocked_at TIMESTAMP,
+            FOREIGN KEY (account_id) REFERENCES accounts(id)
+        );
+
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_anvisa_quar_acc_batch ON anvisa_batch_quarantines(account_id, batch_number);
+
         CREATE TABLE IF NOT EXISTS whatsapp_instances (
+
             id TEXT PRIMARY KEY,
             account_id TEXT NOT NULL,
             instance_name TEXT NOT NULL UNIQUE,
@@ -1219,7 +1270,14 @@ def init_db() -> None:
             if "business_unit_id" not in tbl_cols:
                 cur.execute(f"ALTER TABLE {table} ADD COLUMN business_unit_id TEXT;")
 
+        # Migração de status em dentgo_hub_inventory
+        cur.execute("PRAGMA table_info(dentgo_hub_inventory);")
+        dhi_cols = {row[1] for row in cur.fetchall()}
+        if "status" not in dhi_cols:
+            cur.execute("ALTER TABLE dentgo_hub_inventory ADD COLUMN status TEXT NOT NULL DEFAULT 'AVAILABLE';")
+
         # Índices compostos obrigatórios de alta performance (SPEC_RBAC_DATA_SCOPING_HIERARQUICO)
+
         cur.execute("CREATE INDEX IF NOT EXISTS idx_teams_hierarchy ON teams(account_id, parent_id);")
         cur.execute("CREATE INDEX IF NOT EXISTS idx_deals_scope ON deals(account_id, team_id, owner_id);")
         cur.execute("CREATE INDEX IF NOT EXISTS idx_contacts_scope ON contacts(account_id, team_id, owner_id);")

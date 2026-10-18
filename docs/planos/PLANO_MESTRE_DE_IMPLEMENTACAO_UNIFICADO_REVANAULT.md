@@ -488,7 +488,7 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
 - **Validation Command:** `python -m pytest tests/test_surgical_catalog_rag.py -q`
 - **Blocked by:** TICKET-03, TICKET-24
 
-#### [TICKET-27] Módulo de Cosmovigilância, Tecnovigilância ANVISA e Garantia de Osseointegração (RMA)
+#### [TICKET-27] [x] DONE - Módulo de Cosmovigilância, Tecnovigilância ANVISA e Garantia de Osseointegração (RMA)
 - **Descrição:** Implementação da esteira regulatória de queixas técnicas e reposição em garantia de implantes perdidos/não-osseointegrados (`src/features/tickets/anvisa_technovigilance.py`), coletando obrigatoriamente lote, série, torque aplicado, região anatômica (dente FDI), data da cirurgia, data do explante e radiografia periapical/tomografia no Cloudflare R2.
 - **Como Implementar (Detalhes Técnicos):**
   1. Criar tabela `anvisa_rma_claims` vinculada a `tickets` e ao `kp_custody_ledger` (validando se o lote informado realmente foi vendido ou consignado para aquele cirurgião).
