@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Brand */
+  --color-brand-primary: hsl(27, 100%, 50%);
+  --color-brand-primary-hover: hsl(27, 100%, 45%);
+  --color-brand-primary-subtle: hsl(27, 100%, 96%);
+  --color-brand-navy: hsl(208, 67%, 21%);
+  --color-brand-navy-subtle: hsl(208, 67%, 96%);
+
+  /* Neutrals */
+  --color-surface-bg: hsl(210, 20%, 98%);
+  --color-surface-card: hsl(0, 0%, 100%);
+  --color-surface-sidebar: hsl(215, 25%, 15%);
+  --color-surface-sidebar-hover: hsl(215, 25%, 22%);
+  --color-surface-sidebar-active: hsl(27, 100%, 50%);
+
+  --color-border: hsl(214, 15%, 88%);
+  --color-border-subtle: hsl(214, 15%, 93%);
+
+  --color-text-main: hsl(220, 20%, 12%);
+  --color-text-secondary: hsl(215, 14%, 42%);
+  --color-text-muted: hsl(215, 12%, 62%);
+  --color-text-inverse: hsl(0, 0%, 100%);
+
+  /* Status & Pipeline */
+  --color-success: hsl(148, 50%, 52%);
+  --color-success-subtle: hsl(148, 50%, 95%);
+  --color-warning: hsl(43, 95%, 50%);
+  --color-warning-subtle: hsl(43, 95%, 95%);
+  --color-danger: hsl(14, 100%, 50%);
+  --color-danger-subtle: hsl(14, 100%, 95%);
+  --color-whatsapp: hsl(173, 77%, 31%);
+
+  /* Spacing */
+  --space-2xs: 2px;
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-base: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+
+  /* Typography */
+  --font-family-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-family-mono: 'JetBrains Mono', monospace;
+
+  /* Border Radii */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-card: 0 2px 8px rgba(18, 56, 91, 0.06);
+  --shadow-dropdown: 0 10px 25px -5px rgba(18, 56, 91, 0.15);
+  --shadow-modal: 0 20px 40px -15px rgba(0, 0, 0, 0.25);
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-family-sans);
+  background-color: var(--color-surface-bg);
+  color: var(--color-text-main);
+  -webkit-font-smoothing: antialiased;
+}

@@ -6,8 +6,75 @@ Persistência transacional com concorrência segura e isolamento.
 
 from __future__ import annotations
 import sqlite3
-from typing import Any, Dict, List, Optional
+from typing import Any, AsyncGenerator, Dict, List, Optional
+from sqlalchemy import event
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 from src.core.config import DB_PATH
+
+_async_engine: Optional[AsyncEngine] = None
+_AsyncSessionLocal: Optional[async_sessionmaker[AsyncSession]] = None
+
+
+def get_async_database_url() -> str:
+    db_str = str(DB_PATH).replace("\\", "/")
+    return f"sqlite+aiosqlite:///{db_str}"
+
+
+def get_async_engine() -> AsyncEngine:
+    global _async_engine
+    if _async_engine is None:
+        url = get_async_database_url()
+        _async_engine = create_async_engine(
+            url,
+            echo=False,
+            future=True,
+            connect_args={"timeout": 10.0},
+        )
+
+        @event.listens_for(_async_engine.sync_engine, "connect")
+        def _set_sqlite_pragma(dbapi_connection, connection_record):
+            cursor = dbapi_connection.cursor()
+            cursor.execute("PRAGMA journal_mode=WAL;")
+            cursor.execute("PRAGMA synchronous=NORMAL;")
+            cursor.execute("PRAGMA foreign_keys=ON;")
+            cursor.execute("PRAGMA busy_timeout=5000;")
+            cursor.close()
+
+    return _async_engine
+
+
+def get_async_session_maker() -> async_sessionmaker[AsyncSession]:
+    global _AsyncSessionLocal
+    if _AsyncSessionLocal is None:
+        _AsyncSessionLocal = async_sessionmaker(
+            bind=get_async_engine(),
+            expire_on_commit=False,
+            autoflush=False,
+            autocommit=False,
+            class_=AsyncSession,
+        )
+    return _AsyncSessionLocal
+
+
+def AsyncSessionLocal() -> AsyncSession:
+    return get_async_session_maker()()
+
+
+async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
+    async_session = get_async_session_maker()
+    async with async_session() as session:
+        try:
+            yield session
+        except Exception:
+            await session.rollback()
+            raise
+        finally:
+            await session.close()
 
 
 def get_connection() -> sqlite3.Connection:
@@ -20,6 +87,7 @@ def get_connection() -> sqlite3.Connection:
     conn.execute("PRAGMA temp_store=MEMORY;")
     conn.execute("PRAGMA cache_size=-32000;")
     return conn
+
 
 
 def init_db() -> None:
