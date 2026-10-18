@@ -168,3 +168,60 @@ class SurgicalOrderOut(BaseModel):
     billing_order_id: Optional[str] = None
     created_at: str
     updated_at: str
+
+
+class KolContractCreate(BaseModel):
+    kol_name: str = Field(..., description="Nome completo do cirurgião KOL / Embaixador")
+    cro_uf: str = Field(..., description="CRO/UF do cirurgião")
+    equipment_name: str = Field(..., description="Nome do equipamento cedido em comodato")
+    asset_tag: str = Field(..., description="Número de patrimônio físico do equipamento")
+    min_monthly_implants_target: int = Field(default=20, ge=1, description="Meta mínima mensal de implantes")
+    clinical_lectures_quota: int = Field(default=1, ge=0, description="Cota de palestras ou aulas clínicas por período")
+    agreement_id: Optional[str] = Field(default=None, description="Vínculo opcional com acordo de consignação")
+    account_id: Optional[str] = Field(default="0f14ffff", description="ID da conta tenant")
+
+
+class KolConsumptionRecordRequest(BaseModel):
+    consumed_implants_count: int = Field(..., ge=0, description="Total de implantes consumidos no mês")
+    account_id: Optional[str] = Field(default="0f14ffff", description="ID da conta tenant")
+
+
+class KolConsumptionRecordResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    compliance_status: str
+    current_month_consumption: int
+    min_monthly_implants_target: int
+    regional_alert: bool
+    alert_message: Optional[str] = None
+
+
+class KolEvidenceSubmitRequest(BaseModel):
+    r2_key: str = Field(..., description="Chave R2 do arquivo comprobatório submetido")
+    title: str = Field(..., description="Título ou descrição do caso clínico / vídeo")
+    account_id: Optional[str] = Field(default="0f14ffff", description="ID da conta tenant")
+
+
+class KolEvidenceSubmitResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    success: bool
+    contract_id: str
+    evidence_r2_keys_json: str
+
+
+class KolContractOut(BaseModel):
+    model_config = {"extra": "allow"}
+    id: str
+    account_id: str
+    agreement_id: Optional[str] = None
+    kol_name: str
+    cro_uf: str
+    equipment_name: str
+    asset_tag: str
+    min_monthly_implants_target: int
+    clinical_lectures_quota: int
+    current_month_consumption: int
+    compliance_status: str
+    evidence_r2_keys_json: str
+    created_at: str
+    updated_at: str
+

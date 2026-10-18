@@ -723,6 +723,29 @@ def init_db() -> None:
         CREATE INDEX IF NOT EXISTS idx_kp_ledger_batch ON kp_custody_ledger(batch_number);
         CREATE INDEX IF NOT EXISTS idx_kp_surg_agr ON kp_surgical_orders(agreement_id);
         CREATE INDEX IF NOT EXISTS idx_kp_surg_status ON kp_surgical_orders(status);
+
+        CREATE TABLE IF NOT EXISTS kp_kol_contracts (
+            id TEXT PRIMARY KEY,
+            account_id TEXT NOT NULL,
+            agreement_id TEXT,
+            kol_name TEXT NOT NULL,
+            cro_uf TEXT NOT NULL,
+            equipment_name TEXT NOT NULL,
+            asset_tag TEXT UNIQUE NOT NULL,
+            min_monthly_implants_target INTEGER NOT NULL DEFAULT 20,
+            clinical_lectures_quota INTEGER NOT NULL DEFAULT 1,
+            current_month_consumption INTEGER NOT NULL DEFAULT 0,
+            compliance_status TEXT NOT NULL DEFAULT 'COMPLIANT',
+            evidence_r2_keys_json TEXT DEFAULT '[]',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (account_id) REFERENCES accounts(id),
+            FOREIGN KEY (agreement_id) REFERENCES kp_partner_agreements(id)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_kp_kol_acc ON kp_kol_contracts(account_id);
+        CREATE INDEX IF NOT EXISTS idx_kp_kol_status ON kp_kol_contracts(compliance_status);
+        CREATE INDEX IF NOT EXISTS idx_kp_kol_asset ON kp_kol_contracts(asset_tag);
         """)
 
 

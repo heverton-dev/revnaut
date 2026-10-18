@@ -377,7 +377,7 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
 - **Validation Command:** `python -m pytest tests/test_keypartners_surgical_postop.py -q`
 - **Blocked by:** TICKET-13, TICKET-15, TICKET-16
 
-#### [TICKET-18] Gestão de Key Opinion Leaders (KOLs), Embaixadores e Metas de Comodato
+#### [TICKET-18] [x] DONE - Gestão de Key Opinion Leaders (KOLs), Embaixadores e Metas de Comodato
 - **Descrição:** Implementação do submódulo de gestão de cirurgiões embaixadores, professores e grandes clínicas parceiras (`src/features/keypartners/kol_management.py`), monitorando contrapartidas de comodato de equipamentos (motores cirúrgicos, scanners intraorais, kits permanentes) versus consumo mensal de implantes e entregas de aulas/casos clínicos.
 - **Como Implementar (Detalhes Técnicos):**
   1. Criar tabela `kp_kol_contracts` vinculando equipamentos cedidos em comodato (com número de patrimônio) à meta mensal de consumo de consumíveis e cotas de palestras/publicações clínicas.

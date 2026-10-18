@@ -13,10 +13,14 @@ from src.features.keypartners.schemas import (
     CustodySummaryResponse,
     SurgicalOrderCreate, SurgicalOrderApproveRequest,
     SurgicalPostopReportRequest, SurgicalPostopReportResponse,
-    SurgicalOrderOut
+    SurgicalOrderOut,
+    KolContractCreate, KolConsumptionRecordRequest,
+    KolConsumptionRecordResponse, KolEvidenceSubmitRequest,
+    KolEvidenceSubmitResponse, KolContractOut
 )
 from src.features.keypartners import service
 from src.features.keypartners import surgical_cycle
+from src.features.keypartners import kol_management
 
 router = APIRouter(prefix="/api/v1/keypartners", tags=["KeyPartners • Consignação Cirúrgica"])
 
@@ -129,3 +133,59 @@ def get_surgical_order(order_id: str, account_id: str = "0f14ffff"):
         return surgical_cycle.get_surgical_order(order_id=order_id, account_id=account_id)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.post("/kol-contracts", response_model=KolContractOut, status_code=status.HTTP_201_CREATED, summary="Cadastrar novo contrato de KOL e ativo em comodato")
+def create_kol(payload: KolContractCreate):
+    try:
+        return kol_management.create_kol_contract(
+            kol_name=payload.kol_name,
+            cro_uf=payload.cro_uf,
+            equipment_name=payload.equipment_name,
+            asset_tag=payload.asset_tag,
+            min_monthly_implants_target=payload.min_monthly_implants_target,
+            clinical_lectures_quota=payload.clinical_lectures_quota,
+            agreement_id=payload.agreement_id,
+            account_id=payload.account_id or "0f14ffff"
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/kol-contracts", response_model=List[KolContractOut], summary="Listar contratos de KOL e ativos em comodato")
+def list_kols(account_id: str = "0f14ffff"):
+    return kol_management.list_kol_contracts(account_id=account_id)
+
+
+@router.post("/kol-contracts/{contract_id}/record-consumption", response_model=KolConsumptionRecordResponse, summary="Registrar consumo mensal e auditar metas de comodato")
+def record_kol_consumption(contract_id: str, payload: KolConsumptionRecordRequest):
+    try:
+        return kol_management.record_monthly_consumption(
+            contract_id=contract_id,
+            consumed_implants_count=payload.consumed_implants_count,
+            account_id=payload.account_id or "0f14ffff"
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.post("/kol-contracts/{contract_id}/evidence", response_model=KolEvidenceSubmitResponse, summary="Submeter caso clínico ou vídeo no Cloudflare R2")
+def submit_kol_evidence(contract_id: str, payload: KolEvidenceSubmitRequest):
+    try:
+        return kol_management.submit_clinical_evidence(
+            contract_id=contract_id,
+            r2_key=payload.r2_key,
+            title=payload.title,
+            account_id=payload.account_id or "0f14ffff"
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.get("/kol-contracts/{contract_id}", response_model=KolContractOut, summary="Obter detalhes do contrato de comodato do KOL")
+def get_kol(contract_id: str, account_id: str = "0f14ffff"):
+    try:
+        return kol_management.get_kol_contract(contract_id=contract_id, account_id=account_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
