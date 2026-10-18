@@ -30,6 +30,7 @@ from src.features.integrations.totvs.router import router as totvs_router
 from src.features.integrations.omnichannel.router import router as omnichannel_router
 from src.features.automations.router import router as automations_router
 from src.features.intelligence.router import router as intelligence_router
+from src.features.storage.router import router as storage_router
 
 # Inicializa schema e seed SQLite WAL
 
@@ -98,6 +99,7 @@ app.include_router(totvs_router)
 app.include_router(omnichannel_router)
 app.include_router(automations_router)
 app.include_router(intelligence_router)
+app.include_router(storage_router)
 
 # Montagem de Estáticos e Frontend Root
 _possible_static_paths = [

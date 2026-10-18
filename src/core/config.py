@@ -17,3 +17,12 @@ HOST = os.getenv("HOST", "0.0.0.0")
 APP_ENV = os.getenv("APP_ENV", "production")
 SECRET_KEY = os.getenv("SECRET_KEY", "revnaut-secret-key-2026-superadmin-god")
 
+# Cloudflare R2 Object Storage Config (S3 API v4 compatible)
+R2_ACCOUNT_ID = os.getenv("R2_ACCOUNT_ID", "mock-r2-account-id")
+R2_ACCESS_KEY_ID = os.getenv("R2_ACCESS_KEY_ID", "mock-r2-access-key")
+R2_SECRET_ACCESS_KEY = os.getenv("R2_SECRET_ACCESS_KEY", "mock-r2-secret-key")
+R2_BUCKET_NAME = os.getenv("R2_BUCKET_NAME", "revnaut-media")
+R2_PUBLIC_DOMAIN = os.getenv("R2_PUBLIC_DOMAIN", "https://cdn.revnaut.io")
+R2_ENDPOINT_URL = os.getenv("R2_ENDPOINT_URL", f"https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com")
+
+
