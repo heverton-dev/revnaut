@@ -60,6 +60,21 @@ services:
       restart_policy:
         condition: on-failure
 
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      - POSTGRES_DB=revnaut
+      - POSTGRES_USER=revnaut_admin
+      - POSTGRES_PASSWORD_FILE=/run/secrets/pg_password
+    networks:
+      - network_conexao
+    volumes:
+      - /opt/rvops/postgres:/var/lib/postgresql/data
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
 networks:
   network_conexao:
     external: true

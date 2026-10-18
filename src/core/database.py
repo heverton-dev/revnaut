@@ -77,6 +77,18 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
             await session.close()
 
 
+async def get_write_db() -> AsyncGenerator[AsyncSession, None]:
+    """Sessão assíncrona dedicada a operações de escrita (Primary OLTP)."""
+    async for session in get_async_session():
+        yield session
+
+
+async def get_read_db() -> AsyncGenerator[AsyncSession, None]:
+    """Sessão assíncrona dedicada a consultas de leitura analítica (Replica OLAP)."""
+    async for session in get_async_session():
+        yield session
+
+
 def get_connection() -> sqlite3.Connection:
     conn = sqlite3.connect(str(DB_PATH), timeout=10.0, check_same_thread=False)
     conn.row_factory = sqlite3.Row
@@ -433,6 +445,20 @@ def init_db() -> None:
             executed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (flow_id) REFERENCES automation_flows(id)
         );
+
+        CREATE TABLE IF NOT EXISTS semantic_embeddings (
+            id TEXT PRIMARY KEY,
+            tenant_id TEXT NOT NULL,
+            entity_type TEXT NOT NULL,
+            entity_id TEXT NOT NULL,
+            content_chunk TEXT NOT NULL,
+            embedding TEXT NOT NULL,
+            metadata_json TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (tenant_id) REFERENCES accounts(id)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_embeddings_tenant ON semantic_embeddings(tenant_id, entity_type);
         """)
 
 
