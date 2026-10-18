@@ -67,7 +67,8 @@ class HealthResponse(BaseModel):
     accounts_online: int
     timestamp: float | None = None
 
-# Health Check do Monólito
+# Health Check do Monolito
+@app.get("/health", response_model=HealthResponse, tags=["Sistema"])
 @app.get("/api/v1/health", response_model=HealthResponse, tags=["Sistema"])
 def health_check():
     conn = get_connection()

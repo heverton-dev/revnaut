@@ -122,7 +122,7 @@ services:
         - "traefik.http.middlewares.revnaut-security-headers.headers.sslredirect=true"
         - "traefik.http.middlewares.revnaut-security-headers.headers.stsSeconds=315360000"
     healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=5)\" || exit 1"]
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health', timeout=5)\" || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 3
