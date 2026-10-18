@@ -133,6 +133,22 @@ services:
       restart_policy:
         condition: on-failure
 
+  documenso:
+    image: documenso/documenso:latest
+    environment:
+      - NEXTAUTH_URL=http://documenso.revnaut.internal:3000
+      - NEXTAUTH_SECRET=${DOCUMENSO_SECRET:-supersecret_documenso_key}
+      - DATABASE_URL=postgresql://revnaut_user:revnaut_secret_pg_2026@postgres:5432/revnaut_crm
+      - NEXT_PUBLIC_WEBAPP_URL=http://documenso.revnaut.internal:3000
+    ports:
+      - "3000:3000"
+    networks:
+      - network_conexao
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
 networks:
   network_conexao:
     external: true

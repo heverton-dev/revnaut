@@ -623,7 +623,33 @@ def init_db() -> None:
         );
 
         CREATE INDEX IF NOT EXISTS idx_disc_req_deal ON deal_discount_requests(deal_id);
+
+        CREATE TABLE IF NOT EXISTS deal_contracts (
+            id TEXT PRIMARY KEY,
+            account_id TEXT NOT NULL,
+            deal_id TEXT NOT NULL,
+            documenso_document_id TEXT,
+            title TEXT NOT NULL,
+            contract_type TEXT NOT NULL DEFAULT 'fornecimento_implantes',
+            status TEXT NOT NULL DEFAULT 'PENDING_SIGNATURE',
+            original_pdf_r2_key TEXT,
+            signed_pdf_r2_key TEXT,
+            signed_pdf_url TEXT,
+            sha256_hash TEXT,
+            signer_name TEXT,
+            signer_email TEXT,
+            signer_phone TEXT,
+            signing_url TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            signed_at TIMESTAMP,
+            FOREIGN KEY (account_id) REFERENCES accounts(id),
+            FOREIGN KEY (deal_id) REFERENCES deals(id)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_contracts_deal ON deal_contracts(deal_id);
+        CREATE INDEX IF NOT EXISTS idx_contracts_doc_id ON deal_contracts(documenso_document_id);
         """)
+
 
         # Migração idempotente para colunas complementares em deals e contacts
         cur = conn.cursor()

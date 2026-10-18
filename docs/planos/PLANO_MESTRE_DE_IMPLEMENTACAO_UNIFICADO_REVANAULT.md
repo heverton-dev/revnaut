@@ -334,7 +334,7 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
 - **Validation Command:** `python -m pytest tests/test_catalog_pricing_approval.py -q`
 - **Blocked by:** TICKET-04
 
-#### [TICKET-15] Fechamento de Propostas e Contratos com Documenso Headless e Assinatura via WhatsApp
+#### [TICKET-15] [x] DONE - Fechamento de Propostas e Contratos com Documenso Headless e Assinatura via WhatsApp
 - **Descrição:** Integração do motor open-source **Documenso** (`src/features/deals/documenso_service.py`) para geração dinâmica de PDFs de propostas comerciais, contratos de fornecimento e termos de responsabilidade de consignação, enviando o link de assinatura diretamente no WhatsApp do cirurgião e movendo o Deal para `WON` após o webhook de rubrica.
 - **Como Implementar (Detalhes Técnicos):**
   1. Gerar o PDF do pedido/termo a partir dos itens do Deal, arquivar a versão original no Cloudflare R2 e enviar via API REST do Documenso (`/api/v1/documents`) posicionando as tags de assinatura do cirurgião, consultor e testemunha.

@@ -153,5 +153,55 @@ class ApproveDiscountResponse(BaseModel):
     status: str
 
 
+class GenerateContractRequest(BaseModel):
+    deal_id: str = Field(..., description="ID do Deal vinculado")
+    contract_type: str = Field(default="fornecimento_implantes", description="Tipo de contrato: fornecimento_implantes | termo_consignacao | proposta")
+    signer_name: str | None = Field(default=None, description="Nome do cirurgião signatário")
+    signer_email: str | None = Field(default=None, description="E-mail do signatário")
+    signer_phone: str | None = Field(default=None, description="WhatsApp/Telefone para envio do link de assinatura")
+    account_id: str | None = Field(default="0f14ffff", description="ID do tenant")
+
+
+class GenerateContractResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    contract_id: str
+    deal_id: str
+    documenso_document_id: str
+    status: str
+    original_pdf_r2_key: str
+    signing_url: str
+
+
+class DealContractOut(BaseModel):
+    model_config = {"extra": "allow"}
+    id: str
+    account_id: str
+    deal_id: str
+    documenso_document_id: str | None = None
+    title: str
+    contract_type: str
+    status: str
+    original_pdf_r2_key: str | None = None
+    signed_pdf_r2_key: str | None = None
+    signed_pdf_url: str | None = None
+    sha256_hash: str | None = None
+    signer_name: str | None = None
+    signer_email: str | None = None
+    signer_phone: str | None = None
+    signing_url: str | None = None
+    created_at: str
+    signed_at: str | None = None
+
+
+class DocumensoWebhookResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    success: bool
+    deal_id: str | None = None
+    contract_status: str
+    new_stage_id: int | None = None
+    sha256_hash: str | None = None
+
+
+
 
 

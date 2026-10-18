@@ -15,9 +15,12 @@ from src.features.deals.schemas import (
     ProductCatalogItemOut, PriceTableOut,
     CalculateProposalRequest, CalculateProposalResponse,
     ApproveDiscountRequest, ApproveDiscountResponse,
+    GenerateContractRequest, GenerateContractResponse,
+    DealContractOut, DocumensoWebhookResponse,
 )
 from src.features.deals import service
 from src.features.deals import catalog_pricing
+from src.features.deals import documenso_service
 from src.core.database import get_connection
 from src.core.security import enforce_user_permission
 
@@ -150,5 +153,30 @@ def approve_discount(payload: ApproveDiscountRequest):
         )
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.post("/api/v1/deals/{deal_id}/generate-contract", response_model=GenerateContractResponse, summary="Gerar contrato Documenso para o Deal")
+def generate_deal_contract(deal_id: str, payload: GenerateContractRequest):
+    try:
+        return documenso_service.generate_contract_for_deal(
+            deal_id=deal_id,
+            contract_type=payload.contract_type,
+            signer_name=payload.signer_name,
+            signer_email=payload.signer_email,
+            signer_phone=payload.signer_phone,
+            account_id=payload.account_id or "0f14ffff",
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.get("/api/v1/deals/{deal_id}/contracts", response_model=List[DealContractOut], summary="Listar contratos e minutas vinculadas ao Deal")
+def get_deal_contracts(deal_id: str, account_id: str = "0f14ffff"):
+    return documenso_service.list_deal_contracts(deal_id=deal_id, account_id=account_id)
+
+
+@router.post("/api/v1/webhooks/documenso/document-completed", response_model=DocumensoWebhookResponse, summary="Webhook Documenso Assinatura de Contrato Concluída")
+def documenso_completed_webhook(payload: dict):
+    return documenso_service.handle_documenso_webhook(payload)
 
 
