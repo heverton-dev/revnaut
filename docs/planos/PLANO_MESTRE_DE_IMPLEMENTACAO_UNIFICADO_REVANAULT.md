@@ -621,7 +621,8 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
 - **Validation Command:** `python -m pytest tests/test_calcom_patient_reactivation.py -q`
 - **Blocked by:** TICKET-11, TICKET-23, TICKET-28
 
-#### [TICKET-37] Liquidação Inteligente FEFO de Lotes com Validade Curta via Flash Deals no DENTGO
+#### [TICKET-37] [x] DONE Liquidação Inteligente FEFO de Lotes com Validade Curta via Flash Deals no DENTGO
+- **Status:** [x] CONCLUIDO (226/226 testes aprovados, cobertura 100% do motor FEFO 6-9 meses, segmentação geolocalizada Haversine 50km, disparo WhatsApp 1-clique e reserva atômica de lotes). **(FASE 7 100% Concluída)**.
 - **Descrição:** Implementação do motor anti-perda de estoque (`src/features/dentgo/fefo_flash_deals.py`) que monitora lotes de implantes e biomateriais nos Hubs/CDs com validade esterilizante residual entre $6$ e $9\text{ meses}$ (*First-Expired, First-Out - FEFO*) e dispara ofertas relâmpago segmentadas no WhatsApp e no topo do app **DENTGO** para cirurgiões de alto giro daquela exata conexão protética.
 - **Como Implementar (Detalhes Técnicos):**
   1. Varredura automática no `dentgo_hub_inventory` e `kp_custody_ledger` identificando lotes na janela de alerta FEFO.

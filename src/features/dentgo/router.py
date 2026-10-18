@@ -13,11 +13,14 @@ from src.features.dentgo.schemas import (
     OrderCheckoutRequest, OrderOut,
     OrderPickingRequest, OrderSealRequest,
     OrderAssignCourierRequest, OrderDeliveryVerifyRequest,
-    FinancialSplitRequest, FinancialSplitOut
+    FinancialSplitRequest, FinancialSplitOut,
+    FefoScanRequest, FefoScanResponse,
+    FefoFlashDealItem, FefoReserveRequest, FefoReserveResponse
 )
 from src.features.dentgo import service
 from src.features.dentgo import logistics_dispatch
 from src.features.dentgo import financial_split
+from src.features.dentgo import fefo_flash_deals
 
 router = APIRouter(prefix="/api/v1/dentgo", tags=["DENTGO • Marketplace B2B & Logística Express"])
 
@@ -179,5 +182,73 @@ def get_split(order_id: str, account_id: str = "0f14ffff"):
 @router.get("/splits", response_model=List[FinancialSplitOut], summary="Listar conciliações financeiras e splits do marketplace")
 def list_splits(account_id: str = "0f14ffff"):
     return financial_split.list_financial_splits(account_id=account_id)
+
+
+@router.post(
+    "/fefo/scan",
+    response_model=FefoScanResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Varredura FEFO de lotes com validade entre 6 e 9 meses e criação de Flash Deals"
+)
+def run_fefo_scan(payload: FefoScanRequest):
+    result = fefo_flash_deals.scan_and_generate_flash_deals(
+        reference_date=payload.reference_date,
+        discount_percentage=payload.discount_percentage,
+        max_target_surgeons=payload.max_target_surgeons,
+        radius_km=payload.radius_km,
+        account_id=payload.account_id or "0f14ffff"
+    )
+    return FefoScanResponse(**result)
+
+
+@router.get(
+    "/fefo/deals",
+    response_model=List[FefoFlashDealItem],
+    summary="Listar Flash Deals ativos de lotes com validade curta"
+)
+def list_fefo_deals(
+    status: Optional[str] = None,
+    hub_id: Optional[str] = None,
+    account_id: str = "0f14ffff"
+):
+    deals = fefo_flash_deals.list_flash_deals(
+        status=status,
+        hub_id=hub_id,
+        account_id=account_id
+    )
+    return [FefoFlashDealItem(**d) for d in deals]
+
+
+@router.get(
+    "/fefo/deals/{deal_id}",
+    response_model=FefoFlashDealItem,
+    summary="Consultar detalhes de um Flash Deal específico"
+)
+def get_fefo_deal(deal_id: str, account_id: str = "0f14ffff"):
+    deal = fefo_flash_deals.get_flash_deal(deal_id=deal_id, account_id=account_id)
+    if not deal:
+        raise HTTPException(status_code=404, detail="Flash deal não encontrado.")
+    return FefoFlashDealItem(**deal)
+
+
+@router.post(
+    "/fefo/deals/{deal_id}/reserve",
+    response_model=FefoReserveResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Reserva atômica de unidades de Flash Deal (1 clique checkout)"
+)
+def reserve_fefo_deal(deal_id: str, payload: FefoReserveRequest):
+    try:
+        return fefo_flash_deals.reserve_flash_deal_batch(
+            deal_id=deal_id,
+            surgeon_cro_uf=payload.surgeon_cro_uf,
+            surgeon_name=payload.surgeon_name,
+            quantity=payload.quantity,
+            contact_id=payload.contact_id,
+            account_id=payload.account_id or "0f14ffff"
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 
 

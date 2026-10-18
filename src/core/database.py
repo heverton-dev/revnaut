@@ -1149,6 +1149,53 @@ def init_db() -> None:
 
         CREATE INDEX IF NOT EXISTS idx_calcom_acc ON calcom_bookings(account_id);
         CREATE INDEX IF NOT EXISTS idx_calcom_uid ON calcom_bookings(calcom_booking_uid);
+
+        CREATE TABLE IF NOT EXISTS fefo_flash_deals (
+            id TEXT PRIMARY KEY,
+            account_id TEXT NOT NULL,
+            hub_id TEXT NOT NULL,
+            hub_name TEXT NOT NULL,
+            inventory_id TEXT NOT NULL,
+            product_id TEXT NOT NULL,
+            product_name TEXT NOT NULL,
+            batch_number TEXT NOT NULL,
+            original_quantity INTEGER NOT NULL,
+            available_quantity INTEGER NOT NULL,
+            original_unit_price REAL NOT NULL,
+            discount_percentage REAL NOT NULL DEFAULT 35.0,
+            flash_unit_price REAL NOT NULL,
+            sterilization_expiry_date TEXT NOT NULL,
+            months_to_expire REAL NOT NULL,
+            target_surgeons_count INTEGER NOT NULL DEFAULT 0,
+            status TEXT NOT NULL DEFAULT 'ACTIVE',
+            checkout_one_click_url TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE,
+            FOREIGN KEY (hub_id) REFERENCES dentgo_hubs(id) ON DELETE CASCADE,
+            FOREIGN KEY (inventory_id) REFERENCES dentgo_hub_inventory(id) ON DELETE CASCADE
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_fefo_deals_acc ON fefo_flash_deals(account_id);
+        CREATE INDEX IF NOT EXISTS idx_fefo_deals_status ON fefo_flash_deals(status);
+        CREATE INDEX IF NOT EXISTS idx_fefo_deals_hub ON fefo_flash_deals(hub_id);
+
+        CREATE TABLE IF NOT EXISTS fefo_flash_deal_reservations (
+            id TEXT PRIMARY KEY,
+            account_id TEXT NOT NULL,
+            deal_id TEXT NOT NULL,
+            contact_id INTEGER,
+            surgeon_name TEXT NOT NULL,
+            surgeon_cro_uf TEXT NOT NULL,
+            quantity_reserved INTEGER NOT NULL,
+            total_amount REAL NOT NULL,
+            status TEXT NOT NULL DEFAULT 'RESERVED',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE,
+            FOREIGN KEY (deal_id) REFERENCES fefo_flash_deals(id) ON DELETE CASCADE
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_fefo_res_deal ON fefo_flash_deal_reservations(deal_id);
+        CREATE INDEX IF NOT EXISTS idx_fefo_res_acc ON fefo_flash_deal_reservations(account_id);
         """)
 
 

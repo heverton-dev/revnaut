@@ -3,7 +3,8 @@
 Pydantic Schemas para o Motor DENTGO (Marketplace B2B & Logística Express)
 """
 
-from typing import List, Optional
+from __future__ import annotations
+from typing import List, Optional, Dict, Any
 from pydantic import BaseModel, Field
 
 
@@ -191,5 +192,80 @@ class FinancialSplitOut(BaseModel):
     agreement_id: Optional[str] = None
     settlement_status: str
     created_at: str
+
+
+class FefoScanRequest(BaseModel):
+    reference_date: Optional[str] = Field(default=None, description="Data de referência para varredura (YYYY-MM-DD)")
+    discount_percentage: float = Field(default=35.0, ge=5.0, le=70.0, description="Percentual de desconto Flash Deal")
+    max_target_surgeons: int = Field(default=50, ge=1, le=200, description="Limite máximo de cirurgiões segmentados")
+    radius_km: float = Field(default=50.0, ge=5.0, le=200.0, description="Raio geográfico em km ao redor do Hub")
+    account_id: Optional[str] = Field(default="0f14ffff", description="ID da conta tenant")
+
+
+class FefoTargetSurgeonItem(BaseModel):
+    model_config = {"extra": "allow"}
+    id: int
+    name: str
+    email: str
+    phone: Optional[str] = None
+    cro: Optional[str] = None
+    cro_uf: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    monthly_implants_volume: Optional[int] = None
+
+
+class FefoFlashDealItem(BaseModel):
+    model_config = {"extra": "allow"}
+    id: str
+    account_id: str
+    hub_id: str
+    hub_name: str
+    inventory_id: str
+    product_id: str
+    product_name: str
+    batch_number: str
+    original_quantity: int
+    available_quantity: int
+    original_unit_price: float
+    discount_percentage: float
+    flash_unit_price: float
+    sterilization_expiry_date: str
+    months_to_expire: float
+    target_surgeons_count: int
+    status: str
+    checkout_one_click_url: str
+    target_surgeons: Optional[List[FefoTargetSurgeonItem]] = None
+    created_at: Optional[str] = None
+
+
+class FefoScanResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    scanned_batches: int
+    created_deals_count: int
+    reference_date: str
+    created_deals: List[FefoFlashDealItem]
+
+
+class FefoReserveRequest(BaseModel):
+    surgeon_cro_uf: str = Field(..., description="CRO-UF do cirurgião (ex: 12345-SP)")
+    surgeon_name: str = Field(..., min_length=2, description="Nome do cirurgião")
+    quantity: int = Field(default=1, ge=1, description="Quantidade de unidades a reservar")
+    contact_id: Optional[int] = Field(default=None, description="ID do contato cirurgião se cadastrado")
+    account_id: Optional[str] = Field(default="0f14ffff", description="ID da conta tenant")
+
+
+class FefoReserveResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    reservation_id: str
+    deal_id: str
+    surgeon_name: str
+    surgeon_cro_uf: str
+    quantity_reserved: int
+    total_amount: float
+    remaining_available: int
+    deal_status: str
+    status: str
+
 
 
