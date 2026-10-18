@@ -539,7 +539,28 @@ def init_db() -> None:
 
         CREATE INDEX IF NOT EXISTS idx_call_rec_deal ON call_recordings(deal_id);
         CREATE INDEX IF NOT EXISTS idx_call_rec_room ON call_recordings(room_name);
+
+        CREATE TABLE IF NOT EXISTS call_transcriptions (
+            id TEXT PRIMARY KEY,
+            account_id TEXT NOT NULL,
+            call_id TEXT NOT NULL,
+            deal_id TEXT,
+            full_text TEXT NOT NULL,
+            language TEXT NOT NULL DEFAULT 'pt',
+            model_name TEXT NOT NULL DEFAULT 'faster-whisper-medium',
+            segments_json TEXT NOT NULL,
+            speakers_detected INTEGER DEFAULT 2,
+            duration_seconds REAL DEFAULT 0.0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (account_id) REFERENCES accounts(id),
+            FOREIGN KEY (call_id) REFERENCES call_recordings(id),
+            FOREIGN KEY (deal_id) REFERENCES deals(id)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_transc_call ON call_transcriptions(call_id);
+        CREATE INDEX IF NOT EXISTS idx_transc_deal ON call_transcriptions(deal_id);
         """)
+
 
 
 

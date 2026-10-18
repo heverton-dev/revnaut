@@ -121,3 +121,46 @@ class IntelligenceOperationResponse(BaseModel):
     model_config = {"extra": "allow"}
     success: bool = True
     message: str
+
+
+class TranscriptionSegment(BaseModel):
+    model_config = {"extra": "allow"}
+    speaker: str
+    start: float
+    end: float
+    text: str
+
+
+class TranscriptionProcessRequest(BaseModel):
+    call_id: str = Field(..., description="ID da chamada em call_recordings")
+    account_id: Optional[str] = Field(default="0f14ffff", description="ID do tenant")
+    dialogue_text: Optional[str] = Field(default=None, description="Texto transcrito pré-existente ou fixture")
+    audio_url: Optional[str] = Field(default=None, description="URL do arquivo de áudio no R2")
+    duration_seconds: Optional[float] = Field(default=0.0, description="Duração total da gravação em segundos")
+
+
+class TranscriptionProcessResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    success: bool
+    transcription_id: str
+    call_id: str
+    deal_id: Optional[str] = None
+    duration_seconds: float
+    speakers_count: int
+    segments: List[TranscriptionSegment]
+
+
+class TranscriptionItemOut(BaseModel):
+    model_config = {"extra": "allow"}
+    id: str
+    account_id: str
+    call_id: str
+    deal_id: Optional[str] = None
+    full_text: str
+    language: str = "pt"
+    model_name: str = "faster-whisper-medium"
+    duration_seconds: float = 0.0
+    speakers_detected: int = 2
+    segments: List[TranscriptionSegment]
+    created_at: str
+

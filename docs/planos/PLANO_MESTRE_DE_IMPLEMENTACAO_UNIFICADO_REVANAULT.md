@@ -298,7 +298,7 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
 - **Validation Command:** `python -m pytest tests/test_livekit_webrtc_sip.py -q`
 - **Blocked by:** TICKET-01, TICKET-02
 
-#### [TICKET-12] Pipeline STT de Alta Performance com faster-whisper e Diarização pyannote.audio
+#### [TICKET-12] [x] DONE - Pipeline STT de Alta Performance com faster-whisper e Diarização pyannote.audio
 - **Descrição:** Criação do worker de transcrição e diarização (`src/features/intelligence/transcription_worker.py`) que consome os áudios salvos no Cloudflare R2, executa transcrição acelerada com `faster-whisper` (CTranslate2 `int8`) e separa os interlocutores (`SPEAKER_CONSULTANT` vs. `SPEAKER_SURGEON`) via `pyannote.audio` ou canais estéreo isolados do LiveKit.
 - **Como Implementar (Detalhes Técnicos):**
   1. Escutar o evento `call.recording_ready` no Redis Streams.

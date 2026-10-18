@@ -9,13 +9,16 @@ from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Query, status
 
 from src.features.intelligence import service
+from src.features.intelligence import transcription_worker
 from src.features.intelligence.schemas import (
     ContactInstitutionCreate, ContactInstitutionOut,
     ClinicalGraphResponse, KOLSpeakerResponse,
-    ChurnRiskResponse, IntelligenceOperationResponse
+    ChurnRiskResponse, IntelligenceOperationResponse,
+    TranscriptionProcessRequest, TranscriptionProcessResponse,
+    TranscriptionItemOut
 )
 
-router = APIRouter(prefix="/api/v1/intelligence", tags=["Inteligência Clínica & Anti-Churn"])
+router = APIRouter(prefix="/api/v1/intelligence", tags=["Inteligência Clínica & STT"])
 
 
 @router.get("/churn-risk", response_model=ChurnRiskResponse, summary="Radar Anti-Churn & Inteligência de Carteira (RFM Odontológico)")
@@ -68,3 +71,31 @@ def remove_institution_link(link_id: str, account_id: str = "0f14ffff"):
     if not deleted:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vínculo não encontrado.")
     return {"success": True, "message": "Vínculo removido com sucesso."}
+
+
+@router.post("/transcriptions/process", response_model=TranscriptionProcessResponse, summary="Processar e diarizar áudio de reunião/ligação")
+def process_transcription(payload: TranscriptionProcessRequest):
+    try:
+        return transcription_worker.process_call_audio(
+            call_id=payload.call_id,
+            account_id=payload.account_id or "0f14ffff",
+            dialogue_text=payload.dialogue_text,
+            audio_url=payload.audio_url,
+            duration_seconds=payload.duration_seconds or 0.0,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/transcriptions/{transcription_id}", response_model=TranscriptionItemOut, summary="Obter transcrição e diarização por ID")
+def get_transcription(transcription_id: str):
+    item = transcription_worker.get_transcription_by_id(transcription_id)
+    if not item:
+        raise HTTPException(status_code=404, detail="Transcrição não encontrada")
+    return item
+
+
+@router.get("/transcriptions/deal/{deal_id}", response_model=List[TranscriptionItemOut], summary="Listar transcrições de reuniões do Deal")
+def list_deal_transcriptions(deal_id: str, account_id: str = "0f14ffff"):
+    return transcription_worker.list_transcriptions_for_deal(deal_id=deal_id, account_id=account_id)
+
