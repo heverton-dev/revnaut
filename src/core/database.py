@@ -831,6 +831,41 @@ def init_db() -> None:
 
         CREATE INDEX IF NOT EXISTS idx_dentgo_splits_order ON dentgo_financial_splits(order_id);
         CREATE INDEX IF NOT EXISTS idx_dentgo_splits_acc ON dentgo_financial_splits(account_id);
+
+        CREATE TABLE IF NOT EXISTS whatsapp_instances (
+            id TEXT PRIMARY KEY,
+            account_id TEXT NOT NULL,
+            instance_name TEXT NOT NULL UNIQUE,
+            consultant_user_id TEXT,
+            shard_node_url TEXT NOT NULL,
+            phone_number TEXT,
+            status TEXT NOT NULL DEFAULT 'DISCONNECTED',
+            qr_code_base64 TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (account_id) REFERENCES accounts(id)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_whatsapp_inst_acc ON whatsapp_instances(account_id);
+        CREATE INDEX IF NOT EXISTS idx_whatsapp_inst_consultant ON whatsapp_instances(consultant_user_id);
+
+        CREATE TABLE IF NOT EXISTS omnichannel_messages (
+            id TEXT PRIMARY KEY,
+            account_id TEXT NOT NULL,
+            instance_name TEXT NOT NULL,
+            remote_jid TEXT NOT NULL,
+            sender_phone TEXT NOT NULL,
+            message_type TEXT NOT NULL DEFAULT 'text',
+            content TEXT,
+            media_r2_key TEXT,
+            from_me INTEGER NOT NULL DEFAULT 0,
+            sos_call_link TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (account_id) REFERENCES accounts(id)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_omni_msg_acc ON omnichannel_messages(account_id);
+        CREATE INDEX IF NOT EXISTS idx_omni_msg_instance ON omnichannel_messages(instance_name);
         """)
 
 

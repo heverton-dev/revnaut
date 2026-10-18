@@ -51,3 +51,38 @@ class MauticCampaignActionResponse(BaseModel):
     rendered_message: Optional[str] = None
     timestamp: Optional[float] = None
 
+
+class WhatsappInstanceCreate(BaseModel):
+    instance_name: str = Field(..., description="Nome único da instância na Evolution API v2")
+    consultant_user_id: Optional[str] = Field(default=None, description="ID do usuário consultor de vendas")
+    phone_number: Optional[str] = Field(default=None, description="Número de telefone conectado (+55...)")
+    account_id: Optional[str] = Field(default="0f14ffff", description="ID da conta tenant")
+
+
+class WhatsappInstanceOut(BaseModel):
+    model_config = {"extra": "allow"}
+    id: str
+    account_id: str
+    instance_name: str
+    consultant_user_id: Optional[str] = None
+    shard_node_url: str
+    phone_number: Optional[str] = None
+    status: str
+    qr_code_base64: Optional[str] = None
+    created_at: str
+    updated_at: str
+
+
+class EvolutionWebhookResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    success: bool = True
+    event: str
+    action: Optional[str] = None
+    sos_call_link: Optional[str] = None
+    remote_jid: Optional[str] = None
+    phone: Optional[str] = None
+    response_message: Optional[str] = None
+    status: Optional[str] = None
+    media_r2_key: Optional[str] = None
+
+
