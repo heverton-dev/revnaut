@@ -350,7 +350,7 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
 
 ### FASE 3: Integração Integral do Motor Proprietário KEYPARTNERS (Consignação Cirúrgica & Parcerias)
 
-#### [TICKET-16] Incorporação do Domínio Core KeyPartners: Custódia de Kits, Lotes ANVISA e Saldos
+#### [TICKET-16] [x] DONE - Incorporação do Domínio Core KeyPartners: Custódia de Kits, Lotes ANVISA e Saldos
 - **Descrição:** Implementação nativa completa do motor **KeyPartners** (`src/features/keypartners/`) no backend e banco de dados do REVNAULT, controlando o razão de custódia de estoque em posse de cada clínica/cirurgião com rastreabilidade estrita de lote, número de série, data de esterilização e validade ANVISA.
 - **Como Implementar (Detalhes Técnicos):**
   1. Criar esquema relacional completo do KeyPartners via migration Alembic:

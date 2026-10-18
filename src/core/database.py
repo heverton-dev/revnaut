@@ -648,6 +648,59 @@ def init_db() -> None:
 
         CREATE INDEX IF NOT EXISTS idx_contracts_deal ON deal_contracts(deal_id);
         CREATE INDEX IF NOT EXISTS idx_contracts_doc_id ON deal_contracts(documenso_document_id);
+
+        CREATE TABLE IF NOT EXISTS kp_partner_agreements (
+            id TEXT PRIMARY KEY,
+            account_id TEXT NOT NULL,
+            partner_name TEXT NOT NULL,
+            partner_cro_uf TEXT,
+            tier TEXT NOT NULL DEFAULT 'SILVER',
+            credit_limit REAL NOT NULL DEFAULT 0.0,
+            used_credit REAL NOT NULL DEFAULT 0.0,
+            min_monthly_revenue REAL NOT NULL DEFAULT 0.0,
+            max_turnover_days INTEGER NOT NULL DEFAULT 60,
+            is_active INTEGER NOT NULL DEFAULT 1,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (account_id) REFERENCES accounts(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS kp_consignment_kits (
+            id TEXT PRIMARY KEY,
+            account_id TEXT NOT NULL,
+            serial_number TEXT UNIQUE NOT NULL,
+            qr_code TEXT NOT NULL,
+            name TEXT NOT NULL,
+            composition_json TEXT,
+            status TEXT NOT NULL DEFAULT 'IN_STOCK',
+            current_agreement_id TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (account_id) REFERENCES accounts(id),
+            FOREIGN KEY (current_agreement_id) REFERENCES kp_partner_agreements(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS kp_custody_ledger (
+            id TEXT PRIMARY KEY,
+            account_id TEXT NOT NULL,
+            agreement_id TEXT NOT NULL,
+            movement_type TEXT NOT NULL,
+            product_id TEXT NOT NULL,
+            product_name TEXT NOT NULL,
+            anvisa_reg TEXT NOT NULL,
+            batch_number TEXT NOT NULL,
+            serial_number TEXT,
+            quantity INTEGER NOT NULL DEFAULT 1,
+            unit_value REAL NOT NULL DEFAULT 0.0,
+            total_value REAL NOT NULL DEFAULT 0.0,
+            sterilization_expiry_date TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (account_id) REFERENCES accounts(id),
+            FOREIGN KEY (agreement_id) REFERENCES kp_partner_agreements(id)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_kp_agr_acc ON kp_partner_agreements(account_id);
+        CREATE INDEX IF NOT EXISTS idx_kp_kits_agr ON kp_consignment_kits(current_agreement_id);
+        CREATE INDEX IF NOT EXISTS idx_kp_ledger_agr ON kp_custody_ledger(agreement_id);
+        CREATE INDEX IF NOT EXISTS idx_kp_ledger_batch ON kp_custody_ledger(batch_number);
         """)
 
 
