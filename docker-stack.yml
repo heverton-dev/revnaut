@@ -117,7 +117,24 @@ services:
       restart_policy:
         condition: on-failure
 
+  livekit:
+    image: livekit/livekit-server:latest
+    command: --config /etc/livekit.yaml
+    environment:
+      - LIVEKIT_CONFIG_FILE=/etc/livekit.yaml
+    ports:
+      - "7880:7880"
+      - "7881:7881"
+      - "7882:7882/udp"
+    networks:
+      - network_conexao
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
 networks:
   network_conexao:
     external: true
+
 

@@ -286,7 +286,7 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
 
 ### FASE 2: Camada de Vendas, Copiloto de IA ("Granola-like"), VoIP/Meet LiveKit & Documenso
 
-#### [TICKET-11] Infraestrutura de Salas WebRTC e Telefonia VoIP com LiveKit SFU & LiveKit SIP
+#### [TICKET-11] [x] DONE - Infraestrutura de Salas WebRTC e Telefonia VoIP com LiveKit SFU & LiveKit SIP
 - **Descrição:** Implementação do módulo de comunicações em tempo real (`src/features/communications/livekit_service.py`) integrando o servidor **LiveKit SFU** para videoconferências embutidas em React (`@livekit/components-react`) e **LiveKit SIP** para discagem/recebimento de chamadas telefônicas normais (VoIP) diretamente no navegador do consultor, com gravação automática de faixas de áudio separadas (*Track Egress*) no Cloudflare R2.
 - **Como Implementar (Detalhes Técnicos):**
   1. Implementar gerador de tokens de acesso LiveKit (`AccessToken` JWT assinado com `LIVEKIT_API_KEY` e `LIVEKIT_API_SECRET`) vinculado ao `deal_id` ou `ticket_id`.

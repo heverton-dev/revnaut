@@ -516,7 +516,31 @@ def init_db() -> None:
         );
 
         CREATE INDEX IF NOT EXISTS idx_lp_subs_lp ON landing_page_submissions(landing_page_id);
+
+        CREATE TABLE IF NOT EXISTS call_recordings (
+            id TEXT PRIMARY KEY,
+            account_id TEXT NOT NULL,
+            room_name TEXT NOT NULL,
+            deal_id TEXT,
+            ticket_id TEXT,
+            caller_identity TEXT NOT NULL,
+            receiver_identity TEXT,
+            call_type TEXT NOT NULL DEFAULT 'webrtc',
+            status TEXT NOT NULL DEFAULT 'initiated',
+            duration_seconds INTEGER DEFAULT 0,
+            r2_recording_url TEXT,
+            r2_audio_key TEXT,
+            egress_id TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            ended_at TIMESTAMP,
+            FOREIGN KEY (account_id) REFERENCES accounts(id),
+            FOREIGN KEY (deal_id) REFERENCES deals(id)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_call_rec_deal ON call_recordings(deal_id);
+        CREATE INDEX IF NOT EXISTS idx_call_rec_room ON call_recordings(room_name);
         """)
+
 
 
 
