@@ -1098,6 +1098,57 @@ def init_db() -> None:
 
         CREATE INDEX IF NOT EXISTS idx_omni_msg_acc ON omnichannel_messages(account_id);
         CREATE INDEX IF NOT EXISTS idx_omni_msg_instance ON omnichannel_messages(instance_name);
+
+        CREATE TABLE IF NOT EXISTS patient_reactivation_schedules (
+            id TEXT PRIMARY KEY,
+            account_id TEXT NOT NULL,
+            patient_name TEXT NOT NULL,
+            patient_phone TEXT NOT NULL,
+            surgeon_name TEXT NOT NULL,
+            procedure_name TEXT NOT NULL,
+            surgery_date TEXT NOT NULL,
+            milestone_days INTEGER NOT NULL,
+            scheduled_dispatch_date TEXT NOT NULL,
+            calcom_booking_link TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'PENDING',
+            message_dispatched_at TIMESTAMP,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_reactiv_acc ON patient_reactivation_schedules(account_id);
+        CREATE INDEX IF NOT EXISTS idx_reactiv_dispatch ON patient_reactivation_schedules(scheduled_dispatch_date, status);
+        CREATE INDEX IF NOT EXISTS idx_reactiv_phone ON patient_reactivation_schedules(patient_phone);
+
+        CREATE TABLE IF NOT EXISTS calcom_bookings (
+            id TEXT PRIMARY KEY,
+            account_id TEXT NOT NULL,
+            calcom_booking_uid TEXT NOT NULL UNIQUE,
+            schedule_id TEXT,
+            patient_name TEXT NOT NULL,
+            patient_email TEXT,
+            patient_phone TEXT,
+            host_name TEXT,
+            host_email TEXT,
+            event_type_title TEXT NOT NULL,
+            start_time TEXT NOT NULL,
+            end_time TEXT NOT NULL,
+            meeting_url TEXT,
+            is_online INTEGER NOT NULL DEFAULT 0,
+            deal_id TEXT,
+            task_id TEXT,
+            status TEXT NOT NULL DEFAULT 'CONFIRMED',
+            raw_payload TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE,
+            FOREIGN KEY (schedule_id) REFERENCES patient_reactivation_schedules(id) ON DELETE SET NULL,
+            FOREIGN KEY (deal_id) REFERENCES deals(id) ON DELETE SET NULL,
+            FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE SET NULL
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_calcom_acc ON calcom_bookings(account_id);
+        CREATE INDEX IF NOT EXISTS idx_calcom_uid ON calcom_bookings(calcom_booking_uid);
         """)
 
 

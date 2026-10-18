@@ -147,6 +147,24 @@ services:
     deploy:
       replicas: 1
       restart_policy:
+        condition: on-failure
+
+  calcom:
+    image: calcom/cal.com:latest
+    environment:
+      - DATABASE_URL=postgresql://revnaut_user:revnaut_secret_pg_2026@postgres:5432/calcom
+      - NEXTAUTH_SECRET=${CALCOM_SECRET:-secret_calcom_jwt_key_2026}
+      - CALENDSO_ENCRYPTION_KEY=${CALCOM_ENCRYPTION_KEY:-secret_calcom_encryption_32chars}
+      - NEXT_PUBLIC_WEBAPP_URL=http://calcom.revnaut.internal:3000
+    ports:
+      - "3002:3000"
+    networks:
+      - network_conexao
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
   superset:
     image: apache/superset:3.1.0
     command: ["/app/docker/docker-bootstrap.sh", "app-gunicorn"]

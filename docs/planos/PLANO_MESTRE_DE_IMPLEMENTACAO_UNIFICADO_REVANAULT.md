@@ -608,7 +608,8 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
 - **Validation Command:** `python -m pytest tests/test_b2b_referral_mgm_loop.py -q`
 - **Blocked by:** TICKET-06, TICKET-33, TICKET-34
 
-#### [TICKET-36] Motor de Agendamento Inteligente Cal.com e Loop de Reativação Preventiva de Pacientes (6/12/18m)
+#### [TICKET-36] [x] DONE Motor de Agendamento Inteligente Cal.com e Loop de Reativação Preventiva de Pacientes (6/12/18m)
+- **Status:** [x] CONCLUIDO (222/222 testes aprovados, cobertura 100% dos fluxos de reativação 180/365/540d, webhook BOOKING_CREATED e LiveKit room generation).
 - **Descrição:** Integração do motor open-source **Cal.com** (`src/features/automations/calcom_reactivation.py`) para agendamento sem fricção de consultorias técnicas B2B (visitas de representantes/demonstração de scanners) e **Loops de Reativação B2C** de pacientes que instalaram próteses sobre implante há 6, 12 ou 18 meses para profilaxia e manutenção da garantia peri-implantar.
 - **Como Implementar (Detalhes Técnicos):**
   1. Implementar adaptador para a API do Cal.com sincronizando agendas dos consultores e cadeiras das clínicas, gerando links dinâmicos de sala do **LiveKit** quando o agendamento for teleconsulta/reunião online.
