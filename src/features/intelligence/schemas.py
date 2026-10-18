@@ -348,3 +348,53 @@ class PredictiveInventoryReportResponse(BaseModel):
     partner_name: str
     scores_history: List[Dict[str, Any]] = Field(default_factory=list)
     total_records: int
+
+
+class ClinicalMarginCalculateRequest(BaseModel):
+    procedure_name: str = Field(..., description="Nome do procedimento cirurgico (ex: Protocolo All-on-4)")
+    gross_revenue: float = Field(..., gt=0.0, description="Valor cobrado do paciente pelo procedimento em R$")
+    supplies_cost: float = Field(..., ge=0.0, description="Custo dos implantes/biomateriais KeyPartners/DENTGO em R$")
+    lab_cost: Optional[float] = Field(default=0.0, ge=0.0, description="Custo com protese laboratorial em R$")
+    surgeon_fee: float = Field(..., ge=0.0, description="Honorarios do cirurgiao-dentista em R$")
+    chair_hours: float = Field(..., ge=0.0, description="Quantidade de horas clinicas de cadeira utilizadas")
+    chair_hour_cost: Optional[float] = Field(default=200.0, ge=0.0, description="Custo fixo da hora-clinica de cadeira em R$")
+    tax_rate_percent: Optional[float] = Field(default=10.0, ge=0.0, le=100.0, description="Aliquota de imposto em porcentagem")
+    clinic_id: Optional[str] = Field(default="clinic-default", description="ID da clinica ou polo odontologico")
+    surgery_order_id: Optional[str] = Field(default=None, description="ID da ordem cirurgica KeyPartners se vinculada")
+    patient_identifier: Optional[str] = Field(default=None, description="Identificador anonimo do paciente")
+    account_id: Optional[str] = Field(default="0f14ffff", description="ID do tenant")
+
+
+class ClinicalMarginCalculateResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    id: str
+    procedure_name: str
+    gross_revenue: float
+    supplies_cost: float
+    lab_cost: float
+    surgeon_fee: float
+    chair_hours: float
+    chair_hour_cost: float
+    total_chair_cost: float
+    tax_rate_percent: float
+    tax_amount: float
+    total_cost: float
+    net_margin_value: float
+    net_margin_percent: float
+    is_low_margin: bool
+    status: str
+    recommendation: str
+    clinic_id: Optional[str] = None
+    surgery_order_id: Optional[str] = None
+    patient_identifier: Optional[str] = None
+    calculated_at: str
+
+
+class ClinicalMarginSummaryReportResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    clinic_id: str
+    total_procedures_analyzed: int
+    average_margin_percent: float
+    low_margin_count: int
+    items: List[Dict[str, Any]] = Field(default_factory=list)
+

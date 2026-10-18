@@ -15,6 +15,7 @@ from src.features.intelligence import surgical_rag
 from src.features.intelligence import superset_embedded
 from src.features.intelligence import text_to_sql_agent
 from src.features.intelligence import predictive_inventory
+from src.features.intelligence import clinical_margin
 from src.features.intelligence.schemas import (
     ContactInstitutionCreate, ContactInstitutionOut,
     ClinicalGraphResponse, KOLSpeakerResponse,
@@ -29,7 +30,9 @@ from src.features.intelligence.schemas import (
     TextToSqlExecuteRequest, TextToSqlExecuteResponse,
     SokCalculationRequest, SokCalculationResponse,
     PrCalculationRequest, PrCalculationResponse,
-    PredictiveInventoryReportResponse
+    PredictiveInventoryReportResponse,
+    ClinicalMarginCalculateRequest, ClinicalMarginCalculateResponse,
+    ClinicalMarginSummaryReportResponse
 )
 
 
@@ -287,3 +290,41 @@ def get_inventory_scores_report(
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post(
+    "/margin/calculate",
+    response_model=ClinicalMarginCalculateResponse,
+    summary="Calcular Margem Liquida Real de Procedimento Clinico Cirurgico"
+)
+def calculate_clinical_margin(payload: ClinicalMarginCalculateRequest):
+    """
+    Motor financeiro para clinicas e franquias odontologicas:
+    Margem Liquida = V_procedimento - (C_insumos + C_lab + C_honorario + C_hora_cadeira + C_imposto)
+    Emite alerta no dashboard quando a margem liquida for inferior a 15.0%.
+    """
+    try:
+        return clinical_margin.calculate_procedure_net_margin(payload)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get(
+    "/margin/summary/{clinic_id}",
+    response_model=ClinicalMarginSummaryReportResponse,
+    summary="Obter relatorio consolidado de rentabilidade e margens da clinica"
+)
+def get_clinic_margin_summary_report(
+    clinic_id: str,
+    account_id: str = Query("0f14ffff", description="ID do tenant")
+):
+    try:
+        return clinical_margin.get_clinic_margin_summary(
+            clinic_id=clinic_id,
+            account_id=account_id
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+

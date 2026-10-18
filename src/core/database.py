@@ -921,6 +921,33 @@ def init_db() -> None:
 
         CREATE INDEX IF NOT EXISTS idx_pred_inv_agr ON kp_predictive_inventory_scores(agreement_id);
 
+        CREATE TABLE IF NOT EXISTS clinical_procedure_margins (
+            id TEXT PRIMARY KEY,
+            account_id TEXT NOT NULL,
+            clinic_id TEXT,
+            surgery_order_id TEXT,
+            procedure_name TEXT NOT NULL,
+            patient_identifier TEXT,
+            gross_revenue REAL NOT NULL,
+            supplies_cost REAL NOT NULL,
+            lab_cost REAL NOT NULL DEFAULT 0.0,
+            surgeon_fee REAL NOT NULL,
+            chair_hours REAL NOT NULL,
+            chair_hour_cost REAL NOT NULL,
+            total_chair_cost REAL NOT NULL,
+            tax_rate_percent REAL NOT NULL,
+            tax_amount REAL NOT NULL,
+            net_margin_value REAL NOT NULL,
+            net_margin_percent REAL NOT NULL,
+            is_low_margin INTEGER NOT NULL DEFAULT 0,
+            recommendation TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_clin_margin_acc ON clinical_procedure_margins(account_id);
+        CREATE INDEX IF NOT EXISTS idx_clin_margin_clinic ON clinical_procedure_margins(clinic_id);
+
         CREATE TABLE IF NOT EXISTS whatsapp_instances (
 
 

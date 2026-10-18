@@ -554,7 +554,7 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
 - **Validation Command:** `python -m pytest tests/test_predictive_sok_pr_math.py -q`
 - **Blocked by:** TICKET-17, TICKET-21
 
-#### [TICKET-32] Calculadora de Margem Líquida Real por Procedimento Clínico (Módulo para Clínicas e Franquias)
+#### [TICKET-32] [x] DONE - Calculadora de Margem Líquida Real por Procedimento Clínico (Módulo para Clínicas e Franquias)
 - **Descrição:** Implementação do motor de engenharia financeira clínica (`src/features/intelligence/clinical_margin.py`) para que consultórios e redes de franquias calculem o lucro líquido real de cada cirurgia realizada:
   $$\text{Margem Líquida} = V_{\text{procedimento}} - (C_{\text{insumos\_keypartners\_dentgo}} + C_{\text{honorario\_cirurgiao}} + C_{\text{hora\_cadeira}} + C_{\text{imposto}})$$
 - **Como Implementar (Detalhes Técnicos):**
