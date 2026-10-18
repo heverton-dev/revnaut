@@ -539,7 +539,7 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
 - **Validation Command:** `python -m pytest tests/test_text_to_sql_security.py -q`
 - **Blocked by:** TICKET-03, TICKET-29
 
-#### [TICKET-31] Motor Matemático de Score de Ociosidade de Kit Consignado ($SOK$) e Ponto de Reposição ($PR$)
+#### [TICKET-31] [x] DONE - Motor Matemático de Score de Ociosidade de Kit Consignado ($SOK$) e Ponto de Reposição ($PR$)
 - **Descrição:** Implementação dos algoritmos preditivos de estoque e consignação (`src/features/intelligence/predictive_inventory.py`) que calculam diariamente o **Score de Ociosidade de Kit ($SOK$)** e o **Ponto de Reposição ($PR$)** para cada parceiro, gerando ações automáticas no Kanban, no KeyPartners e no DENTGO.
 - **Como Implementar (Detalhes Técnicos):**
   1. Implementar a equação determinística do Score de Ociosidade de Kit Consignado ($SOK$):

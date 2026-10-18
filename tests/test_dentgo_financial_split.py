@@ -32,6 +32,7 @@ def clean_tables():
         cur.execute("DELETE FROM kp_custody_ledger")
         cur.execute("DELETE FROM kp_consignment_kits")
         cur.execute("DELETE FROM kp_kol_contracts")
+        cur.execute("DELETE FROM kp_predictive_inventory_scores")
         cur.execute("DELETE FROM kp_partner_agreements")
         conn.commit()
     finally:

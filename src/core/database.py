@@ -903,7 +903,26 @@ def init_db() -> None:
         CREATE INDEX IF NOT EXISTS idx_postop_patient_phone ON postop_patient_care_schedules(patient_phone);
         CREATE INDEX IF NOT EXISTS idx_postop_status ON postop_patient_care_schedules(status);
 
+        CREATE TABLE IF NOT EXISTS kp_predictive_inventory_scores (
+            id TEXT PRIMARY KEY,
+            account_id TEXT NOT NULL,
+            agreement_id TEXT NOT NULL,
+            sok_score REAL NOT NULL,
+            is_idle INTEGER NOT NULL DEFAULT 0,
+            pr_score REAL NOT NULL,
+            current_stock INTEGER NOT NULL,
+            replenishment_needed INTEGER NOT NULL DEFAULT 0,
+            recommendation TEXT,
+            deal_id TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE,
+            FOREIGN KEY (agreement_id) REFERENCES kp_partner_agreements(id) ON DELETE CASCADE
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_pred_inv_agr ON kp_predictive_inventory_scores(agreement_id);
+
         CREATE TABLE IF NOT EXISTS whatsapp_instances (
+
 
 
             id TEXT PRIMARY KEY,

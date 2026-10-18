@@ -32,6 +32,7 @@ def clean_test_data():
         cur.execute("DELETE FROM kp_custody_ledger")
         cur.execute("DELETE FROM kp_consignment_kits")
         cur.execute("DELETE FROM kp_kol_contracts")
+        cur.execute("DELETE FROM kp_predictive_inventory_scores")
         cur.execute("DELETE FROM kp_partner_agreements")
         cur.execute("DELETE FROM contacts WHERE phone = ? OR cro_uf = ?", ("+5511988887777", "CRO-SP-54321"))
         conn.commit()

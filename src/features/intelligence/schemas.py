@@ -292,6 +292,59 @@ class TextToSqlExecuteResponse(BaseModel):
     execution_time_ms: float
 
 
+class SokCalculationRequest(BaseModel):
+    agreement_id: str = Field(..., description="ID do termo de consignacao KeyPartners")
+    days_without_surgery: int = Field(..., ge=0, description="Dias decorridos sem cirurgia realizada")
+    contract_limit_days: int = Field(default=30, ge=1, description="Limite contratual em dias para giro do kit")
+    kit_immobilized_value: float = Field(..., ge=0.0, description="Valor do kit imobilizado em R$")
+    avg_monthly_revenue: float = Field(..., gt=0.0, description="Faturamento medio mensal do parceiro em R$")
+    account_id: Optional[str] = Field(default="0f14ffff", description="ID do tenant")
 
 
+class SokCalculationResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    agreement_id: str
+    sok_score: float
+    is_idle: bool
+    days_without_surgery: int
+    contract_limit_days: int
+    kit_immobilized_value: float
+    avg_monthly_revenue: float
+    status: str
+    recommendation: str
+    dentgo_reverse_pickup_suggested: bool
+    dentgo_order_id: Optional[str] = None
+    calculated_at: str
 
+
+class PrCalculationRequest(BaseModel):
+    agreement_id: str = Field(..., description="ID do termo de consignacao KeyPartners")
+    avg_daily_consumption: float = Field(..., ge=0.0, description="Consumo medio diario em unidades (C_medio_diario)")
+    delivery_lead_time_days: float = Field(..., ge=0.0, description="Prazo de entrega DENTGO em dias (T_entrega_dentgo)")
+    safety_stock: float = Field(default=0.0, ge=0.0, description="Estoque de seguranca em unidades (ES)")
+    current_stock: Optional[int] = Field(None, ge=0, description="Saldo atual de unidades em estoque do parceiro")
+    trigger_deal: Optional[bool] = Field(default=True, description="Criar Deal automatico no funil se current_stock <= PR")
+    account_id: Optional[str] = Field(default="0f14ffff", description="ID do tenant")
+
+
+class PrCalculationResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    agreement_id: str
+    pr_score: float
+    current_stock: int
+    replenishment_needed: bool
+    deal_id: Optional[str] = None
+    deal_title: Optional[str] = None
+    whatsapp_sent: bool = False
+    whatsapp_message_id: Optional[str] = None
+    approval_link: Optional[str] = None
+    recommendation: str
+    calculated_at: str
+
+
+class PredictiveInventoryReportResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    agreement_id: str
+    partner_name: str
+    scores_history: List[Dict[str, Any]] = Field(default_factory=list)
+    total_records: int

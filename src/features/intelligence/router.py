@@ -14,6 +14,7 @@ from src.features.intelligence import granola_copilot
 from src.features.intelligence import surgical_rag
 from src.features.intelligence import superset_embedded
 from src.features.intelligence import text_to_sql_agent
+from src.features.intelligence import predictive_inventory
 from src.features.intelligence.schemas import (
     ContactInstitutionCreate, ContactInstitutionOut,
     ClinicalGraphResponse, KOLSpeakerResponse,
@@ -25,10 +26,11 @@ from src.features.intelligence.schemas import (
     CatalogRagQueryRequest, CatalogRagQueryResponse,
     SupersetGuestTokenRequest, SupersetGuestTokenResponse,
     AnalyticsDatasetExportRequest, AnalyticsDatasetExportResponse,
-    TextToSqlExecuteRequest, TextToSqlExecuteResponse
+    TextToSqlExecuteRequest, TextToSqlExecuteResponse,
+    SokCalculationRequest, SokCalculationResponse,
+    PrCalculationRequest, PrCalculationResponse,
+    PredictiveInventoryReportResponse
 )
-
-
 
 
 router = APIRouter(prefix="/api/v1/intelligence", tags=["Inteligência Clínica & STT"])
@@ -231,6 +233,57 @@ def execute_text_to_sql(payload: TextToSqlExecuteRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post(
+    "/inventory/sok",
+    response_model=SokCalculationResponse,
+    summary="Calcular Score de Ociosidade de Kit Consignado (SOK)"
+)
+def calculate_kit_idle_score(payload: SokCalculationRequest):
+    """
+    Equacao deterministica do Score de Ociosidade de Kit (SOK):
+    SOK = (D_sem_cirurgia / D_limite_contratual) * 0.6 + (V_kit_imobilizado / V_faturamento_medio_mensal) * 0.4
+    Quando SOK >= 1.0, sinaliza alerta de ociosidade e sugere ordem de coleta reversa DENTGO.
+    """
+    try:
+        return predictive_inventory.calculate_kit_idle_score_sok(payload)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post(
+    "/inventory/pr",
+    response_model=PrCalculationResponse,
+    summary="Calcular Ponto de Reposicao de Estoque Consignado (PR)"
+)
+def calculate_replenishment_point(payload: PrCalculationRequest):
+    """
+    Equacao deterministica do Ponto de Reposicao (PR):
+    PR = (C_medio_diario * T_entrega_dentgo) + ES
+    Quando o saldo atual <= PR, gera Deal de Recompra Ativa no funil e dispara mensagem WhatsApp.
+    """
+    try:
+        return predictive_inventory.calculate_replenishment_point_pr(payload)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
+
+@router.get(
+    "/inventory/report/{agreement_id}",
+    response_model=PredictiveInventoryReportResponse,
+    summary="Obter historico de scores de estoque preditivo do parceiro"
+)
+def get_inventory_scores_report(
+    agreement_id: str,
+    account_id: str = Query("0f14ffff", description="ID do tenant")
+):
+    try:
+        return predictive_inventory.get_predictive_inventory_report(
+            agreement_id=agreement_id,
+            account_id=account_id
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
