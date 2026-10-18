@@ -147,3 +147,32 @@ def list_outbox_items(account_id: str = "0f14ffff", status_filter: Optional[str]
         return [dict(r) for r in cur.fetchall()]
     finally:
         conn.close()
+
+
+def dispatch_erp_remittance(
+    remittance_data: Dict[str, Any],
+    erp_type: str = "totvs_protheus",
+    account_id: str = "0f14ffff"
+) -> Dict[str, Any]:
+    from src.features.integrations.erp_hub.windmill_client import WindmillERPOrchestrator
+    orchestrator = WindmillERPOrchestrator()
+    return orchestrator.dispatch_consignment_remittance(
+        remittance_data=remittance_data,
+        erp_type=erp_type,
+        account_id=account_id
+    )
+
+
+def dispatch_erp_settlement(
+    settlement_data: Dict[str, Any],
+    erp_type: str = "totvs_protheus",
+    account_id: str = "0f14ffff"
+) -> Dict[str, Any]:
+    from src.features.integrations.erp_hub.windmill_client import WindmillERPOrchestrator
+    orchestrator = WindmillERPOrchestrator()
+    return orchestrator.dispatch_consignment_settlement(
+        settlement_data=settlement_data,
+        erp_type=erp_type,
+        account_id=account_id
+    )
+

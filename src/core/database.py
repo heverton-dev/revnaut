@@ -1196,6 +1196,32 @@ def init_db() -> None:
 
         CREATE INDEX IF NOT EXISTS idx_fefo_res_deal ON fefo_flash_deal_reservations(deal_id);
         CREATE INDEX IF NOT EXISTS idx_fefo_res_acc ON fefo_flash_deal_reservations(account_id);
+
+        CREATE TABLE IF NOT EXISTS erp_fiscal_invoices (
+            id TEXT PRIMARY KEY,
+            account_id TEXT NOT NULL,
+            erp_type TEXT NOT NULL DEFAULT 'totvs_protheus',
+            flow_type TEXT NOT NULL,
+            reference_id TEXT NOT NULL,
+            cfop TEXT NOT NULL,
+            nfe_number TEXT NOT NULL,
+            nfe_series TEXT NOT NULL DEFAULT '1',
+            nfe_access_key TEXT NOT NULL UNIQUE,
+            recipient_cnpj_cpf TEXT NOT NULL,
+            recipient_name TEXT NOT NULL,
+            total_invoice_value REAL NOT NULL DEFAULT 0.0,
+            xml_r2_key TEXT NOT NULL,
+            danfe_pdf_r2_key TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'AUTORIZADA',
+            sefaz_protocol TEXT,
+            windmill_job_id TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_erp_inv_acc ON erp_fiscal_invoices(account_id);
+        CREATE INDEX IF NOT EXISTS idx_erp_inv_key ON erp_fiscal_invoices(nfe_access_key);
+        CREATE INDEX IF NOT EXISTS idx_erp_inv_flow ON erp_fiscal_invoices(flow_type);
         """)
 
 

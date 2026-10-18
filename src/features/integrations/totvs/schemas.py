@@ -59,3 +59,69 @@ class OutboxItemOut(BaseModel):
     last_error: Optional[str] = None
     created_at: str
     updated_at: str
+
+
+class ErpConsignmentItem(BaseModel):
+    product_id: str = Field(..., description="Código do produto no ERP")
+    product_name: str = Field(..., description="Descrição técnica do produto")
+    ncm: str = Field(default="90211010", description="NCM fiscal do produto")
+    batch_number: str = Field(..., description="Lote rastreável de fabricação")
+    quantity: int = Field(default=1, ge=1, description="Quantidade de itens")
+    unit_price: float = Field(..., ge=0.0, description="Preço unitário em R$")
+
+
+class ErpRemittanceRequest(BaseModel):
+    erp_type: str = Field(default="totvs_protheus", description="ERP de destino: totvs_protheus | sap_b1 | sankhya")
+    agreement_id: str = Field(..., description="ID do termo/acordo KeyPartners")
+    emitter_uf: str = Field(default="SP", description="UF de origem da indústria/distribuidor")
+    recipient_uf: str = Field(default="SP", description="UF de destino da clínica/cirurgião")
+    recipient_cnpj: str = Field(..., description="CNPJ ou CPF do destinatário")
+    recipient_name: str = Field(..., description="Razão social ou nome do destinatário")
+    items: List[ErpConsignmentItem] = Field(..., min_length=1, description="Itens da remessa consignada")
+    account_id: Optional[str] = Field(default="0f14ffff", description="ID da conta tenant")
+
+
+class ErpSettlementRequest(BaseModel):
+    erp_type: str = Field(default="totvs_protheus", description="ERP de destino: totvs_protheus | sap_b1 | sankhya")
+    agreement_id: str = Field(..., description="ID do termo de consignação")
+    surgical_report_id: Optional[str] = Field(None, description="ID do reporte cirúrgico de consumo")
+    emitter_uf: str = Field(default="SP", description="UF de origem do emitente")
+    recipient_uf: str = Field(default="SP", description="UF de destino do destinatário")
+    recipient_cnpj: str = Field(..., description="CNPJ ou CPF do destinatário")
+    recipient_name: str = Field(..., description="Razão social ou nome do destinatário")
+    consumed_items: List[ErpConsignmentItem] = Field(..., min_length=1, description="Itens implantados no paciente")
+    returned_unconsumed_items: Optional[List[ErpConsignmentItem]] = Field(default=None, description="Itens devolvidos intactos")
+    account_id: Optional[str] = Field(default="0f14ffff", description="ID da conta tenant")
+
+
+class ErpFiscalInvoiceOut(BaseModel):
+    model_config = {"extra": "allow"}
+    id: str
+    account_id: str
+    erp_type: str
+    flow_type: str
+    reference_id: Optional[str] = None
+    cfop: str
+    nfe_number: str
+    nfe_series: str = "1"
+    nfe_access_key: str
+    recipient_cnpj_cpf: Optional[str] = None
+    recipient_name: str
+    total_invoice_value: float
+    xml_r2_key: str
+    danfe_pdf_r2_key: str
+    xml_url: Optional[str] = None
+    danfe_pdf_url: Optional[str] = None
+    status: str
+    sefaz_protocol: Optional[str] = None
+    windmill_job_id: Optional[str] = None
+    created_at: Optional[str] = None
+
+
+class ErpSettlementResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    success: bool
+    settlement_job_id: str
+    symbolic_return_invoice: Dict[str, Any]
+    sale_invoice: Dict[str, Any]
+
