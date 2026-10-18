@@ -169,6 +169,31 @@ export const DentgoExpressCockpit: React.FC = () => {
   const [splitMethod, setSplitMethod] = useState<string>("PIX_INSTANT");
   const [processingSplit, setProcessingSplit] = useState<boolean>(false);
   const [splitResult, setSplitResult] = useState<FinancialSplitItem | null>(null);
+  const [orderSplitData, setOrderSplitData] = useState<FinancialSplitItem | null>(null);
+  const [fetchingOrderSplit, setFetchingOrderSplit] = useState<boolean>(false);
+  const [splitFeedback, setSplitFeedback] = useState<string | null>(null);
+
+  const handleFetchOrderSplit = async (targetId?: string) => {
+    const oid = targetId || selectedOrder?.id || splitOrderId;
+    if (!oid) return;
+    setFetchingOrderSplit(true);
+    setSplitFeedback(null);
+    try {
+      const res = await fetch(`/api/v1/dentgo/orders/${oid}/split`);
+      if (res.ok) {
+        const data = await res.json();
+        setOrderSplitData(data);
+        setSplitResult(data);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setSplitFeedback(err.detail || "Split ainda não gerado para este pedido.");
+      }
+    } catch (e: any) {
+      setSplitFeedback(e.message || "Erro ao consultar split");
+    } finally {
+      setFetchingOrderSplit(false);
+    }
+  };
 
   // Fetch Orders
   const fetchOrders = useCallback(async () => {
@@ -768,6 +793,39 @@ export const DentgoExpressCockpit: React.FC = () => {
                           </span>
                         </div>
                       )}
+
+                      {/* Split Query Action */}
+                      <div className="pt-2 border-t border-border space-y-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleFetchOrderSplit(selectedOrder.id)}
+                          disabled={fetchingOrderSplit}
+                          className="w-full text-xs gap-1.5"
+                        >
+                          <DollarSign className="w-3.5 h-3.5" />
+                          {fetchingOrderSplit ? "Consultando..." : "Consultar Split do Pedido (GET)"}
+                        </Button>
+                        {orderSplitData && orderSplitData.order_id === selectedOrder.id && (
+                          <div className="p-2 rounded bg-surface-bg border border-border text-[11px] space-y-1">
+                            <div className="flex justify-between">
+                              <span className="text-text-secondary">Bruto:</span>
+                              <span className="font-mono">R$ {orderSplitData.gross_amount.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between text-status-success font-semibold">
+                              <span>Indústria:</span>
+                              <span className="font-mono">R$ {orderSplitData.seller_net_payout.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between text-brand-primary">
+                              <span>Courier:</span>
+                              <span className="font-mono">R$ {orderSplitData.courier_net_payout.toFixed(2)}</span>
+                            </div>
+                          </div>
+                        )}
+                        {splitFeedback && (
+                          <p className="text-[10px] text-text-muted">{splitFeedback}</p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ) : (
@@ -1082,15 +1140,27 @@ export const DentgoExpressCockpit: React.FC = () => {
                   </select>
                 </div>
 
-                <Button
-                  size="sm"
-                  onClick={handleProcessSplit}
-                  disabled={processingSplit || !splitOrderId.trim()}
-                  className="w-full gap-1.5"
-                >
-                  <DollarSign className="w-3.5 h-3.5" />
-                  {processingSplit ? "Processando..." : "Processar Split Financeiro"}
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    onClick={handleProcessSplit}
+                    disabled={processingSplit || !splitOrderId.trim()}
+                    className="flex-1 gap-1.5"
+                  >
+                    <DollarSign className="w-3.5 h-3.5" />
+                    {processingSplit ? "Processando..." : "Processar Split (POST)"}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleFetchOrderSplit(splitOrderId)}
+                    disabled={fetchingOrderSplit || !splitOrderId.trim()}
+                    className="flex-1 gap-1.5"
+                  >
+                    <Search className="w-3.5 h-3.5" />
+                    {fetchingOrderSplit ? "Consultando..." : "Consultar Split (GET)"}
+                  </Button>
+                </div>
               </div>
 
               {splitResult && (

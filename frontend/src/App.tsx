@@ -569,7 +569,7 @@ export function App() {
       onSelectUser={setCurrentUserId}
       onLogout={handleLogout}
     >
-      <ErrorBoundary onReset={() => dealsQuery.refetch()}>
+      <ErrorBoundary key={activeNav} onReset={() => dealsQuery.refetch()}>
         <AppRouter
           currentRoute={activeNav}
           onNavigate={handleNavigate}

@@ -73,47 +73,55 @@ export const OmnichannelWorkspace: React.FC<OmnichannelWorkspaceProps> = ({
   const [searchFilter, setSearchFilter] = React.useState<string>("");
 
   // 1. Carregar Conversas
-  const { data: conversations = [], isLoading: loadingConversations, refetch: refetchConversations } = useQuery<ConversationItem[]>({
+  const { data: rawConversations = [], isLoading: loadingConversations, refetch: refetchConversations } = useQuery<ConversationItem[]>({
     queryKey: ["chat-conversations"],
     queryFn: async () => {
       const res = await fetch("/api/v1/chat/conversations");
       if (!res.ok) throw new Error("Erro ao carregar conversas");
-      return res.json();
+      const d = await res.json();
+      return Array.isArray(d) ? d : (Array.isArray(d?.conversations) ? d.conversations : []);
     },
   });
+  const conversations = Array.isArray(rawConversations) ? rawConversations : [];
 
   // 2. Carregar Contatos (Cirurgiões)
-  const { data: contacts = [] } = useQuery<ContactItem[]>({
+  const { data: rawContacts = [] } = useQuery<ContactItem[]>({
     queryKey: ["crm-contacts"],
     queryFn: async () => {
       const res = await fetch("/api/v1/contacts");
       if (!res.ok) throw new Error("Erro ao carregar contatos");
-      return res.json();
+      const d = await res.json();
+      return Array.isArray(d) ? d : (Array.isArray(d?.contacts) ? d.contacts : []);
     },
   });
+  const contacts = Array.isArray(rawContacts) ? rawContacts : [];
 
   // 3. Carregar Instâncias Evolution API
-  const { data: instances = [], refetch: refetchInstances } = useQuery<WhatsappInstance[]>({
+  const { data: rawInstances = [], refetch: refetchInstances } = useQuery<WhatsappInstance[]>({
     queryKey: ["whatsapp-instances"],
     queryFn: async () => {
       const res = await fetch("/api/v1/omnichannel/whatsapp/instances");
       if (!res.ok) throw new Error("Erro ao carregar instâncias do Evolution API");
-      return res.json();
+      const d = await res.json();
+      return Array.isArray(d) ? d : (Array.isArray(d?.instances) ? d.instances : []);
     },
   });
+  const instances = Array.isArray(rawInstances) ? rawInstances : [];
 
   // 4. Carregar Mensagens do Chat Selecionado
-  const { data: messages = [], isLoading: loadingMessages, refetch: refetchMessages } = useQuery<MessageItem[]>({
+  const { data: rawMessages = [], isLoading: loadingMessages, refetch: refetchMessages } = useQuery<MessageItem[]>({
     queryKey: ["chat-messages", selectedChatId],
     queryFn: async () => {
       if (!selectedChatId) return [];
       const res = await fetch(`/api/v1/chat/${encodeURIComponent(selectedChatId)}/messages`);
       if (!res.ok) throw new Error("Erro ao carregar mensagens");
-      return res.json();
+      const d = await res.json();
+      return Array.isArray(d) ? d : (Array.isArray(d?.messages) ? d.messages : []);
     },
     enabled: Boolean(selectedChatId),
     refetchInterval: 5000,
   });
+  const messages = Array.isArray(rawMessages) ? rawMessages : [];
 
   // 5. Mutation Envio de Mensagem
   const sendMessageMutation = useMutation({
@@ -167,8 +175,8 @@ export const OmnichannelWorkspace: React.FC<OmnichannelWorkspaceProps> = ({
     }
   }, [contacts, selectedContactId]);
 
-  const activeContact = contacts.find((c) => c.id === selectedContactId) || contacts[0];
-  const activeConversation = conversations.find((c) => c.id === selectedChatId) || conversations[0];
+  const activeContact = (Array.isArray(contacts) ? contacts : []).find((c) => c.id === selectedContactId) || contacts[0];
+  const activeConversation = (Array.isArray(conversations) ? conversations : []).find((c) => c.id === selectedChatId) || conversations[0];
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();

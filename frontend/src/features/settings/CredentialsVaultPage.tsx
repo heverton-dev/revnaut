@@ -168,11 +168,13 @@ export function CredentialsVaultPage() {
       ]);
       if (resInv.ok) {
         const invData = await resInv.json();
-        setInvoices(invData);
+        const list = Array.isArray(invData) ? invData : (Array.isArray(invData?.invoices) ? invData.invoices : []);
+        setInvoices(list);
       }
       if (resOutbox.ok) {
         const outboxData = await resOutbox.json();
-        setOutboxItems(outboxData);
+        const list = Array.isArray(outboxData) ? outboxData : (Array.isArray(outboxData?.items) ? outboxData.items : []);
+        setOutboxItems(list);
       }
     } catch {
       // fallback
@@ -191,11 +193,13 @@ export function CredentialsVaultPage() {
       ]);
       if (resSubs.ok) {
         const subsData = await resSubs.json();
-        setSubscriptions(subsData.subscriptions || subsData || []);
+        const list = Array.isArray(subsData?.subscriptions) ? subsData.subscriptions : (Array.isArray(subsData) ? subsData : []);
+        setSubscriptions(list);
       }
       if (resLogs.ok) {
         const logsData = await resLogs.json();
-        setDeliveryLogs(logsData.logs || logsData || []);
+        const list = Array.isArray(logsData?.logs) ? logsData.logs : (Array.isArray(logsData) ? logsData : []);
+        setDeliveryLogs(list);
       }
     } catch {
       // fallback
@@ -216,11 +220,13 @@ export function CredentialsVaultPage() {
       ]);
       if (resUsers.ok) {
         const usersData = await resUsers.json();
-        setUsers(usersData);
+        const list = Array.isArray(usersData) ? usersData : (Array.isArray(usersData?.users) ? usersData.users : []);
+        setUsers(list);
       }
       if (resManuais.ok) {
         const manuaisData = await resManuais.json();
-        setManuais(manuaisData.manuais || []);
+        const list = Array.isArray(manuaisData?.manuais) ? manuaisData.manuais : (Array.isArray(manuaisData) ? manuaisData : []);
+        setManuais(list);
       }
     } catch {
       // fallback

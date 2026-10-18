@@ -26,7 +26,7 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
-from src.core.config import DB_PATH
+from src.core.config import DB_PATH, get_db_path
 
 
 class Base(DeclarativeBase):
@@ -427,7 +427,7 @@ def get_async_database_url(read_only: bool = False) -> str:
     )
     if env_url:
         return _normalize_async_db_url(env_url)
-    db_str = str(DB_PATH).replace("\\", "/")
+    db_str = str(get_db_path()).replace("\\", "/")
     return f"sqlite+aiosqlite:///{db_str}"
 
 
@@ -544,7 +544,7 @@ async def get_read_db() -> AsyncGenerator[AsyncSession, None]:
 
 
 def get_connection() -> sqlite3.Connection:
-    conn = sqlite3.connect(str(DB_PATH), timeout=10.0, check_same_thread=False)
+    conn = sqlite3.connect(str(get_db_path()), timeout=10.0, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL;")
     conn.execute("PRAGMA synchronous=NORMAL;")

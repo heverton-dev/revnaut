@@ -170,15 +170,17 @@ export function RbacHierarchyTree({
       ]);
       if (resBu.ok) {
         const buData = await resBu.json();
-        setBusinessUnits(buData);
-        if (buData.length > 0 && !newTeamBuId) setNewTeamBuId(buData[0].id);
+        const list = Array.isArray(buData) ? buData : (Array.isArray(buData?.business_units) ? buData.business_units : []);
+        setBusinessUnits(list);
+        if (list.length > 0 && !newTeamBuId) setNewTeamBuId(list[0].id);
       }
       if (resTeams.ok) {
         const teamsData = await resTeams.json();
-        setTeams(teamsData);
-        if (teamsData.length > 0) {
-          setReparentTeamId(teamsData[0].id);
-          setTargetEntityId(teamsData[0].id);
+        const list = Array.isArray(teamsData) ? teamsData : (Array.isArray(teamsData?.teams) ? teamsData.teams : []);
+        setTeams(list);
+        if (list.length > 0) {
+          setReparentTeamId(list[0].id);
+          setTargetEntityId(list[0].id);
         }
       }
     } catch {
@@ -197,16 +199,18 @@ export function RbacHierarchyTree({
       ]);
       if (resRoles.ok) {
         const rolesData = await resRoles.json();
-        setRoles(rolesData);
-        if (rolesData.length > 0 && !selectedRoleId) {
-          setSelectedRoleId(rolesData[0].id);
-          setRolePermissions(rolesData[0].permissions || []);
-          setNewCommRoleId(rolesData[0].id);
+        const list = Array.isArray(rolesData) ? rolesData : (Array.isArray(rolesData?.roles) ? rolesData.roles : []);
+        setRoles(list);
+        if (list.length > 0 && !selectedRoleId) {
+          setSelectedRoleId(list[0].id);
+          setRolePermissions(list[0].permissions || []);
+          setNewCommRoleId(list[0].id);
         }
       }
       if (resCatalog.ok) {
         const catalogData = await resCatalog.json();
-        setCatalog(catalogData);
+        const list = Array.isArray(catalogData) ? catalogData : (Array.isArray(catalogData?.catalog) ? catalogData.catalog : []);
+        setCatalog(list);
       }
     } catch {
       // fallback
@@ -219,7 +223,8 @@ export function RbacHierarchyTree({
       const res = await fetch(`/api/v1/hierarchy/targets?account_id=${accountId}`);
       if (res.ok) {
         const data = await res.json();
-        setTargets(data);
+        const list = Array.isArray(data) ? data : (Array.isArray(data?.targets) ? data.targets : []);
+        setTargets(list);
       }
     } catch {
       // fallback
@@ -232,7 +237,8 @@ export function RbacHierarchyTree({
       const res = await fetch(`/api/v1/hierarchy/commissions/rules?account_id=${accountId}`);
       if (res.ok) {
         const data = await res.json();
-        setCommissionRules(data);
+        const list = Array.isArray(data) ? data : (Array.isArray(data?.rules) ? data.rules : []);
+        setCommissionRules(list);
       }
     } catch {
       // fallback

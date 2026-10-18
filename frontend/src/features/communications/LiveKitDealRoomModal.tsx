@@ -77,9 +77,10 @@ export const LiveKitDealRoomModal: React.FC<LiveKitDealRoomModalProps> = ({
         const res = await fetch("/api/v1/deals");
         if (res.ok) {
           const data = await res.json();
-          setDeals(data);
-          if (data.length > 0 && !dealId) {
-            setSelectedDealId(data[0].id);
+          const list = Array.isArray(data) ? data : Array.isArray(data?.deals) ? data.deals : [];
+          setDeals(list);
+          if (list.length > 0 && !dealId) {
+            setSelectedDealId(list[0].id);
           }
         }
       } catch {
@@ -97,7 +98,8 @@ export const LiveKitDealRoomModal: React.FC<LiveKitDealRoomModalProps> = ({
       const res = await fetch(`/api/v1/communications/deals/${selectedDealId}/recordings`);
       if (res.ok) {
         const data = await res.json();
-        setRecordings(data);
+        const recList = Array.isArray(data) ? data : Array.isArray(data?.recordings) ? data.recordings : [];
+        setRecordings(recList);
       }
     } catch {
       // fallback
@@ -112,7 +114,7 @@ export const LiveKitDealRoomModal: React.FC<LiveKitDealRoomModalProps> = ({
 
   if (!isOpen && !inline) return null;
 
-  const currentDeal = deals.find((d) => d.id === selectedDealId);
+  const currentDeal = (Array.isArray(deals) ? deals : []).find((d) => d.id === selectedDealId);
   const activeTitle = currentDeal ? currentDeal.title : dealTitle;
   const activeContact = currentDeal?.contact_name || contactName;
 
@@ -220,13 +222,13 @@ export const LiveKitDealRoomModal: React.FC<LiveKitDealRoomModalProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          {deals.length > 0 && (
+          {(Array.isArray(deals) ? deals : []).length > 0 && (
             <select
               value={selectedDealId}
               onChange={(e) => setSelectedDealId(e.target.value)}
               className="px-2.5 py-1.5 rounded-lg border border-border bg-surface-bg text-xs font-mono text-text-main"
             >
-              {deals.map((d) => (
+              {(Array.isArray(deals) ? deals : []).map((d) => (
                 <option key={d.id} value={d.id}>
                   {d.id} - {d.title} ({d.contact_name || "Cirurgião"})
                 </option>
@@ -383,7 +385,7 @@ export const LiveKitDealRoomModal: React.FC<LiveKitDealRoomModalProps> = ({
 
             {loadingRecordings ? (
               <p className="text-xs text-text-muted text-center py-6">Carregando gravações...</p>
-            ) : recordings.length === 0 ? (
+            ) : (!Array.isArray(recordings) || recordings.length === 0) ? (
               <div className="p-8 text-center border border-border rounded-xl bg-surface-bg">
                 <FileVideo className="h-8 w-8 text-text-muted mx-auto mb-2" />
                 <p className="text-xs text-text-secondary">
@@ -398,7 +400,7 @@ export const LiveKitDealRoomModal: React.FC<LiveKitDealRoomModalProps> = ({
               </div>
             ) : (
               <div className="space-y-2 max-h-64 overflow-y-auto">
-                {recordings.map((rec) => (
+                {(Array.isArray(recordings) ? recordings : []).map((rec) => (
                   <div
                     key={rec.id}
                     className="p-3 rounded-xl border border-border bg-surface-bg flex items-center justify-between text-xs"

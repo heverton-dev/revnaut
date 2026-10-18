@@ -26,38 +26,6 @@ volumes:
   traefik_certificates:
 
 services:
-  traefik:
-    image: traefik:v3.0
-    command:
-      - "--api.insecure=false"
-      - "--providers.docker=true"
-      - "--providers.docker.swarmMode=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.websecure.address=:443"
-      - "--certificatesresolvers.letsencryptresolver.acme.tlschallenge=true"
-      - "--certificatesresolvers.letsencryptresolver.acme.email=devops@vpsconexao.org"
-      - "--certificatesresolvers.letsencryptresolver.acme.storage=/letsencrypt/acme.json"
-    ports:
-      - "80:80"
-      - "443:443"
-    networks:
-      - network_conexao
-      - revnault_edge
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - traefik_certificates:/letsencrypt
-    deploy:
-      replicas: 1
-      placement:
-        constraints:
-          - node.role == manager
-      resources:
-        limits:
-          cpus: "1.0"
-          memory: 512M
-      restart_policy:
-        condition: on-failure
 
   frontend:
     image: rvops_frontend:latest

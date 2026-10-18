@@ -1,12 +1,18 @@
 {
-  "timestamp": "2026-10-18T19:22:05Z",
+  "timestamp": "2026-10-18T22:56:16Z",
   "engine_utilization": {
     "total_openapi_paths": 196,
     "total_backend_operations": 223,
-    "exposed_in_frontend_count": 172,
-    "orphaned_in_backend_count": 51,
-    "global_utilization_pct": 77.13,
+    "exposed_in_frontend_count": 178,
+    "orphaned_in_backend_count": 45,
+    "global_utilization_pct": 79.82,
     "frontend_fetch_calls": [
+      {
+        "file": "frontend/src/App.tsx",
+        "method": "POST",
+        "raw_url": "/api/v1/auth/logout",
+        "normalized_path": "/api/v1/auth/logout"
+      },
       {
         "file": "frontend/src/App.tsx",
         "method": "GET",
@@ -104,6 +110,12 @@
         "normalized_path": "/api/v1/storage/presign-upload"
       },
       {
+        "file": "frontend/src/features/auth/LoginPage.tsx",
+        "method": "POST",
+        "raw_url": "/api/v1/auth/login",
+        "normalized_path": "/api/v1/auth/login"
+      },
+      {
         "file": "frontend/src/features/bi/SupersetEmbeddedDashboard.tsx",
         "method": "POST",
         "raw_url": "/api/v1/intelligence/bi/guest-token",
@@ -148,6 +160,12 @@
       {
         "file": "frontend/src/features/campaigns/LandingPageBuilder.tsx",
         "method": "GET",
+        "raw_url": "/api/v1/campaigns",
+        "normalized_path": "/api/v1/campaigns"
+      },
+      {
+        "file": "frontend/src/features/campaigns/LandingPageBuilder.tsx",
+        "method": "GET",
         "raw_url": "/api/v1/campaigns/landing-pages",
         "normalized_path": "/api/v1/campaigns/landing-pages"
       },
@@ -174,6 +192,18 @@
         "method": "GET",
         "raw_url": "/api/v1/campaigns/referral/dashboard/${encodeURIComponent(referrerId)}",
         "normalized_path": "/api/v1/campaigns/referral/dashboard/{*}"
+      },
+      {
+        "file": "frontend/src/features/campaigns/LandingPageBuilder.tsx",
+        "method": "POST",
+        "raw_url": "/api/v1/campaigns/landing-pages",
+        "normalized_path": "/api/v1/campaigns/landing-pages"
+      },
+      {
+        "file": "frontend/src/features/campaigns/LandingPageBuilder.tsx",
+        "method": "PUT",
+        "raw_url": "/api/v1/campaigns/landing-pages/${currentId}",
+        "normalized_path": "/api/v1/campaigns/landing-pages/{*}"
       },
       {
         "file": "frontend/src/features/campaigns/LandingPageBuilder.tsx",
@@ -414,6 +444,12 @@
         "method": "POST",
         "raw_url": "/api/v1/intelligence/copilot/extract-and-apply",
         "normalized_path": "/api/v1/intelligence/copilot/extract-and-apply"
+      },
+      {
+        "file": "frontend/src/features/dentgo/DentgoExpressCockpit.tsx",
+        "method": "GET",
+        "raw_url": "/api/v1/dentgo/orders/${oid}/split",
+        "normalized_path": "/api/v1/dentgo/orders/{*}/split"
       },
       {
         "file": "frontend/src/features/dentgo/DentgoExpressCockpit.tsx",
@@ -738,6 +774,12 @@
         "method": "POST",
         "raw_url": "/api/v1/keypartners/loyalty/redeem",
         "normalized_path": "/api/v1/keypartners/loyalty/redeem"
+      },
+      {
+        "file": "frontend/src/features/rbac/RbacHierarchyTree.tsx",
+        "method": "GET",
+        "raw_url": "/api/v1/hierarchy/business-units",
+        "normalized_path": "/api/v1/hierarchy/business-units"
       },
       {
         "file": "frontend/src/features/rbac/RbacHierarchyTree.tsx",
@@ -1106,61 +1148,20 @@
         "normalized_path": "/api/v1/automations/postop-care/{*}/feedback"
       }
     ],
-    "hardcoded_prop_traps": [
-      {
-        "file": "frontend/src/features/communications/LiveKitDealRoomModal.tsx",
-        "line": 55,
-        "prop": "dealId",
-        "hardcoded_value": "deal-01"
-      },
-      {
-        "file": "frontend/src/features/imaging/DicomStl3DViewer.tsx",
-        "line": 47,
-        "prop": "studyId",
-        "hardcoded_value": "study-demo-01"
-      },
-      {
-        "file": "frontend/src/features/rbac/RbacHierarchyTree.tsx",
-        "line": 79,
-        "prop": "accountId",
-        "hardcoded_value": "0f14ffff"
-      },
-      {
-        "file": "frontend/src/router.tsx",
-        "line": 82,
-        "prop": "dealId",
-        "hardcoded_value": "sos-mesa-01"
-      },
-      {
-        "file": "frontend/src/router.tsx",
-        "line": 89,
-        "prop": "studyId",
-        "hardcoded_value": "study-demo-01"
-      },
-      {
-        "file": "frontend/src/router.tsx",
-        "line": 102,
-        "prop": "campaignId",
-        "hardcoded_value": "camp-allon4-sp"
-      },
-      {
-        "file": "frontend/src/router.tsx",
-        "line": 104,
-        "prop": "accountId",
-        "hardcoded_value": "0f14ffff"
-      }
-    ],
+    "hardcoded_prop_traps": [],
     "domain_utilization": {
       "auth/vault": {
         "domain": "auth/vault",
         "total_endpoints": 12,
-        "exposed_endpoints": 8,
-        "orphaned_endpoints": 4,
-        "utilization_pct": 66.7,
+        "exposed_endpoints": 10,
+        "orphaned_endpoints": 2,
+        "utilization_pct": 83.3,
         "exposed_list": [
           "POST /api/v1/auth/credentials",
           "GET /api/v1/auth/credentials",
           "DELETE /api/v1/auth/credentials/{credential_id}",
+          "POST /api/v1/auth/login",
+          "POST /api/v1/auth/logout",
           "GET /api/v1/auth/me",
           "GET /api/v1/auth/users",
           "POST /api/v1/auth/users",
@@ -1169,8 +1170,6 @@
         ],
         "orphaned_list": [
           "POST /api/v1/auth/forgot-password",
-          "POST /api/v1/auth/login",
-          "POST /api/v1/auth/logout",
           "POST /api/v1/auth/reset-password-with-token"
         ]
       },
@@ -1211,19 +1210,19 @@
       "campaigns/landing_pages": {
         "domain": "campaigns/landing_pages",
         "total_endpoints": 7,
-        "exposed_endpoints": 4,
-        "orphaned_endpoints": 3,
-        "utilization_pct": 57.1,
+        "exposed_endpoints": 6,
+        "orphaned_endpoints": 1,
+        "utilization_pct": 85.7,
         "exposed_list": [
           "GET /api/v1/campaigns/landing-pages",
+          "POST /api/v1/campaigns/landing-pages",
           "GET /api/v1/campaigns/landing-pages/templates",
+          "PUT /api/v1/campaigns/landing-pages/{page_id}",
           "PUT /api/v1/campaigns/landing-pages/{page_id}/publish",
           "POST /api/v1/campaigns/public/lp/{slug}/submit"
         ],
         "orphaned_list": [
-          "POST /api/v1/campaigns/landing-pages",
-          "GET /api/v1/campaigns/landing-pages/{page_id}",
-          "PUT /api/v1/campaigns/landing-pages/{page_id}"
+          "GET /api/v1/campaigns/landing-pages/{page_id}"
         ]
       },
       "campaigns/listmonk": {
@@ -1360,16 +1359,15 @@
       "dentgo/financial_split": {
         "domain": "dentgo/financial_split",
         "total_endpoints": 3,
-        "exposed_endpoints": 2,
-        "orphaned_endpoints": 1,
-        "utilization_pct": 66.7,
+        "exposed_endpoints": 3,
+        "orphaned_endpoints": 0,
+        "utilization_pct": 100.0,
         "exposed_list": [
           "POST /api/v1/dentgo/orders/{order_id}/split",
+          "GET /api/v1/dentgo/orders/{order_id}/split",
           "GET /api/v1/dentgo/splits"
         ],
-        "orphaned_list": [
-          "GET /api/v1/dentgo/orders/{order_id}/split"
-        ]
+        "orphaned_list": []
       },
       "dentgo/hubs": {
         "domain": "dentgo/hubs",
@@ -1750,15 +1748,15 @@
       "system": {
         "domain": "system",
         "total_endpoints": 5,
-        "exposed_endpoints": 1,
-        "orphaned_endpoints": 4,
-        "utilization_pct": 20.0,
+        "exposed_endpoints": 2,
+        "orphaned_endpoints": 3,
+        "utilization_pct": 40.0,
         "exposed_list": [
+          "GET /api/v1/campaigns",
           "GET /api/v1/health"
         ],
         "orphaned_list": [
           "GET /",
-          "GET /api/v1/campaigns",
           "POST /api/v1/campaigns",
           "GET /health"
         ]
@@ -1885,8 +1883,10 @@
         "path": "/api/v1/auth/login",
         "normalized_path": "/api/v1/auth/login",
         "summary": "Autenticar usuário e emitir token de sessão",
-        "is_exposed_in_ui": false,
-        "ui_files": []
+        "is_exposed_in_ui": true,
+        "ui_files": [
+          "frontend/src/features/auth/LoginPage.tsx"
+        ]
       },
       {
         "domain": "auth/vault",
@@ -1894,8 +1894,10 @@
         "path": "/api/v1/auth/logout",
         "normalized_path": "/api/v1/auth/logout",
         "summary": "Encerrar sessão ativa",
-        "is_exposed_in_ui": false,
-        "ui_files": []
+        "is_exposed_in_ui": true,
+        "ui_files": [
+          "frontend/src/App.tsx"
+        ]
       },
       {
         "domain": "auth/vault",
@@ -2122,8 +2124,10 @@
         "path": "/api/v1/campaigns",
         "normalized_path": "/api/v1/campaigns",
         "summary": "Listar campanhas de marketing com ROAS e CAC",
-        "is_exposed_in_ui": false,
-        "ui_files": []
+        "is_exposed_in_ui": true,
+        "ui_files": [
+          "frontend/src/features/campaigns/LandingPageBuilder.tsx"
+        ]
       },
       {
         "domain": "system",
@@ -2162,8 +2166,10 @@
         "path": "/api/v1/campaigns/landing-pages",
         "normalized_path": "/api/v1/campaigns/landing-pages",
         "summary": "Criar nova Landing Page",
-        "is_exposed_in_ui": false,
-        "ui_files": []
+        "is_exposed_in_ui": true,
+        "ui_files": [
+          "frontend/src/features/campaigns/LandingPageBuilder.tsx"
+        ]
       },
       {
         "domain": "campaigns/landing_pages",
@@ -2191,8 +2197,10 @@
         "path": "/api/v1/campaigns/landing-pages/{page_id}",
         "normalized_path": "/api/v1/campaigns/landing-pages/{*}",
         "summary": "Atualizar Landing Page (HTML/CSS/GrapesJS)",
-        "is_exposed_in_ui": false,
-        "ui_files": []
+        "is_exposed_in_ui": true,
+        "ui_files": [
+          "frontend/src/features/campaigns/LandingPageBuilder.tsx"
+        ]
       },
       {
         "domain": "campaigns/landing_pages",
@@ -2765,8 +2773,10 @@
         "path": "/api/v1/dentgo/orders/{order_id}/split",
         "normalized_path": "/api/v1/dentgo/orders/{*}/split",
         "summary": "Consultar extrato de split financeiro do pedido",
-        "is_exposed_in_ui": false,
-        "ui_files": []
+        "is_exposed_in_ui": true,
+        "ui_files": [
+          "frontend/src/features/dentgo/DentgoExpressCockpit.tsx"
+        ]
       },
       {
         "domain": "dentgo/logistics",
@@ -4195,7 +4205,7 @@
         "height": 812,
         "routes_tested": 17,
         "routes_with_horizontal_overflow": 0,
-        "routes_with_cramped_main_area": 0,
+        "routes_with_cramped_main_area": 17,
         "total_console_errors": 0,
         "total_failed_requests": 0
       },
@@ -4204,7 +4214,7 @@
         "height": 1024,
         "routes_tested": 17,
         "routes_with_horizontal_overflow": 0,
-        "routes_with_cramped_main_area": 0,
+        "routes_with_cramped_main_area": 17,
         "total_console_errors": 0,
         "total_failed_requests": 0
       },
@@ -4213,8 +4223,8 @@
         "height": 768,
         "routes_tested": 17,
         "routes_with_horizontal_overflow": 0,
-        "routes_with_cramped_main_area": 0,
-        "total_console_errors": 2,
+        "routes_with_cramped_main_area": 17,
+        "total_console_errors": 0,
         "total_failed_requests": 0
       },
       "Desktop_Full_HD": {
@@ -4222,8 +4232,8 @@
         "height": 1080,
         "routes_tested": 17,
         "routes_with_horizontal_overflow": 0,
-        "routes_with_cramped_main_area": 0,
-        "total_console_errors": 2,
+        "routes_with_cramped_main_area": 17,
+        "total_console_errors": 0,
         "total_failed_requests": 0
       }
     },
@@ -4235,35 +4245,27 @@
         "navigation_method": "sidebar_click",
         "viewports": {
           "Mobile": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 375,
               "clientWidth": 375,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
               "sidebarWidth": 0,
-              "mainWidth": 375,
+              "mainWidth": 0,
               "sidebarRatioPct": 0,
-              "mainRatioPct": 100,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 7,
-                "buttonLabels": [
-                  "Sincronizar",
-                  "Exportar CSV",
-                  "Novo Negócio",
-                  "Tabela Paginada",
-                  "Quadro Kanban",
-                  "Anterior",
-                  "Próxima"
-                ],
-                "inputsCount": 1,
-                "selectsCount": 2,
-                "tablesCount": 1,
+                "buttonsCount": 0,
+                "buttonLabels": [],
+                "inputsCount": 0,
+                "selectsCount": 0,
+                "tablesCount": 0,
                 "iframesCount": 0
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Cockpit de Negócios & Consignação Cirúrgica Operação unificada RevOps + KeyPartners (Kits & ANVISA) + DENTGO (Logística Same-Day). Clique em um negócio para abrir o Dossiê e Aprovação de Crédito. Sincronizar Exportar C"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -4271,35 +4273,27 @@
             "auto_mutations_fired": []
           },
           "Tablet": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 768,
               "clientWidth": 768,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
               "sidebarWidth": 0,
-              "mainWidth": 768,
+              "mainWidth": 0,
               "sidebarRatioPct": 0,
-              "mainRatioPct": 100,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 7,
-                "buttonLabels": [
-                  "Sincronizar",
-                  "Exportar CSV",
-                  "Novo Negócio",
-                  "Tabela Paginada",
-                  "Quadro Kanban",
-                  "Anterior",
-                  "Próxima"
-                ],
-                "inputsCount": 1,
-                "selectsCount": 2,
-                "tablesCount": 1,
+                "buttonsCount": 0,
+                "buttonLabels": [],
+                "inputsCount": 0,
+                "selectsCount": 0,
+                "tablesCount": 0,
                 "iframesCount": 0
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Cockpit de Negócios & Consignação Cirúrgica Operação unificada RevOps + KeyPartners (Kits & ANVISA) + DENTGO (Logística Same-Day). Clique em um negócio para abrir o Dossiê e Aprovação de Crédito. Sincronizar Exportar C"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -4307,22 +4301,19 @@
             "auto_mutations_fired": []
           },
           "Corporate_Laptop": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 1366,
               "clientWidth": 1366,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
-              "sidebarWidth": 256,
-              "mainWidth": 1110,
-              "sidebarRatioPct": 19,
-              "mainRatioPct": 81,
+              "sidebarWidth": 0,
+              "mainWidth": 0,
+              "sidebarRatioPct": 0,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 2,
-                "buttonLabels": [
-                  "Atualizar Cockpit",
-                  "Exportar Snapshot R2"
-                ],
+                "buttonsCount": 0,
+                "buttonLabels": [],
                 "inputsCount": 0,
                 "selectsCount": 0,
                 "tablesCount": 0,
@@ -4330,35 +4321,27 @@
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Cockpit Executivo RevOps & Inteligência de Carteira Visão consolidada em tempo real de Pipeline Comercial, ROAS de Campanhas, Radar Anti-Churn RFM e Grafo Clínico KOL. Atualizar Cockpit Exportar Snapshot R2 PIPELINE AT"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
             "failed_requests": [],
-            "auto_mutations_fired": [
-              {
-                "url": "http://127.0.0.1:8019/api/v1/intelligence/bi/guest-token",
-                "method": "POST"
-              }
-            ]
+            "auto_mutations_fired": []
           },
           "Desktop_Full_HD": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 1920,
               "clientWidth": 1920,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
-              "sidebarWidth": 256,
-              "mainWidth": 1664,
-              "sidebarRatioPct": 13,
-              "mainRatioPct": 87,
+              "sidebarWidth": 0,
+              "mainWidth": 0,
+              "sidebarRatioPct": 0,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 2,
-                "buttonLabels": [
-                  "Atualizar Cockpit",
-                  "Exportar Snapshot R2"
-                ],
+                "buttonsCount": 0,
+                "buttonLabels": [],
                 "inputsCount": 0,
                 "selectsCount": 0,
                 "tablesCount": 0,
@@ -4366,17 +4349,12 @@
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Cockpit Executivo RevOps & Inteligência de Carteira Visão consolidada em tempo real de Pipeline Comercial, ROAS de Campanhas, Radar Anti-Churn RFM e Grafo Clínico KOL. Atualizar Cockpit Exportar Snapshot R2 PIPELINE AT"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
             "failed_requests": [],
-            "auto_mutations_fired": [
-              {
-                "url": "http://127.0.0.1:8019/api/v1/intelligence/bi/guest-token",
-                "method": "POST"
-              }
-            ]
+            "auto_mutations_fired": []
           }
         }
       },
@@ -4387,35 +4365,27 @@
         "navigation_method": "sidebar_click",
         "viewports": {
           "Mobile": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 375,
               "clientWidth": 375,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
               "sidebarWidth": 0,
-              "mainWidth": 375,
+              "mainWidth": 0,
               "sidebarRatioPct": 0,
-              "mainRatioPct": 100,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 7,
-                "buttonLabels": [
-                  "Sincronizar",
-                  "Exportar CSV",
-                  "Novo Negócio",
-                  "Tabela Paginada",
-                  "Quadro Kanban",
-                  "Anterior",
-                  "Próxima"
-                ],
-                "inputsCount": 1,
-                "selectsCount": 2,
-                "tablesCount": 1,
+                "buttonsCount": 0,
+                "buttonLabels": [],
+                "inputsCount": 0,
+                "selectsCount": 0,
+                "tablesCount": 0,
                 "iframesCount": 0
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Cockpit de Negócios & Consignação Cirúrgica Operação unificada RevOps + KeyPartners (Kits & ANVISA) + DENTGO (Logística Same-Day). Clique em um negócio para abrir o Dossiê e Aprovação de Crédito. Sincronizar Exportar C"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -4423,35 +4393,27 @@
             "auto_mutations_fired": []
           },
           "Tablet": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 768,
               "clientWidth": 768,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
               "sidebarWidth": 0,
-              "mainWidth": 768,
+              "mainWidth": 0,
               "sidebarRatioPct": 0,
-              "mainRatioPct": 100,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 7,
-                "buttonLabels": [
-                  "Sincronizar",
-                  "Exportar CSV",
-                  "Novo Negócio",
-                  "Tabela Paginada",
-                  "Quadro Kanban",
-                  "Anterior",
-                  "Próxima"
-                ],
-                "inputsCount": 1,
-                "selectsCount": 2,
-                "tablesCount": 1,
+                "buttonsCount": 0,
+                "buttonLabels": [],
+                "inputsCount": 0,
+                "selectsCount": 0,
+                "tablesCount": 0,
                 "iframesCount": 0
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Cockpit de Negócios & Consignação Cirúrgica Operação unificada RevOps + KeyPartners (Kits & ANVISA) + DENTGO (Logística Same-Day). Clique em um negócio para abrir o Dossiê e Aprovação de Crédito. Sincronizar Exportar C"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -4459,35 +4421,27 @@
             "auto_mutations_fired": []
           },
           "Corporate_Laptop": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 1366,
               "clientWidth": 1366,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
-              "sidebarWidth": 256,
-              "mainWidth": 1110,
-              "sidebarRatioPct": 19,
-              "mainRatioPct": 81,
+              "sidebarWidth": 0,
+              "mainWidth": 0,
+              "sidebarRatioPct": 0,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 7,
-                "buttonLabels": [
-                  "Sincronizar",
-                  "Exportar CSV",
-                  "Novo Negócio",
-                  "Tabela Paginada",
-                  "Quadro Kanban",
-                  "Anterior",
-                  "Próxima"
-                ],
-                "inputsCount": 1,
-                "selectsCount": 2,
-                "tablesCount": 1,
+                "buttonsCount": 0,
+                "buttonLabels": [],
+                "inputsCount": 0,
+                "selectsCount": 0,
+                "tablesCount": 0,
                 "iframesCount": 0
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Cockpit de Negócios & Consignação Cirúrgica Operação unificada RevOps + KeyPartners (Kits & ANVISA) + DENTGO (Logística Same-Day). Clique em um negócio para abrir o Dossiê e Aprovação de Crédito. Sincronizar Exportar C"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -4495,35 +4449,27 @@
             "auto_mutations_fired": []
           },
           "Desktop_Full_HD": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 1920,
               "clientWidth": 1920,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
-              "sidebarWidth": 256,
-              "mainWidth": 1664,
-              "sidebarRatioPct": 13,
-              "mainRatioPct": 87,
+              "sidebarWidth": 0,
+              "mainWidth": 0,
+              "sidebarRatioPct": 0,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 7,
-                "buttonLabels": [
-                  "Sincronizar",
-                  "Exportar CSV",
-                  "Novo Negócio",
-                  "Tabela Paginada",
-                  "Quadro Kanban",
-                  "Anterior",
-                  "Próxima"
-                ],
-                "inputsCount": 1,
-                "selectsCount": 2,
-                "tablesCount": 1,
+                "buttonsCount": 0,
+                "buttonLabels": [],
+                "inputsCount": 0,
+                "selectsCount": 0,
+                "tablesCount": 0,
                 "iframesCount": 0
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Cockpit de Negócios & Consignação Cirúrgica Operação unificada RevOps + KeyPartners (Kits & ANVISA) + DENTGO (Logística Same-Day). Clique em um negócio para abrir o Dossiê e Aprovação de Crédito. Sincronizar Exportar C"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -4539,35 +4485,27 @@
         "navigation_method": "sidebar_click",
         "viewports": {
           "Mobile": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 375,
               "clientWidth": 375,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
               "sidebarWidth": 0,
-              "mainWidth": 375,
+              "mainWidth": 0,
               "sidebarRatioPct": 0,
-              "mainRatioPct": 100,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 7,
-                "buttonLabels": [
-                  "Sincronizar",
-                  "Exportar CSV",
-                  "Novo Negócio",
-                  "Tabela Paginada",
-                  "Quadro Kanban",
-                  "Anterior",
-                  "Próxima"
-                ],
-                "inputsCount": 1,
-                "selectsCount": 2,
-                "tablesCount": 1,
+                "buttonsCount": 0,
+                "buttonLabels": [],
+                "inputsCount": 0,
+                "selectsCount": 0,
+                "tablesCount": 0,
                 "iframesCount": 0
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Cockpit de Negócios & Consignação Cirúrgica Operação unificada RevOps + KeyPartners (Kits & ANVISA) + DENTGO (Logística Same-Day). Clique em um negócio para abrir o Dossiê e Aprovação de Crédito. Sincronizar Exportar C"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -4575,35 +4513,27 @@
             "auto_mutations_fired": []
           },
           "Tablet": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 768,
               "clientWidth": 768,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
               "sidebarWidth": 0,
-              "mainWidth": 768,
+              "mainWidth": 0,
               "sidebarRatioPct": 0,
-              "mainRatioPct": 100,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 7,
-                "buttonLabels": [
-                  "Sincronizar",
-                  "Exportar CSV",
-                  "Novo Negócio",
-                  "Tabela Paginada",
-                  "Quadro Kanban",
-                  "Anterior",
-                  "Próxima"
-                ],
-                "inputsCount": 1,
-                "selectsCount": 2,
-                "tablesCount": 1,
+                "buttonsCount": 0,
+                "buttonLabels": [],
+                "inputsCount": 0,
+                "selectsCount": 0,
+                "tablesCount": 0,
                 "iframesCount": 0
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Cockpit de Negócios & Consignação Cirúrgica Operação unificada RevOps + KeyPartners (Kits & ANVISA) + DENTGO (Logística Same-Day). Clique em um negócio para abrir o Dossiê e Aprovação de Crédito. Sincronizar Exportar C"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -4611,37 +4541,27 @@
             "auto_mutations_fired": []
           },
           "Corporate_Laptop": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 1366,
               "clientWidth": 1366,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
-              "sidebarWidth": 256,
-              "mainWidth": 1110,
-              "sidebarRatioPct": 19,
-              "mainRatioPct": 81,
+              "sidebarWidth": 0,
+              "mainWidth": 0,
+              "sidebarRatioPct": 0,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 9,
-                "buttonLabels": [
-                  "Importar CSV",
-                  "Novo Cirurgião",
-                  "Base de Cirurgiões (CRM)\n1441",
-                  "Clínicas, Hospitais & Vínculos\n296",
-                  "Auditor Ético CFO 196/2019",
-                  "Qualificação & Score ICP",
-                  "Atualizar",
-                  "Anterior",
-                  "Próxima"
-                ],
-                "inputsCount": 1,
-                "selectsCount": 2,
-                "tablesCount": 1,
+                "buttonsCount": 0,
+                "buttonLabels": [],
+                "inputsCount": 0,
+                "selectsCount": 0,
+                "tablesCount": 0,
                 "iframesCount": 0
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "CRM de Cirurgiões-Dentistas, Clínicas & Compliance CRO/CFO Gestão 360° da carteira de implantodontistas, homologação junto ao Conselho Regional de Odontologia, vínculos hospitalares e auditoria ética CFO 196/2019. Impo"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -4649,37 +4569,27 @@
             "auto_mutations_fired": []
           },
           "Desktop_Full_HD": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 1920,
               "clientWidth": 1920,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
-              "sidebarWidth": 256,
-              "mainWidth": 1664,
-              "sidebarRatioPct": 13,
-              "mainRatioPct": 87,
+              "sidebarWidth": 0,
+              "mainWidth": 0,
+              "sidebarRatioPct": 0,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 9,
-                "buttonLabels": [
-                  "Importar CSV",
-                  "Novo Cirurgião",
-                  "Base de Cirurgiões (CRM)\n1441",
-                  "Clínicas, Hospitais & Vínculos\n296",
-                  "Auditor Ético CFO 196/2019",
-                  "Qualificação & Score ICP",
-                  "Atualizar",
-                  "Anterior",
-                  "Próxima"
-                ],
-                "inputsCount": 1,
-                "selectsCount": 2,
-                "tablesCount": 1,
+                "buttonsCount": 0,
+                "buttonLabels": [],
+                "inputsCount": 0,
+                "selectsCount": 0,
+                "tablesCount": 0,
                 "iframesCount": 0
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "CRM de Cirurgiões-Dentistas, Clínicas & Compliance CRO/CFO Gestão 360° da carteira de implantodontistas, homologação junto ao Conselho Regional de Odontologia, vínculos hospitalares e auditoria ética CFO 196/2019. Impo"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -4695,35 +4605,27 @@
         "navigation_method": "sidebar_click",
         "viewports": {
           "Mobile": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 375,
               "clientWidth": 375,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
               "sidebarWidth": 0,
-              "mainWidth": 375,
+              "mainWidth": 0,
               "sidebarRatioPct": 0,
-              "mainRatioPct": 100,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 7,
-                "buttonLabels": [
-                  "Sincronizar",
-                  "Exportar CSV",
-                  "Novo Negócio",
-                  "Tabela Paginada",
-                  "Quadro Kanban",
-                  "Anterior",
-                  "Próxima"
-                ],
-                "inputsCount": 1,
-                "selectsCount": 2,
-                "tablesCount": 1,
+                "buttonsCount": 0,
+                "buttonLabels": [],
+                "inputsCount": 0,
+                "selectsCount": 0,
+                "tablesCount": 0,
                 "iframesCount": 0
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Cockpit de Negócios & Consignação Cirúrgica Operação unificada RevOps + KeyPartners (Kits & ANVISA) + DENTGO (Logística Same-Day). Clique em um negócio para abrir o Dossiê e Aprovação de Crédito. Sincronizar Exportar C"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -4731,35 +4633,27 @@
             "auto_mutations_fired": []
           },
           "Tablet": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 768,
               "clientWidth": 768,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
               "sidebarWidth": 0,
-              "mainWidth": 768,
+              "mainWidth": 0,
               "sidebarRatioPct": 0,
-              "mainRatioPct": 100,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 7,
-                "buttonLabels": [
-                  "Sincronizar",
-                  "Exportar CSV",
-                  "Novo Negócio",
-                  "Tabela Paginada",
-                  "Quadro Kanban",
-                  "Anterior",
-                  "Próxima"
-                ],
-                "inputsCount": 1,
-                "selectsCount": 2,
-                "tablesCount": 1,
+                "buttonsCount": 0,
+                "buttonLabels": [],
+                "inputsCount": 0,
+                "selectsCount": 0,
+                "tablesCount": 0,
                 "iframesCount": 0
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Cockpit de Negócios & Consignação Cirúrgica Operação unificada RevOps + KeyPartners (Kits & ANVISA) + DENTGO (Logística Same-Day). Clique em um negócio para abrir o Dossiê e Aprovação de Crédito. Sincronizar Exportar C"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -4767,37 +4661,27 @@
             "auto_mutations_fired": []
           },
           "Corporate_Laptop": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 1366,
               "clientWidth": 1366,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
-              "sidebarWidth": 256,
-              "mainWidth": 1110,
-              "sidebarRatioPct": 19,
-              "mainRatioPct": 81,
+              "sidebarWidth": 0,
+              "mainWidth": 0,
+              "sidebarRatioPct": 0,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 9,
-                "buttonLabels": [
-                  "Atualizar",
-                  "Nova Instância WhatsApp",
-                  "Conversas (1)",
-                  "Cirurgiões (1441)",
-                  "Shards (3)",
-                  "SOS Vídeo",
-                  "Enviar",
-                  "Sync Chatwoot",
-                  "Video SOS"
-                ],
-                "inputsCount": 2,
+                "buttonsCount": 0,
+                "buttonLabels": [],
+                "inputsCount": 0,
                 "selectsCount": 0,
                 "tablesCount": 0,
                 "iframesCount": 0
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Central Omnichannel & Shards Evolution API LiveKit & Chatwoot Sync Mensageria multicanal unificada com distribuição de carga entre shards Evolution API e contexto cirúrgico 360°. Atualizar Nova Instância WhatsApp Conve"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -4805,37 +4689,27 @@
             "auto_mutations_fired": []
           },
           "Desktop_Full_HD": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 1920,
               "clientWidth": 1920,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
-              "sidebarWidth": 256,
-              "mainWidth": 1664,
-              "sidebarRatioPct": 13,
-              "mainRatioPct": 87,
+              "sidebarWidth": 0,
+              "mainWidth": 0,
+              "sidebarRatioPct": 0,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 9,
-                "buttonLabels": [
-                  "Atualizar",
-                  "Nova Instância WhatsApp",
-                  "Conversas (1)",
-                  "Cirurgiões (1441)",
-                  "Shards (3)",
-                  "SOS Vídeo",
-                  "Enviar",
-                  "Sync Chatwoot",
-                  "Video SOS"
-                ],
-                "inputsCount": 2,
+                "buttonsCount": 0,
+                "buttonLabels": [],
+                "inputsCount": 0,
                 "selectsCount": 0,
                 "tablesCount": 0,
                 "iframesCount": 0
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Central Omnichannel & Shards Evolution API LiveKit & Chatwoot Sync Mensageria multicanal unificada com distribuição de carga entre shards Evolution API e contexto cirúrgico 360°. Atualizar Nova Instância WhatsApp Conve"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -4851,35 +4725,27 @@
         "navigation_method": "sidebar_click",
         "viewports": {
           "Mobile": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 375,
               "clientWidth": 375,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
               "sidebarWidth": 0,
-              "mainWidth": 375,
+              "mainWidth": 0,
               "sidebarRatioPct": 0,
-              "mainRatioPct": 100,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 7,
-                "buttonLabels": [
-                  "Sincronizar",
-                  "Exportar CSV",
-                  "Novo Negócio",
-                  "Tabela Paginada",
-                  "Quadro Kanban",
-                  "Anterior",
-                  "Próxima"
-                ],
-                "inputsCount": 1,
-                "selectsCount": 2,
-                "tablesCount": 1,
+                "buttonsCount": 0,
+                "buttonLabels": [],
+                "inputsCount": 0,
+                "selectsCount": 0,
+                "tablesCount": 0,
                 "iframesCount": 0
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Cockpit de Negócios & Consignação Cirúrgica Operação unificada RevOps + KeyPartners (Kits & ANVISA) + DENTGO (Logística Same-Day). Clique em um negócio para abrir o Dossiê e Aprovação de Crédito. Sincronizar Exportar C"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -4887,35 +4753,27 @@
             "auto_mutations_fired": []
           },
           "Tablet": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 768,
               "clientWidth": 768,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
               "sidebarWidth": 0,
-              "mainWidth": 768,
+              "mainWidth": 0,
               "sidebarRatioPct": 0,
-              "mainRatioPct": 100,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 7,
-                "buttonLabels": [
-                  "Sincronizar",
-                  "Exportar CSV",
-                  "Novo Negócio",
-                  "Tabela Paginada",
-                  "Quadro Kanban",
-                  "Anterior",
-                  "Próxima"
-                ],
-                "inputsCount": 1,
-                "selectsCount": 2,
-                "tablesCount": 1,
+                "buttonsCount": 0,
+                "buttonLabels": [],
+                "inputsCount": 0,
+                "selectsCount": 0,
+                "tablesCount": 0,
                 "iframesCount": 0
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Cockpit de Negócios & Consignação Cirúrgica Operação unificada RevOps + KeyPartners (Kits & ANVISA) + DENTGO (Logística Same-Day). Clique em um negócio para abrir o Dossiê e Aprovação de Crédito. Sincronizar Exportar C"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -4923,26 +4781,19 @@
             "auto_mutations_fired": []
           },
           "Corporate_Laptop": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 1366,
               "clientWidth": 1366,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
-              "sidebarWidth": 256,
-              "mainWidth": 1110,
-              "sidebarRatioPct": 19,
-              "mainRatioPct": 81,
+              "sidebarWidth": 0,
+              "mainWidth": 0,
+              "sidebarRatioPct": 0,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 6,
-                "buttonLabels": [
-                  "Atualizar",
-                  "Quadro Cirúrgico 4 Estágios",
-                  "Acordos & Maletas ANVISA",
-                  "Contratos KOL & Speakers",
-                  "Fidelidade (Moeda Cirúrgica)",
-                  "+ Nova Ordem Cirúrgica"
-                ],
+                "buttonsCount": 0,
+                "buttonLabels": [],
                 "inputsCount": 0,
                 "selectsCount": 0,
                 "tablesCount": 0,
@@ -4950,7 +4801,7 @@
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "KeyPartners • Cockpit de Consignação Cirúrgica & Parcerias Quadro 4 Estágios, Acordos de Consignação, Maletas Seriais, Contratos KOL e Moeda Cirúrgica. CFOP 5.113 / 6.113 Ativo Atualizar Quadro Cirúrgico 4 Estágios Aco"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -4958,26 +4809,19 @@
             "auto_mutations_fired": []
           },
           "Desktop_Full_HD": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 1920,
               "clientWidth": 1920,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
-              "sidebarWidth": 256,
-              "mainWidth": 1664,
-              "sidebarRatioPct": 13,
-              "mainRatioPct": 87,
+              "sidebarWidth": 0,
+              "mainWidth": 0,
+              "sidebarRatioPct": 0,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 6,
-                "buttonLabels": [
-                  "Atualizar",
-                  "Quadro Cirúrgico 4 Estágios",
-                  "Acordos & Maletas ANVISA",
-                  "Contratos KOL & Speakers",
-                  "Fidelidade (Moeda Cirúrgica)",
-                  "+ Nova Ordem Cirúrgica"
-                ],
+                "buttonsCount": 0,
+                "buttonLabels": [],
                 "inputsCount": 0,
                 "selectsCount": 0,
                 "tablesCount": 0,
@@ -4985,7 +4829,7 @@
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "KeyPartners • Cockpit de Consignação Cirúrgica & Parcerias Quadro 4 Estágios, Acordos de Consignação, Maletas Seriais, Contratos KOL e Moeda Cirúrgica. CFOP 5.113 / 6.113 Ativo Atualizar Quadro Cirúrgico 4 Estágios Aco"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -5001,35 +4845,27 @@
         "navigation_method": "sidebar_click",
         "viewports": {
           "Mobile": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 375,
               "clientWidth": 375,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
               "sidebarWidth": 0,
-              "mainWidth": 375,
+              "mainWidth": 0,
               "sidebarRatioPct": 0,
-              "mainRatioPct": 100,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 7,
-                "buttonLabels": [
-                  "Sincronizar",
-                  "Exportar CSV",
-                  "Novo Negócio",
-                  "Tabela Paginada",
-                  "Quadro Kanban",
-                  "Anterior",
-                  "Próxima"
-                ],
-                "inputsCount": 1,
-                "selectsCount": 2,
-                "tablesCount": 1,
+                "buttonsCount": 0,
+                "buttonLabels": [],
+                "inputsCount": 0,
+                "selectsCount": 0,
+                "tablesCount": 0,
                 "iframesCount": 0
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Cockpit de Negócios & Consignação Cirúrgica Operação unificada RevOps + KeyPartners (Kits & ANVISA) + DENTGO (Logística Same-Day). Clique em um negócio para abrir o Dossiê e Aprovação de Crédito. Sincronizar Exportar C"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -5037,35 +4873,27 @@
             "auto_mutations_fired": []
           },
           "Tablet": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 768,
               "clientWidth": 768,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
               "sidebarWidth": 0,
-              "mainWidth": 768,
+              "mainWidth": 0,
               "sidebarRatioPct": 0,
-              "mainRatioPct": 100,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 7,
-                "buttonLabels": [
-                  "Sincronizar",
-                  "Exportar CSV",
-                  "Novo Negócio",
-                  "Tabela Paginada",
-                  "Quadro Kanban",
-                  "Anterior",
-                  "Próxima"
-                ],
-                "inputsCount": 1,
-                "selectsCount": 2,
-                "tablesCount": 1,
+                "buttonsCount": 0,
+                "buttonLabels": [],
+                "inputsCount": 0,
+                "selectsCount": 0,
+                "tablesCount": 0,
                 "iframesCount": 0
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Cockpit de Negócios & Consignação Cirúrgica Operação unificada RevOps + KeyPartners (Kits & ANVISA) + DENTGO (Logística Same-Day). Clique em um negócio para abrir o Dossiê e Aprovação de Crédito. Sincronizar Exportar C"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -5073,27 +4901,19 @@
             "auto_mutations_fired": []
           },
           "Corporate_Laptop": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 1366,
               "clientWidth": 1366,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
-              "sidebarWidth": 256,
-              "mainWidth": 1110,
-              "sidebarRatioPct": 19,
-              "mainRatioPct": 81,
+              "sidebarWidth": 0,
+              "mainWidth": 0,
+              "sidebarRatioPct": 0,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 7,
-                "buttonLabels": [
-                  "Atualizar",
-                  "Despacho Same-Day & 6 Estágios",
-                  "Micro-Hubs & Radar Haversine",
-                  "Liquidação FEFO (Flash Deals)",
-                  "Split Financeiro & Repasses",
-                  "+ Novo Despacho Emergencial",
-                  "+ Novo Despacho Emergencial"
-                ],
+                "buttonsCount": 0,
+                "buttonLabels": [],
                 "inputsCount": 0,
                 "selectsCount": 0,
                 "tablesCount": 0,
@@ -5101,7 +4921,7 @@
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "DENTGO Express • Cockpit de Logística e Despacho Cirúrgico Esteira de 6 estágios, Radar Haversine, Liquidação Preventiva FEFO e Split Automático. Plantão Cirúrgico 24h Ativo Atualizar Despacho Same-Day & 6 Estágios Mic"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -5109,27 +4929,19 @@
             "auto_mutations_fired": []
           },
           "Desktop_Full_HD": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 1920,
               "clientWidth": 1920,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
-              "sidebarWidth": 256,
-              "mainWidth": 1664,
-              "sidebarRatioPct": 13,
-              "mainRatioPct": 87,
+              "sidebarWidth": 0,
+              "mainWidth": 0,
+              "sidebarRatioPct": 0,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 7,
-                "buttonLabels": [
-                  "Atualizar",
-                  "Despacho Same-Day & 6 Estágios",
-                  "Micro-Hubs & Radar Haversine",
-                  "Liquidação FEFO (Flash Deals)",
-                  "Split Financeiro & Repasses",
-                  "+ Novo Despacho Emergencial",
-                  "+ Novo Despacho Emergencial"
-                ],
+                "buttonsCount": 0,
+                "buttonLabels": [],
                 "inputsCount": 0,
                 "selectsCount": 0,
                 "tablesCount": 0,
@@ -5137,7 +4949,7 @@
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "DENTGO Express • Cockpit de Logística e Despacho Cirúrgico Esteira de 6 estágios, Radar Haversine, Liquidação Preventiva FEFO e Split Automático. Plantão Cirúrgico 24h Ativo Atualizar Despacho Same-Day & 6 Estágios Mic"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -5153,35 +4965,27 @@
         "navigation_method": "sidebar_click",
         "viewports": {
           "Mobile": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 375,
               "clientWidth": 375,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
               "sidebarWidth": 0,
-              "mainWidth": 375,
+              "mainWidth": 0,
               "sidebarRatioPct": 0,
-              "mainRatioPct": 100,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 7,
-                "buttonLabels": [
-                  "Sincronizar",
-                  "Exportar CSV",
-                  "Novo Negócio",
-                  "Tabela Paginada",
-                  "Quadro Kanban",
-                  "Anterior",
-                  "Próxima"
-                ],
-                "inputsCount": 1,
-                "selectsCount": 2,
-                "tablesCount": 1,
+                "buttonsCount": 0,
+                "buttonLabels": [],
+                "inputsCount": 0,
+                "selectsCount": 0,
+                "tablesCount": 0,
                 "iframesCount": 0
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Cockpit de Negócios & Consignação Cirúrgica Operação unificada RevOps + KeyPartners (Kits & ANVISA) + DENTGO (Logística Same-Day). Clique em um negócio para abrir o Dossiê e Aprovação de Crédito. Sincronizar Exportar C"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -5189,35 +4993,27 @@
             "auto_mutations_fired": []
           },
           "Tablet": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 768,
               "clientWidth": 768,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
               "sidebarWidth": 0,
-              "mainWidth": 768,
+              "mainWidth": 0,
               "sidebarRatioPct": 0,
-              "mainRatioPct": 100,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 7,
-                "buttonLabels": [
-                  "Sincronizar",
-                  "Exportar CSV",
-                  "Novo Negócio",
-                  "Tabela Paginada",
-                  "Quadro Kanban",
-                  "Anterior",
-                  "Próxima"
-                ],
-                "inputsCount": 1,
-                "selectsCount": 2,
-                "tablesCount": 1,
+                "buttonsCount": 0,
+                "buttonLabels": [],
+                "inputsCount": 0,
+                "selectsCount": 0,
+                "tablesCount": 0,
                 "iframesCount": 0
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Cockpit de Negócios & Consignação Cirúrgica Operação unificada RevOps + KeyPartners (Kits & ANVISA) + DENTGO (Logística Same-Day). Clique em um negócio para abrir o Dossiê e Aprovação de Crédito. Sincronizar Exportar C"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -5225,21 +5021,19 @@
             "auto_mutations_fired": []
           },
           "Corporate_Laptop": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 1366,
               "clientWidth": 1366,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
-              "sidebarWidth": 256,
-              "mainWidth": 1110,
-              "sidebarRatioPct": 19,
-              "mainRatioPct": 81,
+              "sidebarWidth": 0,
+              "mainWidth": 0,
+              "sidebarRatioPct": 0,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 1,
-                "buttonLabels": [
-                  "Tentar Novamente"
-                ],
+                "buttonsCount": 0,
+                "buttonLabels": [],
                 "inputsCount": 0,
                 "selectsCount": 0,
                 "tablesCount": 0,
@@ -5247,32 +5041,27 @@
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Ocorreu uma falha na renderização deste módulo T.find is not a function Tentar Novamente"
+              "mainTextPreview": ""
             },
-            "console_errors": [
-              "[error] TypeError: T.find is not a function\n    at vS (http://127.0.0.1:8019/assets/index-Mnv9eof5.js:557:118743)\n    at Xd (http://127.0.0.1:8019/assets/index-Mnv9eof5.js:48:49945)\n    at hu (http://127.0.0.1:8019/assets/index-Mnv9eof5.js:48:73013)\n    at Ch (http://127.0.0.1:8019/assets/index-Mnv9eof5.js:48:84017)\n    at ob (http://127.0.0.1:8019/assets/index-Mnv9eof5.js:48:129766)\n    at hv (http://127.0.0.1:8019/assets/index-Mnv9eof5.js:48:128810)\n    at Fu (http://127.0.0.1:8019/assets/index-Mnv9eof5.js:48:128640)\n    at ab (http://127.0.0.1:8019/assets/index-Mnv9eof5.js:48:125264)\n    at pb (http://127.0.0.1:8019/assets/index-Mnv9eof5.js:48:137908)\n    at MessagePort._e (http://127.0.0.1:8019/assets/index-Mnv9eof5.js:25:1609)",
-              "[error] Uncaught error in component: TypeError: T.find is not a function\n    at vS (http://127.0.0.1:8019/assets/index-Mnv9eof5.js:557:118743)\n    at Xd (http://127.0.0.1:8019/assets/index-Mnv9eof5.js:48:49945)\n    at hu (http://127.0.0.1:8019/assets/index-Mnv9eof5.js:48:73013)\n    at Ch (http://127.0.0.1:8019/assets/index-Mnv9eof5.js:48:84017)\n    at ob (http://127.0.0.1:8019/assets/index-Mnv9eof5.js:48:129766)\n    at hv (http://127.0.0.1:8019/assets/index-Mnv9eof5.js:48:128810)\n    at Fu (http://127.0.0.1:8019/assets/index-Mnv9eof5.js:48:128640)\n    at ab (http://127.0.0.1:8019/assets/index-Mnv9eof5.js:48:125264)\n    at pb (http://127.0.0.1:8019/assets/index-Mnv9eof5.js:48:137908)\n    at MessagePort._e (http://127.0.0.1:8019/assets/index-Mnv9eof5.js:25:1609) {componentStack: \n    at vS (http://127.0.0.1:8019/assets/index-Mnv…127.0.0.1:8019/assets/index-Mnv9eof5.js:49:51826)}"
-            ],
+            "console_errors": [],
             "page_errors": [],
             "failed_requests": [],
             "auto_mutations_fired": []
           },
           "Desktop_Full_HD": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 1920,
               "clientWidth": 1920,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
-              "sidebarWidth": 256,
-              "mainWidth": 1664,
-              "sidebarRatioPct": 13,
-              "mainRatioPct": 87,
+              "sidebarWidth": 0,
+              "mainWidth": 0,
+              "sidebarRatioPct": 0,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 1,
-                "buttonLabels": [
-                  "Tentar Novamente"
-                ],
+                "buttonsCount": 0,
+                "buttonLabels": [],
                 "inputsCount": 0,
                 "selectsCount": 0,
                 "tablesCount": 0,
@@ -5280,12 +5069,9 @@
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Ocorreu uma falha na renderização deste módulo T.find is not a function Tentar Novamente"
+              "mainTextPreview": ""
             },
-            "console_errors": [
-              "[error] TypeError: T.find is not a function\n    at vS (http://127.0.0.1:8019/assets/index-Mnv9eof5.js:557:118743)\n    at Xd (http://127.0.0.1:8019/assets/index-Mnv9eof5.js:48:49945)\n    at hu (http://127.0.0.1:8019/assets/index-Mnv9eof5.js:48:73013)\n    at Ch (http://127.0.0.1:8019/assets/index-Mnv9eof5.js:48:84017)\n    at ob (http://127.0.0.1:8019/assets/index-Mnv9eof5.js:48:129766)\n    at hv (http://127.0.0.1:8019/assets/index-Mnv9eof5.js:48:128810)\n    at Fu (http://127.0.0.1:8019/assets/index-Mnv9eof5.js:48:128640)\n    at ab (http://127.0.0.1:8019/assets/index-Mnv9eof5.js:48:125264)\n    at pb (http://127.0.0.1:8019/assets/index-Mnv9eof5.js:48:137908)\n    at MessagePort._e (http://127.0.0.1:8019/assets/index-Mnv9eof5.js:25:1609)",
-              "[error] Uncaught error in component: TypeError: T.find is not a function\n    at vS (http://127.0.0.1:8019/assets/index-Mnv9eof5.js:557:118743)\n    at Xd (http://127.0.0.1:8019/assets/index-Mnv9eof5.js:48:49945)\n    at hu (http://127.0.0.1:8019/assets/index-Mnv9eof5.js:48:73013)\n    at Ch (http://127.0.0.1:8019/assets/index-Mnv9eof5.js:48:84017)\n    at ob (http://127.0.0.1:8019/assets/index-Mnv9eof5.js:48:129766)\n    at hv (http://127.0.0.1:8019/assets/index-Mnv9eof5.js:48:128810)\n    at Fu (http://127.0.0.1:8019/assets/index-Mnv9eof5.js:48:128640)\n    at ab (http://127.0.0.1:8019/assets/index-Mnv9eof5.js:48:125264)\n    at pb (http://127.0.0.1:8019/assets/index-Mnv9eof5.js:48:137908)\n    at MessagePort._e (http://127.0.0.1:8019/assets/index-Mnv9eof5.js:25:1609) {componentStack: \n    at vS (http://127.0.0.1:8019/assets/index-Mnv…127.0.0.1:8019/assets/index-Mnv9eof5.js:49:51826)}"
-            ],
+            "console_errors": [],
             "page_errors": [],
             "failed_requests": [],
             "auto_mutations_fired": []
@@ -5299,35 +5085,27 @@
         "navigation_method": "sidebar_click",
         "viewports": {
           "Mobile": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 375,
               "clientWidth": 375,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
               "sidebarWidth": 0,
-              "mainWidth": 375,
+              "mainWidth": 0,
               "sidebarRatioPct": 0,
-              "mainRatioPct": 100,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 7,
-                "buttonLabels": [
-                  "Sincronizar",
-                  "Exportar CSV",
-                  "Novo Negócio",
-                  "Tabela Paginada",
-                  "Quadro Kanban",
-                  "Anterior",
-                  "Próxima"
-                ],
-                "inputsCount": 1,
-                "selectsCount": 2,
-                "tablesCount": 1,
+                "buttonsCount": 0,
+                "buttonLabels": [],
+                "inputsCount": 0,
+                "selectsCount": 0,
+                "tablesCount": 0,
                 "iframesCount": 0
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Cockpit de Negócios & Consignação Cirúrgica Operação unificada RevOps + KeyPartners (Kits & ANVISA) + DENTGO (Logística Same-Day). Clique em um negócio para abrir o Dossiê e Aprovação de Crédito. Sincronizar Exportar C"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -5335,35 +5113,27 @@
             "auto_mutations_fired": []
           },
           "Tablet": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 768,
               "clientWidth": 768,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
               "sidebarWidth": 0,
-              "mainWidth": 768,
+              "mainWidth": 0,
               "sidebarRatioPct": 0,
-              "mainRatioPct": 100,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 7,
-                "buttonLabels": [
-                  "Sincronizar",
-                  "Exportar CSV",
-                  "Novo Negócio",
-                  "Tabela Paginada",
-                  "Quadro Kanban",
-                  "Anterior",
-                  "Próxima"
-                ],
-                "inputsCount": 1,
-                "selectsCount": 2,
-                "tablesCount": 1,
+                "buttonsCount": 0,
+                "buttonLabels": [],
+                "inputsCount": 0,
+                "selectsCount": 0,
+                "tablesCount": 0,
                 "iframesCount": 0
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Cockpit de Negócios & Consignação Cirúrgica Operação unificada RevOps + KeyPartners (Kits & ANVISA) + DENTGO (Logística Same-Day). Clique em um negócio para abrir o Dossiê e Aprovação de Crédito. Sincronizar Exportar C"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -5371,21 +5141,19 @@
             "auto_mutations_fired": []
           },
           "Corporate_Laptop": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 1366,
               "clientWidth": 1366,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
-              "sidebarWidth": 256,
-              "mainWidth": 1110,
-              "sidebarRatioPct": 19,
-              "mainRatioPct": 81,
+              "sidebarWidth": 0,
+              "mainWidth": 0,
+              "sidebarRatioPct": 0,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 1,
-                "buttonLabels": [
-                  "Tentar Novamente"
-                ],
+                "buttonsCount": 0,
+                "buttonLabels": [],
                 "inputsCount": 0,
                 "selectsCount": 0,
                 "tablesCount": 0,
@@ -5393,7 +5161,7 @@
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Ocorreu uma falha na renderização deste módulo T.find is not a function Tentar Novamente"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -5401,21 +5169,19 @@
             "auto_mutations_fired": []
           },
           "Desktop_Full_HD": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 1920,
               "clientWidth": 1920,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
-              "sidebarWidth": 256,
-              "mainWidth": 1664,
-              "sidebarRatioPct": 13,
-              "mainRatioPct": 87,
+              "sidebarWidth": 0,
+              "mainWidth": 0,
+              "sidebarRatioPct": 0,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 1,
-                "buttonLabels": [
-                  "Tentar Novamente"
-                ],
+                "buttonsCount": 0,
+                "buttonLabels": [],
                 "inputsCount": 0,
                 "selectsCount": 0,
                 "tablesCount": 0,
@@ -5423,7 +5189,7 @@
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Ocorreu uma falha na renderização deste módulo T.find is not a function Tentar Novamente"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -5439,35 +5205,27 @@
         "navigation_method": "sidebar_click",
         "viewports": {
           "Mobile": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 375,
               "clientWidth": 375,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
               "sidebarWidth": 0,
-              "mainWidth": 375,
+              "mainWidth": 0,
               "sidebarRatioPct": 0,
-              "mainRatioPct": 100,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 7,
-                "buttonLabels": [
-                  "Sincronizar",
-                  "Exportar CSV",
-                  "Novo Negócio",
-                  "Tabela Paginada",
-                  "Quadro Kanban",
-                  "Anterior",
-                  "Próxima"
-                ],
-                "inputsCount": 1,
-                "selectsCount": 2,
-                "tablesCount": 1,
+                "buttonsCount": 0,
+                "buttonLabels": [],
+                "inputsCount": 0,
+                "selectsCount": 0,
+                "tablesCount": 0,
                 "iframesCount": 0
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Cockpit de Negócios & Consignação Cirúrgica Operação unificada RevOps + KeyPartners (Kits & ANVISA) + DENTGO (Logística Same-Day). Clique em um negócio para abrir o Dossiê e Aprovação de Crédito. Sincronizar Exportar C"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -5475,35 +5233,27 @@
             "auto_mutations_fired": []
           },
           "Tablet": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 768,
               "clientWidth": 768,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
               "sidebarWidth": 0,
-              "mainWidth": 768,
+              "mainWidth": 0,
               "sidebarRatioPct": 0,
-              "mainRatioPct": 100,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 7,
-                "buttonLabels": [
-                  "Sincronizar",
-                  "Exportar CSV",
-                  "Novo Negócio",
-                  "Tabela Paginada",
-                  "Quadro Kanban",
-                  "Anterior",
-                  "Próxima"
-                ],
-                "inputsCount": 1,
-                "selectsCount": 2,
-                "tablesCount": 1,
+                "buttonsCount": 0,
+                "buttonLabels": [],
+                "inputsCount": 0,
+                "selectsCount": 0,
+                "tablesCount": 0,
                 "iframesCount": 0
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Cockpit de Negócios & Consignação Cirúrgica Operação unificada RevOps + KeyPartners (Kits & ANVISA) + DENTGO (Logística Same-Day). Clique em um negócio para abrir o Dossiê e Aprovação de Crédito. Sincronizar Exportar C"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -5511,21 +5261,19 @@
             "auto_mutations_fired": []
           },
           "Corporate_Laptop": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 1366,
               "clientWidth": 1366,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
-              "sidebarWidth": 256,
-              "mainWidth": 1110,
-              "sidebarRatioPct": 19,
-              "mainRatioPct": 81,
+              "sidebarWidth": 0,
+              "mainWidth": 0,
+              "sidebarRatioPct": 0,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 1,
-                "buttonLabels": [
-                  "Tentar Novamente"
-                ],
+                "buttonsCount": 0,
+                "buttonLabels": [],
                 "inputsCount": 0,
                 "selectsCount": 0,
                 "tablesCount": 0,
@@ -5533,7 +5281,7 @@
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Ocorreu uma falha na renderização deste módulo T.find is not a function Tentar Novamente"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -5541,21 +5289,19 @@
             "auto_mutations_fired": []
           },
           "Desktop_Full_HD": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 1920,
               "clientWidth": 1920,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
-              "sidebarWidth": 256,
-              "mainWidth": 1664,
-              "sidebarRatioPct": 13,
-              "mainRatioPct": 87,
+              "sidebarWidth": 0,
+              "mainWidth": 0,
+              "sidebarRatioPct": 0,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 1,
-                "buttonLabels": [
-                  "Tentar Novamente"
-                ],
+                "buttonsCount": 0,
+                "buttonLabels": [],
                 "inputsCount": 0,
                 "selectsCount": 0,
                 "tablesCount": 0,
@@ -5563,7 +5309,7 @@
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Ocorreu uma falha na renderização deste módulo T.find is not a function Tentar Novamente"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -5579,35 +5325,27 @@
         "navigation_method": "sidebar_click",
         "viewports": {
           "Mobile": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 375,
               "clientWidth": 375,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
               "sidebarWidth": 0,
-              "mainWidth": 375,
+              "mainWidth": 0,
               "sidebarRatioPct": 0,
-              "mainRatioPct": 100,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 7,
-                "buttonLabels": [
-                  "Sincronizar",
-                  "Exportar CSV",
-                  "Novo Negócio",
-                  "Tabela Paginada",
-                  "Quadro Kanban",
-                  "Anterior",
-                  "Próxima"
-                ],
-                "inputsCount": 1,
-                "selectsCount": 2,
-                "tablesCount": 1,
+                "buttonsCount": 0,
+                "buttonLabels": [],
+                "inputsCount": 0,
+                "selectsCount": 0,
+                "tablesCount": 0,
                 "iframesCount": 0
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Cockpit de Negócios & Consignação Cirúrgica Operação unificada RevOps + KeyPartners (Kits & ANVISA) + DENTGO (Logística Same-Day). Clique em um negócio para abrir o Dossiê e Aprovação de Crédito. Sincronizar Exportar C"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -5615,35 +5353,27 @@
             "auto_mutations_fired": []
           },
           "Tablet": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 768,
               "clientWidth": 768,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
               "sidebarWidth": 0,
-              "mainWidth": 768,
+              "mainWidth": 0,
               "sidebarRatioPct": 0,
-              "mainRatioPct": 100,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 7,
-                "buttonLabels": [
-                  "Sincronizar",
-                  "Exportar CSV",
-                  "Novo Negócio",
-                  "Tabela Paginada",
-                  "Quadro Kanban",
-                  "Anterior",
-                  "Próxima"
-                ],
-                "inputsCount": 1,
-                "selectsCount": 2,
-                "tablesCount": 1,
+                "buttonsCount": 0,
+                "buttonLabels": [],
+                "inputsCount": 0,
+                "selectsCount": 0,
+                "tablesCount": 0,
                 "iframesCount": 0
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Cockpit de Negócios & Consignação Cirúrgica Operação unificada RevOps + KeyPartners (Kits & ANVISA) + DENTGO (Logística Same-Day). Clique em um negócio para abrir o Dossiê e Aprovação de Crédito. Sincronizar Exportar C"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -5651,21 +5381,19 @@
             "auto_mutations_fired": []
           },
           "Corporate_Laptop": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 1366,
               "clientWidth": 1366,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
-              "sidebarWidth": 256,
-              "mainWidth": 1110,
-              "sidebarRatioPct": 19,
-              "mainRatioPct": 81,
+              "sidebarWidth": 0,
+              "mainWidth": 0,
+              "sidebarRatioPct": 0,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 1,
-                "buttonLabels": [
-                  "Tentar Novamente"
-                ],
+                "buttonsCount": 0,
+                "buttonLabels": [],
                 "inputsCount": 0,
                 "selectsCount": 0,
                 "tablesCount": 0,
@@ -5673,7 +5401,7 @@
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Ocorreu uma falha na renderização deste módulo T.find is not a function Tentar Novamente"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -5681,21 +5409,19 @@
             "auto_mutations_fired": []
           },
           "Desktop_Full_HD": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 1920,
               "clientWidth": 1920,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
-              "sidebarWidth": 256,
-              "mainWidth": 1664,
-              "sidebarRatioPct": 13,
-              "mainRatioPct": 87,
+              "sidebarWidth": 0,
+              "mainWidth": 0,
+              "sidebarRatioPct": 0,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 1,
-                "buttonLabels": [
-                  "Tentar Novamente"
-                ],
+                "buttonsCount": 0,
+                "buttonLabels": [],
                 "inputsCount": 0,
                 "selectsCount": 0,
                 "tablesCount": 0,
@@ -5703,7 +5429,7 @@
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Ocorreu uma falha na renderização deste módulo T.find is not a function Tentar Novamente"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -5719,35 +5445,27 @@
         "navigation_method": "sidebar_click",
         "viewports": {
           "Mobile": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 375,
               "clientWidth": 375,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
               "sidebarWidth": 0,
-              "mainWidth": 375,
+              "mainWidth": 0,
               "sidebarRatioPct": 0,
-              "mainRatioPct": 100,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 7,
-                "buttonLabels": [
-                  "Sincronizar",
-                  "Exportar CSV",
-                  "Novo Negócio",
-                  "Tabela Paginada",
-                  "Quadro Kanban",
-                  "Anterior",
-                  "Próxima"
-                ],
-                "inputsCount": 1,
-                "selectsCount": 2,
-                "tablesCount": 1,
+                "buttonsCount": 0,
+                "buttonLabels": [],
+                "inputsCount": 0,
+                "selectsCount": 0,
+                "tablesCount": 0,
                 "iframesCount": 0
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Cockpit de Negócios & Consignação Cirúrgica Operação unificada RevOps + KeyPartners (Kits & ANVISA) + DENTGO (Logística Same-Day). Clique em um negócio para abrir o Dossiê e Aprovação de Crédito. Sincronizar Exportar C"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -5755,35 +5473,27 @@
             "auto_mutations_fired": []
           },
           "Tablet": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 768,
               "clientWidth": 768,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
               "sidebarWidth": 0,
-              "mainWidth": 768,
+              "mainWidth": 0,
               "sidebarRatioPct": 0,
-              "mainRatioPct": 100,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 7,
-                "buttonLabels": [
-                  "Sincronizar",
-                  "Exportar CSV",
-                  "Novo Negócio",
-                  "Tabela Paginada",
-                  "Quadro Kanban",
-                  "Anterior",
-                  "Próxima"
-                ],
-                "inputsCount": 1,
-                "selectsCount": 2,
-                "tablesCount": 1,
+                "buttonsCount": 0,
+                "buttonLabels": [],
+                "inputsCount": 0,
+                "selectsCount": 0,
+                "tablesCount": 0,
                 "iframesCount": 0
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Cockpit de Negócios & Consignação Cirúrgica Operação unificada RevOps + KeyPartners (Kits & ANVISA) + DENTGO (Logística Same-Day). Clique em um negócio para abrir o Dossiê e Aprovação de Crédito. Sincronizar Exportar C"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -5791,21 +5501,19 @@
             "auto_mutations_fired": []
           },
           "Corporate_Laptop": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 1366,
               "clientWidth": 1366,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
-              "sidebarWidth": 256,
-              "mainWidth": 1110,
-              "sidebarRatioPct": 19,
-              "mainRatioPct": 81,
+              "sidebarWidth": 0,
+              "mainWidth": 0,
+              "sidebarRatioPct": 0,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 1,
-                "buttonLabels": [
-                  "Tentar Novamente"
-                ],
+                "buttonsCount": 0,
+                "buttonLabels": [],
                 "inputsCount": 0,
                 "selectsCount": 0,
                 "tablesCount": 0,
@@ -5813,7 +5521,7 @@
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Ocorreu uma falha na renderização deste módulo T.find is not a function Tentar Novamente"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -5821,21 +5529,19 @@
             "auto_mutations_fired": []
           },
           "Desktop_Full_HD": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 1920,
               "clientWidth": 1920,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
-              "sidebarWidth": 256,
-              "mainWidth": 1664,
-              "sidebarRatioPct": 13,
-              "mainRatioPct": 87,
+              "sidebarWidth": 0,
+              "mainWidth": 0,
+              "sidebarRatioPct": 0,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 1,
-                "buttonLabels": [
-                  "Tentar Novamente"
-                ],
+                "buttonsCount": 0,
+                "buttonLabels": [],
                 "inputsCount": 0,
                 "selectsCount": 0,
                 "tablesCount": 0,
@@ -5843,7 +5549,7 @@
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Ocorreu uma falha na renderização deste módulo T.find is not a function Tentar Novamente"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -5859,35 +5565,27 @@
         "navigation_method": "sidebar_click",
         "viewports": {
           "Mobile": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 375,
               "clientWidth": 375,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
               "sidebarWidth": 0,
-              "mainWidth": 375,
+              "mainWidth": 0,
               "sidebarRatioPct": 0,
-              "mainRatioPct": 100,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 7,
-                "buttonLabels": [
-                  "Sincronizar",
-                  "Exportar CSV",
-                  "Novo Negócio",
-                  "Tabela Paginada",
-                  "Quadro Kanban",
-                  "Anterior",
-                  "Próxima"
-                ],
-                "inputsCount": 1,
-                "selectsCount": 2,
-                "tablesCount": 1,
+                "buttonsCount": 0,
+                "buttonLabels": [],
+                "inputsCount": 0,
+                "selectsCount": 0,
+                "tablesCount": 0,
                 "iframesCount": 0
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Cockpit de Negócios & Consignação Cirúrgica Operação unificada RevOps + KeyPartners (Kits & ANVISA) + DENTGO (Logística Same-Day). Clique em um negócio para abrir o Dossiê e Aprovação de Crédito. Sincronizar Exportar C"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -5895,35 +5593,27 @@
             "auto_mutations_fired": []
           },
           "Tablet": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 768,
               "clientWidth": 768,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
               "sidebarWidth": 0,
-              "mainWidth": 768,
+              "mainWidth": 0,
               "sidebarRatioPct": 0,
-              "mainRatioPct": 100,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 7,
-                "buttonLabels": [
-                  "Sincronizar",
-                  "Exportar CSV",
-                  "Novo Negócio",
-                  "Tabela Paginada",
-                  "Quadro Kanban",
-                  "Anterior",
-                  "Próxima"
-                ],
-                "inputsCount": 1,
-                "selectsCount": 2,
-                "tablesCount": 1,
+                "buttonsCount": 0,
+                "buttonLabels": [],
+                "inputsCount": 0,
+                "selectsCount": 0,
+                "tablesCount": 0,
                 "iframesCount": 0
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Cockpit de Negócios & Consignação Cirúrgica Operação unificada RevOps + KeyPartners (Kits & ANVISA) + DENTGO (Logística Same-Day). Clique em um negócio para abrir o Dossiê e Aprovação de Crédito. Sincronizar Exportar C"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -5931,21 +5621,19 @@
             "auto_mutations_fired": []
           },
           "Corporate_Laptop": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 1366,
               "clientWidth": 1366,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
-              "sidebarWidth": 256,
-              "mainWidth": 1110,
-              "sidebarRatioPct": 19,
-              "mainRatioPct": 81,
+              "sidebarWidth": 0,
+              "mainWidth": 0,
+              "sidebarRatioPct": 0,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 1,
-                "buttonLabels": [
-                  "Tentar Novamente"
-                ],
+                "buttonsCount": 0,
+                "buttonLabels": [],
                 "inputsCount": 0,
                 "selectsCount": 0,
                 "tablesCount": 0,
@@ -5953,7 +5641,7 @@
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Ocorreu uma falha na renderização deste módulo T.find is not a function Tentar Novamente"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -5961,21 +5649,19 @@
             "auto_mutations_fired": []
           },
           "Desktop_Full_HD": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 1920,
               "clientWidth": 1920,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
-              "sidebarWidth": 256,
-              "mainWidth": 1664,
-              "sidebarRatioPct": 13,
-              "mainRatioPct": 87,
+              "sidebarWidth": 0,
+              "mainWidth": 0,
+              "sidebarRatioPct": 0,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 1,
-                "buttonLabels": [
-                  "Tentar Novamente"
-                ],
+                "buttonsCount": 0,
+                "buttonLabels": [],
                 "inputsCount": 0,
                 "selectsCount": 0,
                 "tablesCount": 0,
@@ -5983,7 +5669,7 @@
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Ocorreu uma falha na renderização deste módulo T.find is not a function Tentar Novamente"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -5999,35 +5685,27 @@
         "navigation_method": "sidebar_click",
         "viewports": {
           "Mobile": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 375,
               "clientWidth": 375,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
               "sidebarWidth": 0,
-              "mainWidth": 375,
+              "mainWidth": 0,
               "sidebarRatioPct": 0,
-              "mainRatioPct": 100,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 7,
-                "buttonLabels": [
-                  "Sincronizar",
-                  "Exportar CSV",
-                  "Novo Negócio",
-                  "Tabela Paginada",
-                  "Quadro Kanban",
-                  "Anterior",
-                  "Próxima"
-                ],
-                "inputsCount": 1,
-                "selectsCount": 2,
-                "tablesCount": 1,
+                "buttonsCount": 0,
+                "buttonLabels": [],
+                "inputsCount": 0,
+                "selectsCount": 0,
+                "tablesCount": 0,
                 "iframesCount": 0
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Cockpit de Negócios & Consignação Cirúrgica Operação unificada RevOps + KeyPartners (Kits & ANVISA) + DENTGO (Logística Same-Day). Clique em um negócio para abrir o Dossiê e Aprovação de Crédito. Sincronizar Exportar C"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -6035,35 +5713,27 @@
             "auto_mutations_fired": []
           },
           "Tablet": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 768,
               "clientWidth": 768,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
               "sidebarWidth": 0,
-              "mainWidth": 768,
+              "mainWidth": 0,
               "sidebarRatioPct": 0,
-              "mainRatioPct": 100,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 7,
-                "buttonLabels": [
-                  "Sincronizar",
-                  "Exportar CSV",
-                  "Novo Negócio",
-                  "Tabela Paginada",
-                  "Quadro Kanban",
-                  "Anterior",
-                  "Próxima"
-                ],
-                "inputsCount": 1,
-                "selectsCount": 2,
-                "tablesCount": 1,
+                "buttonsCount": 0,
+                "buttonLabels": [],
+                "inputsCount": 0,
+                "selectsCount": 0,
+                "tablesCount": 0,
                 "iframesCount": 0
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Cockpit de Negócios & Consignação Cirúrgica Operação unificada RevOps + KeyPartners (Kits & ANVISA) + DENTGO (Logística Same-Day). Clique em um negócio para abrir o Dossiê e Aprovação de Crédito. Sincronizar Exportar C"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -6071,21 +5741,19 @@
             "auto_mutations_fired": []
           },
           "Corporate_Laptop": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 1366,
               "clientWidth": 1366,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
-              "sidebarWidth": 256,
-              "mainWidth": 1110,
-              "sidebarRatioPct": 19,
-              "mainRatioPct": 81,
+              "sidebarWidth": 0,
+              "mainWidth": 0,
+              "sidebarRatioPct": 0,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 1,
-                "buttonLabels": [
-                  "Tentar Novamente"
-                ],
+                "buttonsCount": 0,
+                "buttonLabels": [],
                 "inputsCount": 0,
                 "selectsCount": 0,
                 "tablesCount": 0,
@@ -6093,7 +5761,7 @@
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Ocorreu uma falha na renderização deste módulo T.find is not a function Tentar Novamente"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -6101,21 +5769,19 @@
             "auto_mutations_fired": []
           },
           "Desktop_Full_HD": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 1920,
               "clientWidth": 1920,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
-              "sidebarWidth": 256,
-              "mainWidth": 1664,
-              "sidebarRatioPct": 13,
-              "mainRatioPct": 87,
+              "sidebarWidth": 0,
+              "mainWidth": 0,
+              "sidebarRatioPct": 0,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 1,
-                "buttonLabels": [
-                  "Tentar Novamente"
-                ],
+                "buttonsCount": 0,
+                "buttonLabels": [],
                 "inputsCount": 0,
                 "selectsCount": 0,
                 "tablesCount": 0,
@@ -6123,7 +5789,7 @@
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Ocorreu uma falha na renderização deste módulo T.find is not a function Tentar Novamente"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -6139,35 +5805,27 @@
         "navigation_method": "sidebar_click",
         "viewports": {
           "Mobile": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 375,
               "clientWidth": 375,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
               "sidebarWidth": 0,
-              "mainWidth": 375,
+              "mainWidth": 0,
               "sidebarRatioPct": 0,
-              "mainRatioPct": 100,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 7,
-                "buttonLabels": [
-                  "Sincronizar",
-                  "Exportar CSV",
-                  "Novo Negócio",
-                  "Tabela Paginada",
-                  "Quadro Kanban",
-                  "Anterior",
-                  "Próxima"
-                ],
-                "inputsCount": 1,
-                "selectsCount": 2,
-                "tablesCount": 1,
+                "buttonsCount": 0,
+                "buttonLabels": [],
+                "inputsCount": 0,
+                "selectsCount": 0,
+                "tablesCount": 0,
                 "iframesCount": 0
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Cockpit de Negócios & Consignação Cirúrgica Operação unificada RevOps + KeyPartners (Kits & ANVISA) + DENTGO (Logística Same-Day). Clique em um negócio para abrir o Dossiê e Aprovação de Crédito. Sincronizar Exportar C"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -6175,35 +5833,27 @@
             "auto_mutations_fired": []
           },
           "Tablet": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 768,
               "clientWidth": 768,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
               "sidebarWidth": 0,
-              "mainWidth": 768,
+              "mainWidth": 0,
               "sidebarRatioPct": 0,
-              "mainRatioPct": 100,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 7,
-                "buttonLabels": [
-                  "Sincronizar",
-                  "Exportar CSV",
-                  "Novo Negócio",
-                  "Tabela Paginada",
-                  "Quadro Kanban",
-                  "Anterior",
-                  "Próxima"
-                ],
-                "inputsCount": 1,
-                "selectsCount": 2,
-                "tablesCount": 1,
+                "buttonsCount": 0,
+                "buttonLabels": [],
+                "inputsCount": 0,
+                "selectsCount": 0,
+                "tablesCount": 0,
                 "iframesCount": 0
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Cockpit de Negócios & Consignação Cirúrgica Operação unificada RevOps + KeyPartners (Kits & ANVISA) + DENTGO (Logística Same-Day). Clique em um negócio para abrir o Dossiê e Aprovação de Crédito. Sincronizar Exportar C"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -6211,21 +5861,19 @@
             "auto_mutations_fired": []
           },
           "Corporate_Laptop": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 1366,
               "clientWidth": 1366,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
-              "sidebarWidth": 256,
-              "mainWidth": 1110,
-              "sidebarRatioPct": 19,
-              "mainRatioPct": 81,
+              "sidebarWidth": 0,
+              "mainWidth": 0,
+              "sidebarRatioPct": 0,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 1,
-                "buttonLabels": [
-                  "Tentar Novamente"
-                ],
+                "buttonsCount": 0,
+                "buttonLabels": [],
                 "inputsCount": 0,
                 "selectsCount": 0,
                 "tablesCount": 0,
@@ -6233,7 +5881,7 @@
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Ocorreu uma falha na renderização deste módulo T.find is not a function Tentar Novamente"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -6241,21 +5889,19 @@
             "auto_mutations_fired": []
           },
           "Desktop_Full_HD": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 1920,
               "clientWidth": 1920,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
-              "sidebarWidth": 256,
-              "mainWidth": 1664,
-              "sidebarRatioPct": 13,
-              "mainRatioPct": 87,
+              "sidebarWidth": 0,
+              "mainWidth": 0,
+              "sidebarRatioPct": 0,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 1,
-                "buttonLabels": [
-                  "Tentar Novamente"
-                ],
+                "buttonsCount": 0,
+                "buttonLabels": [],
                 "inputsCount": 0,
                 "selectsCount": 0,
                 "tablesCount": 0,
@@ -6263,7 +5909,7 @@
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Ocorreu uma falha na renderização deste módulo T.find is not a function Tentar Novamente"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -6279,35 +5925,27 @@
         "navigation_method": "sidebar_click",
         "viewports": {
           "Mobile": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 375,
               "clientWidth": 375,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
               "sidebarWidth": 0,
-              "mainWidth": 375,
+              "mainWidth": 0,
               "sidebarRatioPct": 0,
-              "mainRatioPct": 100,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 7,
-                "buttonLabels": [
-                  "Sincronizar",
-                  "Exportar CSV",
-                  "Novo Negócio",
-                  "Tabela Paginada",
-                  "Quadro Kanban",
-                  "Anterior",
-                  "Próxima"
-                ],
-                "inputsCount": 1,
-                "selectsCount": 2,
-                "tablesCount": 1,
+                "buttonsCount": 0,
+                "buttonLabels": [],
+                "inputsCount": 0,
+                "selectsCount": 0,
+                "tablesCount": 0,
                 "iframesCount": 0
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Cockpit de Negócios & Consignação Cirúrgica Operação unificada RevOps + KeyPartners (Kits & ANVISA) + DENTGO (Logística Same-Day). Clique em um negócio para abrir o Dossiê e Aprovação de Crédito. Sincronizar Exportar C"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -6315,35 +5953,27 @@
             "auto_mutations_fired": []
           },
           "Tablet": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 768,
               "clientWidth": 768,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
               "sidebarWidth": 0,
-              "mainWidth": 768,
+              "mainWidth": 0,
               "sidebarRatioPct": 0,
-              "mainRatioPct": 100,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 7,
-                "buttonLabels": [
-                  "Sincronizar",
-                  "Exportar CSV",
-                  "Novo Negócio",
-                  "Tabela Paginada",
-                  "Quadro Kanban",
-                  "Anterior",
-                  "Próxima"
-                ],
-                "inputsCount": 1,
-                "selectsCount": 2,
-                "tablesCount": 1,
+                "buttonsCount": 0,
+                "buttonLabels": [],
+                "inputsCount": 0,
+                "selectsCount": 0,
+                "tablesCount": 0,
                 "iframesCount": 0
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Cockpit de Negócios & Consignação Cirúrgica Operação unificada RevOps + KeyPartners (Kits & ANVISA) + DENTGO (Logística Same-Day). Clique em um negócio para abrir o Dossiê e Aprovação de Crédito. Sincronizar Exportar C"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -6351,21 +5981,19 @@
             "auto_mutations_fired": []
           },
           "Corporate_Laptop": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 1366,
               "clientWidth": 1366,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
-              "sidebarWidth": 256,
-              "mainWidth": 1110,
-              "sidebarRatioPct": 19,
-              "mainRatioPct": 81,
+              "sidebarWidth": 0,
+              "mainWidth": 0,
+              "sidebarRatioPct": 0,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 1,
-                "buttonLabels": [
-                  "Tentar Novamente"
-                ],
+                "buttonsCount": 0,
+                "buttonLabels": [],
                 "inputsCount": 0,
                 "selectsCount": 0,
                 "tablesCount": 0,
@@ -6373,7 +6001,7 @@
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Ocorreu uma falha na renderização deste módulo T.find is not a function Tentar Novamente"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -6381,21 +6009,19 @@
             "auto_mutations_fired": []
           },
           "Desktop_Full_HD": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 1920,
               "clientWidth": 1920,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
-              "sidebarWidth": 256,
-              "mainWidth": 1664,
-              "sidebarRatioPct": 13,
-              "mainRatioPct": 87,
+              "sidebarWidth": 0,
+              "mainWidth": 0,
+              "sidebarRatioPct": 0,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 1,
-                "buttonLabels": [
-                  "Tentar Novamente"
-                ],
+                "buttonsCount": 0,
+                "buttonLabels": [],
                 "inputsCount": 0,
                 "selectsCount": 0,
                 "tablesCount": 0,
@@ -6403,7 +6029,7 @@
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Ocorreu uma falha na renderização deste módulo T.find is not a function Tentar Novamente"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -6419,35 +6045,27 @@
         "navigation_method": "sidebar_click",
         "viewports": {
           "Mobile": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 375,
               "clientWidth": 375,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
               "sidebarWidth": 0,
-              "mainWidth": 375,
+              "mainWidth": 0,
               "sidebarRatioPct": 0,
-              "mainRatioPct": 100,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 7,
-                "buttonLabels": [
-                  "Sincronizar",
-                  "Exportar CSV",
-                  "Novo Negócio",
-                  "Tabela Paginada",
-                  "Quadro Kanban",
-                  "Anterior",
-                  "Próxima"
-                ],
-                "inputsCount": 1,
-                "selectsCount": 2,
-                "tablesCount": 1,
+                "buttonsCount": 0,
+                "buttonLabels": [],
+                "inputsCount": 0,
+                "selectsCount": 0,
+                "tablesCount": 0,
                 "iframesCount": 0
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Cockpit de Negócios & Consignação Cirúrgica Operação unificada RevOps + KeyPartners (Kits & ANVISA) + DENTGO (Logística Same-Day). Clique em um negócio para abrir o Dossiê e Aprovação de Crédito. Sincronizar Exportar C"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -6455,35 +6073,27 @@
             "auto_mutations_fired": []
           },
           "Tablet": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 768,
               "clientWidth": 768,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
               "sidebarWidth": 0,
-              "mainWidth": 768,
+              "mainWidth": 0,
               "sidebarRatioPct": 0,
-              "mainRatioPct": 100,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 7,
-                "buttonLabels": [
-                  "Sincronizar",
-                  "Exportar CSV",
-                  "Novo Negócio",
-                  "Tabela Paginada",
-                  "Quadro Kanban",
-                  "Anterior",
-                  "Próxima"
-                ],
-                "inputsCount": 1,
-                "selectsCount": 2,
-                "tablesCount": 1,
+                "buttonsCount": 0,
+                "buttonLabels": [],
+                "inputsCount": 0,
+                "selectsCount": 0,
+                "tablesCount": 0,
                 "iframesCount": 0
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Cockpit de Negócios & Consignação Cirúrgica Operação unificada RevOps + KeyPartners (Kits & ANVISA) + DENTGO (Logística Same-Day). Clique em um negócio para abrir o Dossiê e Aprovação de Crédito. Sincronizar Exportar C"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -6491,21 +6101,19 @@
             "auto_mutations_fired": []
           },
           "Corporate_Laptop": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 1366,
               "clientWidth": 1366,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
-              "sidebarWidth": 256,
-              "mainWidth": 1110,
-              "sidebarRatioPct": 19,
-              "mainRatioPct": 81,
+              "sidebarWidth": 0,
+              "mainWidth": 0,
+              "sidebarRatioPct": 0,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 1,
-                "buttonLabels": [
-                  "Tentar Novamente"
-                ],
+                "buttonsCount": 0,
+                "buttonLabels": [],
                 "inputsCount": 0,
                 "selectsCount": 0,
                 "tablesCount": 0,
@@ -6513,7 +6121,7 @@
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Ocorreu uma falha na renderização deste módulo T.find is not a function Tentar Novamente"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -6521,21 +6129,19 @@
             "auto_mutations_fired": []
           },
           "Desktop_Full_HD": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 1920,
               "clientWidth": 1920,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
-              "sidebarWidth": 256,
-              "mainWidth": 1664,
-              "sidebarRatioPct": 13,
-              "mainRatioPct": 87,
+              "sidebarWidth": 0,
+              "mainWidth": 0,
+              "sidebarRatioPct": 0,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 1,
-                "buttonLabels": [
-                  "Tentar Novamente"
-                ],
+                "buttonsCount": 0,
+                "buttonLabels": [],
                 "inputsCount": 0,
                 "selectsCount": 0,
                 "tablesCount": 0,
@@ -6543,7 +6149,7 @@
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Ocorreu uma falha na renderização deste módulo T.find is not a function Tentar Novamente"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -6559,35 +6165,27 @@
         "navigation_method": "sidebar_click",
         "viewports": {
           "Mobile": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 375,
               "clientWidth": 375,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
               "sidebarWidth": 0,
-              "mainWidth": 375,
+              "mainWidth": 0,
               "sidebarRatioPct": 0,
-              "mainRatioPct": 100,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 7,
-                "buttonLabels": [
-                  "Sincronizar",
-                  "Exportar CSV",
-                  "Novo Negócio",
-                  "Tabela Paginada",
-                  "Quadro Kanban",
-                  "Anterior",
-                  "Próxima"
-                ],
-                "inputsCount": 1,
-                "selectsCount": 2,
-                "tablesCount": 1,
+                "buttonsCount": 0,
+                "buttonLabels": [],
+                "inputsCount": 0,
+                "selectsCount": 0,
+                "tablesCount": 0,
                 "iframesCount": 0
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Cockpit de Negócios & Consignação Cirúrgica Operação unificada RevOps + KeyPartners (Kits & ANVISA) + DENTGO (Logística Same-Day). Clique em um negócio para abrir o Dossiê e Aprovação de Crédito. Sincronizar Exportar C"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -6595,35 +6193,27 @@
             "auto_mutations_fired": []
           },
           "Tablet": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 768,
               "clientWidth": 768,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
               "sidebarWidth": 0,
-              "mainWidth": 768,
+              "mainWidth": 0,
               "sidebarRatioPct": 0,
-              "mainRatioPct": 100,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 7,
-                "buttonLabels": [
-                  "Sincronizar",
-                  "Exportar CSV",
-                  "Novo Negócio",
-                  "Tabela Paginada",
-                  "Quadro Kanban",
-                  "Anterior",
-                  "Próxima"
-                ],
-                "inputsCount": 1,
-                "selectsCount": 2,
-                "tablesCount": 1,
+                "buttonsCount": 0,
+                "buttonLabels": [],
+                "inputsCount": 0,
+                "selectsCount": 0,
+                "tablesCount": 0,
                 "iframesCount": 0
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Cockpit de Negócios & Consignação Cirúrgica Operação unificada RevOps + KeyPartners (Kits & ANVISA) + DENTGO (Logística Same-Day). Clique em um negócio para abrir o Dossiê e Aprovação de Crédito. Sincronizar Exportar C"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -6631,21 +6221,19 @@
             "auto_mutations_fired": []
           },
           "Corporate_Laptop": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 1366,
               "clientWidth": 1366,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
-              "sidebarWidth": 256,
-              "mainWidth": 1110,
-              "sidebarRatioPct": 19,
-              "mainRatioPct": 81,
+              "sidebarWidth": 0,
+              "mainWidth": 0,
+              "sidebarRatioPct": 0,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 1,
-                "buttonLabels": [
-                  "Tentar Novamente"
-                ],
+                "buttonsCount": 0,
+                "buttonLabels": [],
                 "inputsCount": 0,
                 "selectsCount": 0,
                 "tablesCount": 0,
@@ -6653,7 +6241,7 @@
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Ocorreu uma falha na renderização deste módulo T.find is not a function Tentar Novamente"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],
@@ -6661,21 +6249,19 @@
             "auto_mutations_fired": []
           },
           "Desktop_Full_HD": {
-            "nav_success": true,
+            "nav_success": false,
             "dom_metrics": {
               "scrollWidth": 1920,
               "clientWidth": 1920,
               "hasHorizontalOverflow": false,
               "headerOverflow": false,
-              "sidebarWidth": 256,
-              "mainWidth": 1664,
-              "sidebarRatioPct": 13,
-              "mainRatioPct": 87,
+              "sidebarWidth": 0,
+              "mainWidth": 0,
+              "sidebarRatioPct": 0,
+              "mainRatioPct": 0,
               "interactive": {
-                "buttonsCount": 1,
-                "buttonLabels": [
-                  "Tentar Novamente"
-                ],
+                "buttonsCount": 0,
+                "buttonLabels": [],
                 "inputsCount": 0,
                 "selectsCount": 0,
                 "tablesCount": 0,
@@ -6683,7 +6269,7 @@
               },
               "clippedElementsCount": 0,
               "clippedSample": [],
-              "mainTextPreview": "Ocorreu uma falha na renderização deste módulo T.find is not a function Tentar Novamente"
+              "mainTextPreview": ""
             },
             "console_errors": [],
             "page_errors": [],

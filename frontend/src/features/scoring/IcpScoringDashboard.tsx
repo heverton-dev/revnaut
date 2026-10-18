@@ -90,11 +90,12 @@ export const IcpScoringDashboard: React.FC = () => {
       const presetsData = presetsRes.ok ? await presetsRes.json() : [];
       const contactsData = contactsRes.ok ? await contactsRes.json() : [];
 
-      setRules(Array.isArray(rulesData) ? rulesData : rulesData.rules || []);
-      setPresets(Array.isArray(presetsData) ? presetsData : presetsData.presets || []);
-      setContacts(contactsData);
-      if (contactsData.length > 0) {
-        setSelectedContactId(contactsData[0].id);
+      setRules(Array.isArray(rulesData) ? rulesData : (Array.isArray(rulesData?.rules) ? rulesData.rules : []));
+      setPresets(Array.isArray(presetsData) ? presetsData : (Array.isArray(presetsData?.presets) ? presetsData.presets : []));
+      const contactList = Array.isArray(contactsData) ? contactsData : (Array.isArray(contactsData?.contacts) ? contactsData.contacts : []);
+      setContacts(contactList);
+      if (contactList.length > 0) {
+        setSelectedContactId(contactList[0].id);
       }
     } catch (err: any) {
       setError(err.message || "Erro ao conectar com o motor preditivo de Lead Scoring.");

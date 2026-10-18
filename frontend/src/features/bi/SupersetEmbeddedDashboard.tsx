@@ -54,9 +54,16 @@ export interface GuestTokenData {
 interface PipelineMetrics {
   mrr?: number;
   pipelineTotal?: number;
+  pipeline_total?: number;
+  total_value?: number;
   closedWonMRR?: number;
+  won_value?: number;
   totalDeals?: number;
+  total_deals?: number;
   conversionRate?: number;
+  conversion_rate?: number;
+  win_rate?: number;
+  [key: string]: any;
 }
 
 interface CampaignMetrics {
@@ -374,10 +381,10 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
               <TrendingUp className="h-4 w-4 text-brand-primary" />
             </div>
             <p className="text-xl font-bold text-text-main mt-2">
-              {formatBrl(pipelineMetrics?.pipelineTotal)}
+              {formatBrl(pipelineMetrics?.pipelineTotal ?? pipelineMetrics?.total_value ?? pipelineMetrics?.pipeline_total ?? 0)}
             </p>
             <p className="text-xs text-text-secondary mt-1">
-              {pipelineMetrics?.totalDeals ?? 0} oportunidades • Conv. {pipelineMetrics?.conversionRate ?? 0}%
+              {(pipelineMetrics?.totalDeals ?? pipelineMetrics?.total_deals ?? 0)} oportunidades • Conv. {(pipelineMetrics?.conversionRate ?? pipelineMetrics?.conversion_rate ?? pipelineMetrics?.win_rate ?? 0)}%
             </p>
           </Card>
 
@@ -389,10 +396,10 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
               <BarChart3 className="h-4 w-4 text-status-success" />
             </div>
             <p className="text-xl font-bold text-status-success mt-2">
-              {formatBrl(pipelineMetrics?.mrr)}
+              {formatBrl(pipelineMetrics?.mrr ?? pipelineMetrics?.closedWonMRR ?? pipelineMetrics?.won_value ?? 0)}
             </p>
             <p className="text-xs text-text-secondary mt-1">
-              Fechado Ganho: {formatBrl(pipelineMetrics?.closedWonMRR)}
+              Fechado Ganho: {formatBrl(pipelineMetrics?.closedWonMRR ?? pipelineMetrics?.won_value ?? pipelineMetrics?.mrr ?? 0)}
             </p>
           </Card>
 
@@ -659,15 +666,15 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                   <div className="p-2 rounded bg-surface-card border border-border-subtle">
                     <span className="text-text-muted block">Volume Pipeline</span>
-                    <strong className="text-text-main">{formatBrl(pipelineMetrics?.pipelineTotal)}</strong>
+                    <strong className="text-text-main">{formatBrl(pipelineMetrics?.pipelineTotal ?? pipelineMetrics?.total_value ?? pipelineMetrics?.pipeline_total ?? 0)}</strong>
                   </div>
                   <div className="p-2 rounded bg-surface-card border border-border-subtle">
                     <span className="text-text-muted block">Negócios Mapeados</span>
-                    <strong className="text-text-main">{pipelineMetrics?.totalDeals ?? 0}</strong>
+                    <strong className="text-text-main">{pipelineMetrics?.totalDeals ?? pipelineMetrics?.total_deals ?? 0}</strong>
                   </div>
                   <div className="p-2 rounded bg-surface-card border border-border-subtle">
                     <span className="text-text-muted block">Conversão Funil</span>
-                    <strong className="text-status-success">{pipelineMetrics?.conversionRate ?? 0}%</strong>
+                    <strong className="text-status-success">{(pipelineMetrics?.conversionRate ?? pipelineMetrics?.conversion_rate ?? pipelineMetrics?.win_rate ?? 0)}%</strong>
                   </div>
                   <div className="p-2 rounded bg-surface-card border border-border-subtle">
                     <span className="text-text-muted block">TTL Guest Token</span>

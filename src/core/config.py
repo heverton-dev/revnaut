@@ -10,7 +10,15 @@ import os
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = BASE_DIR / "data"
 DATA_DIR.mkdir(parents=True, exist_ok=True)
-DB_PATH = DATA_DIR / "rvops.db"
+def get_db_path() -> Path:
+    db_env = os.getenv("REVNAUT_DB_PATH") or os.getenv("RVOPS_DB_PATH")
+    if db_env:
+        p = Path(db_env)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        return p
+    return DATA_DIR / "rvops.db"
+
+DB_PATH = get_db_path()
 
 PORT = int(os.getenv("PORT", 8000))
 HOST = os.getenv("HOST", "0.0.0.0")
