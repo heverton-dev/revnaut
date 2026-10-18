@@ -131,3 +131,21 @@ class LandingPageSubmissionResponse(BaseModel):
     cro_verified: bool = False
     message: str
 
+
+class ListmonkBroadcastRequest(BaseModel):
+    title: str = Field(..., min_length=2)
+    subject: str = Field(..., min_length=2)
+    body_html: str = Field(..., min_length=5)
+    target_uf: Optional[str] = None
+    target_specialty: Optional[str] = None
+    listmonk_list_id: Optional[int] = 1
+
+
+class ListmonkBroadcastResponse(BaseModel):
+    success: bool = True
+    status: str
+    queued_count: int
+    listmonk_campaign_id: Optional[int] = None
+    message: str
+
+

@@ -82,6 +82,42 @@ services:
       restart_policy:
         condition: on-failure
 
+  listmonk-db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=listmonk
+      - POSTGRES_USER=listmonk
+      - POSTGRES_PASSWORD_FILE=/run/secrets/listmonk_db_password
+    networks:
+      - network_conexao
+    volumes:
+      - /opt/rvops/listmonk_db:/var/lib/postgresql/data
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+  listmonk:
+    image: listmonk/listmonk:v3.0.0
+    command: [sh, -c, "sleep 5 && ./listmonk --config='' --install --idempotent --yes && ./listmonk --config=''"]
+    environment:
+      - LISTMONK_db__host=listmonk-db
+      - LISTMONK_db__port=5432
+      - LISTMONK_db__user=listmonk
+      - LISTMONK_db__database=listmonk
+      - LISTMONK_app__address=0.0.0.0:9000
+    networks:
+      - network_conexao
+    volumes:
+      - /opt/rvops/listmonk_data:/listmonk/data
+    depends_on:
+      - listmonk-db
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
 networks:
   network_conexao:
     external: true
+

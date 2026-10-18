@@ -17,9 +17,13 @@ from src.features.campaigns.schemas import (
     LandingPageSubmissionCreate,
     LandingPageSubmissionResponse,
     LandingPageTemplateOut,
+    ListmonkBroadcastRequest,
+    ListmonkBroadcastResponse,
 )
 from src.features.campaigns import service
 from src.features.campaigns import landing_pages
+from src.features.campaigns.listmonk_adapter import ListmonkClient
+
 
 router = APIRouter(prefix="/api/v1/campaigns", tags=["Campanhas & Mídia"])
 
@@ -84,4 +88,19 @@ def submit_lp_lead(slug: str, data: LandingPageSubmissionCreate):
         return landing_pages.submit_public_lead(slug, data)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.post("/broadcast-listmonk", response_model=ListmonkBroadcastResponse, summary="Enfileirar disparo em massa de e-mails via Listmonk Engine")
+def broadcast_listmonk_endpoint(payload: ListmonkBroadcastRequest):
+    client = ListmonkClient()
+    result = client.dispatch_broadcast(
+        title=payload.title,
+        subject=payload.subject,
+        body_html=payload.body_html,
+        target_uf=payload.target_uf,
+        target_specialty=payload.target_specialty,
+        list_id=payload.listmonk_list_id or 1,
+    )
+    return ListmonkBroadcastResponse(**result)
+
 
