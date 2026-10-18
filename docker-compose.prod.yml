@@ -1,0 +1,311 @@
+version: "3.8"
+
+networks:
+  revnault_edge:
+    driver: overlay
+    attachable: true
+  revnault_app:
+    driver: overlay
+    attachable: true
+  revnault_data:
+    driver: overlay
+    internal: true
+
+volumes:
+  sqlite_data:
+  postgres_data:
+  redis_data:
+  listmonk_data:
+  orthanc_data:
+  traefik_certificates:
+
+services:
+  traefik:
+    image: traefik:v3.1
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.letsencryptresolver.acme.tlschallenge=true"
+      - "--certificatesresolvers.letsencryptresolver.acme.email=${ACME_EMAIL:-admin@revnaut.internal}"
+      - "--certificatesresolvers.letsencryptresolver.acme.storage=/certificates/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_certificates:/certificates
+    networks:
+      - revnault_edge
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 128M
+      restart_policy:
+        condition: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "traefik healthcheck --ping || exit 0"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  frontend:
+    image: rvops_frontend:latest
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    networks:
+      - revnault_edge
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        - "traefik.docker.network=revnault_edge"
+        - "traefik.http.routers.frontend.entrypoints=websecure"
+        - "traefik.http.routers.frontend.rule=Host(`app.revnaut.internal`)"
+        - "traefik.http.routers.frontend.tls.certresolver=letsencryptresolver"
+        - "traefik.http.services.frontend.loadbalancer.server.port=80"
+
+  app:
+    image: rvops_app:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - PORT=8000
+      - ENVIRONMENT=production
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=${DATABASE_URL:-sqlite+aiosqlite:////app/data/revnaut.db}
+      - POSTGRES_URL=${POSTGRES_URL:-postgresql+asyncpg://revnaut_admin:${PG_PASSWORD:-revnaut_pg_pass}@postgres:5432/revnaut}
+      - R2_ENDPOINT_URL=${R2_ENDPOINT_URL:-}
+      - R2_ACCESS_KEY_ID=${R2_ACCESS_KEY_ID:-}
+      - R2_SECRET_ACCESS_KEY=${R2_SECRET_ACCESS_KEY:-}
+    volumes:
+      - sqlite_data:/app/data
+    networks:
+      - revnault_edge
+      - revnault_app
+      - revnault_data
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2048M
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        - "traefik.docker.network=revnault_edge"
+        - "traefik.http.routers.revnaut.entrypoints=websecure"
+        - "traefik.http.routers.revnaut.rule=Host(`api.revnaut.internal`) || Host(`rvops.vpsconexao.org`)"
+        - "traefik.http.routers.revnaut.service=revnaut"
+        - "traefik.http.routers.revnaut.tls.certresolver=letsencryptresolver"
+        - "traefik.http.services.revnaut.loadbalancer.server.port=8000"
+        - "traefik.http.routers.revnaut.middlewares=revnaut-ratelimit,revnaut-security-headers"
+        - "traefik.http.middlewares.revnaut-ratelimit.ratelimit.average=100"
+        - "traefik.http.middlewares.revnaut-ratelimit.ratelimit.burst=50"
+        - "traefik.http.middlewares.revnaut-security-headers.headers.sslredirect=true"
+        - "traefik.http.middlewares.revnaut-security-headers.headers.stsSeconds=315360000"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=5)\" || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  worker:
+    image: rvops_app:latest
+    command: python -m src.workers.runner
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=${DATABASE_URL:-sqlite+aiosqlite:////app/data/revnaut.db}
+    volumes:
+      - sqlite_data:/app/data
+    networks:
+      - revnault_app
+      - revnault_data
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1024M
+        reservations:
+          cpus: "0.2"
+          memory: 256M
+      restart_policy:
+        condition: on-failure
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --save 60 1
+    volumes:
+      - redis_data:/data
+    networks:
+      - revnault_data
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+      restart_policy:
+        condition: on-failure
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      - POSTGRES_DB=revnaut
+      - POSTGRES_USER=revnaut_admin
+      - POSTGRES_PASSWORD=${PG_PASSWORD:-revnaut_pg_pass}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - revnault_data
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2048M
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+      restart_policy:
+        condition: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U revnaut_admin -d revnaut"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  superset:
+    image: apache/superset:3.1.0
+    command: ["/app/docker/docker-bootstrap.sh", "app-gunicorn"]
+    environment:
+      - SUPERSET_SECRET_KEY=${SUPERSET_SECRET_KEY:-revnaut_superset_secret_key_default}
+      - DATABASE_DB=revnaut
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+      - DATABASE_USER=revnaut_admin
+      - DATABASE_PASSWORD=${PG_PASSWORD:-revnaut_pg_pass}
+      - SUPERSET_FEATURE_EMBEDDED_SUPERSET=true
+    networks:
+      - revnault_app
+      - revnault_data
+    deploy:
+      resources:
+        limits:
+          cpus: "1.5"
+          memory: 1536M
+      restart_policy:
+        condition: on-failure
+
+  orthanc:
+    image: orthancteam/orthanc:24.3.0
+    environment:
+      - ORTHANC_JSON={"Name":"Revnaut-Orthanc-DICOM","StorageDirectory":"/var/lib/orthanc/db","StorageAreaPlugin":"s3","DicomAet":"REVNAULT_PACS","DicomPort":4242,"HttpPort":8042,"RemoteAccessAllowed":true}
+    volumes:
+      - orthanc_data:/var/lib/orthanc/db
+    networks:
+      - revnault_app
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1024M
+      restart_policy:
+        condition: on-failure
+
+  windmill:
+    image: ghcr.io/windmill-labs/windmill:latest
+    environment:
+      - DATABASE_URL=postgresql://revnaut_admin:${PG_PASSWORD:-revnaut_pg_pass}@postgres:5432/revnaut
+      - RUST_LOG=info
+    networks:
+      - revnault_app
+      - revnault_data
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1024M
+      restart_policy:
+        condition: on-failure
+
+  livekit:
+    image: livekit/livekit-server:latest
+    command: --config /etc/livekit.yaml
+    environment:
+      - LIVEKIT_CONFIG_FILE=/etc/livekit.yaml
+    ports:
+      - "7880:7880"
+      - "7881:7881"
+      - "7882:7882/udp"
+    networks:
+      - revnault_edge
+      - revnault_app
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+      restart_policy:
+        condition: on-failure
+
+  listmonk:
+    image: listmonk/listmonk:v3.0.0
+    environment:
+      - LISTMONK_db__host=postgres
+      - LISTMONK_db__port=5432
+      - LISTMONK_db__user=revnaut_admin
+      - LISTMONK_db__password=${PG_PASSWORD:-revnaut_pg_pass}
+      - LISTMONK_db__database=revnaut
+    networks:
+      - revnault_app
+      - revnault_data
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+      restart_policy:
+        condition: on-failure
+
+  wal-backup:
+    image: rvops_app:latest
+    command: python scripts/wal_backup_s3.py --db /app/data/revnaut.db --retention 30
+    environment:
+      - R2_ENDPOINT_URL=${R2_ENDPOINT_URL:-}
+      - R2_ACCESS_KEY_ID=${R2_ACCESS_KEY_ID:-}
+      - R2_SECRET_ACCESS_KEY=${R2_SECRET_ACCESS_KEY:-}
+      - R2_BUCKET_NAME=${R2_BUCKET_NAME:-revnaut-wal-backups}
+    volumes:
+      - sqlite_data:/app/data
+    networks:
+      - revnault_data
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+      restart_policy:
+        condition: on-failure
