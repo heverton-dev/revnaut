@@ -746,6 +746,63 @@ def init_db() -> None:
         CREATE INDEX IF NOT EXISTS idx_kp_kol_acc ON kp_kol_contracts(account_id);
         CREATE INDEX IF NOT EXISTS idx_kp_kol_status ON kp_kol_contracts(compliance_status);
         CREATE INDEX IF NOT EXISTS idx_kp_kol_asset ON kp_kol_contracts(asset_tag);
+
+        CREATE TABLE IF NOT EXISTS dentgo_hubs (
+            id TEXT PRIMARY KEY,
+            account_id TEXT NOT NULL,
+            name TEXT NOT NULL,
+            cnpj TEXT NOT NULL,
+            latitude REAL NOT NULL,
+            longitude REAL NOT NULL,
+            coverage_radius_km REAL NOT NULL DEFAULT 30.0,
+            on_duty_schedule TEXT DEFAULT '24h',
+            is_active INTEGER NOT NULL DEFAULT 1,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (account_id) REFERENCES accounts(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS dentgo_hub_inventory (
+            id TEXT PRIMARY KEY,
+            hub_id TEXT NOT NULL,
+            account_id TEXT NOT NULL,
+            product_id TEXT NOT NULL,
+            product_name TEXT NOT NULL,
+            anvisa_reg TEXT NOT NULL,
+            batch_number TEXT NOT NULL,
+            quantity_available INTEGER NOT NULL DEFAULT 0,
+            unit_price REAL NOT NULL DEFAULT 0.0,
+            sterilization_expiry_date TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (hub_id) REFERENCES dentgo_hubs(id),
+            FOREIGN KEY (account_id) REFERENCES accounts(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS dentgo_orders (
+            id TEXT PRIMARY KEY,
+            account_id TEXT NOT NULL,
+            hub_id TEXT NOT NULL,
+            customer_cro_uf TEXT NOT NULL,
+            cro_verified INTEGER NOT NULL DEFAULT 0,
+            delivery_address TEXT NOT NULL,
+            delivery_lat REAL NOT NULL,
+            delivery_lng REAL NOT NULL,
+            distance_km REAL NOT NULL DEFAULT 0.0,
+            estimated_eta_minutes INTEGER NOT NULL DEFAULT 60,
+            items_json TEXT NOT NULL DEFAULT '[]',
+            subtotal REAL NOT NULL DEFAULT 0.0,
+            urgency_fee REAL NOT NULL DEFAULT 0.0,
+            total_amount REAL NOT NULL DEFAULT 0.0,
+            status TEXT NOT NULL DEFAULT 'ORDER_PLACED',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (hub_id) REFERENCES dentgo_hubs(id),
+            FOREIGN KEY (account_id) REFERENCES accounts(id)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_dentgo_hubs_acc ON dentgo_hubs(account_id);
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_dentgo_hub_cnpj ON dentgo_hubs(cnpj);
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_dentgo_inv_hub_batch ON dentgo_hub_inventory(hub_id, product_id, batch_number);
+        CREATE INDEX IF NOT EXISTS idx_dentgo_orders_hub ON dentgo_orders(hub_id);
+        CREATE INDEX IF NOT EXISTS idx_dentgo_orders_status ON dentgo_orders(status);
         """)
 
 
