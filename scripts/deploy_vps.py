@@ -87,7 +87,7 @@ def deploy():
         print("[4/5] Descompactando e compilando imagem Docker na VPS...")
         import time
         version_tag = f"rvops_app:v{int(time.time())}"
-        cmd_build = f"cd {REMOTE_DIR} && tar -xzf deploy.tar.gz && docker build -t {version_tag} . && docker tag {version_tag} rvops_app:latest"
+        cmd_build = f"cd {REMOTE_DIR} && tar -xzf deploy.tar.gz && docker build --no-cache -t {version_tag} . && docker tag {version_tag} rvops_app:latest"
         stdin, stdout, stderr = ssh.exec_command(cmd_build)
         exit_status = stdout.channel.recv_exit_status()
         if exit_status != 0:
