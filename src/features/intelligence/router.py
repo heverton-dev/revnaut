@@ -13,6 +13,7 @@ from src.features.intelligence import transcription_worker
 from src.features.intelligence import granola_copilot
 from src.features.intelligence import surgical_rag
 from src.features.intelligence import superset_embedded
+from src.features.intelligence import text_to_sql_agent
 from src.features.intelligence.schemas import (
     ContactInstitutionCreate, ContactInstitutionOut,
     ClinicalGraphResponse, KOLSpeakerResponse,
@@ -23,8 +24,10 @@ from src.features.intelligence.schemas import (
     CatalogChunkIngestRequest, CatalogChunkIngestResponse,
     CatalogRagQueryRequest, CatalogRagQueryResponse,
     SupersetGuestTokenRequest, SupersetGuestTokenResponse,
-    AnalyticsDatasetExportRequest, AnalyticsDatasetExportResponse
+    AnalyticsDatasetExportRequest, AnalyticsDatasetExportResponse,
+    TextToSqlExecuteRequest, TextToSqlExecuteResponse
 )
+
 
 
 
@@ -207,6 +210,26 @@ def export_dataset(payload: AnalyticsDatasetExportRequest):
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post(
+    "/bi/text-to-sql",
+    response_model=TextToSqlExecuteResponse,
+    summary="Executar consulta analítica Text-to-SQL com proteção AST e RLS"
+)
+def execute_text_to_sql(payload: TextToSqlExecuteRequest):
+    try:
+        return text_to_sql_agent.execute_analytical_query(
+            natural_language_query=payload.natural_language_query,
+            raw_sql=payload.raw_sql,
+            user_id=payload.user_id,
+            account_id=payload.account_id or "0f14ffff"
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 
 

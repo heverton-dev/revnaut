@@ -527,7 +527,7 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
 - **Validation Command:** `python -m pytest tests/test_superset_rls_embedded.py -q`
 - **Blocked by:** TICKET-03, TICKET-04
 
-#### [TICKET-30] Agente Analítico Conversacional Text-to-SQL (Web & WhatsApp da Diretoria)
+#### [TICKET-30] [x] DONE - Agente Analítico Conversacional Text-to-SQL (Web & WhatsApp da Diretoria)
 - **Descrição:** Criação do motor **Text-to-SQL** (`src/features/intelligence/text_to_sql_agent.py`) que permite a diretores, gerentes e donos de clínicas fazerem perguntas analíticas por texto ou áudio no WhatsApp/Web, convertendo a pergunta em SQL seguro (somente leitura na réplica OLAP com filtro de RBAC obrigatório) e devolvendo tabelas e gráficos.
 - **Como Implementar (Detalhes Técnicos):**
   1. Indexar o dicionário de metadados das tabelas analíticas (`deals`, `kp_custody_ledger`, `dentgo_orders`, `anvisa_rma_claims`) no `pgvector`.

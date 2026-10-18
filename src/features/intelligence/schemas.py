@@ -272,5 +272,26 @@ class AnalyticsDatasetExportResponse(BaseModel):
     exported_at: str
 
 
+class TextToSqlExecuteRequest(BaseModel):
+    natural_language_query: Optional[str] = Field(None, description="Pergunta analítica em português (ex: Total faturado por regional)")
+    raw_sql: Optional[str] = Field(None, description="Consulta SQL customizada gerada ou validada")
+    user_id: str = Field(..., description="ID do usuário para injeção estrita de escopo RBAC/RLS")
+    account_id: Optional[str] = Field(default="0f14ffff", description="ID do tenant")
+
+
+class TextToSqlExecuteResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    query: str
+    sql_executed: str
+    is_safe: bool
+    columns: List[str] = Field(default_factory=list)
+    rows: List[Dict[str, Any]] = Field(default_factory=list)
+    chart_labels: List[str] = Field(default_factory=list)
+    chart_values: List[float] = Field(default_factory=list)
+    summary: str
+    execution_time_ms: float
+
+
+
 
 
