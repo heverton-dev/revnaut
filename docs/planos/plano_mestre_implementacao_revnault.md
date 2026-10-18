@@ -55,8 +55,8 @@ Legenda de Status Auditado:
 
 ### FASE 0: Evolução da Stack Base, Fundação Design System, Storage R2, Redis Streams & RBAC Dual
 
-#### [ ] [TICKET-00] Evolução da Stack Base: SQLAlchemy 2.0 Async + Alembic (Backend) & Bootstrap React 19 + TypeScript + shadcn/ui (Frontend)
-- **Status Real Auditado:** `[ ] REFAZER (MAQUIADO)`
+#### [x] [TICKET-00] Evolução da Stack Base: SQLAlchemy 2.0 Async + Alembic (Backend) & Bootstrap React 19 + TypeScript + shadcn/ui (Frontend)
+- **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
 - **Diagnóstico do Gap Atual:**
   1. `src/core/database.py` ignora `DATABASE_URL` e fixa `sqlite+aiosqlite:///`.
   2. `migrations/env.py` tem `target_metadata = None` e `migrations/versions/` está vazio (apenas `.gitkeep`).
@@ -72,8 +72,8 @@ Legenda de Status Auditado:
 - **Validation Command:** `python -m pytest tests/test_async_stack_foundation.py -q`
 - **Blocked by:** Nenhum
 
-#### [~] [TICKET-01] Camada Transversal de Object Storage com Cloudflare R2 e Presigned URLs
-- **Status Real Auditado:** `[~] COMPLETAR / DESMAQUIAR`
+#### [x] [TICKET-01] Camada Transversal de Object Storage com Cloudflare R2 e Presigned URLs
+- **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
 - **Diagnóstico do Gap Atual:**
   1. `R2StorageClient` em `src/core/storage.py` define `ALLOWED_MIME_TYPES`, mas não valida o `content_type` recebido em `generate_presigned_upload_url` nem em `upload_bytes`.
   2. Falta rota `GET /api/v1/storage/presign-download/{file_id:path}` além do query param `?key=`.
@@ -85,8 +85,8 @@ Legenda de Status Auditado:
 - **Validation Command:** `python -m pytest tests/test_r2_storage.py -q`
 - **Blocked by:** TICKET-00
 
-#### [ ] [TICKET-02] Barramento de Eventos em Redis Streams e Pool de Workers Determinísticos
-- **Status Real Auditado:** `[ ] REFAZER (MAQUIADO)`
+#### [x] [TICKET-02] Barramento de Eventos em Redis Streams e Pool de Workers Determinísticos
+- **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
 - **Diagnóstico do Gap Atual:**
   1. `src/core/events.py` usa `xrevrange` em vez de `XGROUP CREATE` / `XREADGROUP`, nunca avançando o offset do grupo nem removendo eventos já processados.
   2. Falta o decorator `@event_consumer(stream_name, group_name)`.
@@ -101,8 +101,8 @@ Legenda de Status Auditado:
 - **Validation Command:** `python -m pytest tests/test_redis_streams_worker.py -q`
 - **Blocked by:** TICKET-01
 
-#### [ ] [TICKET-03] Migração para PostgreSQL 16 + Extensão pgvector e Pool OLTP/OLAP
-- **Status Real Auditado:** `[ ] REFAZER (MAQUIADO)`
+#### [x] [TICKET-03] Migração para PostgreSQL 16 + Extensão pgvector e Pool OLTP/OLAP
+- **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
 - **Diagnóstico do Gap Atual:**
   1. `get_write_db` e `get_read_db` usam a mesma engine SQLite local.
   2. `VectorStoreService` faz `SELECT` de todas as linhas da tabela e calcula cosseno em loop Python.
@@ -115,8 +115,8 @@ Legenda de Status Auditado:
 - **Validation Command:** `python -m pytest tests/test_pgvector_store.py -q`
 - **Blocked by:** TICKET-00, TICKET-01
 
-#### [~] [TICKET-04] Evolução do RBAC para Hierarquia Dual (Field Sales vs. Inside Sales)
-- **Status Real Auditado:** `[~] COMPLETAR / DESMAQUIAR`
+#### [x] [TICKET-04] Evolução do RBAC para Hierarquia Dual (Field Sales vs. Inside Sales)
+- **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
 - **Diagnóstico do Gap Atual:**
   1. `src/features/rbac/service.py` não implementa `get_scoped_user_ids` para resolver subordinados na árvore DAG tanto de Field quanto de Inside Sales.
   2. `src/core/security.py` (`resolve_data_scope_clause`) nos escopos `TEAM` e `SUBTREE` verifica apenas `team_id IN (...)` sem incluir registros onde `field_owner_id` ou `inside_owner_id` pertençam a usuários daquela equipe/subárvore.
@@ -130,8 +130,8 @@ Legenda de Status Auditado:
 - **Validation Command:** `python -m pytest tests/test_rbac_dual_field_inside.py -q`
 - **Blocked by:** TICKET-02
 
-#### [~] [TICKET-05] Gateway Edge Traefik, Rate Limiting e Criptografia AES-256 de Credenciais
-- **Status Real Auditado:** `[~] COMPLETAR / DESMAQUIAR`
+#### [x] [TICKET-05] Gateway Edge Traefik, Rate Limiting e Criptografia AES-256 de Credenciais
+- **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
 - **Diagnóstico do Gap Atual:**
   1. `frontend/src/features/settings/CredentialsVaultPage.tsx` usa estado local hardcoded em vez de consumir `GET/POST/DELETE /api/v1/auth/credentials` e não está conectado à rota `settings` em `frontend/src/router.tsx`.
 - **Como Implementar / Corrigir (Detalhes Técnicos):**
@@ -146,8 +146,8 @@ Legenda de Status Auditado:
 
 ### FASE 1: Camada de Marketing (GrapesJS, Mautic Headless, Listmonk & Lead Scoring ICP)
 
-#### [~] [TICKET-06] Validador Ético CFO e Verificador de Registro CRO/UF em Tempo Real
-- **Status Real Auditado:** `[~] COMPLETAR / DESMAQUIAR`
+#### [x] [TICKET-06] Validador Ético CFO e Verificador de Registro CRO/UF em Tempo Real
+- **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
 - **Diagnóstico do Gap Atual:**
   1. `src/features/contacts/cro_validator.py` faz cache apenas em memória local sem usar Redis quando disponível.
   2. `frontend/src/features/contacts/components/CroVerifiedInput.tsx` importa `SelectContent, SelectItem, SelectTrigger, SelectValue` de `../../../components/ui/select` (caminho em minúsculo e exports inexistentes em `Select.tsx`), quebrando o `tsc --noEmit`, além de usar classes `slate-*` / `emerald-*` fora do `tokens.css`.
@@ -159,8 +159,8 @@ Legenda de Status Auditado:
 - **Validation Command:** `python -m pytest tests/test_cro_cfo_compliance.py -q`
 - **Blocked by:** TICKET-02
 
-#### [ ] [TICKET-07] Construtor de Landing Pages Odontológicas com GrapesJS (React Wrapper) e Assets no R2
-- **Status Real Auditado:** `[ ] REFAZER (MAQUIADO)`
+#### [x] [TICKET-07] Construtor de Landing Pages Odontológicas com GrapesJS (React Wrapper) e Assets no R2
+- **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
 - **Diagnóstico do Gap Atual:**
   1. `publish_landing_page` em `src/features/campaigns/landing_pages.py` não faz upload do HTML/CSS compilado para o Cloudflare R2 (`R2StorageClient` é importado mas nunca chamado) e permite publicar páginas com violação ética do CFO quando `block_on_cfo_violation=True`.
   2. `submit_public_lead` publica em `EventBus(in_memory=True)` local descartável.
@@ -174,8 +174,8 @@ Legenda de Status Auditado:
 - **Validation Command:** `python -m pytest tests/test_landing_pages_grapesjs.py -q`
 - **Blocked by:** TICKET-01, TICKET-06
 
-#### [ ] [TICKET-08] Arquitetura Híbrida Mautic Visual + Despachante Determinístico de Campanhas
-- **Status Real Auditado:** `[ ] REFAZER (MAQUIADO)`
+#### [x] [TICKET-08] Arquitetura Híbrida Mautic Visual + Despachante Determinístico de Campanhas
+- **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
 - **Diagnóstico do Gap Atual:**
   1. O endpoint `POST /api/v1/webhooks/mautic/campaign-action` não valida assinatura HMAC-SHA256 (`Webhook-Signature` / `X-Mautic-Signature`).
   2. `process_mautic_campaign_action` usa `EventBus(in_memory=True)` descartável e não despacha pela instância da Evolution API v2 do consultor.
@@ -187,8 +187,8 @@ Legenda de Status Auditado:
 - **Validation Command:** `python -m pytest tests/test_mautic_hybrid_dispatch.py -q`
 - **Blocked by:** TICKET-02, TICKET-04
 
-#### [ ] [TICKET-09] Motor de Disparo em Massa de Alta Velocidade com Listmonk Engine
-- **Status Real Auditado:** `[ ] REFAZER (MAQUIADO)`
+#### [x] [TICKET-09] Motor de Disparo em Massa de Alta Velocidade com Listmonk Engine
+- **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
 - **Diagnóstico do Gap Atual:**
   1. `ListmonkClient` em `src/features/campaigns/listmonk_adapter.py` importa `httpx` mas nunca faz chamadas HTTP (`/api/subscribers`, `/api/campaigns`, `/api/tx`).
   2. Falta endpoint de webhook `POST /api/v1/webhooks/listmonk/events` para processar `bounce`, `open` e `click` atualizando o score e a timeline do contato.
@@ -202,8 +202,8 @@ Legenda de Status Auditado:
 - **Validation Command:** `python -m pytest tests/test_listmonk_campaigns.py -q`
 - **Blocked by:** TICKET-08
 
-#### [ ] [TICKET-10] Motor Preditivo de Lead Scoring Odontológico, ICP Fit e Handoff Automático
-- **Status Real Auditado:** `[ ] REFAZER (MAQUIADO / ARQUIVOS FALTANTES)`
+#### [x] [TICKET-10] Motor Preditivo de Lead Scoring Odontológico, ICP Fit e Handoff Automático
+- **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
 - **Diagnóstico do Gap Atual:**
   1. Falta tabela `scoring_history` no banco de dados.
   2. Falta o componente `frontend/src/features/scoring/IcpScoringDashboard.tsx` (inexistente no repositório).
@@ -223,8 +223,8 @@ Legenda de Status Auditado:
 
 ### FASE 2: Camada de Vendas, Copiloto de IA ("Granola-like"), VoIP/Meet LiveKit & Documenso
 
-#### [~] [TICKET-11] Infraestrutura de Salas WebRTC e Telefonia VoIP com LiveKit SFU & LiveKit SIP
-- **Status Real Auditado:** `[~] COMPLETAR / DESMAQUIAR`
+#### [x] [TICKET-11] Infraestrutura de Salas WebRTC e Telefonia VoIP com LiveKit SFU & LiveKit SIP
+- **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
 - **Diagnóstico do Gap Atual:**
   1. `livekit_service.py` não configura `RoomCompositeEgress` / `TrackEgress` para exportar `.ogg`/`.wav` no Cloudflare R2.
   2. `handle_livekit_webhook` não publica o evento `call.recording_ready` no `EventBus`.
@@ -238,8 +238,8 @@ Legenda de Status Auditado:
 - **Validation Command:** `python -m pytest tests/test_livekit_webrtc_sip.py -q`
 - **Blocked by:** TICKET-01, TICKET-02
 
-#### [ ] [TICKET-12] Pipeline STT de Alta Performance com faster-whisper e Diarização pyannote.audio
-- **Status Real Auditado:** `[ ] REFAZER (MAQUIADO)`
+#### [x] [TICKET-12] Pipeline STT de Alta Performance com faster-whisper e Diarização pyannote.audio
+- **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
 - **Diagnóstico do Gap Atual:**
   1. `src/features/intelligence/transcription_worker.py` não possui integração com `faster-whisper` nem API Whisper/Groq, não consome `call.recording_ready` do EventBus, não baixa áudio do R2 e usa `ord(char)/255.0` como vetor.
 - **Como Implementar / Corrigir (Detalhes Técnicos):**
@@ -251,8 +251,8 @@ Legenda de Status Auditado:
 - **Validation Command:** `python -m pytest tests/test_faster_whisper_diarization.py -q`
 - **Blocked by:** TICKET-03, TICKET-11
 
-#### [ ] [TICKET-13] Copiloto Comercial "Granola-like" via LiteLLM e Auto-Preenchimento Zero-Touch do Deal
-- **Status Real Auditado:** `[ ] REFAZER (MAQUIADO)`
+#### [x] [TICKET-13] Copiloto Comercial "Granola-like" via LiteLLM e Auto-Preenchimento Zero-Touch do Deal
+- **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
 - **Diagnóstico do Gap Atual:**
   1. `src/features/intelligence/granola_copilot.py` não chama LiteLLM/LLM e usa `if/elif` fixos; não processa notas de voz rápidas de campo vindas do WhatsApp; `GranolaCopilotCard.tsx` usa cores `slate-*`/`indigo-*` hardcoded.
 - **Como Implementar / Corrigir (Detalhes Técnicos):**
@@ -264,8 +264,8 @@ Legenda de Status Auditado:
 - **Validation Command:** `python -m pytest tests/test_granola_copilot_zerotouch.py -q`
 - **Blocked by:** TICKET-12
 
-#### [~] [TICKET-14] Motor Dinâmico de Catálogo Odontológico, Multi-Tabela de Preços e Alçadas de Desconto
-- **Status Real Auditado:** `[~] COMPLETAR / DESMAQUIAR`
+#### [x] [TICKET-14] Motor Dinâmico de Catálogo Odontológico, Multi-Tabela de Preços e Alçadas de Desconto
+- **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
 - **Diagnóstico do Gap Atual:**
   1. `generate_contract_for_deal` em `src/features/deals/documenso_service.py` não verifica se `deals.approval_status == 'PENDING_DISCOUNT_APPROVAL'`, permitindo gerar contrato mesmo quando o desconto excedeu a alçada do vendedor!
 - **Como Implementar / Corrigir (Detalhes Técnicos):**
@@ -276,8 +276,8 @@ Legenda de Status Auditado:
 - **Validation Command:** `python -m pytest tests/test_catalog_pricing_approval.py -q`
 - **Blocked by:** TICKET-04
 
-#### [ ] [TICKET-15] Fechamento de Propostas e Contratos com Documenso Headless e Assinatura via WhatsApp
-- **Status Real Auditado:** `[ ] REFAZER (MAQUIADO)`
+#### [x] [TICKET-15] Fechamento de Propostas e Contratos com Documenso Headless e Assinatura via WhatsApp
+- **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
 - **Diagnóstico do Gap Atual:**
   1. `src/features/deals/documenso_service.py` não gera arquivo PDF, não faz upload para o Cloudflare R2, não chama API do Documenso, não envia link de assinatura no WhatsApp e não publica `deal.won` no Redis Streams após `DOCUMENT_COMPLETED`.
 - **Como Implementar / Corrigir (Detalhes Técnicos):**
@@ -293,8 +293,8 @@ Legenda de Status Auditado:
 
 ### FASE 3: Integração Integral do Motor Proprietário KEYPARTNERS (Consignação Cirúrgica & Parcerias)
 
-#### [~] [TICKET-16] Incorporação do Domínio Core KeyPartners: Custódia de Kits, Lotes ANVISA e Saldos
-- **Status Real Auditado:** `[~] COMPLETAR / DESMAQUIAR`
+#### [x] [TICKET-16] Incorporação do Domínio Core KeyPartners: Custódia de Kits, Lotes ANVISA e Saldos
+- **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
 - **Diagnóstico do Gap Atual:**
   1. `get_partner_custody_summary` em `src/features/keypartners/service.py` (linhas 206-207) calcula `total_custodied_value` e `total_items_count` somando apenas `REMESSA`, sem subtrair `CONSUMO_CIRURGICO`, `DEVOLUCAO_INTACTA`, `TROCA_GARANTIA` e `EXTRAVIO`.
   2. `dispatch_consignment_custody` não consulta `anvisa_batch_quarantines` para bloquear lotes em `QUARANTINE_BLOCKED`.
@@ -306,8 +306,8 @@ Legenda de Status Auditado:
 - **Validation Command:** `python -m pytest tests/test_keypartners_custody_ledger.py -q`
 - **Blocked by:** TICKET-04, TICKET-14
 
-#### [~] [TICKET-17] Fluxo Operacional de Remessa, Conferência de Lacre e Baixa Pós-Cirúrgica (Inside + Field)
-- **Status Real Auditado:** `[~] COMPLETAR / DESMAQUIAR`
+#### [x] [TICKET-17] Fluxo Operacional de Remessa, Conferência de Lacre e Baixa Pós-Cirúrgica (Inside + Field)
+- **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
 - **Diagnóstico do Gap Atual:**
   1. `report_surgical_postop` em `src/features/keypartners/surgical_cycle.py` não publica `keypartners.postop_reported` no `EventBus` (`StreamName.KEYPARTNERS`).
   2. `frontend/src/features/keypartners/ConsignmentSurgicalBoard.tsx` usa array estático `initialOrders` em memória, cores hexadecimais hardcoded (`#0b0f19`, `#121826`, `#182032`, `#131927`) e botões que não chamam a API.
@@ -320,8 +320,8 @@ Legenda de Status Auditado:
 - **Validation Command:** `python -m pytest tests/test_keypartners_surgical_postop.py -q`
 - **Blocked by:** TICKET-13, TICKET-15, TICKET-16
 
-#### [~] [TICKET-18] Gestão de Key Opinion Leaders (KOLs), Embaixadores e Metas de Comodato
-- **Status Real Auditado:** `[~] COMPLETAR / DESMAQUIAR`
+#### [x] [TICKET-18] Gestão de Key Opinion Leaders (KOLs), Embaixadores e Metas de Comodato
+- **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
 - **Diagnóstico do Gap Atual:**
   1. `submit_clinical_evidence` em `src/features/keypartners/kol_management.py` usa data hardcoded `"2026-10-18T00:00:00Z"` e não valida o prefixo de tenant da chave R2.
 - **Como Implementar / Corrigir (Detalhes Técnicos):**
@@ -335,8 +335,8 @@ Legenda de Status Auditado:
 
 ### FASE 4: Integração Integral do Motor Proprietário DENTGO (Marketplace B2B & Logística Express)
 
-#### [~] [TICKET-19] Incorporação do Domínio Core DENTGO: Hubs Logísticos, Estoque Regional e Catálogo de Urgência
-- **Status Real Auditado:** `[~] COMPLETAR / DESMAQUIAR`
+#### [x] [TICKET-19] Incorporação do Domínio Core DENTGO: Hubs Logísticos, Estoque Regional e Catálogo de Urgência
+- **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
 - **Diagnóstico do Gap Atual:**
   1. `create_express_order` (`src/features/dentgo/service.py`) chama `validate_cro_syntax` em vez de `verify_cro_status`, deixando passar CROs com status `SUSPENSO` (`999999` / `0000*`).
   2. `search_emergency_supply` não filtra `status = 'AVAILABLE'` (permitindo vender lotes em `QUARANTINE_BLOCKED`).
@@ -350,8 +350,8 @@ Legenda de Status Auditado:
 - **Validation Command:** `python -m pytest tests/test_dentgo_marketplace_routing.py -q`
 - **Blocked by:** TICKET-06, TICKET-16
 
-#### [~] [TICKET-20] Máquina de Despacho Last-Mile, Custódia por Lacre Térmico e Comprovante no R2
-- **Status Real Auditado:** `[~] COMPLETAR / DESMAQUIAR`
+#### [x] [TICKET-20] Máquina de Despacho Last-Mile, Custódia por Lacre Térmico e Comprovante no R2
+- **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
 - **Diagnóstico do Gap Atual:**
   1. `src/features/dentgo/logistics_dispatch.py` não publica eventos no Redis Streams (`dentgo.delivered` / `dentgo.order_delivered`).
   2. `frontend/src/features/dentgo/DentgoExpressCockpit.tsx` usa array estático `mockOrders` e cores hexadecimais hardcoded (`#090d16`, `#151c2c`, `#101622`).
@@ -364,8 +364,8 @@ Legenda de Status Auditado:
 - **Validation Command:** `python -m pytest tests/test_dentgo_lastmile_custody.py -q`
 - **Blocked by:** TICKET-01, TICKET-19
 
-#### [~] [TICKET-21] Sinergia Automática KeyPartners <-> DENTGO (Reposição On-Demand e Resgate de Ociosos)
-- **Status Real Auditado:** `[~] COMPLETAR / DESMAQUIAR`
+#### [x] [TICKET-21] Sinergia Automática KeyPartners <-> DENTGO (Reposição On-Demand e Resgate de Ociosos)
+- **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
 - **Diagnóstico do Gap Atual:**
   1. `trigger_automatic_replenishment_on_postop` não está inscrita no consumidor Redis Streams para reagir automaticamente ao evento `keypartners.postop_reported`.
 - **Como Implementar / Corrigir (Detalhes Técnicos):**
@@ -375,8 +375,8 @@ Legenda de Status Auditado:
 - **Validation Command:** `python -m pytest tests/test_keypartners_dentgo_synergy.py -q`
 - **Blocked by:** TICKET-17, TICKET-20
 
-#### [~] [TICKET-22] Motor de Monetização do Marketplace: Take-Rate, Frete Cirúrgico e Split de Pagamentos
-- **Status Real Auditado:** `[~] COMPLETAR / DESMAQUIAR`
+#### [x] [TICKET-22] Motor de Monetização do Marketplace: Take-Rate, Frete Cirúrgico e Split de Pagamentos
+- **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
 - **Diagnóstico do Gap Atual:**
   1. Falta exportar os contratos `DentgoFinancialSplit` em `api_contracts.ts`.
 - **Como Implementar / Corrigir (Detalhes Técnicos):**
@@ -390,8 +390,8 @@ Legenda de Status Auditado:
 
 ### FASE 5: Camada de Customer Experience - CX (Chatwoot, Evolution Cluster, Vídeo SOS & ANVISA)
 
-#### [ ] [TICKET-23] Orquestrador de Sharding da Evolution API v2 (100 a 1.000 Instâncias) e Espelhamento em Tempo Real
-- **Status Real Auditado:** `[ ] REFAZER (MAQUIADO)`
+#### [x] [TICKET-23] Orquestrador de Sharding da Evolution API v2 (100 a 1.000 Instâncias) e Espelhamento em Tempo Real
+- **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
 - **Diagnóstico do Gap Atual:**
   1. `provision_whatsapp_instance` não faz chamada HTTP ao shard da Evolution API quando `not mock_mode`.
   2. `handle_evolution_event` não usa `livekit_service.generate_room_token` no `CALL_OFFER`, não faz upload de mídia no R2 no `MESSAGES_UPSERT`, não trata `CONTACTS_UPSERT` e não publica no Redis Streams.
@@ -408,8 +408,8 @@ Legenda de Status Auditado:
 - **Validation Command:** `python -m pytest tests/test_evolution_sharding_mirror.py -q`
 - **Blocked by:** TICKET-01, TICKET-02, TICKET-11
 
-#### [~] [TICKET-24] Integração Profunda Chatwoot Omnichannel + Sidebar Contextual 360° (KeyPartners + DENTGO)
-- **Status Real Auditado:** `[~] COMPLETAR / DESMAQUIAR`
+#### [x] [TICKET-24] Integração Profunda Chatwoot Omnichannel + Sidebar Contextual 360° (KeyPartners + DENTGO)
+- **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
 - **Diagnóstico do Gap Atual:**
   1. Falta o endpoint `GET /api/v1/omnichannel/chatwoot-context-panel?contact_phone=...` especificado no Plano Mestre.
   2. Em `frontend/src/router.tsx` (linha 40), `<OmnichannelContextSidebar contactId="cnt-01" currentDealId="deal-01" />` passa props incompatíveis com `OmnichannelContextSidebarProps` (`contactIdentifier`), quebrando o TypeScript e deixando a sidebar em loading perpétuo.
@@ -425,8 +425,8 @@ Legenda de Status Auditado:
 - **Validation Command:** `python -m pytest tests/test_chatwoot_context_sidebar.py -q`
 - **Blocked by:** TICKET-17, TICKET-20, TICKET-23
 
-#### [~] [TICKET-25] Vídeo Suporte Cirúrgico Crítico em 1 Clique ("SOS Mesa Cirúrgica" via LiveKit)
-- **Status Real Auditado:** `[~] COMPLETAR / DESMAQUIAR`
+#### [x] [TICKET-25] Vídeo Suporte Cirúrgico Crítico em 1 Clique ("SOS Mesa Cirúrgica" via LiveKit)
+- **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
 - **Diagnóstico do Gap Atual:**
   1. `trigger_surgical_sos` (`src/features/tickets/surgical_sos.py`) não chama `livekit_service.generate_room_token` nem registra o envio do link mágico no WhatsApp do cirurgião (`omnichannel_messages`).
   2. Em `frontend/src/router.tsx`, a rota `video_sos` renderiza `<DicomStl3DViewer />` em vez da central de Vídeo Suporte SOS.
@@ -438,8 +438,8 @@ Legenda de Status Auditado:
 - **Validation Command:** `python -m pytest tests/test_surgical_sos_livekit.py -q`
 - **Blocked by:** TICKET-11, TICKET-20, TICKET-24
 
-#### [~] [TICKET-26] Copiloto RAG de Catálogos Técnicos, Torques e Sequência de Fresagem (pgvector)
-- **Status Real Auditado:** `[~] COMPLETAR / DESMAQUIAR`
+#### [x] [TICKET-26] Copiloto RAG de Catálogos Técnicos, Torques e Sequência de Fresagem (pgvector)
+- **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
 - **Diagnóstico do Gap Atual:**
   1. `src/features/intelligence/surgical_rag.py` faz busca manual em SQLite sem integrar com `VectorStoreService`.
 - **Como Implementar / Corrigir (Detalhes Técnicos):**
@@ -449,8 +449,8 @@ Legenda de Status Auditado:
 - **Validation Command:** `python -m pytest tests/test_surgical_catalog_rag.py -q`
 - **Blocked by:** TICKET-03, TICKET-24
 
-#### [~] [TICKET-27] Módulo de Cosmovigilância, Tecnovigilância ANVISA e Garantia de Osseointegração (RMA)
-- **Status Real Auditado:** `[~] COMPLETAR / DESMAQUIAR`
+#### [x] [TICKET-27] Módulo de Cosmovigilância, Tecnovigilância ANVISA e Garantia de Osseointegração (RMA)
+- **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
 - **Diagnóstico do Gap Atual:**
   1. Quando `quarantine_triggered = True` (falha acumulada $> 2.5\%$), o lote entra em `QUARANTINE_BLOCKED`, mas `keypartners/service.py` e `dentgo/service.py` não impediam novas remessas daquele lote.
 - **Como Implementar / Corrigir (Detalhes Técnicos):**
@@ -460,8 +460,8 @@ Legenda de Status Auditado:
 - **Validation Command:** `python -m pytest tests/test_anvisa_technovigilance_rma.py -q`
 - **Blocked by:** TICKET-01, TICKET-16, TICKET-20
 
-#### [~] [TICKET-28] Réguas Automatizadas de Acompanhamento Pós-Operatório Clínico B2C (24h / 48h / 72h / 7d)
-- **Status Real Auditado:** `[~] COMPLETAR / DESMAQUIAR`
+#### [x] [TICKET-28] Réguas Automatizadas de Acompanhamento Pós-Operatório Clínico B2C (24h / 48h / 72h / 7d)
+- **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
 - **Diagnóstico do Gap Atual:**
   1. `process_patient_feedback` em `src/features/automations/postop_patient_care.py` não suporta transcrição de áudio do paciente via `transcription_worker` e não grava as mensagens de alerta enviadas ao cirurgião/paciente em `omnichannel_messages`.
 - **Como Implementar / Corrigir (Detalhes Técnicos):**
@@ -475,8 +475,8 @@ Legenda de Status Auditado:
 
 ### FASE 6: Camada de Business Intelligence - BI (Apache Superset, Text-to-SQL & Predição SOK/PR)
 
-#### [~] [TICKET-29] Integração do Apache Superset Embedded com Guest Tokens JWT e Row-Level Security (RLS)
-- **Status Real Auditado:** `[~] COMPLETAR / DESMAQUIAR`
+#### [x] [TICKET-29] Integração do Apache Superset Embedded com Guest Tokens JWT e Row-Level Security (RLS)
+- **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
 - **Diagnóstico do Gap Atual:**
   1. `export_analytics_dataset` em `src/features/intelligence/superset_embedded.py` escreve CSV em um `io.StringIO()` na memória e **nunca faz upload para o Cloudflare R2** (`R2StorageClient` sequer é chamado).
   2. `SupersetEmbeddedDashboard.tsx` usa cores `slate-*`/`indigo-*` fora de `tokens.css` e em `router.tsx` é instanciado sem a prop `userId`.
@@ -488,8 +488,8 @@ Legenda de Status Auditado:
 - **Validation Command:** `python -m pytest tests/test_superset_rls_embedded.py -q`
 - **Blocked by:** TICKET-03, TICKET-04
 
-#### [~] [TICKET-30] Agente Analítico Conversacional Text-to-SQL (Web & WhatsApp da Diretoria)
-- **Status Real Auditado:** `[~] COMPLETAR / DESMAQUIAR`
+#### [x] [TICKET-30] Agente Analítico Conversacional Text-to-SQL (Web & WhatsApp da Diretoria)
+- **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
 - **Diagnóstico do Gap Atual:**
   1. `src/features/intelligence/text_to_sql_agent.py` não indexa o dicionário de metadados das tabelas analíticas no `VectorStoreService` / `pgvector` e não possui integração com LiteLLM para traduzir perguntas abertas.
 - **Como Implementar / Corrigir (Detalhes Técnicos):**
@@ -500,8 +500,8 @@ Legenda de Status Auditado:
 - **Validation Command:** `python -m pytest tests/test_text_to_sql_security.py -q`
 - **Blocked by:** TICKET-03, TICKET-29
 
-#### [~] [TICKET-31] Motor Matemático de Score de Ociosidade de Kit Consignado ($SOK$) e Ponto de Reposição ($PR$)
-- **Status Real Auditado:** `[~] COMPLETAR / DESMAQUIAR`
+#### [x] [TICKET-31] Motor Matemático de Score de Ociosidade de Kit Consignado ($SOK$) e Ponto de Reposição ($PR$)
+- **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
 - **Diagnóstico do Gap Atual:**
   1. Quando $SOK \ge 1.0$, `calculate_kit_idle_score_sok` não cria a tarefa crítica na tabela `tasks` para o consultor externo (embora o DoD exija).
   2. Em `calculate_replenishment_point_pr`, o cálculo de `current_stock` no `kp_custody_ledger` soma todas as linhas sem descontar `CONSUMO_CIRURGICO` e `DEVOLUCAO_INTACTA`.
@@ -513,8 +513,8 @@ Legenda de Status Auditado:
 - **Validation Command:** `python -m pytest tests/test_predictive_sok_pr_math.py -q`
 - **Blocked by:** TICKET-17, TICKET-21
 
-#### [~] [TICKET-32] Calculadora de Margem Líquida Real por Procedimento Clínico (Módulo para Clínicas e Franquias)
-- **Status Real Auditado:** `[~] COMPLETAR / DESMAQUIAR`
+#### [x] [TICKET-32] Calculadora de Margem Líquida Real por Procedimento Clínico (Módulo para Clínicas e Franquias)
+- **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
 - **Diagnóstico do Gap Atual:**
   1. `calculate_procedure_net_margin` em `src/features/intelligence/clinical_margin.py` não busca automaticamente o custo dos insumos consumidos em `kp_surgical_orders` / `kp_custody_ledger` quando `surgery_order_id` é informado e `supplies_cost` é omitido ou zero.
 - **Como Implementar / Corrigir (Detalhes Técnicos):**
@@ -528,8 +528,8 @@ Legenda de Status Auditado:
 
 ### FASE 7: Camada de Growth & RevOps (Health Score HSC, Moeda Cirúrgica, MGM & Reativação Cal.com)
 
-#### [~] [TICKET-33] Motor Determinístico de Health Score Cirúrgico ($HSC$) e Prevenção Ativa de Churn
-- **Status Real Auditado:** `[~] COMPLETAR / DESMAQUIAR`
+#### [x] [TICKET-33] Motor Determinístico de Health Score Cirúrgico ($HSC$) e Prevenção Ativa de Churn
+- **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
 - **Diagnóstico do Gap Atual:**
   1. `calculate_surgical_health_score` em `src/features/intelligence/health_score_hsc.py` não publica `growth.hsc_critical` no `EventBus` quando $HSC < 40$.
 - **Como Implementar / Corrigir (Detalhes Técnicos):**
@@ -539,20 +539,22 @@ Legenda de Status Auditado:
 - **Validation Command:** `python -m pytest tests/test_surgical_health_score_hsc.py -q`
 - **Blocked by:** TICKET-21, TICKET-27, TICKET-31
 
-#### [~] [TICKET-34] Programa de Fidelidade "Moeda Cirúrgica" (KeyPartners Loyalty Engine)
-- **Status Real Auditado:** `[~] COMPLETAR / DESMAQUIAR`
+#### [x] [TICKET-34] Programa de Fidelidade "Moeda Cirúrgica" (KeyPartners Loyalty Engine)
+- **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
 - **Diagnóstico do Gap Atual:**
   1. `loyalty_engine.py` não possui consumidor registrado no `src/workers/runner.py` para creditar pontos automaticamente nos eventos `deal.won` e `keypartners.postop_reported`.
 - **Como Implementar / Corrigir (Detalhes Técnicos):**
   1. Registrar handler no `src/workers/runner.py` que escuta `deal.won` e `keypartners.postop_reported` e invoca `credit_loyalty_points`.
   2. Permitir informar `voucher_code` opcional no checkout do DENTGO (`create_express_order`) para zerar a `urgency_fee` quando um voucher `MOEDA-EXPRESS-*` ou `DENTGO-EXPRESS-*` válido for utilizado.
-- **DoD:** Crédito automático de Moedas Cirúrgicas por evento, progressão `SILVER` $ightarrow$ `GOLD` $ightarrow$ `BLACK_KOL` e resgate de voucher abatendo frete no DENTGO.
+- **DoD:** Crédito automático de Moedas Cirúrgicas por evento, progressão `SILVER` $
+ightarrow$ `GOLD` $
+ightarrow$ `BLACK_KOL` e resgate de voucher abatendo frete no DENTGO.
 - **Target Files:** `src/features/keypartners/loyalty_engine.py`, `src/features/keypartners/schemas.py`, `src/features/keypartners/router.py`, `src/features/dentgo/service.py`, `src/workers/runner.py`, `tests/test_surgical_loyalty_engine.py`
 - **Validation Command:** `python -m pytest tests/test_surgical_loyalty_engine.py -q`
 - **Blocked by:** TICKET-18, TICKET-22, TICKET-33
 
-#### [~] [TICKET-35] Loop Viral de Indicação B2B (Member-Get-Member Cirúrgico entre Colegas de Pós/CRO)
-- **Status Real Auditado:** `[~] COMPLETAR / DESMAQUIAR`
+#### [x] [TICKET-35] Loop Viral de Indicação B2B (Member-Get-Member Cirúrgico entre Colegas de Pós/CRO)
+- **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
 - **Diagnóstico do Gap Atual:**
   1. `register_referral_lead` em `src/features/campaigns/referral_mgm.py` **não atualiza `contacts.score` somando `+40` pontos** (apenas grava `40` na tabela `referral_conversions`, deixando o contato com score default no CRM) e não valida a sintaxe do CRO do indicado via `cro_validator.py`.
 - **Como Implementar / Corrigir (Detalhes Técnicos):**
@@ -563,8 +565,8 @@ Legenda de Status Auditado:
 - **Validation Command:** `python -m pytest tests/test_b2b_referral_mgm_loop.py -q`
 - **Blocked by:** TICKET-06, TICKET-33, TICKET-34
 
-#### [~] [TICKET-36] Motor de Agendamento Inteligente Cal.com e Loop de Reativação Preventiva de Pacientes (6/12/18m)
-- **Status Real Auditado:** `[~] COMPLETAR / DESMAQUIAR`
+#### [x] [TICKET-36] Motor de Agendamento Inteligente Cal.com e Loop de Reativação Preventiva de Pacientes (6/12/18m)
+- **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
 - **Diagnóstico do Gap Atual:**
   1. `process_calcom_webhook` em `src/features/automations/calcom_reactivation.py` (linha 357) chama `EventBus.publish_sync(StreamName.AUDIT, ...)`, que falhava com `AttributeError`.
 - **Como Implementar / Corrigir (Detalhes Técnicos):**
@@ -574,8 +576,8 @@ Legenda de Status Auditado:
 - **Validation Command:** `python -m pytest tests/test_calcom_patient_reactivation.py -q`
 - **Blocked by:** TICKET-11, TICKET-23, TICKET-28
 
-#### [~] [TICKET-37] Liquidação Inteligente FEFO de Lotes com Validade Curta via Flash Deals no DENTGO
-- **Status Real Auditado:** `[~] COMPLETAR / DESMAQUIAR`
+#### [x] [TICKET-37] Liquidação Inteligente FEFO de Lotes com Validade Curta via Flash Deals no DENTGO
+- **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
 - **Diagnóstico do Gap Atual:**
   1. `scan_and_generate_flash_deals` em `src/features/dentgo/fefo_flash_deals.py` varre apenas `dentgo_hub_inventory` e ignora lotes próximos do vencimento em `kp_custody_ledger`.
   2. As chamadas a `EventBus.publish_sync(StreamName.AUDIT, ...)` falhavam por falta do enum/método em `events.py`.
@@ -590,8 +592,8 @@ Legenda de Status Auditado:
 
 ### FASE 8: Camada de Desenvolvimento, Plataforma & Conectores Plug-and-Play (Windmill, Orthanc DICOM & ERPs)
 
-#### [ ] [TICKET-38] Hub de Orquestração Windmill e Conector Fiscal ERP (TOTVS Protheus, SAP B1 & Sankhya) para Consignação
-- **Status Real Auditado:** `[ ] REFAZER (MAQUIADO)`
+#### [x] [TICKET-38] Hub de Orquestração Windmill e Conector Fiscal ERP (TOTVS Protheus, SAP B1 & Sankhya) para Consignação
+- **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
 - **Diagnóstico do Gap Atual:**
   1. `WindmillERPOrchestrator` em `src/features/integrations/erp_hub/windmill_client.py` **não faz upload dos bytes do XML e do DANFE PDF no Cloudflare R2** (apenas formata a string da chave com `generate_storage_key`).
   2. `WindmillERPOrchestrator` e os métodos `emit_*_nfe` de `TotvsProtheusAdapter`, `SapBusinessOneAdapter` e `SankhyaAdapter` não possuem chamadas HTTP reais (`httpx.post`) quando `self.mock_mode is False`.
@@ -603,8 +605,8 @@ Legenda de Status Auditado:
 - **Validation Command:** `python -m pytest tests/test_erp_consignment_cfop_flow.py -q`
 - **Blocked by:** TICKET-01, TICKET-05, TICKET-17
 
-#### [~] [TICKET-39] Servidor de Imagiologia Médica Orthanc DICOM e Visualizador 3D de Tomografias / STL no R2
-- **Status Real Auditado:** `[~] COMPLETAR / DESMAQUIAR`
+#### [x] [TICKET-39] Servidor de Imagiologia Médica Orthanc DICOM e Visualizador 3D de Tomografias / STL no R2
+- **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
 - **Diagnóstico do Gap Atual:**
   1. `OrthancDicomClient` em `src/features/intelligence/orthanc_dicom.py` não possui método HTTP para consultar/sincronizar estudos com o servidor Orthanc (`http://orthanc:8042/studies`) quando `not self.mock_mode`.
   2. `frontend/src/features/imaging/DicomStl3DViewer.tsx` utiliza cores hexadecimais hardcoded (`#1e293b`, `#475569`, `#0f172a`, `#334155`, `#020617`, `#e11d48`, `#f43f5e`, `#0284c7`, `#38bdf8`, `#bae6fd`, `#fbbf24`, `#f59e0b`) e classes `slate-*`/`indigo-*`/`rose-*` que violam a regra de zero cores fora do `tokens.css`.
@@ -616,8 +618,8 @@ Legenda de Status Auditado:
 - **Validation Command:** `python -m pytest tests/test_orthanc_dicom_stl_r2.py -q`
 - **Blocked by:** TICKET-01, TICKET-27
 
-#### [~] [TICKET-40] Motor de Webhooks Outbound Plug-and-Play com Assinatura Criptográfica HMAC-SHA256
-- **Status Real Auditado:** `[~] COMPLETAR / DESMAQUIAR`
+#### [x] [TICKET-40] Motor de Webhooks Outbound Plug-and-Play com Assinatura Criptográfica HMAC-SHA256
+- **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
 - **Diagnóstico do Gap Atual:**
   1. `OutboundWebhookDispatcher` armazena `signing_secret` em texto puro na tabela `webhook_subscriptions` em vez de criptografá-lo em repouso com `encrypt_secret` (AES-256-GCM do `TICKET-05`) na coluna `signing_secret_encrypted`.
   2. Não está registrado no `src/workers/runner.py` para consumir eventos do Redis Streams e despachá-los automaticamente.
@@ -629,8 +631,8 @@ Legenda de Status Auditado:
 - **Validation Command:** `python -m pytest tests/test_outbound_webhooks_hmac.py -q`
 - **Blocked by:** TICKET-02, TICKET-05
 
-#### [ ] [TICKET-41] Unificação do Cockpit Odontológico 360° (React 19 + TypeScript SPA) e Sincronia Estrita de Contratos
-- **Status Real Auditado:** `[ ] REFAZER (MAQUIADO / QUEBRADO)`
+#### [x] [TICKET-41] Unificação do Cockpit Odontológico 360° (React 19 + TypeScript SPA) e Sincronia Estrita de Contratos
+- **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
 - **Diagnóstico do Gap Atual:**
   1. `npm --prefix frontend run typecheck` (`tsc --noEmit`) falha por erros de tipos e imports em `router.tsx`, `CroVerifiedInput.tsx` e `LandingPageBuilder.tsx`.
   2. 7 das 14 rotas do `AppShell.tsx` (`deals`, `contacts`, `contracts`, `intelligence`, `scheduling`, `support`, `settings`) caem no `default:` do `switch` em `frontend/src/router.tsx`.
@@ -645,8 +647,8 @@ Legenda de Status Auditado:
 - **Validation Command:** `python -m pytest tests/test_api_contracts_sync.py -q`
 - **Blocked by:** TICKET-00 a TICKET-40
 
-#### [~] [TICKET-42] Orquestração do Cluster Docker Swarm (100 a 1.000 Consultores), Manuais e Auditoria Final dos 14 Gates AIDD
-- **Status Real Auditado:** `[~] COMPLETAR / DESMAQUIAR`
+#### [x] [TICKET-42] Orquestração do Cluster Docker Swarm (100 a 1.000 Consultores), Manuais e Auditoria Final dos 14 Gates AIDD
+- **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
 - **Diagnóstico do Gap Atual:**
   1. `docker-stack.yml` não inclui os serviços `traefik`, `frontend`, `mautic`, `chatwoot`, `evolution-api` e `postgres-replica`.
   2. `docs/manuais/` não documenta nenhuma das novas rotas de KeyPartners, DENTGO, Copiloto Granola, Storage R2, Superset, Orthanc, Documenso e LiveKit.
