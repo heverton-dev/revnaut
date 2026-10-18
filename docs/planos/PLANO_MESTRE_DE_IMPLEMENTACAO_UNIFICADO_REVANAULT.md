@@ -515,7 +515,7 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
 
 ### FASE 6: Camada de Business Intelligence - BI (Apache Superset, Text-to-SQL & Predição SOK/PR)
 
-#### [TICKET-29] Integração do Apache Superset Embedded com Guest Tokens JWT e Row-Level Security (RLS)
+#### [TICKET-29] [x] DONE - Integração do Apache Superset Embedded com Guest Tokens JWT e Row-Level Security (RLS)
 - **Descrição:** Implementação do módulo de BI embarcado (`src/features/intelligence/superset_embedded.py` e `frontend/src/features/bi/SupersetEmbeddedDashboard.tsx`) gerando *Guest Tokens JWT* assinados para renderizar dashboards do **Apache Superset** dentro do REVNAULT, aplicando filtros automáticos de **Row-Level Security (RLS)** baseados na árvore de RBAC do usuário logado.
 - **Como Implementar (Detalhes Técnicos):**
   1. Implementar endpoint `POST /api/v1/intelligence/bi/guest-token` que consulta `get_scoped_user_ids(current_user)` no RBAC e monta a cláusula RLS determinística (ex.: `tenant_id = 10 AND (field_owner_id IN (4, 5) OR inside_owner_id IN (4, 5))`).

@@ -147,10 +147,30 @@ services:
     deploy:
       replicas: 1
       restart_policy:
+  superset:
+    image: apache/superset:3.1.0
+    command: ["/app/docker/docker-bootstrap.sh", "app-gunicorn"]
+    environment:
+      - SUPERSET_SECRET_KEY=${SUPERSET_SECRET_KEY:-revnaut_superset_secret_jwt_key_2026}
+      - DATABASE_DB=revnaut_crm
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+      - DATABASE_USER=revnaut_user
+      - DATABASE_PASSWORD=revnaut_secret_pg_2026
+      - GUEST_ROLE_NAME=Gamma
+      - SUPERSET_FEATURE_EMBEDDED_SUPERSET=true
+    ports:
+      - "8088:8088"
+    networks:
+      - network_conexao
+    deploy:
+      replicas: 1
+      restart_policy:
         condition: on-failure
 
 networks:
   network_conexao:
     external: true
+
 
 

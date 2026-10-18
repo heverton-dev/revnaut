@@ -235,4 +235,42 @@ class CatalogRagQueryResponse(BaseModel):
     answer: str
 
 
+class SupersetGuestTokenRequest(BaseModel):
+    user_id: str = Field(..., description="ID do usuário solicitante (para RLS automático)")
+    dashboard_id: str = Field(..., description="ID ou UUID do dashboard no Superset")
+    dashboard_type: Optional[str] = Field(default="industry_consignment", description="Tipo de painel: industry_consignment | clinic_chair | dentgo_sla")
+    account_id: Optional[str] = Field(default="0f14ffff", description="ID do tenant")
+
+
+class SupersetGuestTokenResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    token: str
+    dashboard_id: str
+    dashboard_type: str
+    rls_clause: str
+    user_id: str
+    account_id: str
+    superset_domain: str
+    expires_in_seconds: int = 3600
+
+
+class AnalyticsDatasetExportRequest(BaseModel):
+    dataset_name: str = Field(..., description="Nome do dataset: deals_funnel | consignment_turnover | dentgo_deliveries | anvisa_rma")
+    user_id: str = Field(..., description="ID do usuário solicitante")
+    format: Optional[str] = Field(default="csv", pattern="^(csv|parquet)$", description="Formato de saída: csv | parquet")
+    account_id: Optional[str] = Field(default="0f14ffff", description="ID do tenant")
+
+
+class AnalyticsDatasetExportResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    dataset_name: str
+    format: str
+    r2_storage_key: str
+    record_count: int
+    download_url: str
+    status: str
+    exported_at: str
+
+
+
 

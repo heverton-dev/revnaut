@@ -12,6 +12,7 @@ from src.features.intelligence import service
 from src.features.intelligence import transcription_worker
 from src.features.intelligence import granola_copilot
 from src.features.intelligence import surgical_rag
+from src.features.intelligence import superset_embedded
 from src.features.intelligence.schemas import (
     ContactInstitutionCreate, ContactInstitutionOut,
     ClinicalGraphResponse, KOLSpeakerResponse,
@@ -20,8 +21,11 @@ from src.features.intelligence.schemas import (
     TranscriptionItemOut,
     CopilotExtractAndApplyRequest, CopilotExtractAndApplyResponse,
     CatalogChunkIngestRequest, CatalogChunkIngestResponse,
-    CatalogRagQueryRequest, CatalogRagQueryResponse
+    CatalogRagQueryRequest, CatalogRagQueryResponse,
+    SupersetGuestTokenRequest, SupersetGuestTokenResponse,
+    AnalyticsDatasetExportRequest, AnalyticsDatasetExportResponse
 )
+
 
 
 router = APIRouter(prefix="/api/v1/intelligence", tags=["Inteligência Clínica & STT"])
@@ -169,6 +173,41 @@ def query_catalog_rag(payload: CatalogRagQueryRequest):
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post(
+    "/bi/guest-token",
+    response_model=SupersetGuestTokenResponse,
+    summary="Gerar Guest Token JWT com Row-Level Security (RLS) para Apache Superset Embedded"
+)
+def get_superset_guest_token(payload: SupersetGuestTokenRequest):
+    try:
+        return superset_embedded.generate_superset_guest_token(
+            user_id=payload.user_id,
+            dashboard_id=payload.dashboard_id,
+            dashboard_type=payload.dashboard_type or "industry_consignment",
+            account_id=payload.account_id or "0f14ffff"
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post(
+    "/bi/export-dataset",
+    response_model=AnalyticsDatasetExportResponse,
+    summary="Exportar dataset analítico para Cloudflare R2 com RLS"
+)
+def export_dataset(payload: AnalyticsDatasetExportRequest):
+    try:
+        return superset_embedded.export_analytics_dataset(
+            dataset_name=payload.dataset_name,
+            user_id=payload.user_id,
+            format=payload.format or "csv",
+            account_id=payload.account_id or "0f14ffff"
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 
 

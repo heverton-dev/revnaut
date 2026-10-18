@@ -25,4 +25,9 @@ R2_BUCKET_NAME = os.getenv("R2_BUCKET_NAME", "revnaut-media")
 R2_PUBLIC_DOMAIN = os.getenv("R2_PUBLIC_DOMAIN", "https://cdn.revnaut.io")
 R2_ENDPOINT_URL = os.getenv("R2_ENDPOINT_URL", f"https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com")
 
+# Apache Superset Embedded Config
+SUPERSET_SECRET_KEY = os.getenv("SUPERSET_SECRET_KEY", "revnaut_superset_secret_jwt_key_2026")
+SUPERSET_DOMAIN = os.getenv("SUPERSET_DOMAIN", "http://localhost:8088")
+
+
 
