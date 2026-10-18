@@ -473,7 +473,51 @@ def init_db() -> None:
         );
 
         CREATE INDEX IF NOT EXISTS idx_creds_account ON tenant_credentials(account_id, service_name);
+
+        CREATE TABLE IF NOT EXISTS landing_pages (
+            id TEXT PRIMARY KEY,
+            tenant_id TEXT NOT NULL,
+            slug TEXT NOT NULL UNIQUE,
+            title TEXT NOT NULL,
+            template_type TEXT NOT NULL DEFAULT 'imersao_fluxo_digital',
+            gjs_html TEXT,
+            gjs_css TEXT,
+            gjs_components_json TEXT,
+            cfo_responsible_cro TEXT,
+            cfo_responsible_name TEXT,
+            published_r2_url TEXT,
+            is_published INTEGER NOT NULL DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (tenant_id) REFERENCES accounts(id)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_lp_tenant_slug ON landing_pages(tenant_id, slug);
+
+        CREATE TABLE IF NOT EXISTS landing_page_submissions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            landing_page_id TEXT NOT NULL,
+            tenant_id TEXT NOT NULL,
+            name TEXT NOT NULL,
+            email TEXT NOT NULL,
+            phone TEXT,
+            cro TEXT,
+            cro_uf TEXT,
+            specialty TEXT,
+            utm_source TEXT,
+            utm_medium TEXT,
+            utm_campaign TEXT,
+            utm_content TEXT,
+            utm_term TEXT,
+            contact_id INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (landing_page_id) REFERENCES landing_pages(id),
+            FOREIGN KEY (tenant_id) REFERENCES accounts(id)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_lp_subs_lp ON landing_page_submissions(landing_page_id);
         """)
+
 
 
         # Migração idempotente para colunas complementares em deals e contacts

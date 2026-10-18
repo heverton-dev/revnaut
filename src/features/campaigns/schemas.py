@@ -51,3 +51,83 @@ class CampaignMetricsOut(BaseModel):
     total_leads: int
     total_deals: int
     active_campaigns_count: int
+
+
+class LandingPageTemplateOut(BaseModel):
+    template_type: str
+    name: str
+    description: str
+    category: str
+    html: str
+    css: str
+
+
+class LandingPageCreate(BaseModel):
+    title: str = Field(..., min_length=2)
+    slug: str = Field(..., min_length=2)
+    template_type: Optional[str] = "imersao_fluxo_digital"
+    gjs_html: Optional[str] = None
+    gjs_css: Optional[str] = None
+    gjs_components_json: Optional[str] = None
+    cfo_responsible_cro: Optional[str] = None
+    cfo_responsible_name: Optional[str] = None
+
+
+class LandingPageUpdate(BaseModel):
+    title: Optional[str] = None
+    slug: Optional[str] = None
+    template_type: Optional[str] = None
+    gjs_html: Optional[str] = None
+    gjs_css: Optional[str] = None
+    gjs_components_json: Optional[str] = None
+    cfo_responsible_cro: Optional[str] = None
+    cfo_responsible_name: Optional[str] = None
+
+
+class LandingPageOut(BaseModel):
+    id: str
+    tenant_id: str
+    slug: str
+    title: str
+    template_type: str
+    gjs_html: Optional[str] = None
+    gjs_css: Optional[str] = None
+    gjs_components_json: Optional[str] = None
+    cfo_responsible_cro: Optional[str] = None
+    cfo_responsible_name: Optional[str] = None
+    published_r2_url: Optional[str] = None
+    is_published: bool = False
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+
+
+class LandingPagePublishResponse(BaseModel):
+    id: str
+    slug: str
+    is_published: bool = True
+    published_r2_url: str
+    cfo_compliance_status: str
+    message: str
+
+
+class LandingPageSubmissionCreate(BaseModel):
+    name: str = Field(..., min_length=2)
+    email: str = Field(..., min_length=3)
+    phone: Optional[str] = None
+    cro: Optional[str] = None
+    cro_uf: Optional[str] = None
+    specialty: Optional[str] = "Implantodontia"
+    utm_source: Optional[str] = None
+    utm_medium: Optional[str] = None
+    utm_campaign: Optional[str] = None
+    utm_content: Optional[str] = None
+    utm_term: Optional[str] = None
+
+
+class LandingPageSubmissionResponse(BaseModel):
+    success: bool = True
+    lead_id: int
+    landing_page_slug: str
+    cro_verified: bool = False
+    message: str
+
