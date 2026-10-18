@@ -570,7 +570,7 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
 
 ### FASE 7: Camada de Growth & RevOps (Health Score HSC, Moeda Cirúrgica, MGM & Reativação Cal.com)
 
-#### [TICKET-33] Motor Determinístico de Health Score Cirúrgico ($HSC$) e Prevenção Ativa de Churn
+#### [TICKET-33] [x] DONE - Motor Determinístico de Health Score Cirúrgico ($HSC$) e Prevenção Ativa de Churn
 - **Descrição:** Implementação do motor de saúde da conta (`src/features/intelligence/health_score_hsc.py`) calculando continuamente o **Health Score Cirúrgico ($HSC$)** de cada cirurgião/clínica parceira:
   $$HSC = 0.4 \cdot F_{\text{cirurgica}} + 0.3 \cdot G_{\text{consignado}} + 0.2 \cdot S_{\text{atendimento}} + 0.1 \cdot E_{\text{canal}}$$
 - **Como Implementar (Detalhes Técnicos):**

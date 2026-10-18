@@ -16,6 +16,7 @@ from src.features.intelligence import superset_embedded
 from src.features.intelligence import text_to_sql_agent
 from src.features.intelligence import predictive_inventory
 from src.features.intelligence import clinical_margin
+from src.features.intelligence import health_score_hsc
 from src.features.intelligence.schemas import (
     ContactInstitutionCreate, ContactInstitutionOut,
     ClinicalGraphResponse, KOLSpeakerResponse,
@@ -32,7 +33,9 @@ from src.features.intelligence.schemas import (
     PrCalculationRequest, PrCalculationResponse,
     PredictiveInventoryReportResponse,
     ClinicalMarginCalculateRequest, ClinicalMarginCalculateResponse,
-    ClinicalMarginSummaryReportResponse
+    ClinicalMarginSummaryReportResponse,
+    HealthScoreCalculateRequest, HealthScoreCalculateResponse,
+    HealthScoreSummaryResponse
 )
 
 
@@ -327,4 +330,42 @@ def get_clinic_margin_summary_report(
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post(
+    "/health-score/calculate",
+    response_model=HealthScoreCalculateResponse,
+    summary="Calcular Health Score Cirurgico (HSC) e Disparar Playbook Anti-Churn"
+)
+def calculate_health_score(payload: HealthScoreCalculateRequest):
+    """
+    Motor deterministico de saude cirurgica da conta:
+    HSC = 0.4 * F_cirurgica + 0.3 * G_consignado + 0.2 * S_atendimento + 0.1 * E_canal
+    Dispara playbooks de resgate (HSC < 40) ou promocao/MGM (HSC > 75).
+    """
+    try:
+        return health_score_hsc.calculate_surgical_health_score(payload)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get(
+    "/health-score/history/{partner_id}",
+    response_model=HealthScoreSummaryResponse,
+    summary="Consultar historico de avaliacoes HSC do parceiro"
+)
+def get_health_score_history(
+    partner_id: str,
+    account_id: str = Query("0f14ffff", description="ID do tenant")
+):
+    try:
+        return health_score_hsc.get_health_score_history(
+            partner_id=partner_id,
+            account_id=account_id
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 

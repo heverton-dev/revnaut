@@ -948,6 +948,29 @@ def init_db() -> None:
         CREATE INDEX IF NOT EXISTS idx_clin_margin_acc ON clinical_procedure_margins(account_id);
         CREATE INDEX IF NOT EXISTS idx_clin_margin_clinic ON clinical_procedure_margins(clinic_id);
 
+        CREATE TABLE IF NOT EXISTS kp_surgical_health_scores (
+            id TEXT PRIMARY KEY,
+            account_id TEXT NOT NULL,
+            partner_id TEXT NOT NULL,
+            partner_name TEXT NOT NULL,
+            f_cirurgica REAL NOT NULL,
+            g_consignado REAL NOT NULL,
+            s_atendimento REAL NOT NULL,
+            e_canal REAL NOT NULL,
+            hsc_score REAL NOT NULL,
+            classification TEXT NOT NULL,
+            rescue_task_id TEXT,
+            dentgo_voucher_code TEXT,
+            upsell_eligible INTEGER NOT NULL DEFAULT 0,
+            mgm_eligible INTEGER NOT NULL DEFAULT 0,
+            recommendation TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_kp_hsc_acc ON kp_surgical_health_scores(account_id);
+        CREATE INDEX IF NOT EXISTS idx_kp_hsc_partner ON kp_surgical_health_scores(partner_id);
+
         CREATE TABLE IF NOT EXISTS whatsapp_instances (
 
 

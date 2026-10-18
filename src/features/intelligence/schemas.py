@@ -398,3 +398,43 @@ class ClinicalMarginSummaryReportResponse(BaseModel):
     low_margin_count: int
     items: List[Dict[str, Any]] = Field(default_factory=list)
 
+
+class HealthScoreCalculateRequest(BaseModel):
+    partner_id: str = Field(..., description="ID do cirurgiao ou clinica parceira")
+    partner_name: str = Field(..., description="Nome do parceiro")
+    f_cirurgica: Optional[float] = Field(None, ge=0.0, le=100.0, description="Frequencia cirurgica (0 a 100)")
+    g_consignado: Optional[float] = Field(None, ge=0.0, le=100.0, description="Giro do consignado (0 a 100)")
+    s_atendimento: Optional[float] = Field(None, ge=0.0, le=100.0, description="Satisfacao e ausencia de RMAs (0 a 100)")
+    e_canal: Optional[float] = Field(None, ge=0.0, le=100.0, description="Engajamento no WhatsApp/canais (0 a 100)")
+    baseline_interval_days: Optional[float] = Field(default=7.0, ge=1.0, description="Intervalo historico medio entre cirurgias")
+    current_interval_days: Optional[float] = Field(None, ge=0.0, description="Intervalo atual ou dias sem cirurgia")
+    rma_claims_count: Optional[int] = Field(default=0, ge=0, description="Quantidade de queixas de RMA abertas no periodo")
+    account_id: Optional[str] = Field(default="0f14ffff", description="ID do tenant")
+
+
+class HealthScoreCalculateResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    id: str
+    partner_id: str
+    partner_name: str
+    f_cirurgica: float
+    g_consignado: float
+    s_atendimento: float
+    e_canal: float
+    hsc_score: float
+    classification: str
+    rescue_task_id: Optional[str] = None
+    dentgo_voucher_code: Optional[str] = None
+    upsell_eligible: bool = False
+    mgm_eligible: bool = False
+    recommendation: str
+    calculated_at: str
+
+
+class HealthScoreSummaryResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    partner_id: str
+    total_records: int
+    history: List[Dict[str, Any]] = Field(default_factory=list)
+
+
