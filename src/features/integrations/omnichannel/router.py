@@ -9,11 +9,13 @@ from typing import List, Optional
 from fastapi import APIRouter, Request, Header, HTTPException, status
 from src.features.integrations.omnichannel.schemas import (
     OmnichannelWebhookResponse, WhatsappInstanceCreate,
-    WhatsappInstanceOut, EvolutionWebhookResponse
+    WhatsappInstanceOut, EvolutionWebhookResponse,
+    Omnichannel360ContextOut, ChatwootSyncResponse
 )
 from src.features.integrations.omnichannel import service
 from src.features.integrations.omnichannel import evolution_cluster
 from src.features.integrations.omnichannel import evolution_webhook_router
+from src.features.integrations.omnichannel import chatwoot_bridge
 
 router = APIRouter(tags=["Integrações • Omnichannel & Webhooks"])
 
@@ -139,5 +141,19 @@ def get_whatsapp_instance(instance_name: str, account_id: str = "0f14ffff"):
 @router.post("/api/v1/omnichannel/webhook/evolution", response_model=EvolutionWebhookResponse, summary="Webhook direto Evolution API (CALL_OFFER e mensagens)")
 def evolution_direct_webhook(payload: dict):
     return evolution_webhook_router.handle_evolution_event(payload)
+
+
+@router.get("/api/v1/omnichannel/context/{contact_identifier}", response_model=Omnichannel360ContextOut, summary="Agregador de Contexto 360° para Sidebar de Atendimento (KeyPartners + DENTGO)")
+def get_omnichannel_context(contact_identifier: str, account_id: str = "0f14ffff"):
+    return chatwoot_bridge.get_omnichannel_360_context(contact_identifier=contact_identifier, account_id=account_id)
+
+
+@router.post("/api/v1/omnichannel/chatwoot/sync-contact/{contact_id}", response_model=ChatwootSyncResponse, summary="Sincronizar contato do CRM com o Chatwoot")
+def sync_chatwoot_contact(contact_id: int, account_id: str = "0f14ffff"):
+    try:
+        return chatwoot_bridge.sync_contact_to_chatwoot(contact_id=contact_id, account_id=account_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
 
 

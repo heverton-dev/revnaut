@@ -86,3 +86,24 @@ class EvolutionWebhookResponse(BaseModel):
     media_r2_key: Optional[str] = None
 
 
+class Omnichannel360ContextOut(BaseModel):
+    model_config = {"extra": "allow"}
+    contact_identifier: str
+    contact: Optional[Dict[str, Any]] = None
+    cro_uf: Optional[str] = None
+    agreement: Optional[Dict[str, Any]] = None
+    consignments_in_field: List[Dict[str, Any]] = Field(default_factory=list)
+    active_dentgo_orders: List[Dict[str, Any]] = Field(default_factory=list)
+    is_synced_chatwoot: bool = True
+
+
+class ChatwootSyncResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    status: str
+    contact_id: int
+    chatwoot_contact_id: int
+    source_id: str
+    synced_at: str
+
+
+

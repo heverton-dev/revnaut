@@ -454,7 +454,7 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
 - **Validation Command:** `python -m pytest tests/test_evolution_sharding_mirror.py -q`
 - **Blocked by:** TICKET-01, TICKET-02, TICKET-11
 
-#### [TICKET-24] Integração Profunda Chatwoot Omnichannel + Sidebar Contextual 360° (KeyPartners + DENTGO)
+#### [TICKET-24] [x] DONE - Integração Profunda Chatwoot Omnichannel + Sidebar Contextual 360° (KeyPartners + DENTGO)
 - **Descrição:** Integração bidirecional com o **Chatwoot** (`src/features/integrations/omnichannel/chatwoot_bridge.py`) e construção do Dashboard App em React (`frontend/src/features/inbox/OmnichannelContextSidebar.tsx`) exibindo em tela única: CRO do dentista, kits consignados em posse dele no **KeyPartners**, entregas em andamento no **DENTGO** e situação financeira.
 - **Como Implementar (Detalhes Técnicos):**
   1. Sincronizar contatos, caixas de entrada e agentes do REVNAULT com o Chatwoot via API Platform/Application.
