@@ -90,6 +90,18 @@ async def handle_sales_stream(event: Dict[str, Any]) -> Dict[str, Any]:
                 conn.commit()
             finally:
                 conn.close()
+    elif event_type == "deal.won":
+        partner_id = payload.get("partner_id") or payload.get("contact_id")
+        if partner_id:
+            from src.features.keypartners.loyalty_engine import credit_loyalty_points
+            credit_loyalty_points(
+                partner_id=str(partner_id),
+                partner_name=str(payload.get("partner_name") or payload.get("contact_name") or "Cirurgião Parceiro"),
+                implants_count=int(payload.get("implants_count") or 1),
+                event_origin="deal.won",
+                reference_id=str(payload.get("deal_id") or ""),
+                account_id=tenant_id,
+            )
 
     return {"status": "processed", "stream": StreamName.SALES.value, "event_type": event_type}
 
@@ -99,6 +111,23 @@ async def handle_keypartners_stream(event: Dict[str, Any]) -> Dict[str, Any]:
     """Processa eventos de consignação cirúrgica KeyPartners e rastreabilidade ANVISA."""
     init_db()
     event_type = event.get("event_type", "")
+    payload = event.get("payload") or {}
+    tenant_id = event.get("tenant_id") or payload.get("account_id") or "0f14ffff"
+
+    if event_type == "keypartners.postop_reported":
+        partner_id = payload.get("agreement_id") or payload.get("partner_id")
+        consumed_qty = int(payload.get("consumed_count") or payload.get("implants_count") or 0)
+        if partner_id and consumed_qty > 0:
+            from src.features.keypartners.loyalty_engine import credit_loyalty_points
+            credit_loyalty_points(
+                partner_id=str(partner_id),
+                partner_name=str(payload.get("partner_name") or "Clínica Parceira"),
+                implants_count=consumed_qty,
+                event_origin="keypartners.postop_reported",
+                reference_id=str(payload.get("surgical_order_id") or ""),
+                account_id=tenant_id,
+            )
+
     return {"status": "processed", "stream": StreamName.KEYPARTNERS.value, "event_type": event_type}
 
 
@@ -123,6 +152,14 @@ async def handle_webhooks_stream(event: Dict[str, Any]) -> Dict[str, Any]:
     """Processa fila de despacho de webhooks outbound com assinatura HMAC-SHA256."""
     init_db()
     event_type = event.get("event_type", "")
+    payload = event.get("payload") or {}
+    tenant_id = event.get("tenant_id") or payload.get("account_id") or "0f14ffff"
+
+    if event_type:
+        from src.features.webhooks.outbound_dispatcher import OutboundWebhookDispatcher
+        dispatcher = OutboundWebhookDispatcher()
+        dispatcher.dispatch_event(event_name=event_type, payload_data=payload, account_id=tenant_id)
+
     return {"status": "processed", "stream": StreamName.WEBHOOKS.value, "event_type": event_type}
 
 

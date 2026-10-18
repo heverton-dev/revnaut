@@ -93,7 +93,7 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
   };
 
   return (
-    <div className="w-full bg-[#0b0f19] text-slate-100 min-h-screen p-6 font-sans">
+    <div className="w-full bg-[var(--color-bg-primary)] text-slate-100 min-h-screen p-6 font-sans">
       <div className="flex justify-between items-center mb-6 pb-4 border-b border-white/10">
         <div>
           <div className="flex items-center gap-2">
@@ -121,7 +121,7 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
           {columns.map(col => {
             const colOrders = orders.filter(o => o.status === col.id);
             return (
-              <div key={col.id} className="bg-[#121826] border border-white/5 rounded-lg p-3 flex flex-col min-h-[500px]">
+              <div key={col.id} className="bg-[var(--color-bg-secondary)] border border-white/5 rounded-lg p-3 flex flex-col min-h-[500px]">
                 <div className="flex justify-between items-center mb-3 pb-2 border-b border-white/5">
                   <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider">{col.title}</span>
                   <span className="px-2 py-0.5 text-xs bg-white/5 text-slate-400 rounded-full font-mono">{colOrders.length}</span>
@@ -131,7 +131,7 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
                     <div
                       key={order.id}
                       onClick={() => setSelectedOrder(order)}
-                      className="p-3 bg-[#182032] hover:bg-[#1e2840] border border-white/5 hover:border-orange-500/40 rounded-md cursor-pointer transition-all shadow-sm"
+                      className="p-3 bg-[var(--color-bg-elevated)] hover:bg-slate-800 border border-white/5 hover:border-orange-500/40 rounded-md cursor-pointer transition-all shadow-sm"
                     >
                       <div className="flex justify-between items-start mb-2">
                         <span className="text-xs font-mono text-orange-400 font-semibold">{order.id}</span>
@@ -185,7 +185,7 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
 
       {selectedOrder && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-[#131927] border border-white/10 rounded-xl max-w-lg w-full p-6 shadow-2xl">
+          <div className="bg-[var(--color-bg-secondary)] border border-white/10 rounded-xl max-w-lg w-full p-6 shadow-2xl">
             <div className="flex justify-between items-center pb-3 border-b border-white/10">
               <h3 className="text-base font-bold text-white">Detalhes da Ordem Cirúrgica</h3>
               <button
@@ -209,7 +209,7 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
               </div>
               <div>
                 <span className="text-xs text-slate-400 block">Grade Remetida</span>
-                <pre className="mt-1 p-2 bg-[#0c101a] rounded text-xs font-mono text-cyan-300 overflow-x-auto border border-white/5">
+                <pre className="mt-1 p-2 bg-[var(--color-bg-primary)] rounded text-xs font-mono text-cyan-300 overflow-x-auto border border-white/5">
                   {selectedOrder.remitted_items_json}
                 </pre>
               </div>

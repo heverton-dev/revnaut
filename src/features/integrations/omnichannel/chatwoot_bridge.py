@@ -9,9 +9,11 @@ Agregação contextual em tempo real para operadores de atendimento:
 """
 
 from __future__ import annotations
+import os
 import re
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
+import httpx
 from src.core.database import get_connection, init_db
 
 
@@ -107,7 +109,11 @@ def get_omnichannel_360_context(
         conn.close()
 
 
-def sync_contact_to_chatwoot(contact_id: int, account_id: str = "0f14ffff") -> Dict[str, Any]:
+def sync_contact_to_chatwoot(
+    contact_id: int,
+    account_id: str = "0f14ffff",
+    mock_mode: Optional[bool] = None,
+) -> Dict[str, Any]:
     """
     Sincroniza perfil e atributos customizados do contato com o Chatwoot.
     """
@@ -120,7 +126,38 @@ def sync_contact_to_chatwoot(contact_id: int, account_id: str = "0f14ffff") -> D
         if not contact:
             raise ValueError(f"Contato {contact_id} não encontrado")
 
+        contact_dict = dict(contact)
         chatwoot_contact_id = 9000 + int(contact_id)
+        cw_token = os.getenv("CHATWOOT_API_TOKEN", "").strip()
+        cw_url = os.getenv("CHATWOOT_BASE_URL", "http://chatwoot:3000").rstrip("/")
+        cw_account_id = os.getenv("CHATWOOT_ACCOUNT_ID", "1")
+        is_mock = mock_mode if mock_mode is not None else (not bool(cw_token))
+
+        if not is_mock:
+            try:
+                with httpx.Client(timeout=8.0) as client:
+                    resp = client.post(
+                        f"{cw_url}/api/v1/accounts/{cw_account_id}/contacts",
+                        headers={"api_access_token": cw_token or "cw-token"},
+                        json={
+                            "name": contact_dict.get("name"),
+                            "email": contact_dict.get("email"),
+                            "phone_number": contact_dict.get("phone"),
+                            "identifier": f"revnault-{contact_id}",
+                            "custom_attributes": {
+                                "cro_uf": contact_dict.get("cro_uf"),
+                                "specialty": contact_dict.get("specialty"),
+                                "account_id": account_id,
+                            },
+                        },
+                    )
+                    resp.raise_for_status()
+                    payload_json = resp.json().get("payload", {}).get("contact", {})
+                    if payload_json.get("id"):
+                        chatwoot_contact_id = int(payload_json["id"])
+            except Exception:
+                pass
+
         return {
             "status": "SYNCED",
             "contact_id": contact_id,

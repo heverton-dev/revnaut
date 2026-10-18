@@ -5,10 +5,12 @@ Parser determinístico de linguagem natural para SQL OLAP com validação léxic
 """
 
 from __future__ import annotations
+import json
 import re
 import time
 from typing import Any, Dict, List, Optional
 from src.core.database import get_connection, init_db
+from src.core.vector_store import compute_semantic_embedding, cosine_similarity
 from src.features.intelligence.superset_embedded import build_superset_rls_clause
 
 FORBIDDEN_KEYWORDS = {
@@ -20,6 +22,94 @@ FORBIDDEN_KEYWORDS = {
 SENSITIVE_COLUMNS = {
     "password_hash", "signing_secret_encrypted", "secret_key"
 }
+
+ANALYTICAL_SCHEMA_DOCS: List[Dict[str, str]] = [
+    {
+        "id": "schema_deals_revenue",
+        "description": "total faturado faturamento total receita total quanto faturou vendas gerais deals",
+        "sql": (
+            "SELECT 'Total Faturado' AS metrica, "
+            "COALESCE(SUM(value), 0.0) AS total_faturamento, "
+            "COUNT(*) AS total_deals FROM deals"
+        ),
+    },
+    {
+        "id": "schema_deals_regional",
+        "description": "regional por time faturamento por regional ranking regional equipes vendas",
+        "sql": (
+            "SELECT COALESCE(t.name, 'Sem Regional') AS regional, "
+            "COALESCE(SUM(d.value), 0.0) AS faturamento, "
+            "COUNT(d.id) AS total_pedidos "
+            "FROM deals d "
+            "LEFT JOIN teams t ON d.team_id = t.id "
+            "GROUP BY t.name ORDER BY faturamento DESC"
+        ),
+    },
+    {
+        "id": "schema_kp_custody",
+        "description": "consignado implantes por lote custodia lotes estoque de implantes keypartners",
+        "sql": (
+            "SELECT batch_number AS lote, "
+            "COALESCE(SUM(quantity), 0) AS total_unidades, "
+            "COALESCE(SUM(total_value), 0.0) AS valor_imobilizado "
+            "FROM kp_custody_ledger "
+            "GROUP BY batch_number ORDER BY total_unidades DESC LIMIT 10"
+        ),
+    },
+    {
+        "id": "schema_dentgo_orders",
+        "description": "dentgo entregas pedidos express courier motoboy logistica",
+        "sql": (
+            "SELECT status AS status_entrega, "
+            "COUNT(*) AS total_pedidos, "
+            "COALESCE(SUM(distance_km), 0.0) AS km_total "
+            "FROM dentgo_orders "
+            "GROUP BY status ORDER BY total_pedidos DESC"
+        ),
+    },
+    {
+        "id": "schema_anvisa_rma",
+        "description": "anvisa queixas perda nao-osseointegrado rma tecnovigilancia implante perdido",
+        "sql": (
+            "SELECT failure_reason AS motivo_reclamado, "
+            "COUNT(*) AS total_ocorrencias "
+            "FROM anvisa_rma_claims "
+            "GROUP BY failure_reason ORDER BY total_ocorrencias DESC"
+        ),
+    },
+]
+
+
+def ensure_analytical_schema_indexed(account_id: str = "0f14ffff") -> None:
+    """Indexa metadados do schema analítico no armazenamento vetorial para recuperação semântica."""
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        for doc in ANALYTICAL_SCHEMA_DOCS:
+            emb_id = f"emb_sql_schema_{account_id}_{doc['id']}"
+            cur.execute("SELECT id FROM semantic_embeddings WHERE id = ?", (emb_id,))
+            if not cur.fetchone():
+                vec = compute_semantic_embedding(doc["description"])
+                cur.execute(
+                    """
+                    INSERT OR IGNORE INTO semantic_embeddings (
+                        id, tenant_id, entity_type, entity_id, content_chunk, embedding, metadata_json
+                    ) VALUES (?, ?, 'analytical_sql_schema', ?, ?, ?, ?)
+                    """,
+                    (
+                        emb_id,
+                        account_id,
+                        doc["id"],
+                        doc["description"],
+                        json.dumps(vec),
+                        json.dumps({"sql": doc["sql"]}),
+                    ),
+                )
+        conn.commit()
+    except Exception:
+        pass
+    finally:
+        conn.close()
 
 
 def validate_safe_readonly_sql(sql_query: str) -> None:
@@ -57,59 +147,44 @@ def validate_safe_readonly_sql(sql_query: str) -> None:
             raise ValueError(f"Tentativa de extração de coluna confidencial bloqueada: '{token}'.")
 
 
-def natural_language_to_sql(nl_query: str) -> str:
+def natural_language_to_sql(nl_query: str, account_id: str = "0f14ffff") -> str:
     """
     Mapeia perguntas analíticas em linguagem natural para consultas SQL analíticas sobre o schema do Revnault.
     """
+    ensure_analytical_schema_indexed(account_id=account_id)
     q = nl_query.lower().strip()
 
     # 1. Total faturado / Receita
     if any(k in q for k in ["total faturado", "faturamento total", "receita total", "quanto faturou"]):
-        return (
-            "SELECT 'Total Faturado' AS metrica, "
-            "COALESCE(SUM(value), 0.0) AS total_faturamento, "
-            "COUNT(*) AS total_deals FROM deals"
-        )
+        return ANALYTICAL_SCHEMA_DOCS[0]["sql"]
 
     # 2. Faturamento por regional / time
     if any(k in q for k in ["regional", "por time", "faturamento por regional", "ranking regional"]):
-        return (
-            "SELECT COALESCE(t.name, 'Sem Regional') AS regional, "
-            "COALESCE(SUM(d.value), 0.0) AS faturamento, "
-            "COUNT(d.id) AS total_pedidos "
-            "FROM deals d "
-            "LEFT JOIN teams t ON d.team_id = t.id "
-            "GROUP BY t.name ORDER BY faturamento DESC"
-        )
+        return ANALYTICAL_SCHEMA_DOCS[1]["sql"]
 
     # 3. Consignação / Lotes de Implantes
     if any(k in q for k in ["consignado", "implantes por lote", "custodia", "lotes", "estoque de implantes"]):
-        return (
-            "SELECT batch_number AS lote, "
-            "COALESCE(SUM(quantity), 0) AS total_unidades, "
-            "COALESCE(SUM(total_value), 0.0) AS valor_imobilizado "
-            "FROM kp_custody_ledger "
-            "GROUP BY batch_number ORDER BY total_unidades DESC LIMIT 10"
-        )
+        return ANALYTICAL_SCHEMA_DOCS[2]["sql"]
 
     # 4. Pedidos e entregas DENTGO
     if any(k in q for k in ["dentgo", "entregas", "pedidos express", "courier", "motoboy"]):
-        return (
-            "SELECT status AS status_entrega, "
-            "COUNT(*) AS total_pedidos, "
-            "COALESCE(SUM(distance_km), 0.0) AS km_total "
-            "FROM dentgo_orders "
-            "GROUP BY status ORDER BY total_pedidos DESC"
-        )
+        return ANALYTICAL_SCHEMA_DOCS[3]["sql"]
 
     # 5. Cosmovigilância ANVISA / Queixas Técnicas
     if any(k in q for k in ["anvisa", "queixas", "perda", "nao-osseointegrado", "rma"]):
-        return (
-            "SELECT failure_reason AS motivo_reclamado, "
-            "COUNT(*) AS total_ocorrencias "
-            "FROM anvisa_rma_claims "
-            "GROUP BY failure_reason ORDER BY total_ocorrencias DESC"
-        )
+        return ANALYTICAL_SCHEMA_DOCS[4]["sql"]
+
+    # 6. Recuperação semântica vetorial sobre os metadados do schema analítico
+    query_vec = compute_semantic_embedding(q)
+    best_sql = None
+    best_sim = 0.0
+    for doc in ANALYTICAL_SCHEMA_DOCS:
+        sim = cosine_similarity(query_vec, compute_semantic_embedding(doc["description"]))
+        if sim > best_sim:
+            best_sim = sim
+            best_sql = doc["sql"]
+    if best_sql and best_sim >= 0.45:
+        return best_sql
 
     # Fallback padrão: Últimos deals e oportunidades ativas
     return (

@@ -30,7 +30,7 @@ from src.features.campaigns.schemas import (
 from src.features.campaigns import service
 from src.features.campaigns import landing_pages
 from src.features.campaigns import referral_mgm
-from src.features.campaigns.listmonk_adapter import ListmonkClient
+from src.features.campaigns.listmonk_adapter import ListmonkClient, process_listmonk_webhook_event
 
 
 router = APIRouter(prefix="/api/v1/campaigns", tags=["Campanhas & Mídia"])
@@ -83,11 +83,14 @@ def update_lp(page_id: str, data: LandingPageUpdate):
 
 
 @router.put("/landing-pages/{page_id}/publish", response_model=LandingPagePublishResponse, summary="Compilar e publicar Landing Page no Cloudflare R2")
-def publish_lp(page_id: str):
+def publish_lp(page_id: str, block_on_cfo_violation: bool = False):
     try:
-        return landing_pages.publish_landing_page(page_id)
+        return landing_pages.publish_landing_page(page_id, block_on_cfo_violation=block_on_cfo_violation)
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        msg = str(e)
+        if "bloqueada por violação" in msg:
+            raise HTTPException(status_code=400, detail=msg)
+        raise HTTPException(status_code=404, detail=msg)
 
 
 @router.post("/public/lp/{slug}/submit", response_model=LandingPageSubmissionResponse, status_code=status.HTTP_201_CREATED, summary="Submissão pública de formulário de Landing Page")
@@ -110,6 +113,15 @@ def broadcast_listmonk_endpoint(payload: ListmonkBroadcastRequest):
         list_id=payload.listmonk_list_id or 1,
     )
     return ListmonkBroadcastResponse(**result)
+
+
+@router.post("/webhooks/listmonk", response_model=dict, summary="Webhook Listmonk para eventos de bounce, open e click")
+def listmonk_campaign_webhook(payload: dict):
+    try:
+        return process_listmonk_webhook_event(payload)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 
 
 @router.post("/referral/generate-link", response_model=ReferralLinkResponse, summary="Gerar link unico de indicacao B2B para o parceiro")

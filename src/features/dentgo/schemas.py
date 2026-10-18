@@ -92,6 +92,7 @@ class OrderCheckoutRequest(BaseModel):
     delivery_lat: float = Field(..., description="Latitude da entrega")
     delivery_lng: float = Field(..., description="Longitude da entrega")
     items: List[OrderItemIn] = Field(..., min_length=1, description="Lista de itens do pedido express")
+    voucher_code: Optional[str] = Field(default=None, description="Código de voucher para isenção da taxa de urgência")
     account_id: Optional[str] = Field(default="0f14ffff", description="ID da conta tenant")
 
 

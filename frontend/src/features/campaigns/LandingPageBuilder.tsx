@@ -80,13 +80,13 @@ export const LandingPageBuilder: React.FC<LandingPageBuilderProps> = ({
             width: 'auto',
             storageManager: false,
             blockManager: {
-              appendTo: '#blocks-panel',
+              appendTo: 'div[id="blocks-panel"]',
               blocks: [
                 {
                   id: 'cfo-responsible',
                   label: 'Responsável Técnico CFO',
                   category: 'Odontologia CFO',
-                  content: `<div class="cfo-banner" style="padding: 12px; background: #f8fafc; border-top: 2px solid #0284c7; font-size: 12px; text-align: center; color: #475569;">
+                  content: `<div class="cfo-banner" style="padding: 12px; background: var(--color-bg-elevated); border-top: 2px solid var(--color-brand-primary); font-size: 12px; text-align: center; color: var(--color-text-secondary);">
                     <p>Responsável Técnico: ${cfoName} — ${cfoCro} | Conforme Resolução CFO 196/2019 e Art. 43 do CEO</p>
                   </div>`,
                 },
@@ -96,7 +96,7 @@ export const LandingPageBuilder: React.FC<LandingPageBuilderProps> = ({
                   category: 'Formulários',
                   content: `<div style="margin-bottom: 12px;">
                     <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px;">CRO/UF do Cirurgião</label>
-                    <input type="text" name="cro" placeholder="CRO-SP 123456" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px;" required />
+                    <input type="text" name="cro" placeholder="CRO-SP 123456" style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border-subtle); border-radius: 6px;" required />
                   </div>`,
                 },
                 {
@@ -105,7 +105,7 @@ export const LandingPageBuilder: React.FC<LandingPageBuilderProps> = ({
                   category: 'Formulários',
                   content: `<div style="margin-bottom: 12px;">
                     <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px;">Sistema Utilizado</label>
-                    <select name="implant_system" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                    <select name="implant_system" style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border-subtle); border-radius: 6px;">
                       <option value="Cone Morse">Cone Morse / Conexão Cônica</option>
                       <option value="Hexágono Externo">Hexágono Externo (HE)</option>
                       <option value="Hexágono Interno">Hexágono Interno (HI)</option>

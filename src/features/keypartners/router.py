@@ -133,6 +133,11 @@ def report_postop(order_id: str, payload: SurgicalPostopReportRequest):
         raise HTTPException(status_code=400, detail=str(e))
 
 
+@router.get("/surgical-orders", response_model=List[SurgicalOrderOut], summary="Listar todas as ordens cirúrgicas do tenant")
+def list_surgical_orders(account_id: str = "0f14ffff"):
+    return surgical_cycle.list_surgical_orders(account_id=account_id)
+
+
 @router.get("/surgical-orders/{order_id}", response_model=SurgicalOrderOut, summary="Consultar detalhes da ordem cirúrgica")
 def get_surgical_order(order_id: str, account_id: str = "0f14ffff"):
     try:

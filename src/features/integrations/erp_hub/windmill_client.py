@@ -12,9 +12,48 @@ import uuid
 from typing import Any, Dict, List, Optional
 
 from src.core.database import get_connection, init_db
-from src.core.events import EventBus, StreamName
+from src.core.events import EventBus, StreamName, default_event_bus
 from src.core.storage import R2StorageClient
 from src.features.integrations.totvs.adapter import get_erp_connector
+
+
+def _build_nfe_xml_bytes(inv: Dict[str, Any]) -> bytes:
+    """Compila o XML determinístico da NF-e 4.00 com protocolo SEFAZ."""
+    xml_doc = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">\n'
+        f'  <NFe><infNFe Id="NFe{inv["nfe_access_key"]}" versao="4.00">\n'
+        f'    <ide><nNF>{inv["nfe_number"]}</nNF><serie>{inv["nfe_series"]}</serie><CFOP>{inv["cfop"]}</CFOP></ide>\n'
+        f'    <dest><CNPJ>{inv["recipient_cnpj"]}</CNPJ><xNome>{inv["recipient_name"]}</xNome></dest>\n'
+        f'    <total><ICMSTot><vNF>{inv["total_invoice_value"]:.2f}</vNF></ICMSTot></total>\n'
+        '  </infNFe></NFe>\n'
+        f'  <protNFe versao="4.00"><infProt><chNFe>{inv["nfe_access_key"]}</chNFe><nProt>{inv["sefaz_protocol"]}</nProt><cStat>100</cStat></infProt></protNFe>\n'
+        '</nfeProc>\n'
+    )
+    return xml_doc.encode("utf-8")
+
+
+def _build_danfe_pdf_bytes(inv: Dict[str, Any]) -> bytes:
+    """Gera documento PDF válido (%PDF-1.4) do DANFE para guarda fiscal no R2."""
+    text = (
+        f"DANFE NF-e {inv['nfe_number']} Serie {inv['nfe_series']} | "
+        f"CFOP {inv['cfop']} | Chave {inv['nfe_access_key']} | "
+        f"Destinatario: {inv['recipient_name']} ({inv['recipient_cnpj']}) | "
+        f"Valor Total R$ {inv['total_invoice_value']:.2f}"
+    )
+    safe_text = text.replace("(", "\\(").replace(")", "\\)")
+    stream = f"BT /F1 10 Tf 36 750 Td ({safe_text}) Tj ET".encode("latin-1", errors="ignore")
+    pdf = (
+        b"%PDF-1.4\n"
+        b"1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n"
+        b"2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n"
+        b"3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R >> endobj\n"
+        b"4 0 obj << /Length " + str(len(stream)).encode("ascii") + b" >>\nstream\n"
+        + stream +
+        b"\nendstream\nendobj\n"
+        b"trailer << /Root 1 0 R >>\n%%EOF\n"
+    )
+    return pdf
 
 
 class WindmillERPOrchestrator:
@@ -30,6 +69,17 @@ class WindmillERPOrchestrator:
         app_env = os.getenv("APP_ENV", "local")
         self.mock_mode = mock_mode if mock_mode is not None else (app_env in ("local", "test", "development"))
         self.storage = R2StorageClient()
+
+    def _trigger_windmill_job_http(self, script_path: str, payload: Dict[str, Any]) -> str:
+        """Aciona job no servidor Windmill via HTTP quando not self.mock_mode."""
+        if not self.mock_mode:
+            import httpx
+            url = f"{self.windmill_url.rstrip('/')}/api/w/revnaut/jobs/run/p/{script_path.lstrip('/')}"
+            headers = {"Authorization": f"Bearer {self.token}", "Content-Type": "application/json"}
+            resp = httpx.post(url, json=payload, headers=headers, timeout=15.0)
+            resp.raise_for_status()
+            return str(resp.text).strip().strip('"') or f"wm-job-{uuid.uuid4().hex[:8]}"
+        return f"wm-job-{uuid.uuid4().hex[:8]}"
 
     def dispatch_consignment_remittance(
         self,
@@ -48,7 +98,7 @@ class WindmillERPOrchestrator:
         access_key = inv["nfe_access_key"]
         ref_id = remittance_data.get("agreement_id") or remittance_data.get("order_id") or f"ref-{uuid.uuid4().hex[:6]}"
 
-        # Particionamento determinístico das chaves no Cloudflare R2
+        # Particionamento determinístico das chaves no Cloudflare R2 + Upload real dos bytes
         xml_key = self.storage.generate_storage_key(
             tenant_id=account_id,
             module="fiscal/nfe",
@@ -60,10 +110,17 @@ class WindmillERPOrchestrator:
             filename=f"{access_key}.pdf"
         )
 
+        xml_bytes = _build_nfe_xml_bytes(inv)
+        pdf_bytes = _build_danfe_pdf_bytes(inv)
+        xml_upload = self.storage.upload_bytes(xml_key, xml_bytes, "application/xml")
+        pdf_upload = self.storage.upload_bytes(pdf_key, pdf_bytes, "application/pdf")
+
         r2_domain = os.getenv("R2_PUBLIC_URL", "https://r2.revnaut.internal")
-        xml_url = f"{r2_domain}/{xml_key}"
-        pdf_url = f"{r2_domain}/{pdf_key}"
-        job_id = f"wm-job-rem-{uuid.uuid4().hex[:8]}"
+        xml_url = xml_upload if isinstance(xml_upload, str) else (xml_upload.get("public_url") or f"{r2_domain}/{xml_key}")
+        pdf_url = pdf_upload if isinstance(pdf_upload, str) else (pdf_upload.get("public_url") or f"{r2_domain}/{pdf_key}")
+        job_id = self._trigger_windmill_job_http("f/erp/emit_remittance_nfe", {"erp_type": erp_type, "invoice": inv})
+        if job_id.startswith("wm-job-") and not job_id.startswith("wm-job-rem-"):
+            job_id = f"wm-job-rem-{uuid.uuid4().hex[:8]}"
         invoice_id = f"inv-rem-{uuid.uuid4().hex[:8]}"
 
         conn = get_connection()
@@ -89,20 +146,19 @@ class WindmillERPOrchestrator:
             conn.close()
 
         # Telemetria no EventBus
-        try:
-            EventBus.publish_sync(
-                StreamName.AUDIT,
-                {
-                    "event": "erp.consignment_remittance_emitted",
-                    "invoice_id": invoice_id,
-                    "cfop": inv["cfop"],
-                    "access_key": access_key,
-                    "total_value": inv["total_invoice_value"],
-                    "erp_type": erp_type,
-                }
-            )
-        except Exception:
-            pass
+        default_event_bus.publish_sync(
+            stream=StreamName.AUDIT,
+            event_type="erp.consignment_remittance_emitted",
+            account_id=account_id,
+            payload={
+                "event": "erp.consignment_remittance_emitted",
+                "invoice_id": invoice_id,
+                "cfop": inv["cfop"],
+                "access_key": access_key,
+                "total_value": inv["total_invoice_value"],
+                "erp_type": erp_type,
+            },
+        )
 
         return {
             "id": invoice_id,
@@ -158,6 +214,8 @@ class WindmillERPOrchestrator:
             module="fiscal/nfe",
             filename=f"{ret_access_key}.pdf"
         )
+        self.storage.upload_bytes(ret_xml_key, _build_nfe_xml_bytes(ret_inv), "application/xml")
+        self.storage.upload_bytes(ret_pdf_key, _build_danfe_pdf_bytes(ret_inv), "application/pdf")
         ret_invoice_id = f"inv-ret-{uuid.uuid4().hex[:8]}"
 
         # 2. Venda Consignada (CFOP 5.113 / 6.113)
@@ -174,9 +232,16 @@ class WindmillERPOrchestrator:
             module="fiscal/nfe",
             filename=f"{sale_access_key}.pdf"
         )
+        self.storage.upload_bytes(sale_xml_key, _build_nfe_xml_bytes(sale_inv), "application/xml")
+        self.storage.upload_bytes(sale_pdf_key, _build_danfe_pdf_bytes(sale_inv), "application/pdf")
         sale_invoice_id = f"inv-sale-{uuid.uuid4().hex[:8]}"
 
-        job_id = f"wm-job-settle-{uuid.uuid4().hex[:8]}"
+        job_id = self._trigger_windmill_job_http(
+            "f/erp/emit_settlement_nfe",
+            {"erp_type": erp_type, "symbolic_return": ret_inv, "sale": sale_inv},
+        )
+        if job_id.startswith("wm-job-") and not job_id.startswith("wm-job-settle-"):
+            job_id = f"wm-job-settle-{uuid.uuid4().hex[:8]}"
 
         conn = get_connection()
         try:
@@ -217,6 +282,18 @@ class WindmillERPOrchestrator:
             conn.commit()
         finally:
             conn.close()
+
+        default_event_bus.publish_sync(
+            stream=StreamName.AUDIT,
+            event_type="erp.consignment_settlement_emitted",
+            account_id=account_id,
+            payload={
+                "settlement_job_id": job_id,
+                "return_invoice_id": ret_invoice_id,
+                "sale_invoice_id": sale_invoice_id,
+                "erp_type": erp_type,
+            },
+        )
 
         r2_domain = os.getenv("R2_PUBLIC_URL", "https://r2.revnaut.internal")
 

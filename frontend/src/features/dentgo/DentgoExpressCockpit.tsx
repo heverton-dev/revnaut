@@ -81,7 +81,7 @@ export const DentgoExpressCockpit: React.FC = () => {
   }, []);
 
   return (
-    <div className="w-full bg-[#090d16] text-slate-100 min-h-screen p-6 font-sans">
+    <div className="w-full bg-[var(--color-bg-primary)] text-slate-100 min-h-screen p-6 font-sans">
       <div className="flex justify-between items-center mb-6 pb-4 border-b border-white/10">
         <div>
           <div className="flex items-center gap-2">
@@ -114,8 +114,8 @@ export const DentgoExpressCockpit: React.FC = () => {
                   onClick={() => setSelectedOrder(order)}
                   className={`p-4 rounded-lg border transition-all cursor-pointer ${
                     selectedOrder?.id === order.id
-                      ? 'bg-[#151c2c] border-orange-500/50 shadow-lg shadow-orange-500/10'
-                      : 'bg-[#101622] border-white/5 hover:border-white/15'
+                      ? 'bg-[var(--color-bg-elevated)] border-orange-500/50 shadow-lg shadow-orange-500/10'
+                      : 'bg-[var(--color-bg-secondary)] border-white/5 hover:border-white/15'
                   }`}
                 >
                   <div className="flex justify-between items-start mb-2">
@@ -148,7 +148,7 @@ export const DentgoExpressCockpit: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-[#101622] border border-white/5 rounded-lg p-5">
+          <div className="bg-[var(--color-bg-secondary)] border border-white/5 rounded-lg p-5">
             <h3 className="text-sm font-bold text-white mb-4">Inspeção de Custódia e Lacre</h3>
             {selectedOrder ? (
               <div className="space-y-4 text-xs">

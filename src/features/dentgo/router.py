@@ -82,10 +82,16 @@ def checkout_order(payload: OrderCheckoutRequest):
             delivery_lat=payload.delivery_lat,
             delivery_lng=payload.delivery_lng,
             items=items_dict,
+            voucher_code=payload.voucher_code,
             account_id=payload.account_id or "0f14ffff"
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/orders", response_model=List[OrderOut], summary="Listar todos os pedidos express do tenant")
+def list_orders(account_id: str = "0f14ffff"):
+    return service.list_orders(account_id=account_id)
 
 
 @router.get("/orders/{order_id}", response_model=OrderOut, summary="Consultar dados do pedido express")

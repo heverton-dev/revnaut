@@ -112,6 +112,60 @@ def scan_and_generate_flash_deals(
         """, (account_id,))
 
         inventory_rows = [dict(r) for r in cur.fetchall()]
+
+        # Varre também lotes consignados em kp_custody_ledger (REMESSA) e sincroniza no hub caso na janela FEFO
+        cur.execute("""
+            SELECT id, account_id, product_id, product_name, anvisa_reg,
+                   batch_number, quantity, unit_value, sterilization_expiry_date
+            FROM kp_custody_ledger
+            WHERE account_id = ? AND movement_type = 'REMESSA' AND quantity > 0
+        """, (account_id,))
+        custody_rows = [dict(r) for r in cur.fetchall()]
+        existing_batches = {r["batch_number"] for r in inventory_rows}
+
+        if custody_rows:
+            cur.execute("SELECT id, name, latitude, longitude, coverage_radius_km FROM dentgo_hubs WHERE account_id = ? AND is_active = 1 LIMIT 1", (account_id,))
+            default_hub = cur.fetchone()
+            for c_row in custody_rows:
+                if c_row["batch_number"] in existing_batches:
+                    continue
+                exp_s = (c_row.get("sterilization_expiry_date") or "")[:10]
+                try:
+                    c_exp_dt = datetime.strptime(exp_s, "%Y-%m-%d")
+                except Exception:
+                    continue
+                c_days = (c_exp_dt - ref_dt).days
+                if 180 <= c_days <= 275 and default_hub:
+                    syn_inv_id = f"dinv-kp-{c_row['id']}"
+                    cur.execute("""
+                        INSERT OR IGNORE INTO dentgo_hub_inventory (
+                            id, hub_id, account_id, product_id, product_name,
+                            anvisa_reg, batch_number, quantity_available, unit_price,
+                            sterilization_expiry_date
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (
+                        syn_inv_id, default_hub["id"], account_id, c_row["product_id"],
+                        c_row["product_name"], c_row["anvisa_reg"], c_row["batch_number"],
+                        int(c_row["quantity"]), float(c_row["unit_value"]), exp_s
+                    ))
+                    inventory_rows.append({
+                        "inventory_id": syn_inv_id,
+                        "hub_id": default_hub["id"],
+                        "account_id": account_id,
+                        "product_id": c_row["product_id"],
+                        "product_name": c_row["product_name"],
+                        "anvisa_reg": c_row["anvisa_reg"],
+                        "batch_number": c_row["batch_number"],
+                        "quantity_available": int(c_row["quantity"]),
+                        "unit_price": float(c_row["unit_value"]),
+                        "sterilization_expiry_date": exp_s,
+                        "hub_name": default_hub["name"],
+                        "hub_lat": float(default_hub["latitude"]),
+                        "hub_lng": float(default_hub["longitude"]),
+                        "coverage_radius_km": float(default_hub["coverage_radius_km"]),
+                    })
+                    existing_batches.add(c_row["batch_number"])
+
         scanned_batches_count = len(inventory_rows)
 
         # Carrega cirurgiões cadastrados

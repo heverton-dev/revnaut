@@ -195,6 +195,24 @@ def process_patient_feedback(
                 f"em canal prioritário ({triggers_str}). Fique calmo(a), mantenha a compressa se orientado e "
                 "nossa equipe entrará em contato com você via chamada nos próximos minutos."
             )
+            surgeon_msg = (
+                f"[ALERTA PÓS-OPERATÓRIO CRÍTICO] Dr(a). {surgeon_name}, paciente {patient_name} "
+                f"({sched['patient_phone']}) relatou intercorrência no marco {milestone_code}: '{feedback_text}' "
+                f"(Gatilhos: {triggers_str}). Ticket {ticket_id} aberto."
+            )
+            surg_digits = "".join(ch for ch in (surgeon_phone or "") if ch.isdigit()) or "5511999990000"
+            cur.execute("""
+                INSERT INTO omnichannel_messages (
+                    id, account_id, instance_name, remote_jid, sender_phone,
+                    message_type, content, from_me
+                ) VALUES (?, ?, 'postop_care_bot', ?, ?, 'POSTOP_SURGEON_ALERT', ?, 1)
+            """, (
+                f"msg-posop-surg-{uuid.uuid4().hex[:8]}",
+                account_id,
+                f"{surg_digits}@s.whatsapp.net",
+                surgeon_phone or surg_digits,
+                surgeon_msg,
+            ))
             surgeon_alert_sent = True
         else:
             patient_msg = (
@@ -204,6 +222,21 @@ def process_patient_feedback(
             surgeon_alert_sent = False
             if milestone_code == "7d":
                 updated_status = "COMPLETED"
+
+        pat_phone = sched["patient_phone"] or "5511988880000"
+        pat_digits = "".join(ch for ch in pat_phone if ch.isdigit()) or "5511988880000"
+        cur.execute("""
+            INSERT INTO omnichannel_messages (
+                id, account_id, instance_name, remote_jid, sender_phone,
+                message_type, content, from_me
+            ) VALUES (?, ?, 'postop_care_bot', ?, ?, 'POSTOP_PATIENT_REPLY', ?, 1)
+        """, (
+            f"msg-posop-pat-{uuid.uuid4().hex[:8]}",
+            account_id,
+            f"{pat_digits}@s.whatsapp.net",
+            pat_phone,
+            patient_msg,
+        ))
 
         # Atualizar milestone correspondente
         for m in milestones:

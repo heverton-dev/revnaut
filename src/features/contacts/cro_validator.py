@@ -100,7 +100,25 @@ def verify_cro_status(
     cache_key = f"cro:{syntax['uf']}:{syntax['clean_number']}:{syntax['category']}"
     now = time.time()
 
-    # Verifica cache
+    # 1. Tenta cache Redis (TTL 7 dias = 604800s) se configurado
+    redis_client = None
+    redis_url = os.getenv("REDIS_URL")
+    if redis_url:
+        try:
+            import json as _json
+            import redis as _sync_redis
+            redis_client = _sync_redis.from_url(
+                redis_url, decode_responses=True, socket_connect_timeout=0.2, socket_timeout=0.2
+            )
+            cached_raw = redis_client.get(cache_key)
+            if cached_raw:
+                res = _json.loads(cached_raw)
+                res["cached"] = True
+                return res
+        except Exception:
+            redis_client = None
+
+    # 2. Fallback: Verifica cache em memória local
     if cache_key in _IN_MEMORY_CRO_CACHE:
         entry = _IN_MEMORY_CRO_CACHE[cache_key]
         if now - entry["timestamp"] < CACHE_TTL_SECONDS:
@@ -134,11 +152,19 @@ def verify_cro_status(
             "cached": False,
         }
 
+    if redis_client is not None:
+        try:
+            import json as _json
+            redis_client.setex(cache_key, CACHE_TTL_SECONDS, _json.dumps(data))
+        except Exception:
+            pass
+
     _IN_MEMORY_CRO_CACHE[cache_key] = {
         "timestamp": now,
         "data": data,
     }
     return data
+
 
 
 # Termos vedados pelo Conselho Federal de Odontologia (Resolução 196/2019 e Art. 44 do CEO)

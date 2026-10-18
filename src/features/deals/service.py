@@ -332,7 +332,7 @@ def export_deals_csv(
 
 def calculate_split_commissions(
     total_value: float,
-    base_rate_pct: float,
+    base_rate_pct: float = 5.0,
     field_pct: float = 70.0,
     inside_pct: float = 30.0,
 ) -> Dict[str, float]:

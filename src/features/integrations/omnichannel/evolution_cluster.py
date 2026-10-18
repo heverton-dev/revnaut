@@ -6,8 +6,10 @@ Balanceamento distribuído de instâncias de WhatsApp entre múltiplos nós (100
 
 from __future__ import annotations
 import hashlib
+import os
 import uuid
 from typing import Any, Dict, List, Optional
+import httpx
 from src.core.database import get_connection, init_db
 
 DEFAULT_SHARDS = [
@@ -59,7 +61,8 @@ def provision_whatsapp_instance(
     consultant_user_id: Optional[str] = None,
     phone_number: Optional[str] = None,
     account_id: str = "0f14ffff",
-    shard_nodes: Optional[List[str]] = None
+    shard_nodes: Optional[List[str]] = None,
+    mock_mode: Optional[bool] = None,
 ) -> Dict[str, Any]:
     """
     Provisiona nova instância da Evolution API v2 no nó de menor carga do cluster.
@@ -83,6 +86,32 @@ def provision_whatsapp_instance(
             account_id=account_id
         )
 
+        qr_code_b64 = MOCK_QR_BASE64
+        api_key = os.getenv("EVOLUTION_API_KEY", "").strip()
+        is_mock = mock_mode if mock_mode is not None else (not bool(api_key))
+        if not is_mock:
+            try:
+                with httpx.Client(timeout=8.0) as client:
+                    resp = client.post(
+                        f"{chosen_shard.rstrip('/')}/instance/create",
+                        headers={"apikey": api_key or "revnault-evo-key"},
+                        json={
+                            "instanceName": clean_name,
+                            "qrcode": True,
+                            "number": phone_number or "",
+                            "integration": "WHATSAPP-BAILEYS",
+                        },
+                    )
+                    resp.raise_for_status()
+                    evo_data = resp.json()
+                    qr_code_b64 = (
+                        evo_data.get("qrcode", {}).get("base64")
+                        or evo_data.get("base64")
+                        or MOCK_QR_BASE64
+                    )
+            except Exception:
+                pass
+
         instance_id = f"winst-{uuid.uuid4().hex[:8]}"
         cur.execute("""
             INSERT INTO whatsapp_instances (
@@ -91,7 +120,7 @@ def provision_whatsapp_instance(
             ) VALUES (?, ?, ?, ?, ?, ?, 'CONNECTING', ?)
         """, (
             instance_id, account_id, clean_name, consultant_user_id,
-            chosen_shard, phone_number, MOCK_QR_BASE64
+            chosen_shard, phone_number, qr_code_b64
         ))
         conn.commit()
 

@@ -94,10 +94,11 @@ from src.features.campaigns.mautic_bridge import process_mautic_campaign_action
 async def mautic_campaign_action_endpoint(
     request: Request,
     x_mautic_signature: Optional[str] = Header(None, alias="X-Mautic-Signature"),
+    webhook_signature: Optional[str] = Header(None, alias="Webhook-Signature"),
     x_hub_signature_256: Optional[str] = Header(None, alias="X-Hub-Signature-256")
 ):
     body_bytes = await request.body()
-    sig = x_mautic_signature or x_hub_signature_256
+    sig = x_mautic_signature or webhook_signature or x_hub_signature_256
     if not sig or not service.verify_hmac_signature(body_bytes, sig):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -146,6 +147,16 @@ def evolution_direct_webhook(payload: dict):
 @router.get("/api/v1/omnichannel/context/{contact_identifier}", response_model=Omnichannel360ContextOut, summary="Agregador de Contexto 360° para Sidebar de Atendimento (KeyPartners + DENTGO)")
 def get_omnichannel_context(contact_identifier: str, account_id: str = "0f14ffff"):
     return chatwoot_bridge.get_omnichannel_360_context(contact_identifier=contact_identifier, account_id=account_id)
+
+
+@router.get("/api/v1/omnichannel/chatwoot-context-panel", response_model=Omnichannel360ContextOut, summary="Painel de Contexto 360° para Chatwoot Dashboard App via Query Param")
+def get_chatwoot_context_panel(
+    contact_phone: str = "",
+    contact_identifier: Optional[str] = None,
+    account_id: str = "0f14ffff"
+):
+    identifier = contact_identifier or contact_phone
+    return chatwoot_bridge.get_omnichannel_360_context(contact_identifier=identifier, account_id=account_id)
 
 
 @router.post("/api/v1/omnichannel/chatwoot/sync-contact/{contact_id}", response_model=ChatwootSyncResponse, summary="Sincronizar contato do CRM com o Chatwoot")

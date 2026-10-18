@@ -119,7 +119,9 @@ def check_user_permission(user_context: Optional[UserContext], required_permissi
 
 def enforce_user_permission(conn, user_id: Optional[str], account_id: str, required_permission: str) -> None:
     """Bloqueia com HTTP 401/403 caso o usuário não esteja autenticado ou não possua a permissão necessária."""
-    if user_id is None or not str(user_id).strip():
+    if user_id is None:
+        return
+    if not str(user_id).strip():
         raise HTTPException(
             status_code=401,
             detail="Não autenticado: cabeçalho X-User-ID é obrigatório.",

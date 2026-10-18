@@ -11,7 +11,7 @@ import asyncio
 from typing import Any, Dict, List, Optional
 from src.core.database import get_connection
 from src.core.storage import R2StorageClient
-from src.core.events import EventBus, StreamName
+from src.core.events import EventBus, StreamName, default_event_bus
 from src.features.contacts.cro_validator import validate_cfo_marketing_compliance, verify_cro_status
 from src.features.contacts.schemas import ContactCreate
 from src.features.contacts.service import create_contact
@@ -288,7 +288,11 @@ def list_landing_pages(tenant_id: str = "0f14ffff") -> List[Dict[str, Any]]:
         conn.close()
 
 
-def publish_landing_page(page_id: str, tenant_id: str = "0f14ffff") -> Dict[str, Any]:
+def publish_landing_page(
+    page_id: str,
+    tenant_id: str = "0f14ffff",
+    block_on_cfo_violation: bool = False,
+) -> Dict[str, Any]:
     lp = get_landing_page(page_id, tenant_id)
     if not lp:
         raise ValueError("Landing page não localizada.")
@@ -301,8 +305,29 @@ def publish_landing_page(page_id: str, tenant_id: str = "0f14ffff") -> Dict[str,
         responsible_cro=lp.get("cfo_responsible_cro")
     )
 
+    if not cfo_audit["is_compliant"] and block_on_cfo_violation:
+        raise ValueError(
+            f"Publicação bloqueada por violação ética CFO: {'; '.join(cfo_audit['violations'])}"
+        )
+
     slug = lp["slug"]
-    published_url = f"https://cdn.revnaut.app/lp/{slug}/index.html"
+    html_doc = (
+        f"<!DOCTYPE html>\n<html lang=\"pt-BR\">\n<head>\n"
+        f"<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
+        f"<title>{lp['title']}</title>\n"
+        f"<style>\n{lp.get('gjs_css') or ''}\n</style>\n</head>\n"
+        f"<body>\n{lp.get('gjs_html') or ''}\n</body>\n</html>"
+    )
+    html_bytes = html_doc.encode("utf-8")
+
+    storage = R2StorageClient()
+    r2_key = storage.generate_storage_key(
+        tenant_id=tenant_id,
+        module="r2_landing_pages",
+        filename=f"{slug}.html",
+        custom_uuid=slug,
+    )
+    published_url = storage.upload_bytes(r2_key, html_bytes, "text/html")
 
     conn = get_connection()
     try:
@@ -325,6 +350,7 @@ def publish_landing_page(page_id: str, tenant_id: str = "0f14ffff") -> Dict[str,
         "slug": slug,
         "is_published": True,
         "published_r2_url": published_url,
+        "r2_key": r2_key,
         "cfo_compliance_status": status_msg,
         "message": "Landing page compilada e publicada no Cloudflare R2 com sucesso."
     }
@@ -381,29 +407,21 @@ def submit_public_lead(slug: str, data: LandingPageSubmissionCreate) -> Dict[str
     finally:
         conn.close()
 
-    try:
-        bus = EventBus(in_memory=True)
-        try:
-            loop = asyncio.get_running_loop()
-            loop.create_task(bus.publish_event(
-                stream_name=StreamName.MARKETING,
-                event_type="lead.captured",
-                payload={
-                    "submission_id": submission_id,
-                    "landing_page_slug": slug,
-                    "contact_id": contact_id,
-                    "name": data.name,
-                    "email": data.email,
-                    "cro": data.cro,
-                    "cro_verified": contact.get("cro_verified", False),
-                    "utm_campaign": data.utm_campaign,
-                },
-                tenant_id=tenant_id
-            ))
-        except RuntimeError:
-            pass
-    except Exception:
-        pass
+    default_event_bus.publish_sync(
+        StreamName.MARKETING,
+        "lead.captured",
+        {
+            "submission_id": submission_id,
+            "landing_page_slug": slug,
+            "contact_id": contact_id,
+            "name": data.name,
+            "email": data.email,
+            "cro": data.cro,
+            "cro_verified": bool(contact.get("cro_verified", False)),
+            "utm_campaign": data.utm_campaign,
+        },
+        tenant_id=tenant_id,
+    )
 
     return {
         "success": True,
@@ -412,4 +430,5 @@ def submit_public_lead(slug: str, data: LandingPageSubmissionCreate) -> Dict[str
         "cro_verified": bool(contact.get("cro_verified")),
         "message": "Lead capturado com sucesso e atribuído no CRM."
     }
+
 

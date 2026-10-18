@@ -435,9 +435,12 @@ def calculate_contact_score_and_handoff(
 ) -> Dict[str, Any]:
     """
     TICKET-10: Motor Preditivo de Lead Scoring Odontológico, ICP Fit e Handoff Automático.
-    Calcula ICP Fit (peso 60%) + Engajamento (peso 40%), persiste embedding semântico
-    e se score >= 75, cria oportunidade comercial no estágio 101 com anti-duplicação.
+    Calcula ICP Fit (peso 60%) + Engajamento (peso 40%), persiste histórico em scoring_history,
+    embedding semântico via compute_semantic_embedding e, se score >= 75, cria Deal com
+    executive_summary e consultor regional atribuído.
     """
+    from src.core.vector_store import compute_semantic_embedding
+
     conn = get_connection()
     try:
         cur = conn.cursor()
@@ -446,6 +449,7 @@ def calculate_contact_score_and_handoff(
         if not c_row:
             raise ValueError(f"Contato com ID {contact_id} não encontrado")
         c = dict(c_row)
+        previous_score = int(c.get("score") or 0)
 
         # 1. Cálculo ICP Fit (base 100 com peso 60%)
         icp_pts = 0
@@ -500,9 +504,8 @@ def calculate_contact_score_and_handoff(
 
         # 3. Ponderação final
         calculated_score = int(round(icp_total * 0.6 + eng_total * 0.4))
-        current_score = c.get("score") or 0
-        if not interactions and current_score > 0:
-            final_score = max(current_score, calculated_score)
+        if not interactions and previous_score > 0:
+            final_score = max(previous_score, calculated_score)
         else:
             final_score = calculated_score
 
@@ -512,20 +515,51 @@ def calculate_contact_score_and_handoff(
         # Atualiza pontuação do contato
         cur.execute("UPDATE contacts SET score = ? WHERE id = ?", (final_score, contact_id))
 
-        # 4. Persiste embedding semântico na tabela semantic_embeddings
+        # 3b. Registra transição na tabela scoring_history
+        hist_id = f"sh-{uuid.uuid4().hex[:10]}"
+        trigger_reason = ", ".join(interactions) if interactions else "recalculo_icp"
+        cur.execute("""
+            INSERT INTO scoring_history (
+                id, account_id, contact_id, previous_score, new_score,
+                icp_fit_score, engagement_score, tier, trigger_reason
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            hist_id,
+            account_id,
+            contact_id,
+            previous_score,
+            final_score,
+            icp_total,
+            eng_total,
+            tier,
+            trigger_reason,
+        ))
+
+        # 4. Persiste embedding semântico real (compute_semantic_embedding) na tabela semantic_embeddings
+        content_chunk = (
+            f"Lead Odontológico: {c.get('name')} | Especialidade: {c.get('specialty')} | "
+            f"Modelo: {c.get('work_model')} | Volume: {c.get('monthly_implants_volume')} | "
+            f"CRO: {c.get('cro')}-{c.get('cro_uf')} | Score: {final_score}"
+        )
+        vector = compute_semantic_embedding(content_chunk)
         cur.execute(
             "SELECT id FROM semantic_embeddings WHERE entity_id = ? AND entity_type = 'contact'",
             (str(contact_id),)
         )
         existing_emb = cur.fetchone()
-        if not existing_emb:
+        if existing_emb:
+            cur.execute("""
+                UPDATE semantic_embeddings
+                SET content_chunk = ?, embedding = ?, metadata_json = ?
+                WHERE id = ?
+            """, (
+                content_chunk,
+                json.dumps(vector),
+                json.dumps({"score": final_score, "tier": tier, "contact_id": contact_id}),
+                existing_emb["id"],
+            ))
+        else:
             emb_id = str(uuid.uuid4())
-            content_chunk = (
-                f"Lead Odontológico: {c.get('name')} | Especialidade: {c.get('specialty')} | "
-                f"Modelo: {c.get('work_model')} | Volume: {c.get('monthly_implants_volume')} | "
-                f"CRO: {c.get('cro')}-{c.get('cro_uf')} | Score: {final_score}"
-            )
-            vector = [(float(ord(char)) / 255.0) for char in (content_chunk[:128].ljust(128, '0'))]
             cur.execute("""
                 INSERT INTO semantic_embeddings (id, tenant_id, entity_type, entity_id, content_chunk, embedding, metadata_json)
                 VALUES (?, ?, 'contact', ?, ?, ?, ?)
@@ -541,6 +575,20 @@ def calculate_contact_score_and_handoff(
         # 5. Handoff comercial automático (Score >= 75 -> Estágio 101 Qualificação & SDR)
         deal_created = False
         deal_id = None
+        assigned_owner_id = c.get("field_owner_id") or c.get("owner_id")
+        if not assigned_owner_id:
+            cur.execute("SELECT id FROM users WHERE account_id = ? ORDER BY created_at ASC LIMIT 1", (account_id,))
+            u_row = cur.fetchone()
+            assigned_owner_id = u_row["id"] if u_row else "usr-superadmin-god"
+        assigned_inside_id = c.get("inside_owner_id") or assigned_owner_id
+        executive_summary = (
+            f"Briefing Técnico MQL ({tier} - {final_score} pts): "
+            f"Cirurgião {c.get('name')} ({c.get('cro') or c.get('cro_uf') or 'CRO Validado'}), "
+            f"Especialidade: {c.get('specialty') or 'Implantodontia'}, "
+            f"Volume Mensal: {c.get('monthly_implants_volume') or '> 20/mês'}, "
+            f"ICP Fit: {icp_total}/100 | Engajamento: {eng_total}/100 ({trigger_reason})."
+        )
+
         if final_score >= 75:
             contact_name = c.get("name") or f"Contato #{contact_id}"
             cur.execute("""
@@ -552,23 +600,51 @@ def calculate_contact_score_and_handoff(
             if d_row:
                 deal_id = d_row["id"]
                 deal_created = False
+                cur.execute("""
+                    UPDATE deals
+                    SET owner_id = COALESCE(owner_id, ?),
+                        field_owner_id = COALESCE(field_owner_id, ?),
+                        inside_owner_id = COALESCE(inside_owner_id, ?),
+                        executive_summary = COALESCE(executive_summary, ?)
+                    WHERE id = ?
+                """, (assigned_owner_id, assigned_owner_id, assigned_inside_id, executive_summary, deal_id))
             else:
                 deal_id = f"deal-lead-{contact_id}"
                 deal_title = f"Oportunidade - {contact_name} (Lead Scoring MQL)"
                 company_name = c.get("company") or f"Consultório {contact_name}"
                 cur.execute("""
-                    INSERT INTO deals (id, account_id, pipeline_id, stage_id, title, value, company, contact_name, priority)
-                    VALUES (?, ?, 1, 101, ?, 18000.0, ?, ?, 'alta')
-                """, (deal_id, account_id, deal_title, company_name, contact_name))
+                    INSERT INTO deals (
+                        id, account_id, pipeline_id, stage_id, title, value,
+                        company, contact_name, priority, owner_id, field_owner_id,
+                        inside_owner_id, executive_summary
+                    )
+                    VALUES (?, ?, 1, 101, ?, 18000.0, ?, ?, 'alta', ?, ?, ?, ?)
+                """, (
+                    deal_id,
+                    account_id,
+                    deal_title,
+                    company_name,
+                    contact_name,
+                    assigned_owner_id,
+                    assigned_owner_id,
+                    assigned_inside_id,
+                    executive_summary,
+                ))
                 deal_created = True
 
         conn.commit()
         return {
             "score": final_score,
+            "previous_score": previous_score,
+            "icp_fit_score": icp_total,
+            "engagement_score": eng_total,
             "tier": tier,
             "deal_created": deal_created,
-            "deal_id": deal_id
+            "deal_id": deal_id,
+            "owner_id": assigned_owner_id,
+            "executive_summary": executive_summary if final_score >= 75 else None,
         }
     finally:
         conn.close()
+
 

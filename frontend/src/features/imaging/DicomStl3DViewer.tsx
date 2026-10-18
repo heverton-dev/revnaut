@@ -267,22 +267,22 @@ export const DicomStl3DViewer: React.FC<DicomStl3DViewerProps> = ({
               {/* Contorno Anatômico da Crista Óssea Alveolar */}
               <path
                 d="M 50 250 C 70 120, 100 80, 150 80 C 200 80, 230 120, 250 250 Z"
-                fill="#1e293b"
-                stroke="#475569"
+                fill="var(--color-bg-elevated)"
+                stroke="var(--color-border-subtle)"
                 strokeWidth="2"
               />
               {/* Camada Cortical vs Medular */}
               <path
                 d="M 75 250 C 90 140, 115 110, 150 110 C 185 110, 210 140, 225 250 Z"
-                fill="#0f172a"
-                stroke="#334155"
+                fill="var(--color-bg-secondary)"
+                stroke="var(--color-border-subtle)"
                 strokeWidth="1.5"
                 strokeDasharray="4 2"
               />
 
               {/* Canal Mandibular / Seio Maxilar */}
-              <circle cx="150" cy="220" r="14" fill="#020617" stroke="#e11d48" strokeWidth="1.5" />
-              <text x="150" y="224" textAnchor="middle" fill="#f43f5e" fontSize="9" fontFamily="monospace">N. ALV</text>
+              <circle cx="150" cy="220" r="14" fill="var(--color-bg-primary)" stroke="var(--color-status-error)" strokeWidth="1.5" />
+              <text x="150" y="224" textAnchor="middle" fill="var(--color-status-error)" fontSize="9" fontFamily="monospace">N. ALV</text>
 
               {/* Projeção do Implante Cirúrgico Guiado */}
               {showImplantGuide && (
@@ -294,19 +294,19 @@ export const DicomStl3DViewer: React.FC<DicomStl3DViewerProps> = ({
                     width={selectedDiameter * 3.5}
                     height="85"
                     rx="3"
-                    fill="#0284c7"
+                    fill="var(--color-brand-primary)"
                     fillOpacity="0.75"
-                    stroke="#38bdf8"
+                    stroke="var(--color-brand-accent)"
                     strokeWidth="1.5"
                   />
                   {/* Roscas Protéticas Micro-estruturadas */}
-                  <line x1={150 - (selectedDiameter * 3.5) / 2} y1="95" x2={150 + (selectedDiameter * 3.5) / 2} y2="95" stroke="#bae6fd" strokeWidth="1" />
-                  <line x1={150 - (selectedDiameter * 3.5) / 2} y1="115" x2={150 + (selectedDiameter * 3.5) / 2} y2="115" stroke="#bae6fd" strokeWidth="1" />
-                  <line x1={150 - (selectedDiameter * 3.5) / 2} y1="135" x2={150 + (selectedDiameter * 3.5) / 2} y2="135" stroke="#bae6fd" strokeWidth="1" />
+                  <line x1={150 - (selectedDiameter * 3.5) / 2} y1="95" x2={150 + (selectedDiameter * 3.5) / 2} y2="95" stroke="var(--color-text-secondary)" strokeWidth="1" />
+                  <line x1={150 - (selectedDiameter * 3.5) / 2} y1="115" x2={150 + (selectedDiameter * 3.5) / 2} y2="115" stroke="var(--color-text-secondary)" strokeWidth="1" />
+                  <line x1={150 - (selectedDiameter * 3.5) / 2} y1="135" x2={150 + (selectedDiameter * 3.5) / 2} y2="135" stroke="var(--color-text-secondary)" strokeWidth="1" />
 
                   {/* Margem de Segurança Cirúrgica (Buffer de 2mm até o Nervo) */}
-                  <line x1="150" y1="160" x2="150" y2="206" stroke="#fbbf24" strokeWidth="1.5" strokeDasharray="3 3" />
-                  <text x="160" y="185" fill="#f59e0b" fontSize="9" fontFamily="monospace">Segurança: 4.8mm</text>
+                  <line x1="150" y1="160" x2="150" y2="206" stroke="var(--color-status-warning)" strokeWidth="1.5" strokeDasharray="3 3" />
+                  <text x="160" y="185" fill="var(--color-status-warning)" fontSize="9" fontFamily="monospace">Segurança: 4.8mm</text>
                 </g>
               )}
             </svg>

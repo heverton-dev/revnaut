@@ -130,6 +130,24 @@ def dispatch_consignment_custody(
     conn = get_connection()
     try:
         cur = conn.cursor()
+        # 2. Auditoria de Quarentena / Recall ANVISA por lote
+        for item in items:
+            batch_number = (item.get("batch_number") or "").strip()
+            if batch_number:
+                cur.execute(
+                    """
+                    SELECT status, reason FROM anvisa_batch_quarantines
+                    WHERE batch_number = ? AND (account_id = ? OR account_id = '0f14ffff')
+                    LIMIT 1
+                    """,
+                    (batch_number, account_id),
+                )
+                q_row = cur.fetchone()
+                if q_row and q_row["status"] == "QUARANTINE_BLOCKED":
+                    raise ValueError(
+                        f"Lote {batch_number} bloqueado por quarentena sanitária ANVISA: {q_row['reason'] or 'Recall ativo'}"
+                    )
+
         cur.execute("SELECT * FROM kp_partner_agreements WHERE id = ? AND account_id = ?", (agreement_id, account_id))
         agr = cur.fetchone()
         if not agr:
@@ -193,7 +211,7 @@ def dispatch_consignment_custody(
 
 
 def get_partner_custody_summary(agreement_id: str, account_id: str = "0f14ffff") -> Dict[str, Any]:
-    """Retorna saldo consolidado e extrato de itens em posse da clínica."""
+    """Retorna saldo líquido consolidado e extrato de itens em posse da clínica."""
     init_db()
     conn = get_connection()
     try:
@@ -213,8 +231,14 @@ def get_partner_custody_summary(agreement_id: str, account_id: str = "0f14ffff")
         """, (agreement_id, account_id))
         ledger_rows = [dict(r) for r in cur.fetchall()]
 
-        total_value = sum(float(r["total_value"]) for r in ledger_rows if r["movement_type"] == "REMESSA")
-        total_items = sum(int(r["quantity"]) for r in ledger_rows if r["movement_type"] == "REMESSA")
+        deduct_types = {"CONSUMO_CIRURGICO", "DEVOLUCAO_INTACTA", "EXTRAVIO"}
+        remitted_val = sum(float(r["total_value"]) for r in ledger_rows if r["movement_type"] == "REMESSA")
+        deducted_val = sum(float(r["total_value"]) for r in ledger_rows if r["movement_type"] in deduct_types)
+        remitted_qty = sum(int(r["quantity"]) for r in ledger_rows if r["movement_type"] == "REMESSA")
+        deducted_qty = sum(int(r["quantity"]) for r in ledger_rows if r["movement_type"] in deduct_types)
+
+        total_value = max(0.0, remitted_val - deducted_val)
+        total_items = max(0, remitted_qty - deducted_qty)
         credit_limit = float(agr["credit_limit"])
         used_credit = float(agr["used_credit"])
 

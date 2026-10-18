@@ -20,7 +20,21 @@ import urllib.error
 from fastapi import HTTPException
 
 from src.core.database import get_connection, init_db
-from src.core.events import EventBus, StreamName
+from src.core.events import EventBus, StreamName, default_event_bus
+from src.core.security import encrypt_secret, decrypt_secret
+
+
+def _resolve_plaintext_secret(raw_secret: Optional[str], encrypted_col: Optional[str] = None) -> str:
+    """Descriptografa segredo em repouso (AES-256-GCM) ou retorna plaintext legado."""
+    candidate = encrypted_col or raw_secret or ""
+    if not candidate:
+        return ""
+    if candidate.startswith("whsec_"):
+        return candidate
+    try:
+        return decrypt_secret(candidate)
+    except Exception:
+        return raw_secret or candidate
 
 
 class SSRFSecurityException(HTTPException):
@@ -117,13 +131,14 @@ class OutboundWebhookDispatcher:
         signing_secret: Optional[str] = None,
         account_id: str = "0f14ffff",
     ) -> Dict[str, Any]:
-        """Cadastra um novo listener/assinatura de webhook outbound com validação SSRF."""
+        """Cadastra um novo listener/assinatura de webhook outbound com validação SSRF e segredo AES-256-GCM em repouso."""
         validate_target_url_safe(target_url)
         init_db()
 
         sub_id = f"sub-{uuid.uuid4().hex[:10]}"
         events = subscribed_events if (subscribed_events and len(subscribed_events) > 0) else ["*"]
         secret = signing_secret or f"whsec_{uuid.uuid4().hex}{uuid.uuid4().hex[:8]}"
+        encrypted_secret = encrypt_secret(secret)
 
         conn = get_connection()
         try:
@@ -131,29 +146,28 @@ class OutboundWebhookDispatcher:
             cur.execute("""
                 INSERT INTO webhook_subscriptions (
                     id, account_id, name, target_url, subscribed_events_json,
-                    signing_secret, is_active, consecutive_failures, circuit_breaker_tripped
-                ) VALUES (?, ?, ?, ?, ?, ?, 1, 0, 0)
+                    signing_secret, signing_secret_encrypted, is_active, consecutive_failures, circuit_breaker_tripped
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, 1, 0, 0)
             """, (
                 sub_id, account_id, name, target_url, json.dumps(events),
-                secret
+                encrypted_secret, encrypted_secret
             ))
             conn.commit()
         finally:
             conn.close()
 
         # Telemetria no EventBus
-        try:
-            EventBus.publish_sync(
-                StreamName.AUDIT,
-                {
-                    "event": "webhooks.subscription_created",
-                    "subscription_id": sub_id,
-                    "account_id": account_id,
-                    "target_url": target_url,
-                }
-            )
-        except Exception:
-            pass
+        default_event_bus.publish_sync(
+            stream=StreamName.AUDIT,
+            event_type="webhooks.subscription_created",
+            account_id=account_id,
+            payload={
+                "event": "webhooks.subscription_created",
+                "subscription_id": sub_id,
+                "account_id": account_id,
+                "target_url": target_url,
+            },
+        )
 
         return {
             "id": sub_id,
@@ -162,6 +176,7 @@ class OutboundWebhookDispatcher:
             "target_url": target_url,
             "subscribed_events": events,
             "signing_secret": secret,
+            "signing_secret_encrypted": encrypted_secret,
             "is_active": True,
             "consecutive_failures": 0,
             "circuit_breaker_tripped": False,
@@ -175,7 +190,7 @@ class OutboundWebhookDispatcher:
             cur = conn.cursor()
             cur.execute("""
                 SELECT id, account_id, name, target_url, subscribed_events_json,
-                       signing_secret, is_active, consecutive_failures, circuit_breaker_tripped,
+                       signing_secret, signing_secret_encrypted, is_active, consecutive_failures, circuit_breaker_tripped,
                        created_at
                 FROM webhook_subscriptions
                 WHERE account_id = ?
@@ -186,6 +201,7 @@ class OutboundWebhookDispatcher:
             for r in rows:
                 d = dict(r)
                 d["subscribed_events"] = json.loads(d["subscribed_events_json"])
+                d["signing_secret"] = _resolve_plaintext_secret(d.get("signing_secret"), d.get("signing_secret_encrypted"))
                 d["is_active"] = bool(d["is_active"])
                 d["circuit_breaker_tripped"] = bool(d["circuit_breaker_tripped"])
                 del d["subscribed_events_json"]
@@ -202,7 +218,7 @@ class OutboundWebhookDispatcher:
             cur = conn.cursor()
             cur.execute("""
                 SELECT id, account_id, name, target_url, subscribed_events_json,
-                       signing_secret, is_active, consecutive_failures, circuit_breaker_tripped,
+                       signing_secret, signing_secret_encrypted, is_active, consecutive_failures, circuit_breaker_tripped,
                        created_at
                 FROM webhook_subscriptions
                 WHERE id = ?
@@ -218,6 +234,7 @@ class OutboundWebhookDispatcher:
 
         d = dict(row)
         d["subscribed_events"] = json.loads(d["subscribed_events_json"])
+        d["signing_secret"] = _resolve_plaintext_secret(d.get("signing_secret"), d.get("signing_secret_encrypted"))
         d["is_active"] = bool(d["is_active"])
         d["circuit_breaker_tripped"] = bool(d["circuit_breaker_tripped"])
         del d["subscribed_events_json"]
@@ -287,7 +304,11 @@ class OutboundWebhookDispatcher:
             "data": payload_data,
         }
         body_bytes = json.dumps(full_envelope, ensure_ascii=False, sort_keys=True).encode("utf-8")
-        signature_header = compute_hmac_signature(subscription["signing_secret"], body_bytes)
+        plaintext_secret = _resolve_plaintext_secret(
+            subscription.get("signing_secret"),
+            subscription.get("signing_secret_encrypted"),
+        )
+        signature_header = compute_hmac_signature(plaintext_secret, body_bytes)
 
         start_time = time.perf_counter()
         status_code = None

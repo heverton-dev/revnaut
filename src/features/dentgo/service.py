@@ -11,7 +11,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 from src.core.database import get_connection, init_db
-from src.features.contacts.cro_validator import validate_cro_syntax
+from src.features.contacts.cro_validator import validate_cro_syntax, verify_cro_status
 
 
 def haversine_distance_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -169,11 +169,16 @@ def search_emergency_supply(
             if dist > max_radius:
                 continue
 
-            # Verifica estoque no hub
+            # Verifica estoque no hub (excluindo lotes bloqueados pela ANVISA ou indisponíveis)
             cur.execute("""
                 SELECT * FROM dentgo_hub_inventory
                 WHERE hub_id = ? AND product_id = ? AND quantity_available >= ? AND account_id = ?
-            """, (hub["id"], product_id, required_qty, account_id))
+                  AND COALESCE(status, 'AVAILABLE') = 'AVAILABLE'
+                  AND batch_number NOT IN (
+                      SELECT batch_number FROM anvisa_batch_quarantines
+                      WHERE status = 'QUARANTINE_BLOCKED' AND (account_id = ? OR account_id = '0f14ffff')
+                  )
+            """, (hub["id"], product_id, required_qty, account_id, account_id))
             inv_row = cur.fetchone()
             if not inv_row:
                 continue
@@ -210,16 +215,17 @@ def create_express_order(
     delivery_lat: float,
     delivery_lng: float,
     items: List[Dict[str, Any]],
-    account_id: str = "0f14ffff"
+    account_id: str = "0f14ffff",
+    voucher_code: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Cria pedido cirúrgico express com bloqueio estrito de CRO para implantes
-    e decremento atômico de estoque no Hub mais próximo.
+    e decremento atômico de estoque para todos os itens no Hub mais próximo.
     """
     init_db()
-    # 1. Validação sanitária de CRO
-    cro_check = validate_cro_syntax(customer_cro_uf)
-    if not cro_check.get("is_valid", False):
+    # 1. Validação sanitária e status ativo de CRO
+    cro_check = verify_cro_status(customer_cro_uf)
+    if not cro_check.get("is_valid", False) or not cro_check.get("verified", False) or cro_check.get("status") != "ATIVO":
         raise ValueError("Checkout bloqueado: Exige validação ativa de CRO para aquisição de dispositivos implantáveis")
 
     if not items:
@@ -243,10 +249,7 @@ def create_express_order(
 
     best_match = hubs_found[0]
     hub_id = best_match["hub_id"]
-    unit_price = best_match["unit_price"]
-    subtotal = unit_price * p_qty
-    urgency_fee = best_match["urgency_fee"]
-    total_amount = round(subtotal + urgency_fee, 2)
+    urgency_fee = 0.0 if (voucher_code and str(voucher_code).strip()) else float(best_match["urgency_fee"])
     distance_km = best_match["distance_km"]
     eta = best_match["estimated_eta_minutes"]
 
@@ -255,12 +258,44 @@ def create_express_order(
         cur = conn.cursor()
         order_id = f"dord-{uuid.uuid4().hex[:8]}"
 
-        # Decrementa o estoque no Hub
-        cur.execute("""
-            UPDATE dentgo_hub_inventory
-            SET quantity_available = quantity_available - ?
-            WHERE hub_id = ? AND product_id = ? AND account_id = ?
-        """, (p_qty, hub_id, p_id, account_id))
+        subtotal = 0.0
+        for item in items:
+            item_prod_id = item["product_id"]
+            item_qty = int(item.get("quantity", 1))
+            cur.execute("""
+                SELECT id, unit_price, quantity_available, batch_number, COALESCE(status, 'AVAILABLE') AS status
+                FROM dentgo_hub_inventory
+                WHERE hub_id = ? AND product_id = ? AND account_id = ?
+                ORDER BY quantity_available DESC
+                LIMIT 1
+            """, (hub_id, item_prod_id, account_id))
+            inv_row = cur.fetchone()
+            if not inv_row:
+                raise ValueError(f"Produto {item_prod_id} sem saldo disponível no Hub {hub_id}")
+
+            if inv_row["status"] != "AVAILABLE" or int(inv_row["quantity_available"]) < item_qty:
+                raise ValueError(f"Estoque insuficiente ou bloqueado para o item {item_prod_id} no Hub {hub_id}")
+
+            cur.execute("""
+                SELECT status FROM anvisa_batch_quarantines
+                WHERE batch_number = ? AND status = 'QUARANTINE_BLOCKED'
+                  AND (account_id = ? OR account_id = '0f14ffff')
+                LIMIT 1
+            """, (inv_row["batch_number"], account_id))
+            if cur.fetchone():
+                raise ValueError(f"Lote {inv_row['batch_number']} bloqueado por quarentena sanitária ANVISA")
+
+            item_unit_price = float(inv_row["unit_price"])
+            subtotal += item_unit_price * item_qty
+
+            cur.execute("""
+                UPDATE dentgo_hub_inventory
+                SET quantity_available = quantity_available - ?
+                WHERE id = ?
+            """, (item_qty, inv_row["id"]))
+
+        subtotal = round(subtotal, 2)
+        total_amount = round(subtotal + urgency_fee, 2)
 
         items_json = json.dumps(items, ensure_ascii=False)
         cur.execute("""
@@ -294,6 +329,18 @@ def get_order(order_id: str, account_id: str = "0f14ffff") -> Dict[str, Any]:
         if not row:
             raise ValueError(f"Pedido {order_id} não encontrado")
         return dict(row)
+    finally:
+        conn.close()
+
+
+def list_orders(account_id: str = "0f14ffff") -> List[Dict[str, Any]]:
+    """Lista todos os pedidos express do tenant."""
+    init_db()
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM dentgo_orders WHERE account_id = ? ORDER BY created_at DESC", (account_id,))
+        return [dict(r) for r in cur.fetchall()]
     finally:
         conn.close()
 

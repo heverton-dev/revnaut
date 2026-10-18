@@ -5,10 +5,12 @@ Gestão de Key Opinion Leaders, Embaixadores, Ativos em Comodato e Auditoria de 
 """
 
 from __future__ import annotations
+from datetime import datetime, timezone
 import json
 import uuid
 from typing import Any, Dict, List, Optional
 from src.core.database import get_connection, init_db
+from src.core.storage import R2StorageClient
 
 
 def create_kol_contract(
@@ -116,6 +118,16 @@ def submit_clinical_evidence(
 ) -> Dict[str, Any]:
     """Armazena caso clínico / vídeo de palestra submetido pelo embaixador no Cloudflare R2."""
     init_db()
+    clean_key = (r2_key or "").strip().lstrip("/")
+    if not clean_key:
+        raise ValueError("Chave R2 da evidência clínica é obrigatória")
+
+    # Valida isolamento multi-tenant caso a chave possua prefixo explícito de outro tenant
+    if "/" in clean_key:
+        first_seg = clean_key.split("/", 1)[0]
+        if first_seg.startswith("tenant_") or (len(first_seg) == 8 and first_seg != account_id and all(c in "0123456789abcdef" for c in first_seg.lower())):
+            raise ValueError(f"Violação de isolamento multi-tenant na chave R2: {clean_key}")
+
     conn = get_connection()
     try:
         cur = conn.cursor()
@@ -130,9 +142,9 @@ def submit_clinical_evidence(
             evidences = []
 
         evidences.append({
-            "r2_key": r2_key,
+            "r2_key": clean_key,
             "title": title,
-            "submitted_at": "2026-10-18T00:00:00Z"
+            "submitted_at": datetime.now(timezone.utc).isoformat()
         })
 
         new_json = json.dumps(evidences, ensure_ascii=False)

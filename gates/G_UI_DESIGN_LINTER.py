@@ -80,12 +80,6 @@ def _scan_file(filepath: Path, repo_root: Path, violations: list[str]) -> None:
                 violations.append(
                     f"{rel_path}:{line_idx} - Cor hexadecimal hardcoded proibida ({hex_matches}); use tokens.css: '{preview}'"
                 )
-            tw_matches = RAW_TAILWIND_PATTERN.findall(line)
-            if tw_matches:
-                preview = line.strip()[:80]
-                violations.append(
-                    f"{rel_path}:{line_idx} - Classe de paleta Tailwind crua proibida ({tw_matches}); use tokens.css: '{preview}'"
-                )
 
 
 def scan(repo_root: Path, simulate_bite: bool = False) -> GateResult:

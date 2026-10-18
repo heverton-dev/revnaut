@@ -9,7 +9,9 @@ import json
 import uuid
 from typing import Any, Dict, List, Optional
 from src.core.database import get_connection, init_db
+from src.core.events import StreamName, default_event_bus
 from src.features.keypartners import service as kp_service
+from src.features.dentgo import keypartners_synergy
 
 
 def create_surgical_request(
@@ -188,19 +190,42 @@ def report_surgical_postop(
         """, (consumed_json, seal_photo_r2_key, billing_order_id, order_id))
 
         conn.commit()
-
-        return {
-            "status": "FATURADO_E_REPOSTO",
-            "order_id": order_id,
-            "agreement_id": agreement_id,
-            "billed_amount": billed_amount,
-            "cfop": "5.113",
-            "consumed_units": consumed_total_qty,
-            "retained_units": retained_units,
-            "billing_order_id": billing_order_id,
-        }
     finally:
         conn.close()
+
+    postop_payload = {
+        "status": "FATURADO_E_REPOSTO",
+        "order_id": order_id,
+        "agreement_id": agreement_id,
+        "billed_amount": billed_amount,
+        "cfop": "5.113",
+        "consumed_units": consumed_total_qty,
+        "retained_units": retained_units,
+        "billing_order_id": billing_order_id,
+    }
+
+    # Publica evento keypartners.postop_reported no barramento
+    default_event_bus.publish_sync(
+        stream=StreamName.KEYPARTNERS,
+        event_type="keypartners.postop_reported",
+        account_id=account_id,
+        payload=postop_payload,
+    )
+
+    # Dispara reposição cirúrgica automática via DENTGO
+    try:
+        repl_res = keypartners_synergy.trigger_automatic_replenishment_on_postop(
+            postop_event=postop_payload,
+            delivery_lat=-23.5615,
+            delivery_lng=-46.6560,
+            delivery_address=f"Reposição Pós-Cirúrgica Acordo {agreement_id}",
+            account_id=account_id,
+        )
+        postop_payload["replenishment_order_id"] = repl_res.get("replenishment_order_id")
+    except Exception:
+        pass
+
+    return postop_payload
 
 
 def get_surgical_order(order_id: str, account_id: str = "0f14ffff") -> Dict[str, Any]:
@@ -214,5 +239,20 @@ def get_surgical_order(order_id: str, account_id: str = "0f14ffff") -> Dict[str,
         if not order:
             raise ValueError(f"Ordem cirúrgica {order_id} não encontrada")
         return dict(order)
+    finally:
+        conn.close()
+
+
+def list_surgical_orders(account_id: str = "0f14ffff") -> List[Dict[str, Any]]:
+    """Lista todas as ordens cirúrgicas do tenant."""
+    init_db()
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT * FROM kp_surgical_orders WHERE account_id = ? ORDER BY created_at DESC",
+            (account_id,),
+        )
+        return [dict(r) for r in cur.fetchall()]
     finally:
         conn.close()

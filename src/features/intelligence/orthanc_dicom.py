@@ -301,3 +301,18 @@ class OrthancDicomClient:
             return result
         finally:
             conn.close()
+
+    def sync_orthanc_study_http(self, orthanc_study_id: str) -> Dict[str, Any]:
+        """Consulta metadados DICOM diretamente na API REST do servidor Orthanc quando not self.mock_mode."""
+        if not self.mock_mode:
+            import httpx
+            url = f"{self.orthanc_url.rstrip('/')}/studies/{orthanc_study_id}"
+            resp = httpx.get(url, timeout=10.0)
+            resp.raise_for_status()
+            return resp.json()
+        return {
+            "ID": orthanc_study_id,
+            "IsStable": True,
+            "MainDicomTags": {"Modality": "CT", "StudyDescription": "CBCT Dental 3D"},
+        }
+

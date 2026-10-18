@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from src.core.database import get_connection, init_db
+from src.features.contacts.cro_validator import validate_cro_syntax
 from src.features.keypartners import loyalty_engine
 
 
@@ -92,6 +93,10 @@ def register_referral_lead(
     Valida prevenção contra auto-indicação e acelera o lead score em +40 pontos.
     """
     init_db()
+    cro_check = validate_cro_syntax(referred_cro_uf)
+    if not cro_check.get("is_valid"):
+        raise ValueError(f"CRO inválido para indicação B2B: '{referred_cro_uf}'.")
+
     conn = get_connection()
     try:
         cur = conn.cursor()
@@ -117,14 +122,15 @@ def register_referral_lead(
             contact_id = str(contact_row["id"])
             cur.execute("""
                 UPDATE contacts
-                SET tags = '["origem_indicacao_kol"]'
+                SET tags = '["origem_indicacao_kol"]',
+                    score = MIN(100, COALESCE(score, 10) + 40)
                 WHERE id = ?
             """, (contact_id,))
         else:
             cur.execute("""
                 INSERT INTO contacts (
-                    account_id, name, email, phone, cro_uf, tags
-                ) VALUES (?, ?, ?, ?, ?, '["origem_indicacao_kol"]')
+                    account_id, name, email, phone, cro_uf, tags, score
+                ) VALUES (?, ?, ?, ?, ?, '["origem_indicacao_kol"]', 50)
             """, (
                 account_id,
                 referred_name,

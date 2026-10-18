@@ -244,3 +244,25 @@ def list_webhook_delivery_logs(
         "total": len(logs)
     }
 
+
+from fastapi import HTTPException
+from src.features.campaigns.listmonk_adapter import process_listmonk_webhook_event
+
+
+@router.post(
+    "/api/v1/webhooks/listmonk",
+    response_model=dict,
+    summary="Webhook Listmonk para eventos de bounce, open e click"
+)
+@router.post(
+    "/api/v1/webhooks/listmonk/events",
+    response_model=dict,
+    summary="Webhook Listmonk para eventos de bounce, open e click (alias)"
+)
+def listmonk_webhook_endpoint(payload: dict):
+    try:
+        return process_listmonk_webhook_event(payload)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+

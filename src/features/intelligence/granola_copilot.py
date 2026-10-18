@@ -5,12 +5,59 @@ Extração cognitiva estruturada com LiteLLM e auto-preenchimento determinístic
 """
 
 from __future__ import annotations
+import json
 import os
 import re
 import uuid
 from typing import Any, Dict, List, Optional
+import httpx
 from src.core.database import get_connection
 from src.features.intelligence.schemas import MeetingIntelligenceExtraction
+
+
+def _call_llm_structured_extraction(transcription_text: str) -> Optional[MeetingIntelligenceExtraction]:
+    api_key = os.getenv("LITELLM_API_KEY") or os.getenv("OPENAI_API_KEY")
+    base_url = (
+        os.getenv("LITELLM_BASE_URL")
+        or os.getenv("OPENAI_BASE_URL")
+        or os.getenv("OLLAMA_BASE_URL")
+    )
+    if not api_key and not base_url:
+        return None
+
+    endpoint = f"{(base_url or 'https://api.openai.com/v1').rstrip('/')}/chat/completions"
+    headers = {"Content-Type": "application/json"}
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+
+    prompt = (
+        "Extraia os dados estruturados da reunião comercial odontológica em JSON estrito com as chaves: "
+        "executive_summary (str), implant_systems_mentioned (list[str]), competitors_cited (list[str]), "
+        "objections_raised (list[dict com category, objection_text, suggested_counter_argument]), "
+        "next_steps_tasks (list[dict com title, due_date, assignee, priority]), "
+        "suggested_deal_value (float|null), suggested_probability (int).\n\n"
+        f"Transcrição:\n{transcription_text}"
+    )
+
+    try:
+        with httpx.Client(timeout=10.0) as client:
+            resp = client.post(
+                endpoint,
+                headers=headers,
+                json={
+                    "model": os.getenv("LITELLM_MODEL", "gpt-4o-mini"),
+                    "messages": [{"role": "user", "content": prompt}],
+                    "response_format": {"type": "json_object"},
+                    "temperature": 0.0,
+                },
+            )
+            if resp.status_code == 200:
+                content = resp.json()["choices"][0]["message"]["content"]
+                parsed = json.loads(content)
+                return MeetingIntelligenceExtraction(**parsed)
+    except Exception:
+        return None
+    return None
 
 
 def extract_meeting_intelligence(
@@ -19,73 +66,120 @@ def extract_meeting_intelligence(
     account_id: str = "0f14ffff"
 ) -> MeetingIntelligenceExtraction:
     """
-    Submete a transcrição comercial odontológica para extração estruturada de inteligência:
-    resumo executivo, sistemas de implantes citados, objeções levantadas, tarefas de follow-up
-    e estimativa de valor da oportunidade.
+    Submete a transcrição comercial odontológica para extração estruturada de inteligência
+    via LiteLLM/OpenAI (quando configurado) ou extrator NLP determinístico generalizado.
     """
+    llm_result = _call_llm_structured_extraction(transcription_text)
+    if llm_result is not None:
+        return llm_result
+
     text_lower = transcription_text.lower()
 
-    # 1. Detecção de Sistemas de Implante
+    # 1. Detecção de Sistemas de Implante e Kits
     implant_systems: List[str] = []
-    if "cone morse" in text_lower:
-        implant_systems.append("Cone Morse")
-    if "hexágono externo" in text_lower or "he" in text_lower:
-        implant_systems.append("Hexágono Externo")
-    if "hexágono interno" in text_lower or "hi" in text_lower:
-        implant_systems.append("Hexágono Interno")
-    if "zigomático" in text_lower:
-        implant_systems.append("Zigomático")
+    system_patterns = [
+        (r"cone\s+morse", "Cone Morse"),
+        (r"hex[áa]gono\s+externo|\bhe\b", "Hexágono Externo"),
+        (r"hex[áa]gono\s+interno|\bhi\b", "Hexágono Interno"),
+        (r"zigom[áa]tico", "Zigomático"),
+        (r"grand\s+morse|\bgm\b", "Grand Morse"),
+        (r"cirurgia\s+guiada|kit\s+guiado", "Kit Cirurgia Guiada"),
+        (r"biomaterial|enxerto", "Biomaterial Ósseo"),
+    ]
+    for pattern, label in system_patterns:
+        if re.search(pattern, text_lower) and label not in implant_systems:
+            implant_systems.append(label)
     if not implant_systems:
         implant_systems.append("Cone Morse Universal")
 
     # 2. Detecção de Concorrentes Citados
     competitors: List[str] = []
-    for comp in ["neodent", "straumann", "sin", "implacil", "dsp", "bicon"]:
-        if comp in text_lower:
-            competitors.append(comp.capitalize())
+    known_competitors = [
+        "neodent", "straumann", "sin", "implacil", "dsp", "bicon",
+        "zimmer", "nobel", "biomax", "titaniumfix", "conexao", "conexão"
+    ]
+    for comp in known_competitors:
+        if re.search(rf"\b{comp}\b", text_lower):
+            comp_norm = comp.capitalize()
+            if comp_norm not in competitors:
+                competitors.append(comp_norm)
 
-    # 3. Detecção de Objeções
+    # 3. Detecção Generalizada de Objeções (prazos arbitrários, preços, frete, estoque/lote)
     objections: List[Dict[str, str]] = []
-    if any(k in text_lower for k in ["prazo", "60 dias", "90 dias", "pagamento"]):
+    days_match = re.search(r"(\d+)\s*dias", text_lower)
+    if any(k in text_lower for k in ["prazo", "parcela", "boleto", "pagamento", "faturar"]) or days_match:
+        d_str = f"{days_match.group(1)} dias" if days_match else "60 dias"
         objections.append({
             "category": "prazo",
-            "objection_text": "Cirurgião solicitou prazo estendido de 60 dias para faturamento da remessa.",
-            "suggested_counter_argument": "Oferecer faturamento 30/60 dias condicionado a pedido mínimo de 20 unidades com chave de inserção bonificada."
+            "objection_text": f"Cirurgião solicitou condição de faturamento em {d_str}.",
+            "suggested_counter_argument": f"Oferecer faturamento escalonado ({d_str}) vinculado a volume mínimo ou contrato KeyPartners."
         })
-    if any(k in text_lower for k in ["caro", "desconto", "preço", "valor alto"]):
+    if any(k in text_lower for k in ["caro", "desconto", "preço", "preco", "valor alto", "custo", "tabela"]):
         objections.append({
             "category": "preco",
-            "objection_text": "Sensibilidade ao preço unitário por implante comparado ao concorrente.",
-            "suggested_counter_argument": "Demonstrar redução do custo global de cirurgia guiada e kit cirúrgico único."
+            "objection_text": "Sensibilidade ao preço unitário por implante/componente comparado à concorrência.",
+            "suggested_counter_argument": "Demonstrar bonificação de componentes protéticos e economia com kit cirúrgico único."
+        })
+    if any(k in text_lower for k in ["entrega", "urgência", "urgencia", "demora", "frete"]):
+        objections.append({
+            "category": "logistica",
+            "objection_text": "Preocupação com SLA de entrega para cirurgia agendada.",
+            "suggested_counter_argument": "Ativar entrega expressa DENTGO em até 2h a partir do Hub regional mais próximo."
         })
 
-    # 4. Cálculo de Quantidade e Valor Sugerido
+    # 4. Cálculo Generalizado de Quantidade, Preço Unitário e Valor Sugerido
     suggested_value: Optional[float] = None
-    qty_match = re.search(r"(\d+)\s+implantes", text_lower)
-    if qty_match:
-        qty = int(qty_match.group(1))
-        # Preço médio balcão R$ 450 por implante Cone Morse
-        suggested_value = float(qty * 450.0)
-    elif "20" in text_lower:
-        suggested_value = 9000.0
+    explicit_val_match = re.search(r"r\$\s*([\d\.]+(?:,\d{1,2})?)", text_lower)
+    unit_price = 450.0
+    unit_match = re.search(r"a\s*r\$\s*(\d+(?:[.,]\d{1,2})?)", text_lower)
+    if unit_match:
+        try:
+            unit_price = float(unit_match.group(1).replace(".", "").replace(",", "."))
+        except ValueError:
+            unit_price = 450.0
 
-    # 5. Detecção de Tarefas e Próximos Passos
+    qty_matches = re.findall(r"(\d+)\s+(?:implantes|unidades|caixas|kits|componentes)", text_lower)
+    if qty_matches:
+        total_qty = sum(int(q) for q in qty_matches)
+        suggested_value = float(total_qty * unit_price)
+    elif explicit_val_match:
+        try:
+            raw_v = explicit_val_match.group(1).replace(".", "").replace(",", ".")
+            suggested_value = float(raw_v)
+        except ValueError:
+            suggested_value = None
+
+    # 5. Detecção de Tarefas e Prazos
+    due = "Em 2 dias"
+    for pat, label in [
+        (r"sexta(?:-feira)?", "Sexta-feira"),
+        (r"segunda(?:-feira)?", "Segunda-feira"),
+        (r"ter[çc]a(?:-feira)?", "Terça-feira"),
+        (r"quarta(?:-feira)?", "Quarta-feira"),
+        (r"quinta(?:-feira)?", "Quinta-feira"),
+        (r"amanh[ãa]", "Amanhã"),
+        (r"hoje", "Hoje"),
+    ]:
+        if re.search(pat, text_lower):
+            due = label
+            break
+
     tasks: List[Dict[str, Any]] = []
-    if "sexta-feira" in text_lower or "sexta" in text_lower:
-        due = "Sexta-feira"
-    elif "amanhã" in text_lower:
-        due = "Amanhã"
-    else:
-        due = "Em 2 dias"
-
-    if any(k in text_lower for k in ["proposta", "enviar proposta", "fechar", "pedido"]):
+    if any(k in text_lower for k in ["proposta", "enviar proposta", "fechar", "pedido", "orçamento", "orcamento"]):
         tasks.append({
             "title": "Enviar proposta comercial formal e termo de faturamento",
             "due_date": due,
-            "assignee": "Consultor Comercial",
+            "assignee": "Inside Sales / Consultor Comercial",
             "priority": "alta"
         })
-    else:
+    if any(k in text_lower for k in ["visita", "presencial", "levar kit", "hands-on", "amostra"]):
+        tasks.append({
+            "title": "Agendar visita presencial com demonstração física do Kit Cirúrgico",
+            "due_date": due,
+            "assignee": "Consultor Field Sales",
+            "priority": "alta"
+        })
+    if not tasks:
         tasks.append({
             "title": "Follow-up de alinhamento clínico pós-reunião",
             "due_date": due,
@@ -93,11 +187,11 @@ def extract_meeting_intelligence(
             "priority": "media"
         })
 
-    # 6. Resumo Executivo
     summary = (
-        f"Alinhamento comercial com cirurgião. Interesse confirmado em implantes "
-        f"{', '.join(implant_systems)}. Objeções de {', '.join(o['category'] for o in objections) if objections else 'nenhuma'}. "
-        f"Próximo passo: envio de proposta com prazo alinhado para {due}."
+        f"Alinhamento comercial com cirurgião. Sistemas de interesse: {', '.join(implant_systems)}. "
+        f"Concorrentes citados: {', '.join(competitors) if competitors else 'nenhum'}. "
+        f"Objeções: {', '.join(o['category'] for o in objections) if objections else 'nenhuma'}. "
+        f"Próximo passo agendado para {due}."
     )
 
     return MeetingIntelligenceExtraction(
@@ -107,7 +201,7 @@ def extract_meeting_intelligence(
         objections_raised=objections,
         next_steps_tasks=tasks,
         suggested_deal_value=suggested_value,
-        suggested_probability=75
+        suggested_probability=80 if suggested_value else 75
     )
 
 
@@ -124,7 +218,6 @@ def apply_copilot_intelligence_to_deal(
     try:
         cur = conn.cursor()
 
-        # 1. Atualiza valor e resumo executivo no Deal
         if extraction.suggested_deal_value is not None:
             cur.execute("""
                 UPDATE deals
@@ -139,7 +232,6 @@ def apply_copilot_intelligence_to_deal(
                 WHERE id = ? AND account_id = ?
             """, (extraction.executive_summary, deal_id, account_id))
 
-        # 2. Persiste objeções em deal_objections
         objections_inserted = 0
         for obj in extraction.objections_raised:
             obj_id = f"obj-{uuid.uuid4().hex[:6]}"
@@ -156,7 +248,6 @@ def apply_copilot_intelligence_to_deal(
             ))
             objections_inserted += 1
 
-        # 3. Cria tarefas de follow-up em tasks
         tasks_inserted = 0
         for task in extraction.next_steps_tasks:
             task_id = f"task-{uuid.uuid4().hex[:6]}"
@@ -185,3 +276,47 @@ def apply_copilot_intelligence_to_deal(
         "tasks_count": tasks_inserted,
         "executive_summary": extraction.executive_summary
     }
+
+
+def process_field_voice_note(
+    deal_id: str,
+    voice_note_text: Optional[str] = None,
+    r2_audio_key: Optional[str] = None,
+    account_id: str = "0f14ffff",
+) -> Dict[str, Any]:
+    """
+    Processa notas rápidas de voz de 30s enviadas pelo consultor externo (Field Sales) via WhatsApp
+    após visita presencial à clínica, transcrevendo e aplicando Zero-Touch no Deal.
+    """
+    from src.features.intelligence.transcription_worker import process_call_audio
+
+    call_id = f"field-vn-{uuid.uuid4().hex[:8]}"
+    transc_res = process_call_audio(
+        call_id=call_id,
+        account_id=account_id,
+        dialogue_text=voice_note_text,
+        r2_audio_key=r2_audio_key,
+        duration_seconds=30.0,
+    )
+    full_text = " ".join(s["text"] for s in transc_res["segments"])
+    extraction = extract_meeting_intelligence(
+        transcription_text=full_text,
+        deal_id=deal_id,
+        account_id=account_id,
+    )
+    applied = apply_copilot_intelligence_to_deal(
+        deal_id=deal_id,
+        extraction=extraction,
+        account_id=account_id,
+    )
+    return {
+        "success": True,
+        "deal_id": deal_id,
+        "call_id": call_id,
+        "transcription_id": transc_res["transcription_id"],
+        "extraction": extraction,
+        "updated_value": applied["updated_value"],
+        "objections_count": applied["objections_count"],
+        "tasks_count": applied["tasks_count"],
+    }
+

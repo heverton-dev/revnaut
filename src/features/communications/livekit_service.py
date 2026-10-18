@@ -10,9 +10,16 @@ import os
 import time
 import uuid
 from typing import Any, Dict, List, Optional
+import httpx
 import jwt
+from src.core.config import (
+    R2_ACCESS_KEY_ID,
+    R2_SECRET_ACCESS_KEY,
+    R2_BUCKET_NAME,
+    R2_ENDPOINT_URL,
+)
 from src.core.database import get_connection
-from src.core.events import EventBus, StreamName
+from src.core.events import EventBus, StreamName, default_event_bus
 
 
 LIVEKIT_URL = os.getenv("LIVEKIT_URL", "wss://livekit.revnaut.internal")
@@ -20,29 +27,36 @@ LIVEKIT_API_KEY = os.getenv("LIVEKIT_API_KEY", "devkey")
 LIVEKIT_API_SECRET = os.getenv("LIVEKIT_API_SECRET", "dev_secret_key_revnaut_webrtc_2026")
 
 
-
 def generate_room_token(
     room_name: str,
-    identity: str,
+    identity: Optional[str] = None,
     name: Optional[str] = None,
     deal_id: Optional[str] = None,
     account_id: str = "0f14ffff",
     ttl_seconds: int = 3600,
+    *,
+    participant_identity: Optional[str] = None,
+    participant_name: Optional[str] = None,
+    is_admin: bool = True,
+    **kwargs: Any,
 ) -> str:
     """
     Gera um token JWT padrão do LiveKit assinado com a chave da API.
     Concede permissão para entrar na sala WebRTC vinculada ao Deal.
     """
+    effective_identity = identity or participant_identity or "participant"
+    effective_name = name or participant_name or effective_identity
     now = int(time.time())
     metadata = {
         "deal_id": deal_id,
         "account_id": account_id,
-        "identity": identity,
+        "identity": effective_identity,
+        "is_admin": is_admin,
     }
     payload = {
         "iss": LIVEKIT_API_KEY,
-        "sub": identity,
-        "name": name or identity,
+        "sub": effective_identity,
+        "name": effective_name,
         "nbf": now - 5,
         "exp": now + ttl_seconds,
         "video": {
@@ -51,12 +65,77 @@ def generate_room_token(
             "canPublish": True,
             "canSubscribe": True,
             "canPublishData": True,
+            "roomRecord": bool(is_admin),
         },
         "metadata": json.dumps(metadata),
     }
 
     token = jwt.encode(payload, LIVEKIT_API_SECRET, algorithm="HS256")
     return token
+
+
+def start_room_egress_to_r2(
+    room_name: str,
+    deal_id: Optional[str] = None,
+    account_id: str = "0f14ffff",
+    audio_only: bool = True,
+    mock_mode: Optional[bool] = None,
+) -> Dict[str, Any]:
+    """
+    Configura RoomCompositeEgress / TrackEgress no servidor LiveKit para exportar
+    o arquivo de áudio (.ogg/.wav) diretamente para o bucket Cloudflare R2.
+    """
+    is_mock = (
+        mock_mode
+        if mock_mode is not None
+        else (os.getenv("LIVEKIT_MOCK_MODE", "true").lower() in ("1", "true", "yes") or "internal" in LIVEKIT_URL)
+    )
+    r2_key = f"{account_id}/recordings/{room_name}/composite.ogg"
+    egress_payload = {
+        "room_name": room_name,
+        "audio_only": audio_only,
+        "file_outputs": [
+            {
+                "file_type": "OGG",
+                "filepath": r2_key,
+                "s3": {
+                    "access_key": R2_ACCESS_KEY_ID,
+                    "secret": R2_SECRET_ACCESS_KEY,
+                    "bucket": R2_BUCKET_NAME,
+                    "endpoint": R2_ENDPOINT_URL,
+                    "force_path_style": True,
+                },
+            }
+        ],
+    }
+
+    egress_id = f"EG_{uuid.uuid4().hex[:10]}"
+    if not is_mock:
+        http_base = LIVEKIT_URL.replace("wss://", "https://").replace("ws://", "http://").rstrip("/")
+        admin_token = generate_room_token(
+            room_name=room_name,
+            identity="livekit-egress-admin",
+            deal_id=deal_id,
+            account_id=account_id,
+        )
+        with httpx.Client(timeout=10.0) as client:
+            resp = client.post(
+                f"{http_base}/twirp/livekit.Egress/StartRoomCompositeEgress",
+                json=egress_payload,
+                headers={"Authorization": f"Bearer {admin_token}"},
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            egress_id = data.get("egress_id") or data.get("egressId") or egress_id
+
+    return {
+        "egress_id": egress_id,
+        "room_name": room_name,
+        "deal_id": deal_id,
+        "r2_audio_key": r2_key,
+        "status": "EGRESS_STARTING",
+        "egress_config": egress_payload,
+    }
 
 
 def dial_sip_participant(
@@ -71,6 +150,7 @@ def dial_sip_participant(
     """
     call_id = f"call-sip-{int(time.time() * 1000)}-{uuid.uuid4().hex[:4]}"
     caller = caller_id or os.getenv("LIVEKIT_SIP_DEFAULT_CALLER", "+551140001234")
+    egress_info = start_room_egress_to_r2(room_name=room_name, deal_id=deal_id, account_id=account_id)
 
     conn = get_connection()
     try:
@@ -78,9 +158,9 @@ def dial_sip_participant(
         cur.execute("""
             INSERT INTO call_recordings (
                 id, account_id, room_name, deal_id, caller_identity,
-                receiver_identity, call_type, status
-            ) VALUES (?, ?, ?, ?, ?, ?, 'voip_sip', 'calling')
-        """, (call_id, account_id, room_name, deal_id, caller, phone_number))
+                receiver_identity, call_type, status, egress_id
+            ) VALUES (?, ?, ?, ?, ?, ?, 'voip_sip', 'calling', ?)
+        """, (call_id, account_id, room_name, deal_id, caller, phone_number, egress_info["egress_id"]))
         conn.commit()
     finally:
         conn.close()
@@ -91,6 +171,7 @@ def dial_sip_participant(
         "phone_number": phone_number,
         "caller_id": caller,
         "deal_id": deal_id,
+        "egress_id": egress_info["egress_id"],
         "status": "calling",
     }
 
@@ -127,6 +208,7 @@ def handle_livekit_webhook(payload: Dict[str, Any]) -> Dict[str, Any]:
     recording_url = f"{r2_public_url}/{audio_key}" if audio_key else None
 
     conn = get_connection()
+    call_id = None
     deal_id = None
     account_id = "0f14ffff"
     try:
@@ -134,6 +216,7 @@ def handle_livekit_webhook(payload: Dict[str, Any]) -> Dict[str, Any]:
         cur.execute("SELECT id, deal_id, account_id FROM call_recordings WHERE room_name = ? ORDER BY created_at DESC LIMIT 1", (room_name,))
         row = cur.fetchone()
         if row:
+            call_id = row["id"]
             deal_id = row["deal_id"]
             account_id = row["account_id"]
             cur.execute("""
@@ -145,26 +228,44 @@ def handle_livekit_webhook(payload: Dict[str, Any]) -> Dict[str, Any]:
                     egress_id = ?,
                     ended_at = CURRENT_TIMESTAMP
                 WHERE id = ?
-            """, (duration, audio_key, recording_url, egress_id, row["id"]))
+            """, (duration, audio_key, recording_url, egress_id, call_id))
         else:
-            new_id = f"call-rec-{uuid.uuid4().hex[:8]}"
+            call_id = f"call-rec-{uuid.uuid4().hex[:8]}"
             cur.execute("""
                 INSERT INTO call_recordings (
                     id, account_id, room_name, deal_id, caller_identity,
                     call_type, status, duration_seconds, r2_audio_key, r2_recording_url, egress_id, ended_at
                 ) VALUES (?, ?, ?, NULL, 'system', 'webrtc', 'completed', ?, ?, ?, ?, CURRENT_TIMESTAMP)
-            """, (new_id, account_id, room_name, duration, audio_key, recording_url, egress_id))
+            """, (call_id, account_id, room_name, duration, audio_key, recording_url, egress_id))
         conn.commit()
     finally:
         conn.close()
 
+    event_id = default_event_bus.publish_sync(
+        StreamName.SALES,
+        "call.recording_ready",
+        {
+            "call_id": call_id,
+            "room_name": room_name,
+            "deal_id": deal_id,
+            "egress_id": egress_id,
+            "duration_seconds": duration,
+            "r2_audio_key": audio_key,
+            "r2_recording_url": recording_url,
+            "account_id": account_id,
+        },
+        tenant_id=account_id,
+    )
+
     return {
         "success": True,
         "event": event,
+        "call_id": call_id,
         "room_name": room_name,
         "deal_id": deal_id,
         "duration_seconds": duration,
         "r2_audio_key": audio_key,
+        "event_id": event_id,
     }
 
 
@@ -186,3 +287,4 @@ def list_deal_recordings(deal_id: str, account_id: str = "0f14ffff") -> List[Dic
         return rows
     finally:
         conn.close()
+

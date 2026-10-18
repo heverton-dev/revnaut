@@ -8,9 +8,10 @@ from __future__ import annotations
 import asyncio
 import os
 import time
+import uuid
 from typing import Any, Dict, Optional
 from src.core.database import get_connection
-from src.core.events import EventBus, StreamName
+from src.core.events import EventBus, StreamName, default_event_bus
 
 
 def resolve_consultant_for_contact(contact_id: int) -> Dict[str, Any]:
@@ -35,7 +36,7 @@ def resolve_consultant_for_contact(contact_id: int) -> Dict[str, Any]:
         owner_id = (
             contact_row["field_owner_id"] or
             contact_row["inside_owner_id"] or
-            contact_row.get("owner_id")
+            contact_row["owner_id"]
         )
 
         if not owner_id:
@@ -90,13 +91,13 @@ def render_template_variables(
     return rendered
 
 
-def process_mautic_campaign_action(payload: Dict[str, Any]) -> Dict[str, Any]:
+def process_mautic_campaign_action(payload: Dict[str, Any], account_id: str = "0f14ffff") -> Dict[str, Any]:
     action = payload.get("action", "send_whatsapp")
-    contact_data = payload.get("contact") or {}
+    contact_data = dict(payload.get("contact") or {})
     contact_id = contact_data.get("id")
+    eff_account_id = payload.get("account_id") or account_id
 
     if not contact_id:
-        # Tenta resolver por email se ID não veio direto
         email = contact_data.get("email")
         if email:
             conn = get_connection()
@@ -113,7 +114,6 @@ def process_mautic_campaign_action(payload: Dict[str, Any]) -> Dict[str, Any]:
             finally:
                 conn.close()
 
-    # Resolve o consultor responsável pelo contato
     consultant = resolve_consultant_for_contact(contact_id) if contact_id else {
         "id": "u_corp_fallback",
         "name": "Consultor Corporativo",
@@ -123,29 +123,45 @@ def process_mautic_campaign_action(payload: Dict[str, Any]) -> Dict[str, Any]:
 
     raw_template = payload.get("message_template") or "Olá {{contact.name}}, seu consultor {{consultant.name}} está à disposição."
     rendered_message = render_template_variables(raw_template, contact_data, consultant)
+    phone = contact_data.get("phone") or "+5511999990000"
 
-    # Publica evento de disparo no Redis Streams (stream:marketing)
+    # Registra despacho na instância do consultor em omnichannel_messages
+    msg_id = f"omni-mautic-{uuid.uuid4().hex[:10]}"
+    conn = get_connection()
     try:
-        bus = EventBus(in_memory=True)
-        try:
-            loop = asyncio.get_running_loop()
-            loop.create_task(bus.publish_event(
-                stream_name=StreamName.MARKETING,
-                event_type="campaign.whatsapp.dispatch",
-                payload={
-                    "campaign_id": payload.get("campaign_id"),
-                    "campaign_name": payload.get("campaign_name"),
-                    "contact_id": contact_id,
-                    "contact_phone": contact_data.get("phone"),
-                    "consultant_id": consultant["id"],
-                    "instance_name": consultant["instance_name"],
-                    "message": rendered_message,
-                }
+        with conn:
+            conn.execute("""
+                INSERT INTO omnichannel_messages (
+                    id, account_id, instance_name, remote_jid, sender_phone,
+                    message_type, content, from_me
+                ) VALUES (?, ?, ?, ?, ?, 'text', ?, 1)
+            """, (
+                msg_id,
+                eff_account_id,
+                consultant["instance_name"],
+                f"{phone.lstrip('+')}@s.whatsapp.net",
+                phone,
+                rendered_message,
             ))
-        except RuntimeError:
-            pass
-    except Exception:
-        pass
+    finally:
+        conn.close()
+
+    # Publica evento de disparo no barramento global Redis Streams (stream:marketing)
+    event_id = default_event_bus.publish_sync(
+        StreamName.MARKETING,
+        "campaign.whatsapp.dispatch",
+        {
+            "message_id": msg_id,
+            "campaign_id": payload.get("campaign_id"),
+            "campaign_name": payload.get("campaign_name"),
+            "contact_id": contact_id,
+            "contact_phone": phone,
+            "consultant_id": consultant["id"],
+            "instance_name": consultant["instance_name"],
+            "message": rendered_message,
+        },
+        tenant_id=eff_account_id,
+    )
 
     return {
         "success": True,
@@ -155,5 +171,8 @@ def process_mautic_campaign_action(payload: Dict[str, Any]) -> Dict[str, Any]:
         "consultant_id": consultant["id"],
         "dispatched_instance": consultant["instance_name"],
         "rendered_message": rendered_message,
+        "message_id": msg_id,
+        "event_id": event_id,
         "timestamp": time.time(),
     }
+

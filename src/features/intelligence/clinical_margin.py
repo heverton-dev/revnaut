@@ -5,6 +5,7 @@ Calculadora de Margem Liquida Real por Procedimento Cirurgico para Clinicas e Fr
 """
 
 from __future__ import annotations
+import json
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
@@ -29,35 +30,59 @@ def calculate_procedure_net_margin(data: ClinicalMarginCalculateRequest) -> Dict
     total_chair_cost = round(data.chair_hours * data.chair_hour_cost, 2)
     tax_amount = round(data.gross_revenue * (data.tax_rate_percent / 100.0), 2)
     lab_cost = round(data.lab_cost or 0.0, 2)
-    supplies_cost = round(data.supplies_cost, 2)
+    supplies_cost = round(data.supplies_cost or 0.0, 2)
     surgeon_fee = round(data.surgeon_fee, 2)
-
-    total_cost = round(supplies_cost + lab_cost + surgeon_fee + total_chair_cost + tax_amount, 2)
-    net_margin_value = round(data.gross_revenue - total_cost, 2)
-
-    if data.gross_revenue > 0:
-        net_margin_percent = round((net_margin_value / data.gross_revenue) * 100.0, 2)
-    else:
-        net_margin_percent = 0.0
-
-    is_low_margin = net_margin_percent < 15.0
-
-    if is_low_margin:
-        status_code = "LOW_MARGIN_RISK"
-        recommendation = (
-            f"Alerta de margem critica ({net_margin_percent}% < 15%). "
-            "Rever custos laboratoriais, otimizar horas de cadeira ou reprecificar procedimento."
-        )
-    else:
-        status_code = "HEALTHY_MARGIN"
-        recommendation = f"Procedimento altamente rentavel ({net_margin_percent}% >= 15%). Margem operacional saudavel."
-
-    margin_id = f"clm_{uuid.uuid4().hex[:10]}"
-    now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
     conn = get_connection()
     try:
         cur = conn.cursor()
+        if data.surgery_order_id and supplies_cost <= 0.0:
+            cur.execute(
+                "SELECT consumed_items_json, remitted_items_json FROM kp_surgical_orders WHERE id = ? AND account_id = ?",
+                (data.surgery_order_id, data.account_id),
+            )
+            surg_row = cur.fetchone()
+            if surg_row:
+                raw_json = surg_row["consumed_items_json"]
+                items_list = []
+                if raw_json and raw_json != "[]":
+                    try:
+                        items_list = json.loads(raw_json)
+                    except Exception:
+                        items_list = []
+                if not items_list and surg_row["remitted_items_json"]:
+                    try:
+                        items_list = json.loads(surg_row["remitted_items_json"])
+                    except Exception:
+                        items_list = []
+                if items_list:
+                    supplies_cost = round(
+                        sum(float(it.get("unit_value", 0.0)) * int(it.get("quantity", 1)) for it in items_list),
+                        2,
+                    )
+
+        total_cost = round(supplies_cost + lab_cost + surgeon_fee + total_chair_cost + tax_amount, 2)
+        net_margin_value = round(data.gross_revenue - total_cost, 2)
+
+        if data.gross_revenue > 0:
+            net_margin_percent = round((net_margin_value / data.gross_revenue) * 100.0, 2)
+        else:
+            net_margin_percent = 0.0
+
+        is_low_margin = net_margin_percent < 15.0
+
+        if is_low_margin:
+            status_code = "LOW_MARGIN_RISK"
+            recommendation = (
+                f"Alerta de margem critica ({net_margin_percent}% < 15%). "
+                "Rever custos laboratoriais, otimizar horas de cadeira ou reprecificar procedimento."
+            )
+        else:
+            status_code = "HEALTHY_MARGIN"
+            recommendation = f"Procedimento altamente rentavel ({net_margin_percent}% >= 15%). Margem operacional saudavel."
+
+        margin_id = f"clm_{uuid.uuid4().hex[:10]}"
+        now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
         cur.execute("""
             INSERT INTO clinical_procedure_margins (
                 id, account_id, clinic_id, surgery_order_id, procedure_name, patient_identifier,

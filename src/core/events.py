@@ -21,6 +21,7 @@ class StreamName(str, Enum):
     KEYPARTNERS = "stream:keypartners"
     DENTGO = "stream:dentgo"
     CX = "stream:cx"
+    GROWTH = "stream:growth"
     WEBHOOKS = "stream:webhooks"
     AUDIT = "stream:audit"
     DLQ = "stream:dlq"
@@ -101,25 +102,35 @@ class EventBus:
 
     def _publish_sync_impl(
         self,
-        stream_name: StreamName | str,
-        event_type_or_payload: str | Dict[str, Any],
+        stream_name: Optional[StreamName | str] = None,
+        event_type_or_payload: Optional[str | Dict[str, Any]] = None,
         payload: Optional[Dict[str, Any]] = None,
         tenant_id: Optional[str] = None,
         idempotency_key: Optional[str] = None,
+        *,
+        stream: Optional[StreamName | str] = None,
+        event_type: Optional[str] = None,
+        account_id: Optional[str] = None,
     ) -> str:
-        stream_key = stream_name.value if isinstance(stream_name, StreamName) else str(stream_name)
-        if isinstance(event_type_or_payload, dict) and payload is None:
-            actual_payload = dict(event_type_or_payload)
+        eff_stream = stream_name if stream_name is not None else (stream or StreamName.AUDIT)
+        stream_key = eff_stream.value if isinstance(eff_stream, StreamName) else str(eff_stream)
+        eff_event_or_payload = event_type_or_payload if event_type_or_payload is not None else event_type
+        if isinstance(eff_event_or_payload, dict) and payload is None:
+            actual_payload = dict(eff_event_or_payload)
             actual_event_type = str(
                 actual_payload.get("event")
                 or actual_payload.get("event_type")
                 or "audit.event"
             )
         else:
-            actual_event_type = str(event_type_or_payload)
+            actual_event_type = str(eff_event_or_payload or "domain.event")
             actual_payload = dict(payload) if isinstance(payload, dict) else {"value": payload}
 
-        eff_tenant = tenant_id or str(actual_payload.get("account_id") or actual_payload.get("tenant_id") or "default")
+        eff_tenant = (
+            tenant_id
+            or account_id
+            or str(actual_payload.get("account_id") or actual_payload.get("tenant_id") or "default")
+        )
         event_id = idempotency_key or f"{int(time.time() * 1000)}-{uuid.uuid4().hex[:8]}"
         record: Dict[str, Any] = {
             "event_id": event_id,

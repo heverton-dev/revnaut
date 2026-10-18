@@ -8,6 +8,7 @@ from __future__ import annotations
 import random
 from typing import Any, Dict, Optional
 from src.core.database import get_connection, init_db
+from src.core.events import StreamName, default_event_bus
 
 
 def bip_picking(
@@ -170,6 +171,29 @@ def verify_and_complete_delivery(
         conn.commit()
 
         cur.execute("SELECT * FROM dentgo_orders WHERE id = ?", (order_id,))
-        return dict(cur.fetchone())
+        updated_order = dict(cur.fetchone())
     finally:
         conn.close()
+
+    event_payload = {
+        "order_id": order_id,
+        "hub_id": updated_order.get("hub_id"),
+        "customer_cro_uf": updated_order.get("customer_cro_uf"),
+        "proof_of_delivery_r2_key": updated_order.get("proof_of_delivery_r2_key"),
+        "recipient_signature_name": updated_order.get("recipient_signature_name"),
+        "total_amount": updated_order.get("total_amount"),
+        "status": "DELIVERED_VERIFIED",
+    }
+    default_event_bus.publish_sync(
+        stream=StreamName.DENTGO,
+        event_type="dentgo.delivered",
+        account_id=account_id,
+        payload=event_payload,
+    )
+    default_event_bus.publish_sync(
+        stream=StreamName.DENTGO,
+        event_type="dentgo.order_delivered",
+        account_id=account_id,
+        payload=event_payload,
+    )
+    return updated_order

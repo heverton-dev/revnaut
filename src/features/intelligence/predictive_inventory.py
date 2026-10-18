@@ -85,6 +85,19 @@ def calculate_kit_idle_score_sok(data: SokCalculationRequest) -> Dict[str, Any]:
                 ) VALUES (?, ?, ?, ?, 1, 'Consultorio do Parceiro (Coleta Reversa)', -23.55052, -46.633308, '[]', 'REVERSE_PICKUP_REQUESTED', ?)
             """, (dentgo_order_id, data.account_id, hub_id, cro_uf, now_str))
 
+            # Cria tarefa crítica na tabela tasks para o consultor de campo recolher/realocar o kit ocioso
+            task_id = f"tsk-sok-{uuid.uuid4().hex[:8]}"
+            cur.execute("""
+                INSERT INTO tasks (
+                    id, account_id, title, due_date, assignee, priority, completed
+                ) VALUES (?, ?, ?, ?, 'Consultor Externo Regional', 'alta', 0)
+            """, (
+                task_id,
+                data.account_id,
+                f"[SOK {sok_score}] Recolher Kit Consignado Ocioso (Acordo {data.agreement_id})",
+                now_str[:10],
+            ))
+
         record_id = f"pred_sok_{uuid.uuid4().hex[:10]}"
         cur.execute("""
             INSERT INTO kp_predictive_inventory_scores (
@@ -140,17 +153,19 @@ def calculate_replenishment_point_pr(data: PrCalculationRequest) -> Dict[str, An
     try:
         cur = conn.cursor()
 
-        # Determina saldo em estoque (passado explicitamente ou consultado no kp_custody_ledger)
+        # Determina saldo líquido em estoque (passado explicitamente ou consultado no kp_custody_ledger)
         if data.current_stock is not None:
             current_stock = data.current_stock
         else:
             cur.execute("""
-                SELECT COALESCE(SUM(quantity), 0)
+                SELECT
+                    COALESCE(SUM(CASE WHEN movement_type = 'REMESSA' THEN quantity ELSE 0 END), 0) -
+                    COALESCE(SUM(CASE WHEN movement_type IN ('CONSUMO_CIRURGICO', 'DEVOLUCAO_INTACTA', 'EXTRAVIO') THEN quantity ELSE 0 END), 0)
                 FROM kp_custody_ledger
                 WHERE agreement_id = ? AND account_id = ?
             """, (data.agreement_id, data.account_id))
             row = cur.fetchone()
-            current_stock = int(row[0]) if row else 0
+            current_stock = max(0, int(row[0])) if row else 0
 
         replenishment_needed = current_stock <= pr_score
         deal_id = None

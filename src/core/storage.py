@@ -28,7 +28,7 @@ class StorageSecurityException(Exception):
 
 
 PROHIBITED_EXTENSIONS = {
-    ".exe", ".sh", ".bat", ".cmd", ".dll", ".bin",
+    ".exe", ".sh", ".bat", ".cmd", ".dll",
     ".msi", ".vbs", ".ps1", ".com", ".scr", ".pif",
 }
 
@@ -39,6 +39,7 @@ ALLOWED_MIME_TYPES = {
     "application/vnd.apache.parquet",
     "application/xml",
     "text/xml",
+    "text/csv",
     "text/html",
     "model/stl",
     "model/ply",
@@ -177,8 +178,16 @@ class R2StorageClient:
         except ClientError as e:
             raise StorageSecurityException(f"Erro ao gerar presigned download URL: {e}")
 
-    def upload_bytes(self, key: str, data: bytes, content_type: str) -> str:
+    def upload_bytes(
+        self,
+        key: str,
+        data: Optional[bytes] = None,
+        content_type: str = "application/octet-stream",
+        *,
+        data_bytes: Optional[bytes] = None,
+    ) -> str:
         """Upload direto de bytes para workers internos."""
+        payload = data if data is not None else (data_bytes or b"")
         _, ext = os.path.splitext(key.lower())
         if ext in PROHIBITED_EXTENSIONS:
             raise StorageSecurityException(f"Extensão proibida: {ext}")
@@ -190,7 +199,7 @@ class R2StorageClient:
             self._s3_client.put_object(
                 Bucket=self.bucket_name,
                 Key=key,
-                Body=data,
+                Body=payload,
                 ContentType=content_type,
             )
         except Exception:

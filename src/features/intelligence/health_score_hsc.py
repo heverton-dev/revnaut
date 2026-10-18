@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from src.core.database import get_connection, init_db
+from src.core.events import StreamName, default_event_bus
 from src.features.intelligence.schemas import (
     HealthScoreCalculateRequest,
     HealthScoreCalculateResponse,
@@ -110,6 +111,20 @@ def calculate_surgical_health_score(data: HealthScoreCalculateRequest) -> Dict[s
             conn.commit()
         finally:
             conn.close()
+
+        default_event_bus.publish_sync(
+            stream=StreamName.GROWTH,
+            event_type="growth.hsc_critical",
+            account_id=data.account_id,
+            payload={
+                "partner_id": data.partner_id,
+                "partner_name": data.partner_name,
+                "hsc_score": hsc_score,
+                "classification": classification,
+                "rescue_task_id": rescue_task_id,
+                "dentgo_voucher_code": dentgo_voucher_code,
+            },
+        )
 
     elif hsc_score > 75.0:
         classification = "PROMOTER"
