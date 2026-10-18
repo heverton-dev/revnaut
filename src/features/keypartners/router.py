@@ -16,13 +16,17 @@ from src.features.keypartners.schemas import (
     SurgicalOrderOut,
     KolContractCreate, KolConsumptionRecordRequest,
     KolConsumptionRecordResponse, KolEvidenceSubmitRequest,
-    KolEvidenceSubmitResponse, KolContractOut
+    KolEvidenceSubmitResponse, KolContractOut,
+    LoyaltyPointsCreditRequest, LoyaltyPointsCreditResponse,
+    LoyaltyRedemptionRequest, LoyaltyRedemptionResponse,
+    LoyaltyWalletResponse, LoyaltyRewardItem
 )
 from src.features.dentgo.schemas import TriggerDentgoPickupRequest, TriggerDentgoPickupResponse
 from src.features.dentgo import keypartners_synergy
 from src.features.keypartners import service
 from src.features.keypartners import surgical_cycle
 from src.features.keypartners import kol_management
+from src.features.keypartners import loyalty_engine
 
 router = APIRouter(prefix="/api/v1/keypartners", tags=["KeyPartners • Consignação Cirúrgica"])
 
@@ -204,5 +208,51 @@ def trigger_dentgo_pickup(kit_serial: str, payload: TriggerDentgoPickupRequest):
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/loyalty/credit", response_model=LoyaltyPointsCreditResponse, summary="Creditar Moedas Cirurgicas por implantes faturados")
+def credit_loyalty(payload: LoyaltyPointsCreditRequest):
+    try:
+        return loyalty_engine.credit_loyalty_points(
+            partner_id=payload.partner_id,
+            partner_name=payload.partner_name,
+            implants_count=payload.implants_count,
+            event_origin=payload.event_origin or "deal.won",
+            reference_id=payload.reference_id,
+            account_id=payload.account_id or "0f14ffff"
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/loyalty/redeem", response_model=LoyaltyRedemptionResponse, summary="Resgatar recompensa ou voucher com Moedas Cirurgicas")
+def redeem_loyalty(payload: LoyaltyRedemptionRequest):
+    try:
+        return loyalty_engine.redeem_loyalty_reward(
+            partner_id=payload.partner_id,
+            reward_type_or_id=payload.reward_type_or_id,
+            account_id=payload.account_id or "0f14ffff"
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/loyalty/wallet/{partner_id}", response_model=LoyaltyWalletResponse, summary="Consultar saldo e extrato da carteira de Moedas Cirurgicas")
+def get_loyalty_wallet(partner_id: str, account_id: str = "0f14ffff"):
+    try:
+        return loyalty_engine.get_partner_loyalty_wallet(partner_id=partner_id, account_id=account_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/loyalty/rewards", response_model=List[LoyaltyRewardItem], summary="Listar catalogo de recompensas da Moeda Cirurgica")
+def list_rewards(account_id: str = "0f14ffff"):
+    try:
+        return loyalty_engine.list_rewards_catalog(account_id=account_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 

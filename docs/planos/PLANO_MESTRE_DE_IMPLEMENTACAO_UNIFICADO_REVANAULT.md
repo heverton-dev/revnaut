@@ -584,7 +584,7 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
 - **Validation Command:** `python -m pytest tests/test_surgical_health_score_hsc.py -q`
 - **Blocked by:** TICKET-21, TICKET-27, TICKET-31
 
-#### [TICKET-34] Programa de Fidelidade "Moeda Cirúrgica" (KeyPartners Loyalty Engine)
+#### [TICKET-34] [x] DONE - Programa de Fidelidade "Moeda Cirúrgica" (KeyPartners Loyalty Engine)
 - **Descrição:** Implementação do razão de pontos e recompensas técnicas (`src/features/keypartners/loyalty_engine.py`) onde cada implante faturado, lote consignado conciliado no prazo ou caso clínico publicado gera **Moedas Cirúrgicas** resgatáveis por abatimento na locação de motores, kits de cirurgia guiada, créditos de entrega expressa no **DENTGO** e inscrições em imersões.
 - **Como Implementar (Detalhes Técnicos):**
   1. Criar tabelas `kp_loyalty_wallets`, `kp_loyalty_transactions` e `kp_loyalty_rewards_catalog`.

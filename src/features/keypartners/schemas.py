@@ -3,7 +3,8 @@
 Pydantic Schemas para o Motor KeyPartners (Consignação Cirúrgica & Parcerias)
 """
 
-from typing import List, Optional
+from __future__ import annotations
+from typing import List, Optional, Dict, Any
 from pydantic import BaseModel, Field
 
 
@@ -224,4 +225,70 @@ class KolContractOut(BaseModel):
     evidence_r2_keys_json: str
     created_at: str
     updated_at: str
+
+
+class LoyaltyPointsCreditRequest(BaseModel):
+    partner_id: str = Field(..., description="ID do parceiro ou cirurgiao")
+    partner_name: str = Field(..., description="Nome do parceiro")
+    implants_count: int = Field(..., ge=1, description="Quantidade de implantes faturados")
+    event_origin: Optional[str] = Field(default="deal.won", description="Origem do credito: deal.won | keypartners.postop_reported")
+    reference_id: Optional[str] = Field(default=None, description="ID de referencia do deal ou cirurgia")
+    account_id: Optional[str] = Field(default="0f14ffff", description="ID do tenant")
+
+
+class LoyaltyPointsCreditResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    wallet_id: str
+    partner_id: str
+    partner_name: str
+    points_earned: int
+    points_balance: int
+    lifetime_points: int
+    implants_billed_total: int
+    previous_tier: str
+    current_tier: str
+    tier_promoted: bool
+    transaction_id: str
+
+
+class LoyaltyRedemptionRequest(BaseModel):
+    partner_id: str = Field(..., description="ID do parceiro ou cirurgiao")
+    reward_type_or_id: str = Field(..., description="ID ou tipo da recompensa tecnica")
+    account_id: Optional[str] = Field(default="0f14ffff", description="ID do tenant")
+
+
+class LoyaltyRedemptionResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    partner_id: str
+    reward_name: str
+    reward_type: str
+    points_debited: int
+    points_balance_remaining: int
+    voucher_code: str
+    monetary_value_equivalent: float
+    transaction_id: str
+    redeemed_at: str
+
+
+class LoyaltyWalletResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    wallet_id: Optional[str] = None
+    partner_id: str
+    partner_name: str
+    points_balance: int
+    lifetime_points: int
+    current_tier: str
+    implants_billed_total: int
+    transactions: List[Dict[str, Any]] = Field(default_factory=list)
+
+
+class LoyaltyRewardItem(BaseModel):
+    model_config = {"extra": "allow"}
+    id: str
+    name: str
+    reward_type: str
+    points_cost: int
+    monetary_value_equivalent: float
+    is_active: int
+
 

@@ -971,6 +971,56 @@ def init_db() -> None:
         CREATE INDEX IF NOT EXISTS idx_kp_hsc_acc ON kp_surgical_health_scores(account_id);
         CREATE INDEX IF NOT EXISTS idx_kp_hsc_partner ON kp_surgical_health_scores(partner_id);
 
+        CREATE TABLE IF NOT EXISTS kp_loyalty_wallets (
+            id TEXT PRIMARY KEY,
+            account_id TEXT NOT NULL,
+            partner_id TEXT NOT NULL UNIQUE,
+            partner_name TEXT NOT NULL,
+            points_balance INTEGER NOT NULL DEFAULT 0,
+            lifetime_points INTEGER NOT NULL DEFAULT 0,
+            current_tier TEXT NOT NULL DEFAULT 'SILVER',
+            implants_billed_total INTEGER NOT NULL DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_kp_loyalty_acc ON kp_loyalty_wallets(account_id);
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_kp_loyalty_partner ON kp_loyalty_wallets(partner_id);
+
+        CREATE TABLE IF NOT EXISTS kp_loyalty_transactions (
+            id TEXT PRIMARY KEY,
+            account_id TEXT NOT NULL,
+            wallet_id TEXT NOT NULL,
+            partner_id TEXT NOT NULL,
+            transaction_type TEXT NOT NULL,
+            event_origin TEXT NOT NULL,
+            points INTEGER NOT NULL,
+            balance_after INTEGER NOT NULL,
+            description TEXT NOT NULL,
+            reference_id TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE,
+            FOREIGN KEY (wallet_id) REFERENCES kp_loyalty_wallets(id) ON DELETE CASCADE
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_kp_trans_wallet ON kp_loyalty_transactions(wallet_id);
+        CREATE INDEX IF NOT EXISTS idx_kp_trans_partner ON kp_loyalty_transactions(partner_id);
+
+        CREATE TABLE IF NOT EXISTS kp_loyalty_rewards_catalog (
+            id TEXT PRIMARY KEY,
+            account_id TEXT NOT NULL,
+            name TEXT NOT NULL,
+            reward_type TEXT NOT NULL,
+            points_cost INTEGER NOT NULL,
+            monetary_value_equivalent REAL NOT NULL DEFAULT 0.0,
+            is_active INTEGER NOT NULL DEFAULT 1,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_kp_rewards_acc ON kp_loyalty_rewards_catalog(account_id);
+
         CREATE TABLE IF NOT EXISTS whatsapp_instances (
 
 
