@@ -663,7 +663,8 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
 - **Validation Command:** `python -m pytest tests/test_orthanc_dicom_stl_r2.py -q`
 - **Blocked by:** TICKET-01, TICKET-27
 
-#### [TICKET-40] Motor de Webhooks Outbound Plug-and-Play com Assinatura Criptográfica HMAC-SHA256
+#### [TICKET-40] [x] DONE Motor de Webhooks Outbound Plug-and-Play com Assinatura Criptográfica HMAC-SHA256
+- **Status:** [x] CONCLUIDO (241/241 testes aprovados, cobertura 100% de assinaturas HMAC-SHA256, proteção estrita anti-SSRF, circuit breaker após 15 falhas consecutivas, persistência de logs de auditoria e schemas Pydantic tipados).
 - **Descrição:** Evolução de `src/features/webhooks/` para oferecer um **Portal de Desenvolvedores & Webhooks Outbound** onde indústrias, laboratórios de prótese e clínicas cadastram URLs externas para receber eventos em tempo real do ecossistema (`deal.won`, `keypartners.custody_changed`, `dentgo.order_delivered`, `cx.surgical_sos_triggered`, `growth.hsc_critical`) assinados com cabeçalho `X-Revnault-Signature: sha256=...`.
 - **Como Implementar (Detalhes Técnicos):**
   1. Criar tabelas `webhook_subscriptions` (`id`, `tenant_id`, `target_url`, `subscribed_events_json`, `signing_secret_encrypted`, `is_active`) e `webhook_delivery_logs`.

@@ -1248,6 +1248,45 @@ def init_db() -> None:
         CREATE INDEX IF NOT EXISTS idx_img_studies_deal ON imaging_studies(deal_id);
         CREATE INDEX IF NOT EXISTS idx_img_studies_ticket ON imaging_studies(ticket_id);
         CREATE INDEX IF NOT EXISTS idx_img_studies_orthanc ON imaging_studies(orthanc_study_id);
+
+        CREATE TABLE IF NOT EXISTS webhook_subscriptions (
+            id TEXT PRIMARY KEY,
+            account_id TEXT NOT NULL,
+            name TEXT NOT NULL,
+            target_url TEXT NOT NULL,
+            subscribed_events_json TEXT NOT NULL DEFAULT '["*"]',
+            signing_secret TEXT NOT NULL,
+            is_active INTEGER NOT NULL DEFAULT 1,
+            consecutive_failures INTEGER NOT NULL DEFAULT 0,
+            circuit_breaker_tripped INTEGER NOT NULL DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_wh_sub_acc ON webhook_subscriptions(account_id);
+        CREATE INDEX IF NOT EXISTS idx_wh_sub_active ON webhook_subscriptions(is_active);
+
+        CREATE TABLE IF NOT EXISTS webhook_delivery_logs (
+            id TEXT PRIMARY KEY,
+            subscription_id TEXT NOT NULL,
+            account_id TEXT NOT NULL,
+            event_name TEXT NOT NULL,
+            target_url TEXT NOT NULL,
+            payload_json TEXT NOT NULL,
+            signature_header TEXT NOT NULL,
+            status_code INTEGER,
+            response_body TEXT,
+            latency_ms REAL NOT NULL DEFAULT 0.0,
+            attempt INTEGER NOT NULL DEFAULT 1,
+            success INTEGER NOT NULL DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (subscription_id) REFERENCES webhook_subscriptions(id) ON DELETE CASCADE,
+            FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_wh_log_sub ON webhook_delivery_logs(subscription_id);
+        CREATE INDEX IF NOT EXISTS idx_wh_log_acc ON webhook_delivery_logs(account_id);
+        CREATE INDEX IF NOT EXISTS idx_wh_log_evt ON webhook_delivery_logs(event_name);
         """)
 
 

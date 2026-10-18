@@ -107,3 +107,140 @@ def webhook_studio():
     </body>
     </html>
     """
+
+
+# ==============================================================================
+# REST API: Portal de Desenvolvedores & Webhooks Outbound (TICKET-40)
+# ==============================================================================
+
+from typing import List, Optional
+from fastapi import Query, status
+from src.features.webhooks.schemas import (
+    WebhookSubscriptionCreate, WebhookSubscriptionOut,
+    WebhookSubscriptionListResponse, WebhookDeliveryLogOut,
+    WebhookDeliveryLogsListResponse, WebhookTestDispatchPayload,
+    WebhookTestDispatchResponse, WebhookResetCircuitResponse,
+    WebhookDeleteResponse
+)
+from src.features.webhooks.outbound_dispatcher import OutboundWebhookDispatcher
+
+dispatcher = OutboundWebhookDispatcher()
+
+
+@router.post(
+    "/api/v1/webhooks/subscriptions",
+    response_model=WebhookSubscriptionOut,
+    status_code=status.HTTP_201_CREATED,
+    summary="Cadastrar nova assinatura de webhook outbound com validação SSRF"
+)
+def create_webhook_subscription(
+    payload: WebhookSubscriptionCreate,
+    account_id: str = Query("0f14ffff", description="ID do tenant")
+):
+    acc = payload.account_id or account_id
+    return dispatcher.create_subscription(
+        name=payload.name,
+        target_url=payload.target_url,
+        subscribed_events=payload.subscribed_events,
+        signing_secret=payload.signing_secret,
+        account_id=acc,
+    )
+
+
+@router.get(
+    "/api/v1/webhooks/subscriptions",
+    response_model=WebhookSubscriptionListResponse,
+    summary="Listar assinaturas de webhooks do tenant"
+)
+def list_webhook_subscriptions(
+    account_id: str = Query("0f14ffff", description="ID do tenant")
+):
+    subs = dispatcher.list_subscriptions(account_id=account_id)
+    return {
+        "subscriptions": subs,
+        "total": len(subs)
+    }
+
+
+@router.get(
+    "/api/v1/webhooks/subscriptions/{subscription_id}",
+    response_model=WebhookSubscriptionOut,
+    summary="Obter detalhes de uma assinatura de webhook"
+)
+def get_webhook_subscription(
+    subscription_id: str,
+    account_id: str = Query("0f14ffff", description="ID do tenant")
+):
+    return dispatcher.get_subscription(subscription_id=subscription_id, account_id=account_id)
+
+
+@router.delete(
+    "/api/v1/webhooks/subscriptions/{subscription_id}",
+    response_model=WebhookDeleteResponse,
+    summary="Remover assinatura de webhook"
+)
+def delete_webhook_subscription(
+    subscription_id: str,
+    account_id: str = Query("0f14ffff", description="ID do tenant")
+):
+    return dispatcher.delete_subscription(subscription_id=subscription_id, account_id=account_id)
+
+
+@router.patch(
+    "/api/v1/webhooks/subscriptions/{subscription_id}/reset-circuit",
+    response_model=WebhookResetCircuitResponse,
+    summary="Resetar circuit breaker e reativar assinatura de webhook suspensa"
+)
+def reset_webhook_circuit_breaker(
+    subscription_id: str,
+    account_id: str = Query("0f14ffff", description="ID do tenant")
+):
+    return dispatcher.reset_circuit_breaker(subscription_id=subscription_id, account_id=account_id)
+
+
+@router.post(
+    "/api/v1/webhooks/test-dispatch",
+    response_model=WebhookTestDispatchResponse,
+    summary="Testar disparo de evento com cálculo de assinatura HMAC-SHA256"
+)
+def test_webhook_dispatch(
+    payload: WebhookTestDispatchPayload,
+    account_id: str = Query("0f14ffff", description="ID do tenant")
+):
+    acc = payload.account_id or account_id
+    sub = dispatcher.get_subscription(payload.subscription_id, account_id=acc)
+    test_data = payload.payload_data or {
+        "order_id": "dentgo-test-order-99",
+        "status": "DELIVERED",
+        "hub_name": "Hub Jardins SP",
+        "delivered_at": "2026-10-18T10:00:00Z"
+    }
+    return dispatcher.deliver_to_subscription(
+        subscription=sub,
+        event_name=payload.event_name,
+        payload_data=test_data
+    )
+
+
+@router.get(
+    "/api/v1/webhooks/logs",
+    response_model=WebhookDeliveryLogsListResponse,
+    summary="Consultar logs de auditoria e telemetria de entregas de webhooks"
+)
+def list_webhook_delivery_logs(
+    subscription_id: Optional[str] = Query(None, description="Filtrar por assinatura"),
+    event_name: Optional[str] = Query(None, description="Filtrar por nome de evento"),
+    limit: int = Query(50, ge=1, le=200, description="Limite de registros"),
+    account_id: str = Query("0f14ffff", description="ID do tenant")
+):
+    logs = dispatcher.list_delivery_logs(
+        account_id=account_id,
+        subscription_id=subscription_id,
+        event_name=event_name,
+        limit=limit
+    )
+    return {
+        "logs": logs,
+        "total": len(logs)
+    }
+
