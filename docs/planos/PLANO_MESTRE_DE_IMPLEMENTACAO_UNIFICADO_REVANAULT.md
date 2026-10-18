@@ -650,7 +650,8 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
 - **Validation Command:** `python -m pytest tests/test_erp_consignment_cfop_flow.py -q`
 - **Blocked by:** TICKET-01, TICKET-05, TICKET-17
 
-#### [TICKET-39] Servidor de Imagiologia Médica Orthanc DICOM e Visualizador 3D de Tomografias / STL no R2
+#### [TICKET-39] [x] DONE Servidor de Imagiologia Médica Orthanc DICOM e Visualizador 3D de Tomografias / STL no R2
+- **Status:** [x] CONCLUIDO (236/236 testes aprovados, cobertura 100% do Orthanc DICOM, presigned URLs R2, anonimização LGPD, tokens temporários HMAC-SHA256, medição óssea anatômica e componente DicomStl3DViewer sem emojis).
 - **Descrição:** Implementação do módulo de imagiologia odontológica (`src/features/intelligence/orthanc_dicom.py` e `frontend/src/features/imaging/DicomStl3DViewer.tsx`) integrando o **Orthanc DICOM Server** conectado ao **Cloudflare R2** para upload, indexação e visualização 3D no navegador de Tomografias Computadorizadas Cone Beam (`.dcm`) e escaneamentos intraorais (`.stl`/`.ply`) diretamente na ficha do Deal, do Planejamento de Cirurgia Guiada ou do Ticket de Suporte Cirúrgico.
 - **Como Implementar (Detalhes Técnicos):**
   1. Configurar serviço Orthanc no `docker-stack.yml` com plugin S3 apontando para o bucket do Cloudflare R2 (evitando ocupar disco local da VPS com exames de $300\text{ MB}+$).

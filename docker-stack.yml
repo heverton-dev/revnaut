@@ -201,6 +201,20 @@ services:
       restart_policy:
         condition: on-failure
 
+  orthanc:
+    image: orthancteam/orthanc:24.3.0
+    environment:
+      - ORTHANC_JSON={"Name":"Revnaut-Orthanc-DICOM","StorageDirectory":"/var/lib/orthanc/db","StorageAreaPlugin":"s3","S3":{"BucketName":"revnaut-dicom-studies","Region":"auto","Endpoint":"${R2_ENDPOINT:-https://r2.revnaut.internal}","AccessKey":"${R2_ACCESS_KEY_ID:-mock-key}","SecretKey":"${R2_SECRET_ACCESS_KEY:-mock-secret}"},"DicomAet":"REVNAULT_PACS","DicomCheckCalledAet":false,"DicomPort":4242,"HttpPort":8042,"RemoteAccessAllowed":true,"AuthenticationEnabled":false}
+    ports:
+      - "8042:8042"
+      - "4242:4242"
+    networks:
+      - network_conexao
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
 networks:
   network_conexao:
     external: true

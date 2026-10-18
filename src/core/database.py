@@ -1222,6 +1222,32 @@ def init_db() -> None:
         CREATE INDEX IF NOT EXISTS idx_erp_inv_acc ON erp_fiscal_invoices(account_id);
         CREATE INDEX IF NOT EXISTS idx_erp_inv_key ON erp_fiscal_invoices(nfe_access_key);
         CREATE INDEX IF NOT EXISTS idx_erp_inv_flow ON erp_fiscal_invoices(flow_type);
+
+        CREATE TABLE IF NOT EXISTS imaging_studies (
+            id TEXT PRIMARY KEY,
+            account_id TEXT NOT NULL,
+            patient_name TEXT,
+            patient_anonymized_id TEXT NOT NULL,
+            deal_id TEXT,
+            ticket_id TEXT,
+            study_type TEXT NOT NULL DEFAULT 'DICOM_CBCT',
+            orthanc_study_id TEXT,
+            r2_storage_key TEXT NOT NULL,
+            file_name TEXT NOT NULL,
+            file_size_bytes INTEGER NOT NULL DEFAULT 0,
+            slice_count INTEGER NOT NULL DEFAULT 1,
+            jaw_type TEXT NOT NULL DEFAULT 'AMBAS',
+            bone_density_estimate TEXT NOT NULL DEFAULT 'D2_NORMAL',
+            implant_site TEXT,
+            is_anonymized INTEGER NOT NULL DEFAULT 1,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_img_studies_acc ON imaging_studies(account_id);
+        CREATE INDEX IF NOT EXISTS idx_img_studies_deal ON imaging_studies(deal_id);
+        CREATE INDEX IF NOT EXISTS idx_img_studies_ticket ON imaging_studies(ticket_id);
+        CREATE INDEX IF NOT EXISTS idx_img_studies_orthanc ON imaging_studies(orthanc_study_id);
         """)
 
 

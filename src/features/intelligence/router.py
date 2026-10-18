@@ -17,6 +17,7 @@ from src.features.intelligence import text_to_sql_agent
 from src.features.intelligence import predictive_inventory
 from src.features.intelligence import clinical_margin
 from src.features.intelligence import health_score_hsc
+from src.features.intelligence.orthanc_dicom import OrthancDicomClient
 from src.features.intelligence.schemas import (
     ContactInstitutionCreate, ContactInstitutionOut,
     ClinicalGraphResponse, KOLSpeakerResponse,
@@ -35,11 +36,16 @@ from src.features.intelligence.schemas import (
     ClinicalMarginCalculateRequest, ClinicalMarginCalculateResponse,
     ClinicalMarginSummaryReportResponse,
     HealthScoreCalculateRequest, HealthScoreCalculateResponse,
-    HealthScoreSummaryResponse
+    HealthScoreSummaryResponse,
+    ImagingStudyUploadPresignRequest, ImagingStudyUploadPresignResponse,
+    ImagingStudyViewerTokenResponse, ImagingStudyOut,
+    ImagingStudyListResponse
 )
 
 
 router = APIRouter(prefix="/api/v1/intelligence", tags=["Inteligência Clínica & STT"])
+imaging_router = APIRouter(prefix="/api/v1/imaging", tags=["Imagiologia Médica Orthanc DICOM"])
+orthanc_client = OrthancDicomClient()
 
 
 @router.get("/churn-risk", response_model=ChurnRiskResponse, summary="Radar Anti-Churn & Inteligência de Carteira (RFM Odontológico)")
@@ -367,5 +373,101 @@ def get_health_score_history(
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ==============================================================================
+# Endpoints de Imagiologia Médica Orthanc DICOM & 3D (TICKET-39)
+# Suportados tanto em /api/v1/imaging/studies quanto /api/v1/intelligence/imaging/studies
+# ==============================================================================
+
+@imaging_router.post(
+    "/studies/upload-presign",
+    response_model=ImagingStudyUploadPresignResponse,
+    summary="Gerar URL pré-assinada para upload de Tomografia DICOM ou STL no Cloudflare R2"
+)
+@router.post(
+    "/imaging/studies/upload-presign",
+    response_model=ImagingStudyUploadPresignResponse,
+    summary="Gerar URL pré-assinada para upload de Tomografia DICOM ou STL no Cloudflare R2 (alias)"
+)
+def create_imaging_upload_presign(
+    payload: ImagingStudyUploadPresignRequest,
+    account_id: str = Query("0f14ffff", description="ID do tenant")
+):
+    try:
+        acc = payload.account_id or account_id
+        return orthanc_client.create_upload_presign(
+            file_name=payload.file_name,
+            study_type=payload.study_type,
+            jaw_type=payload.jaw_type,
+            slice_count=payload.slice_count or 1,
+            patient_name=payload.patient_name,
+            deal_id=payload.deal_id,
+            ticket_id=payload.ticket_id,
+            implant_site=payload.implant_site,
+            anonymize_lgpd=payload.anonymize_lgpd if payload.anonymize_lgpd is not None else True,
+            account_id=acc,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@imaging_router.get(
+    "/studies/{study_id}/viewer-token",
+    response_model=ImagingStudyViewerTokenResponse,
+    summary="Gerar token assinado e URLs de streaming 3D para visualização médica"
+)
+@router.get(
+    "/imaging/studies/{study_id}/viewer-token",
+    response_model=ImagingStudyViewerTokenResponse,
+    summary="Gerar token assinado e URLs de streaming 3D para visualização médica (alias)"
+)
+def get_imaging_study_viewer_token(
+    study_id: str,
+    account_id: str = Query("0f14ffff", description="ID do tenant")
+):
+    return orthanc_client.generate_viewer_session(study_id=study_id, account_id=account_id)
+
+
+@imaging_router.get(
+    "/studies/{study_id}",
+    response_model=ImagingStudyOut,
+    summary="Consultar metadados anatômicos e técnicos do estudo de imagem"
+)
+@router.get(
+    "/imaging/studies/{study_id}",
+    response_model=ImagingStudyOut,
+    summary="Consultar metadados anatômicos e técnicos do estudo de imagem (alias)"
+)
+def get_imaging_study_by_id(
+    study_id: str,
+    account_id: str = Query("0f14ffff", description="ID do tenant")
+):
+    return orthanc_client.get_study(study_id=study_id, account_id=account_id)
+
+
+@imaging_router.get(
+    "/studies",
+    response_model=ImagingStudyListResponse,
+    summary="Listar estudos tomográficos e escaneamentos 3D do tenant"
+)
+@router.get(
+    "/imaging/studies",
+    response_model=ImagingStudyListResponse,
+    summary="Listar estudos tomográficos e escaneamentos 3D do tenant (alias)"
+)
+def list_imaging_studies(
+    deal_id: Optional[str] = Query(None, description="Filtrar por Deal/Cirurgia Guiada"),
+    study_type: Optional[str] = Query(None, description="Filtrar por tipo (DICOM_CBCT, INTRAORAL_STL)"),
+    account_id: str = Query("0f14ffff", description="ID do tenant")
+):
+    items = orthanc_client.list_studies(account_id=account_id, deal_id=deal_id, study_type=study_type)
+    return {
+        "studies": items,
+        "total": len(items)
+    }
+
 
 

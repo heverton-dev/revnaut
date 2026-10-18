@@ -29,7 +29,7 @@ from src.features.auth import auth_router
 from src.features.integrations.totvs.router import router as totvs_router
 from src.features.integrations.omnichannel.router import router as omnichannel_router
 from src.features.automations.router import router as automations_router
-from src.features.intelligence.router import router as intelligence_router
+from src.features.intelligence.router import router as intelligence_router, imaging_router
 from src.features.storage.router import router as storage_router
 from src.features.keypartners.router import router as keypartners_router
 from src.features.dentgo.router import router as dentgo_router
@@ -101,6 +101,7 @@ app.include_router(totvs_router)
 app.include_router(omnichannel_router)
 app.include_router(automations_router)
 app.include_router(intelligence_router)
+app.include_router(imaging_router)
 app.include_router(storage_router)
 app.include_router(keypartners_router)
 app.include_router(dentgo_router)

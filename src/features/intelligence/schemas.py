@@ -438,3 +438,74 @@ class HealthScoreSummaryResponse(BaseModel):
     history: List[Dict[str, Any]] = Field(default_factory=list)
 
 
+class ImagingStudyUploadPresignRequest(BaseModel):
+    deal_id: Optional[str] = Field(None, description="ID do negócio/cirurgia guiada")
+    ticket_id: Optional[str] = Field(None, description="ID do ticket de suporte cirúrgico ou cosmovigilância")
+    patient_name: Optional[str] = Field(None, description="Nome do paciente para anonimização")
+    file_name: str = Field(..., description="Nome do arquivo DICOM (.dcm) ou STL (.stl/.ply)")
+    study_type: str = Field(default="DICOM_CBCT", description="Tipo de estudo: DICOM_CBCT | INTRAORAL_STL | INTRAORAL_PLY | GUIDED_SURGERY_PLAN")
+    jaw_type: str = Field(default="AMBAS", description="Arcada anatômica: MAXILA | MANDIBULA | AMBAS | PERIAPICAL")
+    slice_count: Optional[int] = Field(default=1, ge=1, description="Número de cortes tomográficos")
+    implant_site: Optional[str] = Field(default=None, description="Posição do implante na arcada (ex: 11, 21, 36, 46)")
+    anonymize_lgpd: Optional[bool] = Field(default=True, description="Anonimizar dados sensíveis conforme LGPD")
+    account_id: Optional[str] = Field(default="0f14ffff", description="ID do tenant")
+
+
+class ImagingStudyUploadPresignResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    study_id: str
+    upload_presigned_url: str
+    r2_storage_key: str
+    patient_anonymized_id: str
+    study_type: str
+    anonymized: bool
+    expires_in_seconds: int = 3600
+    orthanc_dicom_port: int = 4242
+    orthanc_http_endpoint: str
+
+
+class ImagingStudyViewerTokenResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    study_id: str
+    viewer_token: str
+    viewer_stream_url: str
+    r2_public_url: str
+    study_type: str
+    patient_anonymized_id: str
+    jaw_type: str
+    bone_density_estimate: str
+    implant_site: Optional[str] = None
+    slice_count: int
+    recommended_implant_diameter_mm: float
+    recommended_implant_length_mm: float
+    bone_thickness_mm: float
+    expires_in_seconds: int = 7200
+
+
+class ImagingStudyOut(BaseModel):
+    model_config = {"extra": "allow"}
+    id: str
+    account_id: str
+    patient_anonymized_id: str
+    patient_name: Optional[str] = None
+    deal_id: Optional[str] = None
+    ticket_id: Optional[str] = None
+    study_type: str
+    orthanc_study_id: Optional[str] = None
+    r2_storage_key: str
+    file_name: str
+    file_size_bytes: int
+    slice_count: int
+    jaw_type: str
+    bone_density_estimate: str
+    implant_site: Optional[str] = None
+    is_anonymized: bool
+    created_at: Optional[str] = None
+
+
+class ImagingStudyListResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    studies: List[ImagingStudyOut]
+    total: int
+
+
