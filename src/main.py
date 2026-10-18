@@ -126,8 +126,14 @@ for p in _possible_static_paths:
         _active_static_dir = p
         break
 
+_assets_dir = None
 if _frontend_dist_dir.exists() and (_frontend_dist_dir / "assets").exists():
-    app.mount("/assets", StaticFiles(directory=str(_frontend_dist_dir / "assets")), name="assets")
+    _assets_dir = _frontend_dist_dir / "assets"
+elif _active_static_dir and (_active_static_dir / "assets").exists():
+    _assets_dir = _active_static_dir / "assets"
+
+if _assets_dir:
+    app.mount("/assets", StaticFiles(directory=str(_assets_dir)), name="assets")
 
 if _active_static_dir:
     @app.get("/", response_class=HTMLResponse, tags=["Frontend"])

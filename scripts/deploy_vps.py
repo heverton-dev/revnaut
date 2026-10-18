@@ -38,9 +38,14 @@ def make_tarball(source_dir: Path, output_filename: str):
         tar.add(str(source_dir / "backend"), arcname="backend")
         tar.add(str(source_dir / "data"), arcname="data")
         
-        static_src = source_dir / "docs" / "reconstruct_rvops" / "05_reconstructed_app"
-        if static_src.exists():
-            tar.add(str(static_src), arcname="static")
+        frontend_dist = source_dir / "frontend" / "dist"
+        if frontend_dist.exists():
+            tar.add(str(frontend_dist), arcname="frontend/dist")
+            tar.add(str(frontend_dist), arcname="static")
+        else:
+            static_src = source_dir / "docs" / "reconstruct_rvops" / "05_reconstructed_app"
+            if static_src.exists():
+                tar.add(str(static_src), arcname="static")
 
         manuais_src = source_dir / "docs" / "manuais"
         if manuais_src.exists():
@@ -96,18 +101,18 @@ def deploy():
             return False
 
         print("[5/5] Disparando Docker Stack Deploy com Traefik SSL...")
-        cmd_deploy = f"cd {REMOTE_DIR} && sed -i 's|image: rvops_app:.*|image: {version_tag}|' docker-stack.yml && docker stack deploy -c docker-stack.yml rvops && docker service update --image {version_tag} --force rvops_app"
+        cmd_deploy = f"cd {REMOTE_DIR} && sed -i 's|image: rvops_app:.*|image: {version_tag}|' docker-stack.yml && docker stack deploy -c docker-stack.yml rvops && docker service update --image {version_tag} --force rvops_app && docker service update --image {version_tag} --force rvops_worker"
         stdin, stdout, stderr = ssh.exec_command(cmd_deploy)
         stdout.channel.recv_exit_status()
         print(stdout.read().decode('utf-8'))
 
         print("=================================================================")
         print(" [SUCESSO] DEPLOY CONCLUIDO COM SUCESSO!")
-        print(" - Aplicacao & Frontend: https://revnaut.vpsconexao.org")
-        print(" - Swagger Studio:       https://revnaut.vpsconexao.org/docs")
-        print(" - Webhook Studio:       https://revnaut.vpsconexao.org/webhooks")
-        print(" - MCP Studio (IA):      https://revnaut.vpsconexao.org/mcp")
-        print(" - Guia do Usuario:      https://revnaut.vpsconexao.org/docs/guia")
+        print(" - Aplicacao & Frontend: https://revnault.vpsconexao.org")
+        print(" - Swagger Studio:       https://revnault.vpsconexao.org/docs")
+        print(" - Webhook Studio:       https://revnault.vpsconexao.org/webhooks")
+        print(" - MCP Studio (IA):      https://revnault.vpsconexao.org/mcp")
+        print(" - Guia do Usuario:      https://revnault.vpsconexao.org/docs/guia")
         print("=================================================================")
         return True
 
