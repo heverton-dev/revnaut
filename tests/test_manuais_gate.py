@@ -31,18 +31,18 @@ def test_api_quarteto_manuais_list_and_detail():
     assert "manuals" in data
     
     # Testar detalhe de um manual específico
-    detail_res = client.get("/api/v1/quarteto/manuais/00_autenticacao_login.md")
+    detail_res = client.get("/api/v1/quarteto/manuais/00_login.md")
     assert detail_res.status_code == 200
     detail = detail_res.json()
-    assert detail["filename"] == "00_autenticacao_login.md"
-    assert "Manual da Rota: Autenticação" in detail["content"]
+    assert detail["filename"] == "00_login.md"
+    assert "Manual da Rota: Acesso ao Sistema" in detail["content"]
 
 
 def test_docs_guia_renders_dynamic_html():
     """Valida se /docs/guia responde com 200 e carrega a interface de documentação."""
-    res = client.get("/docs/guia?manual=01_comercial_vendas_funis.md")
+    res = client.get("/docs/guia?manual=01_deals.md")
     assert res.status_code == 200
     html = res.text
     assert "Central de Manuais & Guia Operacional" in html
-    assert "01_comercial_vendas_funis.md" in html
+    assert "01_deals.md" in html
     assert "marked.js" in html

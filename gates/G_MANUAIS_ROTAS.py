@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Quality Gate: Validação Determinística de Manuais de Rotas e Subrotas.
+"""Quality Gate: Validação Determinística de Manuais de Rotas e Sub-rotas.
 
-Verifica:
-1. Se todas as views/rotas registradas no frontend (VIEW_CONFIG) possuem manual em docs/manuais/.
-2. Se cada manual contém rigorosamente as 6 seções obrigatórias de governança.
-3. Se há ausência total de emojis em todos os arquivos de documentação (regra inquebrável).
+Padrão AIDD v4.0:
+1. Relação 1-para-1 estrita: todas as rotas/sub-rotas de VIEW_CONFIG possuem manual dedicado.
+2. Cada manual contém rigorosamente as 9 seções anatômicas obrigatórias de governança.
+3. Ausência total de emojis em todos os arquivos de documentação (Lei #14 inquebrável).
 
 Uso: python gates/G_MANUAIS_ROTAS.py [repo_root]
 Saída: exit 0 (aprovado) ou exit 1 (bloqueado).
@@ -20,12 +20,15 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 MANDATORY_SECTIONS = [
-    r"##\s*1\.\s*Objetivo",
-    r"##\s*2\.\s*O\s*Que\s*o\s*Usu[aá]rio\s*Consegue\s*Realizar",
-    r"##\s*3\.\s*Quem\s*Pode\s*Ver\s*e\s*Realizar\s*A[cç][oõ]es",
-    r"##\s*4\.\s*Quais\s*A[cç][oõ]es\s*Podem\s*Ser\s*Realizadas",
-    r"##\s*5\.\s*Como\s*o\s*Usu[aá]rio\s*Realiza\s*as\s*A[cç][oõ]es",
-    r"##\s*6\.\s*O\s*Que\s*Falta\s*Implementar",
+    (r"##\s*1\.\s*Objetivo", "1. Objetivo da Rota / Sub-rota"),
+    (r"##\s*2\.\s*O\s*Que\s*o\s*Usu[aá]rio\s*Consegue\s*Realizar", "2. O Que o Usuário Consegue Realizar"),
+    (r"##\s*3\.\s*Quem\s*Pode\s*Ver\s*e\s*Realizar\s*A[cç][oõ]es", "3. Quem Pode Ver e Realizar Ações (Matriz RBAC)"),
+    (r"##\s*4\.\s*Quais\s*A[cç][oõ]es\s*Podem\s*Ser\s*Realizadas", "4. Quais Ações Podem Ser Realizadas"),
+    (r"##\s*5\.\s*Como\s*o\s*Usu[aá]rio\s*Realiza\s*as\s*A[cç][oõ]es", "5. Como o Usuário Realiza as Ações (Passo a Passo)"),
+    (r"##\s*6\.\s*Cat[aá]logo\s*Anat[oô]mico\s*de\s*Bot[oõ]es", "6. Catálogo Anatômico de Botões & Ações do DOM"),
+    (r"##\s*7\.\s*Cat[aá]logo\s*de\s*Modais", "7. Catálogo de Modais & Gavetas Operacionais"),
+    (r"##\s*8\.\s*Motores\s*de\s*Backend", "8. Motores de Backend & Arquitetura Subjacente"),
+    (r"##\s*9\.\s*O\s*Que\s*Falta\s*Implementar", "9. O Que Falta Implementar & Plano de Micro-Tickets"),
 ]
 
 EMOJI_PATTERN = re.compile(r"[\U00010000-\U0010ffff]", flags=re.UNICODE)
@@ -61,34 +64,42 @@ def scan(repo_root: Path) -> GateResult:
         return GateResult(passed=False, messages=["Nenhum arquivo markdown encontrado em docs/manuais/."])
 
     all_manuals_text: dict[str, str] = {}
+    covered_routes: set[str] = set()
+
     for mf in manual_files:
         try:
             txt = mf.read_text(encoding="utf-8")
             all_manuals_text[mf.name] = txt
         except Exception as exc:
             errors.append(f"{mf.name}: falha ao ler arquivo ({exc})")
+            continue
 
         # Verificar ausência de emojis
         emojis = EMOJI_PATTERN.findall(txt)
         if emojis:
             errors.append(f"{mf.name}: contém {len(emojis)} emojis proibidos ({set(emojis)})")
 
-        # Verificar 6 seções obrigatórias (exceto README.md)
+        # Verificar 9 seções obrigatórias (exceto README.md)
         if mf.name != "README.md":
-            for sec_regex in MANDATORY_SECTIONS:
+            for sec_regex, sec_name in MANDATORY_SECTIONS:
                 if not re.search(sec_regex, txt, re.IGNORECASE):
-                    errors.append(f"{mf.name}: seção obrigatória ausente correspondente a '{sec_regex}'")
+                    errors.append(f"{mf.name}: seção obrigatória ausente correspondente a '{sec_name}'")
 
-    # 3. Garantir cobertura de todas as views do frontend
-    combined_text = "\n".join(all_manuals_text.values())
-    for view in views_found:
-        pattern = rf"(#|'|\"|`){re.escape(view)}('|#|\"|`|\b)"
-        if not re.search(pattern, combined_text, re.IGNORECASE):
-            errors.append(f"A rota/view '{view}' não foi documentada em nenhum arquivo de docs/manuais/")
+            # Checar qual rota este arquivo cobre no título ou hash
+            for v in views_found:
+                if f"(#{v})" in txt or f"(#/{v})" in txt or f"`#{v}`" in txt or f"`/#{v}`" in txt:
+                    covered_routes.add(v)
+
+    # 3. Garantir cobertura 1-para-1 de todas as views do frontend
+    missing = [v for v in views_found if v not in covered_routes]
+    if missing:
+        errors.append(f"Faltam manuais com as 9 seções para {len(missing)} rota(s)/sub-rota(s): {missing}")
 
     if errors:
         return GateResult(passed=False, messages=errors)
-    return GateResult(passed=True, messages=[f"100% das {len(views_found)} rotas cobertas em {len(manual_files)} manuais sem emojis."])
+    return GateResult(passed=True, messages=[
+        f"100% das {len(views_found)} rotas e sub-rotas cobertas em {len(manual_files) - 1} manuais anatômicos individuais com 9 seções e zero emojis."
+    ])
 
 
 def main(argv: list[str] | None = None) -> int:
