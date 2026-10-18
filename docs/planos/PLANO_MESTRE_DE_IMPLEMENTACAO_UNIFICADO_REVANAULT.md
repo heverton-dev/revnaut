@@ -477,7 +477,7 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
 - **Validation Command:** `python -m pytest tests/test_surgical_sos_livekit.py -q`
 - **Blocked by:** TICKET-11, TICKET-20, TICKET-24
 
-#### [TICKET-26] Copiloto RAG de Catálogos Técnicos, Torques e Sequência de Fresagem (pgvector)
+#### [TICKET-26] [x] DONE - Copiloto RAG de Catálogos Técnicos, Torques e Sequência de Fresagem (pgvector)
 - **Descrição:** Implementação do assistente técnico baseado em RAG (`src/features/intelligence/surgical_rag.py`) que indexa manuais cirúrgicos, tabelas de torque de inserção, sequências de brocas por densidade óssea (Tipo I a IV) e compatibilidade protética no `pgvector`, sugerindo respostas técnicas exatas com citação de página para o consultor/atendente no Chatwoot.
 - **Como Implementar (Detalhes Técnicos):**
   1. Criar pipeline de ingestão de catálogos técnicos (`POST /api/v1/intelligence/catalog-rag/ingest`) que divide manuais em chunks semânticos por linha de implante e grava os embeddings no `pgvector`.

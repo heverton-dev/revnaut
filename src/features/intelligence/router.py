@@ -11,13 +11,16 @@ from fastapi import APIRouter, HTTPException, Query, status
 from src.features.intelligence import service
 from src.features.intelligence import transcription_worker
 from src.features.intelligence import granola_copilot
+from src.features.intelligence import surgical_rag
 from src.features.intelligence.schemas import (
     ContactInstitutionCreate, ContactInstitutionOut,
     ClinicalGraphResponse, KOLSpeakerResponse,
     ChurnRiskResponse, IntelligenceOperationResponse,
     TranscriptionProcessRequest, TranscriptionProcessResponse,
     TranscriptionItemOut,
-    CopilotExtractAndApplyRequest, CopilotExtractAndApplyResponse
+    CopilotExtractAndApplyRequest, CopilotExtractAndApplyResponse,
+    CatalogChunkIngestRequest, CatalogChunkIngestResponse,
+    CatalogRagQueryRequest, CatalogRagQueryResponse
 )
 
 
@@ -126,5 +129,46 @@ def copilot_extract_and_apply(payload: CopilotExtractAndApplyRequest):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post(
+    "/catalog-rag/ingest",
+    response_model=CatalogChunkIngestResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Ingestar fragmento de catálogo cirúrgico com embedding vetorial"
+)
+def ingest_catalog_chunk(payload: CatalogChunkIngestRequest):
+    try:
+        return surgical_rag.ingest_catalog_chunk(
+            source_manual=payload.source_manual,
+            page_number=payload.page_number,
+            implant_line=payload.implant_line,
+            bone_type=payload.bone_type,
+            content_chunk=payload.content_chunk,
+            drill_sequence=payload.drill_sequence,
+            recommended_implant_torque_ncm=payload.recommended_implant_torque_ncm,
+            recommended_prosthetic_torque_ncm=payload.recommended_prosthetic_torque_ncm,
+            account_id=payload.account_id or "0f14ffff"
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post(
+    "/catalog-rag/query",
+    response_model=CatalogRagQueryResponse,
+    summary="Consultar copiloto RAG de torques e sequência de fresagem"
+)
+def query_catalog_rag(payload: CatalogRagQueryRequest):
+    try:
+        return surgical_rag.query_surgical_catalog(
+            query=payload.query,
+            bone_type=payload.bone_type,
+            min_similarity=payload.min_similarity if payload.min_similarity is not None else 0.65,
+            account_id=payload.account_id or "0f14ffff"
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 

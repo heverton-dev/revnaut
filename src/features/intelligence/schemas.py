@@ -192,3 +192,47 @@ class CopilotExtractAndApplyResponse(BaseModel):
     updated_value: Optional[float] = None
 
 
+class CatalogChunkIngestRequest(BaseModel):
+    source_manual: str = Field(..., description="Nome do catálogo/manual técnico")
+    page_number: int = Field(..., description="Página de referência")
+    implant_line: str = Field(..., description="Linha do implante/componente")
+    bone_type: Optional[str] = Field(None, description="Classificação óssea (ex: Tipo I, II, III, IV)")
+    content_chunk: str = Field(..., description="Texto do fragmento técnico")
+    drill_sequence: List[str] = Field(default_factory=list, description="Lista ordenada de brocas/fresas")
+    recommended_implant_torque_ncm: Optional[float] = Field(None, description="Torque de inserção do implante em N.cm")
+    recommended_prosthetic_torque_ncm: Optional[float] = Field(None, description="Torque do parafuso protético em N.cm")
+    account_id: Optional[str] = Field(default="0f14ffff", description="ID do tenant")
+
+
+class CatalogChunkIngestResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    status: str
+    chunk_id: str
+    vector_dimensions: int
+    message: str
+
+
+class CatalogRagQueryRequest(BaseModel):
+    query: str = Field(..., description="Pergunta do operador ou cirurgião sobre fresagem/torque")
+    bone_type: Optional[str] = Field(None, description="Filtro opcional de tipo ósseo")
+    min_similarity: Optional[float] = Field(default=0.65, description="Limiar de similaridade de cosseno")
+    account_id: Optional[str] = Field(default="0f14ffff", description="ID do tenant")
+
+
+class CatalogRagQueryResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    query: str
+    matched: bool
+    similarity_score: float
+    source_manual: Optional[str] = None
+    page_number: Optional[int] = None
+    implant_line: Optional[str] = None
+    bone_type: Optional[str] = None
+    recommended_implant_torque_ncm: Optional[float] = None
+    recommended_prosthetic_torque_ncm: Optional[float] = None
+    drill_sequence: List[str] = Field(default_factory=list)
+    content_chunk: Optional[str] = None
+    answer: str
+
+
+
