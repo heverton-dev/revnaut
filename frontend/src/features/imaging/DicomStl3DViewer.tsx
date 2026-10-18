@@ -48,6 +48,8 @@ export const DicomStl3DViewer: React.FC<DicomStl3DViewerProps> = ({
   dealId,
   onClose,
 }) => {
+  const [activeStudyId, setActiveStudyId] = useState<string>(studyId);
+  const [studies, setStudies] = useState<ImagingStudy[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [study, setStudy] = useState<ViewerTokenData | null>(null);
@@ -59,11 +61,36 @@ export const DicomStl3DViewer: React.FC<DicomStl3DViewerProps> = ({
   const [showImplantGuide, setShowImplantGuide] = useState<boolean>(true);
   const [rotationAngle, setRotationAngle] = useState<number>(0);
 
+  // Upload Presign Modal State
+  const [showUploadModal, setShowUploadModal] = useState<boolean>(false);
+  const [uploadFileName, setUploadFileName] = useState<string>("cone_beam_mandibula_novo.dcm");
+  const [uploadPatientName, setUploadPatientName] = useState<string>("Paciente Dr. Silva");
+  const [uploadStudyType, setUploadStudyType] = useState<string>("DICOM_CBCT");
+  const [uploadJawType, setUploadJawType] = useState<string>("MANDIBULA");
+  const [uploadImplantSite, setUploadImplantSite] = useState<string>("36");
+  const [uploading, setUploading] = useState<boolean>(false);
+
+  const fetchStudiesList = async () => {
+    try {
+      const res = await fetch("/api/v1/imaging/studies");
+      if (res.ok) {
+        const data = await res.json();
+        setStudies(data.studies || []);
+      }
+    } catch {
+      // silent fallback
+    }
+  };
+
+  useEffect(() => {
+    fetchStudiesList();
+  }, []);
+
   const fetchViewerData = async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/v1/imaging/studies/${studyId}/viewer-token`);
+      const res = await fetch(`/api/v1/imaging/studies/${activeStudyId}/viewer-token`);
       if (!res.ok) {
         if (res.status === 404) {
           throw new Error("Estudo tomográfico ou escaneamento STL não encontrado.");
@@ -82,7 +109,41 @@ export const DicomStl3DViewer: React.FC<DicomStl3DViewerProps> = ({
 
   useEffect(() => {
     fetchViewerData();
-  }, [studyId]);
+  }, [activeStudyId]);
+
+  const handlePresignUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!uploadFileName.trim()) return;
+    setUploading(true);
+    try {
+      const res = await fetch("/api/v1/imaging/studies/upload-presign", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          file_name: uploadFileName.trim(),
+          patient_name: uploadPatientName.trim() || undefined,
+          study_type: uploadStudyType,
+          jaw_type: uploadJawType,
+          slice_count: 240,
+          implant_site: uploadImplantSite || undefined,
+          deal_id: dealId || undefined,
+          anonymize_lgpd: true,
+          account_id: "0f14ffff",
+        }),
+      });
+      if (!res.ok) throw new Error("Erro ao gerar URL pré-assinada R2");
+      const data = await res.json();
+      setShowUploadModal(false);
+      await fetchStudiesList();
+      if (data.study_id) {
+        setActiveStudyId(data.study_id);
+      }
+    } catch (err: any) {
+      alert(err.message || "Erro no upload presign");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -172,8 +233,8 @@ export const DicomStl3DViewer: React.FC<DicomStl3DViewerProps> = ({
           Vincule uma tomografia Cone Beam (.dcm) ou escaneamento de arco (.stl) para planejar a cirurgia guiada.
         </p>
         <button
-          onClick={() => {}}
-          className="px-4 py-2 bg-status-success text-text-inverse text-xs font-medium rounded-lg transition-colors flex items-center gap-2"
+          onClick={() => setShowUploadModal(true)}
+          className="px-4 py-2 bg-status-success text-text-inverse text-xs font-medium rounded-lg transition-colors flex items-center gap-2 cursor-pointer"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
             <path
@@ -225,6 +286,31 @@ export const DicomStl3DViewer: React.FC<DicomStl3DViewerProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Seletor dinâmico de estudos */}
+          {studies.length > 0 && (
+            <select
+              value={activeStudyId}
+              onChange={(e) => setActiveStudyId(e.target.value)}
+              className="px-2.5 py-1.5 rounded-lg border border-border bg-surface-card text-xs text-text-main font-mono"
+            >
+              {studies.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.id} - {s.jaw_type} ({s.patient_anonymized_id})
+                </option>
+              ))}
+            </select>
+          )}
+
+          <button
+            onClick={() => setShowUploadModal(true)}
+            className="px-3 py-1.5 bg-brand-primary hover:bg-brand-primary-hover text-text-inverse text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            Upload R2
+          </button>
+
           {onClose && (
             <button
               onClick={onClose}
@@ -486,6 +572,118 @@ export const DicomStl3DViewer: React.FC<DicomStl3DViewerProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Modal Upload Presign DICOM/STL no Cloudflare R2 */}
+      {showUploadModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-md p-5 bg-surface-card border border-border rounded-xl space-y-4 shadow-xl">
+            <div className="flex items-center justify-between border-b border-border pb-2.5">
+              <h3 className="text-sm font-bold text-text-main flex items-center gap-2">
+                <svg className="w-4 h-4 text-brand-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                Upload & Presign Cloudflare R2 (PACS Orthanc)
+              </h3>
+              <button
+                onClick={() => setShowUploadModal(false)}
+                className="text-text-muted hover:text-text-main text-sm"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handlePresignUpload} className="space-y-3">
+              <div>
+                <label className="text-xs font-semibold text-text-secondary block mb-1">
+                  Nome do Arquivo (.dcm / .stl)
+                </label>
+                <input
+                  type="text"
+                  value={uploadFileName}
+                  onChange={(e) => setUploadFileName(e.target.value)}
+                  className="w-full px-3 py-1.5 rounded-lg border border-border bg-surface-bg text-xs text-text-main font-mono"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-text-secondary block mb-1">
+                  Nome do Paciente (Anonimizado por LGPD)
+                </label>
+                <input
+                  type="text"
+                  value={uploadPatientName}
+                  onChange={(e) => setUploadPatientName(e.target.value)}
+                  className="w-full px-3 py-1.5 rounded-lg border border-border bg-surface-bg text-xs text-text-main"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-xs font-semibold text-text-secondary block mb-1">
+                    Tipo de Exame
+                  </label>
+                  <select
+                    value={uploadStudyType}
+                    onChange={(e) => setUploadStudyType(e.target.value)}
+                    className="w-full px-2.5 py-1.5 rounded-lg border border-border bg-surface-bg text-xs text-text-main"
+                  >
+                    <option value="DICOM_CBCT">DICOM Cone Beam</option>
+                    <option value="INTRAORAL_STL">Escaneamento STL</option>
+                    <option value="GUIDED_SURGERY_PLAN">Guia Cirúrgica</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-text-secondary block mb-1">
+                    Arcada Anatômica
+                  </label>
+                  <select
+                    value={uploadJawType}
+                    onChange={(e) => setUploadJawType(e.target.value)}
+                    className="w-full px-2.5 py-1.5 rounded-lg border border-border bg-surface-bg text-xs text-text-main"
+                  >
+                    <option value="MANDIBULA">Mandíbula (D1/D2)</option>
+                    <option value="MAXILA">Maxila (D3/D4)</option>
+                    <option value="AMBAS">Ambas Arcadas</option>
+                    <option value="PERIAPICAL">Periapical Local</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-text-secondary block mb-1">
+                  Sítio de Implante Previsto (Dente FDI)
+                </label>
+                <input
+                  type="text"
+                  value={uploadImplantSite}
+                  onChange={(e) => setUploadImplantSite(e.target.value)}
+                  placeholder="ex: 11, 21, 36, 46"
+                  className="w-full px-3 py-1.5 rounded-lg border border-border bg-surface-bg text-xs text-text-main font-mono"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+                <button
+                  type="button"
+                  onClick={() => setShowUploadModal(false)}
+                  className="px-3 py-1.5 bg-surface-bg hover:bg-surface-card text-text-secondary text-xs font-medium rounded-lg border border-border transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={uploading || !uploadFileName.trim()}
+                  className="px-4 py-1.5 bg-status-success text-text-inverse text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  {uploading ? "Gerando Presign..." : "Registrar & Presign R2"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

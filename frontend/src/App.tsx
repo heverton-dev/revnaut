@@ -538,6 +538,7 @@ export function App() {
       <ErrorBoundary onReset={() => dealsQuery.refetch()}>
         <AppRouter
           currentRoute={activeNav}
+          onNavigate={handleNavigate}
           defaultComponent={
             <div className="space-y-6 max-w-7xl mx-auto">
               {/* Cabeçalho + Ações Primárias */}

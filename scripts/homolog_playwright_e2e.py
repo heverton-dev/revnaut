@@ -53,9 +53,9 @@ ALL_APP_ROUTES: List[Dict[str, Any]] = [
     {"id": "rbac", "label": "RBAC & Hierarquia", "in_sidebar": True},
     {"id": "support", "label": "Suporte & RMA", "in_sidebar": True},
     {"id": "settings", "label": "Configurações & ERP", "in_sidebar": True},
-    {"id": "scoring", "label": "Lead Scoring ICP (Orphan Route)", "in_sidebar": False},
-    {"id": "marketing", "label": "Marketing & LPs (Orphan Route)", "in_sidebar": False},
-    {"id": "imaging", "label": "PACS 3D DICOM/STL (Orphan Route)", "in_sidebar": False},
+    {"id": "scoring", "label": "Lead Scoring ICP", "in_sidebar": True},
+    {"id": "marketing", "label": "Marketing & LPs", "in_sidebar": True},
+    {"id": "imaging", "label": "PACS 3D DICOM/STL", "in_sidebar": True},
 ]
 
 

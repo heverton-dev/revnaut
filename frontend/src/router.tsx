@@ -2,7 +2,6 @@ import * as React from "react";
 import { ConsignmentSurgicalBoard } from "@/features/keypartners/ConsignmentSurgicalBoard";
 import { DentgoExpressCockpit } from "@/features/dentgo/DentgoExpressCockpit";
 import { LandingPageBuilder } from "@/features/campaigns/LandingPageBuilder";
-import { OmnichannelContextSidebar } from "@/features/inbox/OmnichannelContextSidebar";
 import { SupersetEmbeddedDashboard } from "@/features/bi/SupersetEmbeddedDashboard";
 import { DicomStl3DViewer } from "@/features/imaging/DicomStl3DViewer";
 import { RbacHierarchyTree } from "@/features/rbac/RbacHierarchyTree";
@@ -14,6 +13,8 @@ import { ContractsDocumensoWorkspace } from "@/features/contracts/ContractsDocum
 import { SupportAnvisaWorkspace } from "@/features/support/SupportAnvisaWorkspace";
 import { CalcomReactivationWorkspace } from "@/features/scheduling/CalcomReactivationWorkspace";
 import { IntelligenceSuiteWorkspace } from "@/features/intelligence/IntelligenceSuiteWorkspace";
+
+import { OmnichannelWorkspace } from "@/features/inbox/OmnichannelWorkspace";
 
 export type AppRoute =
   | "dashboard"
@@ -44,9 +45,10 @@ export interface RouteConfig {
 export interface RouterProps {
   currentRoute: string;
   defaultComponent?: React.ReactNode;
+  onNavigate?: (route: any) => void;
 }
 
-export const AppRouter: React.FC<RouterProps> = ({ currentRoute, defaultComponent }) => {
+export const AppRouter: React.FC<RouterProps> = ({ currentRoute, defaultComponent, onNavigate }) => {
   switch (currentRoute) {
     case "deals":
       return <>{defaultComponent}</>;
@@ -57,16 +59,7 @@ export const AppRouter: React.FC<RouterProps> = ({ currentRoute, defaultComponen
     case "dentgo":
       return <DentgoExpressCockpit />;
     case "omnichannel":
-      return (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
-          <div className="lg:col-span-2">
-            <OmnichannelContextSidebar contactIdentifier="cnt-01" contactId="cnt-01" currentDealId="deal-01" />
-          </div>
-          <div>
-            <DicomStl3DViewer studyId="study-demo-01" />
-          </div>
-        </div>
-      );
+      return <OmnichannelWorkspace onOpenSosVideo={() => onNavigate && onNavigate("video_sos")} />;
     case "dashboard":
       return (
         <SupersetEmbeddedDashboard

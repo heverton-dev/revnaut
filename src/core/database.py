@@ -2157,6 +2157,23 @@ def init_db() -> None:
         cur.execute("UPDATE users SET is_superadmin = 0 WHERE email != ?", (superadmin_email,))
         cur.execute("UPDATE users SET role = 'Consultor Comercial' WHERE email != ? AND role = 'Super Admin'", (superadmin_email,))
 
+        # Seed determinístico do estudo de demonstração DICOM/STL (HOMOLOG-15)
+        cur.execute("SELECT id FROM imaging_studies WHERE id = 'study-demo-01'")
+        if not cur.fetchone():
+            cur.execute("""
+                INSERT INTO imaging_studies (
+                    id, account_id, patient_name, patient_anonymized_id,
+                    deal_id, ticket_id, study_type, orthanc_study_id,
+                    r2_storage_key, file_name, file_size_bytes, slice_count,
+                    jaw_type, bone_density_estimate, implant_site, is_anonymized
+                ) VALUES (
+                    'study-demo-01', '0f14ffff', 'Paciente Demonstração Cone Beam', 'ANON-PAC-DEMO01',
+                    'deal-01', 't-1', 'DICOM_CBCT', 'orthanc-demo-01',
+                    'imaging/0f14ffff/cone_beam_mandibula_demo.dcm', 'cone_beam_mandibula_demo.dcm',
+                    45219800, 360, 'MANDIBULA', 'D1_DENSO', '46', 1
+                )
+            """)
+
     conn.close()
 
 
