@@ -466,13 +466,22 @@ def init_db() -> None:
         cur = conn.cursor()
         cur.execute("PRAGMA table_info(deals)")
         existing_cols = {row["name"] for row in cur.fetchall()}
-        if "expected_close_date" not in existing_cols:
-            cur.execute("ALTER TABLE deals ADD COLUMN expected_close_date TEXT DEFAULT NULL")
+        for col_name, col_def in [
+            ("expected_close_date", "TEXT DEFAULT NULL"),
+            ("field_owner_id", "TEXT DEFAULT NULL"),
+            ("inside_owner_id", "TEXT DEFAULT NULL"),
+            ("split_commission_field_pct", "REAL DEFAULT 70.0"),
+            ("split_commission_inside_pct", "REAL DEFAULT 30.0"),
+        ]:
+            if col_name not in existing_cols:
+                cur.execute(f"ALTER TABLE deals ADD COLUMN {col_name} {col_def}")
 
         cur.execute("PRAGMA table_info(contacts)")
         contact_cols = {row["name"] for row in cur.fetchall()}
         for col_name, col_def in [
             ("owner_id", "TEXT DEFAULT NULL"),
+            ("field_owner_id", "TEXT DEFAULT NULL"),
+            ("inside_owner_id", "TEXT DEFAULT NULL"),
             ("team_id", "TEXT DEFAULT NULL"),
             ("business_unit_id", "TEXT DEFAULT NULL"),
             ("cro", "TEXT DEFAULT NULL"),

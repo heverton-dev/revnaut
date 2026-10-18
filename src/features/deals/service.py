@@ -329,3 +329,29 @@ def export_deals_csv(
     
     return output.getvalue()
 
+
+def calculate_split_commissions(
+    total_value: float,
+    base_rate_pct: float,
+    field_pct: float = 70.0,
+    inside_pct: float = 30.0,
+) -> Dict[str, float]:
+    """
+    Calcula a partição de comissões entre Consultor de Campo e Analista Inside Sales.
+    Garante conservação de valor: field_commission + inside_commission == total_commission.
+    """
+    total_commission = round(total_value * (base_rate_pct / 100.0), 2)
+    field_commission = round(total_commission * (field_pct / 100.0), 2)
+    inside_commission = round(total_commission - field_commission, 2)
+
+    return {
+        "total_value": total_value,
+        "base_rate_pct": base_rate_pct,
+        "total_commission": total_commission,
+        "field_pct": field_pct,
+        "field_commission": field_commission,
+        "inside_pct": inside_pct,
+        "inside_commission": inside_commission,
+    }
+
+

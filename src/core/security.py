@@ -121,20 +121,20 @@ def resolve_data_scope_clause(
     if scope == DataScopeEnum.TENANT_GLOBAL:
         return f"{prefix}account_id = ?", [user_context.account_id]
 
-    # 4. Escopo Próprio / Self (Consultor de Campo)
+    # 4. Escopo Próprio / Self (Consultor de Campo titular ou Analista Inside co-piloto)
     if scope == DataScopeEnum.SELF:
         return (
-            f"{prefix}account_id = ? AND {prefix}owner_id = ?",
-            [user_context.account_id, user_context.user_id]
+            f"{prefix}account_id = ? AND ({prefix}owner_id = ? OR {prefix}field_owner_id = ? OR {prefix}inside_owner_id = ?)",
+            [user_context.account_id, user_context.user_id, user_context.user_id, user_context.user_id]
         )
 
     # 5. Escopo de Time Direto (Gestor Regional)
     if scope == DataScopeEnum.TEAM:
         if not user_context.team_id:
-            # Fallback seguro: se não tiver time, cai para self
+            # Fallback seguro: se não tiver time, cai para self dual
             return (
-                f"{prefix}account_id = ? AND {prefix}owner_id = ?",
-                [user_context.account_id, user_context.user_id]
+                f"{prefix}account_id = ? AND ({prefix}owner_id = ? OR {prefix}field_owner_id = ? OR {prefix}inside_owner_id = ?)",
+                [user_context.account_id, user_context.user_id, user_context.user_id, user_context.user_id]
             )
         return (
             f"{prefix}account_id = ? AND {prefix}team_id = ?",
@@ -145,8 +145,8 @@ def resolve_data_scope_clause(
     if scope == DataScopeEnum.SUBTREE:
         if not user_context.team_id:
             return (
-                f"{prefix}account_id = ? AND {prefix}owner_id = ?",
-                [user_context.account_id, user_context.user_id]
+                f"{prefix}account_id = ? AND ({prefix}owner_id = ? OR {prefix}field_owner_id = ? OR {prefix}inside_owner_id = ?)",
+                [user_context.account_id, user_context.user_id, user_context.user_id, user_context.user_id]
             )
         
         cur = conn.cursor()
