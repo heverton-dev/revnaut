@@ -102,3 +102,19 @@ class DeleteRuleResponse(BaseModel):
     status: str
     rule_id: str
 
+
+class EvaluateHandoffRequest(BaseModel):
+    contact_id: int = Field(..., description="ID do contato a ser avaliado")
+    account_id: Optional[str] = Field(default="0f14ffff", description="ID do tenant/account")
+    interactions: Optional[List[str]] = Field(default_factory=list, description="Lista de interações ou eventos de engajamento")
+
+
+class EvaluateHandoffResponse(BaseModel):
+    success: bool
+    contact_id: int
+    score: int
+    tier: str
+    deal_created: bool
+    deal_id: Optional[str] = None
+
+

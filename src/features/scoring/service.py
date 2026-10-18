@@ -426,3 +426,149 @@ def recalculate_all_scores(
         "avg_score": avg_score,
         "ranked_leads": ranked
     }
+
+
+def calculate_contact_score_and_handoff(
+    contact_id: int,
+    account_id: str = "0f14ffff",
+    additional_interactions: Optional[List[str]] = None
+) -> Dict[str, Any]:
+    """
+    TICKET-10: Motor Preditivo de Lead Scoring Odontológico, ICP Fit e Handoff Automático.
+    Calcula ICP Fit (peso 60%) + Engajamento (peso 40%), persiste embedding semântico
+    e se score >= 75, cria oportunidade comercial no estágio 101 com anti-duplicação.
+    """
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM contacts WHERE id = ?", (contact_id,))
+        c_row = cur.fetchone()
+        if not c_row:
+            raise ValueError(f"Contato com ID {contact_id} não encontrado")
+        c = dict(c_row)
+
+        # 1. Cálculo ICP Fit (base 100 com peso 60%)
+        icp_pts = 0
+        specialty = (c.get("specialty") or "").lower()
+        if any(k in specialty for k in ["implantodontia", "cirurgia bucomaxilofacial", "bucomaxilofacial", "cirurgia"]):
+            icp_pts += 35
+        elif any(k in specialty for k in ["ortodontia", "protese", "prótese", "periodontia"]):
+            icp_pts += 20
+        else:
+            icp_pts += 10
+
+        vol = (c.get("monthly_implants_volume") or "").lower()
+        if "> 50" in vol or "50" in vol:
+            icp_pts += 30
+        elif "> 20" in vol or "20" in vol:
+            icp_pts += 20
+        elif "10" in vol:
+            icp_pts += 10
+        else:
+            icp_pts += 5
+
+        cust = (c.get("customer_type") or "").lower()
+        if any(k in cust for k in ["cirurgi", "implantodontista", "clinica", "clínica"]):
+            icp_pts += 20
+        else:
+            icp_pts += 10
+
+        work_model = (c.get("work_model") or "").lower()
+        if any(k in work_model for k in ["própria", "propria", "proprietário", "socio", "sócio"]):
+            icp_pts += 15
+        else:
+            icp_pts += 5
+
+        icp_total = min(100, icp_pts)
+
+        # 2. Cálculo Engajamento Comportamental (base 100 com peso 40%)
+        eng_pts = 0
+        interactions = additional_interactions or []
+        for inter in interactions:
+            inter_lower = inter.lower()
+            if any(k in inter_lower for k in ["presenca", "imersao", "evento"]):
+                eng_pts += 35
+            elif any(k in inter_lower for k in ["catalogo", "catálogo", "download"]):
+                eng_pts += 25
+            elif any(k in inter_lower for k in ["whatsapp", "resposta"]):
+                eng_pts += 25
+            elif any(k in inter_lower for k in ["visita", "site", "landing"]):
+                eng_pts += 15
+            else:
+                eng_pts += 10
+        eng_total = min(100, eng_pts)
+
+        # 3. Ponderação final
+        calculated_score = int(round(icp_total * 0.6 + eng_total * 0.4))
+        current_score = c.get("score") or 0
+        if not interactions and current_score > 0:
+            final_score = max(current_score, calculated_score)
+        else:
+            final_score = calculated_score
+
+        final_score = max(0, min(100, final_score))
+        tier = "Tier A" if final_score >= 75 else ("Tier B" if final_score >= 50 else "Tier C")
+
+        # Atualiza pontuação do contato
+        cur.execute("UPDATE contacts SET score = ? WHERE id = ?", (final_score, contact_id))
+
+        # 4. Persiste embedding semântico na tabela semantic_embeddings
+        cur.execute(
+            "SELECT id FROM semantic_embeddings WHERE entity_id = ? AND entity_type = 'contact'",
+            (str(contact_id),)
+        )
+        existing_emb = cur.fetchone()
+        if not existing_emb:
+            emb_id = str(uuid.uuid4())
+            content_chunk = (
+                f"Lead Odontológico: {c.get('name')} | Especialidade: {c.get('specialty')} | "
+                f"Modelo: {c.get('work_model')} | Volume: {c.get('monthly_implants_volume')} | "
+                f"CRO: {c.get('cro')}-{c.get('cro_uf')} | Score: {final_score}"
+            )
+            vector = [(float(ord(char)) / 255.0) for char in (content_chunk[:128].ljust(128, '0'))]
+            cur.execute("""
+                INSERT INTO semantic_embeddings (id, tenant_id, entity_type, entity_id, content_chunk, embedding, metadata_json)
+                VALUES (?, ?, 'contact', ?, ?, ?, ?)
+            """, (
+                emb_id,
+                account_id,
+                str(contact_id),
+                content_chunk,
+                json.dumps(vector),
+                json.dumps({"score": final_score, "tier": tier, "contact_id": contact_id})
+            ))
+
+        # 5. Handoff comercial automático (Score >= 75 -> Estágio 101 Qualificação & SDR)
+        deal_created = False
+        deal_id = None
+        if final_score >= 75:
+            contact_name = c.get("name") or f"Contato #{contact_id}"
+            cur.execute("""
+                SELECT id FROM deals
+                WHERE contact_name = ? OR title LIKE ?
+                LIMIT 1
+            """, (contact_name, f"%{contact_name}%"))
+            d_row = cur.fetchone()
+            if d_row:
+                deal_id = d_row["id"]
+                deal_created = False
+            else:
+                deal_id = f"deal-lead-{contact_id}"
+                deal_title = f"Oportunidade - {contact_name} (Lead Scoring MQL)"
+                company_name = c.get("company") or f"Consultório {contact_name}"
+                cur.execute("""
+                    INSERT INTO deals (id, account_id, pipeline_id, stage_id, title, value, company, contact_name, priority)
+                    VALUES (?, ?, 1, 101, ?, 18000.0, ?, ?, 'alta')
+                """, (deal_id, account_id, deal_title, company_name, contact_name))
+                deal_created = True
+
+        conn.commit()
+        return {
+            "score": final_score,
+            "tier": tier,
+            "deal_created": deal_created,
+            "deal_id": deal_id
+        }
+    finally:
+        conn.close()
+
