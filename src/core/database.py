@@ -559,11 +559,22 @@ def init_db() -> None:
 
         CREATE INDEX IF NOT EXISTS idx_transc_call ON call_transcriptions(call_id);
         CREATE INDEX IF NOT EXISTS idx_transc_deal ON call_transcriptions(deal_id);
+
+        CREATE TABLE IF NOT EXISTS deal_objections (
+            id TEXT PRIMARY KEY,
+            account_id TEXT NOT NULL,
+            deal_id TEXT NOT NULL,
+            category TEXT NOT NULL,
+            objection_text TEXT NOT NULL,
+            suggested_counter_argument TEXT,
+            resolved INTEGER NOT NULL DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (account_id) REFERENCES accounts(id),
+            FOREIGN KEY (deal_id) REFERENCES deals(id)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_objections_deal ON deal_objections(deal_id);
         """)
-
-
-
-
 
         # Migração idempotente para colunas complementares em deals e contacts
         cur = conn.cursor()
@@ -575,9 +586,11 @@ def init_db() -> None:
             ("inside_owner_id", "TEXT DEFAULT NULL"),
             ("split_commission_field_pct", "REAL DEFAULT 70.0"),
             ("split_commission_inside_pct", "REAL DEFAULT 30.0"),
+            ("executive_summary", "TEXT DEFAULT NULL"),
         ]:
             if col_name not in existing_cols:
                 cur.execute(f"ALTER TABLE deals ADD COLUMN {col_name} {col_def}")
+
 
         cur.execute("PRAGMA table_info(contacts)")
         contact_cols = {row["name"] for row in cur.fetchall()}

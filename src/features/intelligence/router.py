@@ -10,13 +10,16 @@ from fastapi import APIRouter, HTTPException, Query, status
 
 from src.features.intelligence import service
 from src.features.intelligence import transcription_worker
+from src.features.intelligence import granola_copilot
 from src.features.intelligence.schemas import (
     ContactInstitutionCreate, ContactInstitutionOut,
     ClinicalGraphResponse, KOLSpeakerResponse,
     ChurnRiskResponse, IntelligenceOperationResponse,
     TranscriptionProcessRequest, TranscriptionProcessResponse,
-    TranscriptionItemOut
+    TranscriptionItemOut,
+    CopilotExtractAndApplyRequest, CopilotExtractAndApplyResponse
 )
+
 
 router = APIRouter(prefix="/api/v1/intelligence", tags=["Inteligência Clínica & STT"])
 
@@ -98,4 +101,30 @@ def get_transcription(transcription_id: str):
 @router.get("/transcriptions/deal/{deal_id}", response_model=List[TranscriptionItemOut], summary="Listar transcrições de reuniões do Deal")
 def list_deal_transcriptions(deal_id: str, account_id: str = "0f14ffff"):
     return transcription_worker.list_transcriptions_for_deal(deal_id=deal_id, account_id=account_id)
+
+
+@router.post("/copilot/extract-and-apply", response_model=CopilotExtractAndApplyResponse, summary="Copiloto Granola: Extrair notas da reunião e atualizar Deal com Zero-Touch")
+def copilot_extract_and_apply(payload: CopilotExtractAndApplyRequest):
+    try:
+        extraction = granola_copilot.extract_meeting_intelligence(
+            transcription_text=payload.transcription_text,
+            deal_id=payload.deal_id,
+            account_id=payload.account_id or "0f14ffff"
+        )
+        applied = granola_copilot.apply_copilot_intelligence_to_deal(
+            deal_id=payload.deal_id,
+            extraction=extraction,
+            account_id=payload.account_id or "0f14ffff"
+        )
+        return {
+            "success": True,
+            "deal_id": payload.deal_id,
+            "extraction": extraction,
+            "objections_count": applied["objections_count"],
+            "tasks_count": applied["tasks_count"],
+            "updated_value": applied["updated_value"]
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 

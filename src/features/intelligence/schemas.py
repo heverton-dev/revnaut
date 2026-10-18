@@ -164,3 +164,31 @@ class TranscriptionItemOut(BaseModel):
     segments: List[TranscriptionSegment]
     created_at: str
 
+
+class MeetingIntelligenceExtraction(BaseModel):
+    model_config = {"extra": "allow"}
+    executive_summary: str
+    implant_systems_mentioned: List[str] = Field(default_factory=list)
+    competitors_cited: List[str] = Field(default_factory=list)
+    objections_raised: List[Dict[str, str]] = Field(default_factory=list)
+    next_steps_tasks: List[Dict[str, Any]] = Field(default_factory=list)
+    suggested_deal_value: Optional[float] = None
+    suggested_probability: Optional[int] = None
+
+
+class CopilotExtractAndApplyRequest(BaseModel):
+    deal_id: str = Field(..., description="ID do Deal vinculado")
+    transcription_text: str = Field(..., description="Texto da transcrição ou nota de voz")
+    account_id: Optional[str] = Field(default="0f14ffff", description="ID do tenant")
+
+
+class CopilotExtractAndApplyResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    success: bool
+    deal_id: str
+    extraction: MeetingIntelligenceExtraction
+    objections_count: int
+    tasks_count: int
+    updated_value: Optional[float] = None
+
+
