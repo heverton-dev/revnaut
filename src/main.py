@@ -107,11 +107,17 @@ app.include_router(storage_router)
 app.include_router(keypartners_router)
 app.include_router(dentgo_router)
 
-# Montagem de Estáticos e Frontend Root
+# Montagem de Estáticos e Frontend Root (React 19 SPA + Fallback Auditável)
+_project_root = Path(__file__).resolve().parent.parent
+_frontend_dist_dir = _project_root / "frontend" / "dist"
+_legacy_reconstruct_dir = _project_root / "docs" / "reconstruct_rvops" / "05_reconstructed_app"
+
 _possible_static_paths = [
-    Path(__file__).resolve().parent.parent / "docs" / "reconstruct_rvops" / "05_reconstructed_app",
+    _frontend_dist_dir,
+    Path("/app/frontend/dist"),
+    _legacy_reconstruct_dir,
     Path("/app/static"),
-    Path(__file__).resolve().parent / "static"
+    Path(__file__).resolve().parent / "static",
 ]
 
 _active_static_dir = None
@@ -120,17 +126,20 @@ for p in _possible_static_paths:
         _active_static_dir = p
         break
 
+if _frontend_dist_dir.exists() and (_frontend_dist_dir / "assets").exists():
+    app.mount("/assets", StaticFiles(directory=str(_frontend_dist_dir / "assets")), name="assets")
+
 if _active_static_dir:
     @app.get("/", response_class=HTMLResponse, tags=["Frontend"])
     def serve_frontend_root():
         index_file = _active_static_dir / "index.html"
         return HTMLResponse(content=index_file.read_text(encoding="utf-8"))
 
-    css_path = _active_static_dir / "css"
+    css_path = (_active_static_dir / "css") if (_active_static_dir / "css").exists() else (_legacy_reconstruct_dir / "css")
     if css_path.exists():
         app.mount("/css", StaticFiles(directory=str(css_path)), name="css")
 
-    js_path = _active_static_dir / "js"
+    js_path = (_active_static_dir / "js") if (_active_static_dir / "js").exists() else (_legacy_reconstruct_dir / "js")
     if js_path.exists():
         app.mount("/js", StaticFiles(directory=str(js_path)), name="js")
 
@@ -146,3 +155,4 @@ if _active_static_dir:
 
     app.mount("/static", StaticFiles(directory=str(_active_static_dir)), name="static")
     app.mount("/app-assets", StaticFiles(directory=str(_active_static_dir)), name="app_assets")
+
