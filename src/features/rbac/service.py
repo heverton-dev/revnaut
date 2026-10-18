@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import Optional, Tuple, List, Any
 from src.core.database import get_connection
 from src.features.hierarchy.schemas import UserContext, DataScopeEnum
-from src.core.security import resolve_data_scope_clause, get_user_context
+from src.core.security import resolve_data_scope_clause, get_user_context, get_scoped_user_ids
 
 
 def build_scope_filter_sql(
@@ -32,4 +32,4 @@ def build_scope_filter_sql(
             conn.close()
 
 
-__all__ = ["build_scope_filter_sql", "get_user_context"]
+__all__ = ["build_scope_filter_sql", "get_user_context", "get_scoped_user_ids"]

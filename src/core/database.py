@@ -5,9 +5,21 @@ Persistência transacional com concorrência segura e isolamento.
 """
 
 from __future__ import annotations
+import os
 import sqlite3
 from typing import Any, AsyncGenerator, Dict, List, Optional
-from sqlalchemy import event
+from sqlalchemy import (
+    Column,
+    Float,
+    ForeignKey,
+    Integer,
+    MetaData,
+    String,
+    Table,
+    Text,
+    event,
+)
+from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -16,27 +28,422 @@ from sqlalchemy.ext.asyncio import (
 )
 from src.core.config import DB_PATH
 
-_async_engine: Optional[AsyncEngine] = None
-_AsyncSessionLocal: Optional[async_sessionmaker[AsyncSession]] = None
+
+class Base(DeclarativeBase):
+    pass
 
 
-def get_async_database_url() -> str:
+metadata: MetaData = Base.metadata
+
+# Definição declarativa do schema core e de domínio no MetaData para o Alembic
+Table(
+    "accounts",
+    metadata,
+    Column("id", String, primary_key=True),
+    Column("name", String, nullable=False),
+    Column("plan", String, nullable=False, default="Enterprise Scale"),
+    Column("created_at", String),
+)
+Table(
+    "users",
+    metadata,
+    Column("id", String, primary_key=True),
+    Column("account_id", String, ForeignKey("accounts.id"), nullable=False),
+    Column("name", String, nullable=False),
+    Column("email", String, nullable=False, unique=True),
+    Column("role", String, nullable=False, default="Consultor"),
+    Column("team_id", String),
+    Column("role_id", String),
+    Column("custom_data_scope", String),
+    Column("is_superadmin", Integer, default=0),
+    Column("created_at", String),
+)
+Table(
+    "teams",
+    metadata,
+    Column("id", String, primary_key=True),
+    Column("account_id", String, ForeignKey("accounts.id"), nullable=False),
+    Column("business_unit_id", String, nullable=False),
+    Column("parent_id", String, ForeignKey("teams.id")),
+    Column("name", String, nullable=False),
+    Column("leader_id", String),
+    Column("created_at", String),
+)
+Table(
+    "contacts",
+    metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("account_id", String, ForeignKey("accounts.id"), nullable=False),
+    Column("name", String, nullable=False),
+    Column("email", String, nullable=False),
+    Column("phone", String),
+    Column("company", String),
+    Column("tags", Text),
+    Column("score", Integer, default=50),
+    Column("owner_id", String),
+    Column("field_owner_id", String),
+    Column("inside_owner_id", String),
+    Column("team_id", String),
+    Column("cro", String),
+    Column("cro_uf", String),
+    Column("cro_verified", Integer, default=0),
+    Column("created_at", String),
+)
+Table(
+    "deals",
+    metadata,
+    Column("id", String, primary_key=True),
+    Column("account_id", String, ForeignKey("accounts.id"), nullable=False),
+    Column("pipeline_id", Integer, nullable=False),
+    Column("stage_id", Integer, nullable=False),
+    Column("title", String, nullable=False),
+    Column("value", Float, nullable=False, default=0.0),
+    Column("company", String, nullable=False),
+    Column("contact_name", String, nullable=False),
+    Column("priority", String, nullable=False, default="media"),
+    Column("owner_id", String),
+    Column("field_owner_id", String),
+    Column("inside_owner_id", String),
+    Column("team_id", String),
+    Column("split_commission_field_pct", Float, default=70.0),
+    Column("split_commission_inside_pct", Float, default=30.0),
+    Column("executive_summary", Text),
+    Column("created_at", String),
+)
+Table(
+    "kp_partner_agreements",
+    metadata,
+    Column("id", String, primary_key=True),
+    Column("account_id", String, ForeignKey("accounts.id"), nullable=False),
+    Column("partner_name", String, nullable=False),
+    Column("partner_cro_uf", String),
+    Column("tier", String, nullable=False, default="SILVER"),
+    Column("credit_limit", Float, nullable=False, default=0.0),
+    Column("used_credit", Float, nullable=False, default=0.0),
+    Column("min_monthly_revenue", Float, nullable=False, default=0.0),
+    Column("max_turnover_days", Integer, nullable=False, default=60),
+    Column("field_owner_id", String),
+    Column("inside_owner_id", String),
+    Column("is_active", Integer, nullable=False, default=1),
+    Column("created_at", String),
+)
+Table(
+    "kp_consignment_kits",
+    metadata,
+    Column("id", String, primary_key=True),
+    Column("account_id", String, ForeignKey("accounts.id"), nullable=False),
+    Column("serial_number", String, unique=True, nullable=False),
+    Column("qr_code", String, nullable=False),
+    Column("name", String, nullable=False),
+    Column("composition_json", Text),
+    Column("status", String, nullable=False, default="IN_STOCK"),
+    Column("current_agreement_id", String, ForeignKey("kp_partner_agreements.id")),
+    Column("created_at", String),
+)
+Table(
+    "kp_custody_ledger",
+    metadata,
+    Column("id", String, primary_key=True),
+    Column("account_id", String, ForeignKey("accounts.id"), nullable=False),
+    Column("agreement_id", String, ForeignKey("kp_partner_agreements.id"), nullable=False),
+    Column("movement_type", String, nullable=False),
+    Column("product_id", String, nullable=False),
+    Column("product_name", String, nullable=False),
+    Column("anvisa_reg", String, nullable=False),
+    Column("batch_number", String, nullable=False),
+    Column("serial_number", String),
+    Column("quantity", Integer, nullable=False, default=1),
+    Column("unit_value", Float, nullable=False, default=0.0),
+    Column("total_value", Float, nullable=False, default=0.0),
+    Column("sterilization_expiry_date", String, nullable=False),
+    Column("created_at", String),
+)
+Table(
+    "kp_surgical_orders",
+    metadata,
+    Column("id", String, primary_key=True),
+    Column("account_id", String, ForeignKey("accounts.id"), nullable=False),
+    Column("agreement_id", String, ForeignKey("kp_partner_agreements.id"), nullable=False),
+    Column("patient_identifier", String),
+    Column("surgery_date", String, nullable=False),
+    Column("status", String, nullable=False, default="SOLICITADO_FIELD"),
+    Column("field_consultant_id", String),
+    Column("inside_analyst_id", String),
+    Column("remitted_items_json", Text),
+    Column("consumed_items_json", Text),
+    Column("returned_items_json", Text),
+    Column("seal_photo_r2_key", String),
+    Column("billing_order_id", String),
+    Column("created_at", String),
+    Column("updated_at", String),
+)
+Table(
+    "kp_kol_contracts",
+    metadata,
+    Column("id", String, primary_key=True),
+    Column("account_id", String, ForeignKey("accounts.id"), nullable=False),
+    Column("agreement_id", String, ForeignKey("kp_partner_agreements.id")),
+    Column("kol_name", String, nullable=False),
+    Column("cro_uf", String, nullable=False),
+    Column("equipment_name", String, nullable=False),
+    Column("asset_tag", String, unique=True, nullable=False),
+    Column("min_monthly_implants_target", Integer, nullable=False, default=20),
+    Column("clinical_lectures_quota", Integer, nullable=False, default=1),
+    Column("current_month_consumption", Integer, nullable=False, default=0),
+    Column("compliance_status", String, nullable=False, default="COMPLIANT"),
+    Column("evidence_r2_keys_json", Text),
+    Column("created_at", String),
+    Column("updated_at", String),
+)
+Table(
+    "kp_loyalty_wallets",
+    metadata,
+    Column("id", String, primary_key=True),
+    Column("account_id", String, ForeignKey("accounts.id"), nullable=False),
+    Column("partner_id", String, unique=True, nullable=False),
+    Column("partner_name", String, nullable=False),
+    Column("points_balance", Integer, nullable=False, default=0),
+    Column("lifetime_points", Integer, nullable=False, default=0),
+    Column("current_tier", String, nullable=False, default="SILVER"),
+    Column("implants_billed_total", Integer, nullable=False, default=0),
+    Column("created_at", String),
+    Column("updated_at", String),
+)
+Table(
+    "dentgo_hubs",
+    metadata,
+    Column("id", String, primary_key=True),
+    Column("account_id", String, ForeignKey("accounts.id"), nullable=False),
+    Column("name", String, nullable=False),
+    Column("cnpj", String, nullable=False),
+    Column("latitude", Float, nullable=False),
+    Column("longitude", Float, nullable=False),
+    Column("coverage_radius_km", Float, nullable=False, default=30.0),
+    Column("on_duty_schedule", String, default="24h"),
+    Column("is_active", Integer, nullable=False, default=1),
+    Column("created_at", String),
+)
+Table(
+    "dentgo_hub_inventory",
+    metadata,
+    Column("id", String, primary_key=True),
+    Column("hub_id", String, ForeignKey("dentgo_hubs.id"), nullable=False),
+    Column("account_id", String, ForeignKey("accounts.id"), nullable=False),
+    Column("product_id", String, nullable=False),
+    Column("product_name", String, nullable=False),
+    Column("anvisa_reg", String, nullable=False),
+    Column("batch_number", String, nullable=False),
+    Column("quantity_available", Integer, nullable=False, default=0),
+    Column("unit_price", Float, nullable=False, default=0.0),
+    Column("sterilization_expiry_date", String, nullable=False),
+    Column("status", String, nullable=False, default="AVAILABLE"),
+    Column("created_at", String),
+)
+Table(
+    "dentgo_orders",
+    metadata,
+    Column("id", String, primary_key=True),
+    Column("account_id", String, ForeignKey("accounts.id"), nullable=False),
+    Column("hub_id", String, ForeignKey("dentgo_hubs.id"), nullable=False),
+    Column("customer_cro_uf", String, nullable=False),
+    Column("cro_verified", Integer, nullable=False, default=0),
+    Column("delivery_address", String, nullable=False),
+    Column("delivery_lat", Float, nullable=False),
+    Column("delivery_lng", Float, nullable=False),
+    Column("distance_km", Float, nullable=False, default=0.0),
+    Column("estimated_eta_minutes", Integer, nullable=False, default=60),
+    Column("items_json", Text, nullable=False),
+    Column("subtotal", Float, nullable=False, default=0.0),
+    Column("urgency_fee", Float, nullable=False, default=0.0),
+    Column("total_amount", Float, nullable=False, default=0.0),
+    Column("status", String, nullable=False, default="ORDER_PLACED"),
+    Column("courier_id", String),
+    Column("seal_code", String),
+    Column("delivery_pin", String),
+    Column("proof_of_delivery_r2_key", String),
+    Column("recipient_signature_name", String),
+    Column("delivered_at", String),
+    Column("created_at", String),
+)
+Table(
+    "dentgo_financial_splits",
+    metadata,
+    Column("id", String, primary_key=True),
+    Column("account_id", String, ForeignKey("accounts.id"), nullable=False),
+    Column("order_id", String, ForeignKey("dentgo_orders.id"), nullable=False),
+    Column("gross_amount", Float, nullable=False),
+    Column("items_amount", Float, nullable=False),
+    Column("delivery_fee_total", Float, nullable=False),
+    Column("platform_take_rate_pct", Float, nullable=False, default=5.0),
+    Column("platform_fee_amount", Float, nullable=False),
+    Column("courier_net_payout", Float, nullable=False),
+    Column("seller_net_payout", Float, nullable=False),
+    Column("payment_method", String, nullable=False, default="PIX_INSTANT"),
+    Column("agreement_id", String),
+    Column("settlement_status", String, nullable=False, default="SETTLED"),
+    Column("created_at", String),
+)
+Table(
+    "anvisa_rma_claims",
+    metadata,
+    Column("id", String, primary_key=True),
+    Column("account_id", String, ForeignKey("accounts.id"), nullable=False),
+    Column("ticket_id", String, nullable=False),
+    Column("agreement_id", String),
+    Column("surgeon_name", String),
+    Column("surgeon_cro_uf", String, nullable=False),
+    Column("patient_identifier", String),
+    Column("product_id", String, nullable=False),
+    Column("product_name", String, nullable=False),
+    Column("batch_number", String, nullable=False),
+    Column("serial_number", String),
+    Column("fdi_tooth_region", String, nullable=False),
+    Column("insertion_torque_ncm", Float, nullable=False),
+    Column("surgery_date", String, nullable=False),
+    Column("explant_date", String, nullable=False),
+    Column("failure_reason", String, nullable=False),
+    Column("radiograph_r2_key", String, nullable=False),
+    Column("status", String, nullable=False, default="SUBMITTED"),
+    Column("warranty_approved", Integer, nullable=False, default=0),
+    Column("replacement_order_id", String),
+    Column("quarantine_triggered", Integer, nullable=False, default=0),
+    Column("notes", Text),
+    Column("created_at", String),
+    Column("updated_at", String),
+)
+Table(
+    "anvisa_batch_quarantines",
+    metadata,
+    Column("id", String, primary_key=True),
+    Column("account_id", String, ForeignKey("accounts.id"), nullable=False),
+    Column("batch_number", String, nullable=False),
+    Column("product_id", String),
+    Column("total_distributed", Integer, nullable=False, default=0),
+    Column("total_failures", Integer, nullable=False, default=0),
+    Column("failure_rate_percent", Float, nullable=False, default=0.0),
+    Column("status", String, nullable=False, default="QUARANTINE_BLOCKED"),
+    Column("reason", Text, nullable=False),
+    Column("blocked_at", String),
+    Column("unblocked_at", String),
+)
+Table(
+    "semantic_embeddings",
+    metadata,
+    Column("id", String, primary_key=True),
+    Column("tenant_id", String, ForeignKey("accounts.id"), nullable=False),
+    Column("entity_type", String, nullable=False),
+    Column("entity_id", String, nullable=False),
+    Column("content_chunk", Text, nullable=False),
+    Column("embedding", Text, nullable=False),
+    Column("metadata_json", Text),
+    Column("created_at", String),
+)
+Table(
+    "scoring_history",
+    metadata,
+    Column("id", String, primary_key=True),
+    Column("account_id", String, ForeignKey("accounts.id"), nullable=False),
+    Column("contact_id", Integer, nullable=False),
+    Column("previous_score", Integer, nullable=False, default=0),
+    Column("new_score", Integer, nullable=False, default=0),
+    Column("icp_fit_score", Integer, nullable=False, default=0),
+    Column("engagement_score", Integer, nullable=False, default=0),
+    Column("tier", String, nullable=False, default="C"),
+    Column("trigger_reason", String),
+    Column("created_at", String),
+)
+Table(
+    "tenant_credentials",
+    metadata,
+    Column("id", String, primary_key=True),
+    Column("account_id", String, ForeignKey("accounts.id"), nullable=False),
+    Column("service_name", String, nullable=False),
+    Column("credential_type", String, nullable=False),
+    Column("encrypted_payload", Text, nullable=False),
+    Column("metadata_json", Text),
+    Column("created_at", String),
+    Column("updated_at", String),
+)
+Table(
+    "webhook_subscriptions",
+    metadata,
+    Column("id", String, primary_key=True),
+    Column("account_id", String, ForeignKey("accounts.id"), nullable=False),
+    Column("name", String, nullable=False),
+    Column("target_url", String, nullable=False),
+    Column("subscribed_events_json", Text, nullable=False),
+    Column("signing_secret", String, nullable=False),
+    Column("signing_secret_encrypted", Text),
+    Column("is_active", Integer, nullable=False, default=1),
+    Column("consecutive_failures", Integer, nullable=False, default=0),
+    Column("circuit_breaker_tripped", Integer, nullable=False, default=0),
+    Column("created_at", String),
+)
+Table(
+    "erp_fiscal_invoices",
+    metadata,
+    Column("id", String, primary_key=True),
+    Column("account_id", String, ForeignKey("accounts.id"), nullable=False),
+    Column("erp_type", String, nullable=False, default="totvs_protheus"),
+    Column("flow_type", String, nullable=False),
+    Column("reference_id", String, nullable=False),
+    Column("cfop", String, nullable=False),
+    Column("nfe_number", String, nullable=False),
+    Column("nfe_series", String, nullable=False, default="1"),
+    Column("nfe_access_key", String, unique=True, nullable=False),
+    Column("recipient_cnpj_cpf", String, nullable=False),
+    Column("recipient_name", String, nullable=False),
+    Column("total_invoice_value", Float, nullable=False, default=0.0),
+    Column("xml_r2_key", String, nullable=False),
+    Column("danfe_pdf_r2_key", String, nullable=False),
+    Column("status", String, nullable=False, default="AUTORIZADA"),
+    Column("sefaz_protocol", String),
+    Column("windmill_job_id", String),
+    Column("created_at", String),
+)
+
+_write_engine: Optional[AsyncEngine] = None
+_read_engine: Optional[AsyncEngine] = None
+_WriteSessionLocal: Optional[async_sessionmaker[AsyncSession]] = None
+_ReadSessionLocal: Optional[async_sessionmaker[AsyncSession]] = None
+
+
+def _normalize_async_db_url(raw_url: str) -> str:
+    url = raw_url.strip()
+    if url.startswith("postgres://"):
+        return "postgresql+asyncpg://" + url[len("postgres://"):]
+    if url.startswith("postgresql://"):
+        return "postgresql+asyncpg://" + url[len("postgresql://"):]
+    if url.startswith("sqlite:///") and not url.startswith("sqlite+aiosqlite:///"):
+        return "sqlite+aiosqlite:///" + url[len("sqlite:///"):]
+    return url
+
+
+def get_async_database_url(read_only: bool = False) -> str:
+    env_url = (
+        (os.getenv("READ_DATABASE_URL") or os.getenv("DATABASE_URL"))
+        if read_only
+        else os.getenv("DATABASE_URL")
+    )
+    if env_url:
+        return _normalize_async_db_url(env_url)
     db_str = str(DB_PATH).replace("\\", "/")
     return f"sqlite+aiosqlite:///{db_str}"
 
 
-def get_async_engine() -> AsyncEngine:
-    global _async_engine
-    if _async_engine is None:
-        url = get_async_database_url()
-        _async_engine = create_async_engine(
-            url,
-            echo=False,
-            future=True,
-            connect_args={"timeout": 10.0},
-        )
+def _build_async_engine(url: str) -> AsyncEngine:
+    is_sqlite = url.startswith("sqlite")
+    kwargs: Dict[str, Any] = {
+        "echo": False,
+        "future": True,
+    }
+    if is_sqlite:
+        kwargs["connect_args"] = {"timeout": 10.0}
 
-        @event.listens_for(_async_engine.sync_engine, "connect")
+    engine = create_async_engine(url, **kwargs)
+
+    if is_sqlite:
+        @event.listens_for(engine.sync_engine, "connect")
         def _set_sqlite_pragma(dbapi_connection, connection_record):
             cursor = dbapi_connection.cursor()
             cursor.execute("PRAGMA journal_mode=WAL;")
@@ -45,28 +452,61 @@ def get_async_engine() -> AsyncEngine:
             cursor.execute("PRAGMA busy_timeout=5000;")
             cursor.close()
 
-    return _async_engine
+    return engine
 
 
-def get_async_session_maker() -> async_sessionmaker[AsyncSession]:
-    global _AsyncSessionLocal
-    if _AsyncSessionLocal is None:
-        _AsyncSessionLocal = async_sessionmaker(
-            bind=get_async_engine(),
+def get_write_engine() -> AsyncEngine:
+    global _write_engine
+    target_url = get_async_database_url(read_only=False)
+    if _write_engine is None or str(_write_engine.url) != target_url:
+        _write_engine = _build_async_engine(target_url)
+    return _write_engine
+
+
+def get_read_engine() -> AsyncEngine:
+    global _read_engine
+    target_url = get_async_database_url(read_only=True)
+    if _read_engine is None or str(_read_engine.url) != target_url:
+        _read_engine = _build_async_engine(target_url)
+    return _read_engine
+
+
+def get_async_engine() -> AsyncEngine:
+    return get_write_engine()
+
+
+def get_async_session_maker(read_only: bool = False) -> async_sessionmaker[AsyncSession]:
+    global _WriteSessionLocal, _ReadSessionLocal
+    if read_only:
+        engine = get_read_engine()
+        if _ReadSessionLocal is None or _ReadSessionLocal.kw.get("bind") is not engine:
+            _ReadSessionLocal = async_sessionmaker(
+                bind=engine,
+                expire_on_commit=False,
+                autoflush=False,
+                autocommit=False,
+                class_=AsyncSession,
+            )
+        return _ReadSessionLocal
+
+    engine = get_write_engine()
+    if _WriteSessionLocal is None or _WriteSessionLocal.kw.get("bind") is not engine:
+        _WriteSessionLocal = async_sessionmaker(
+            bind=engine,
             expire_on_commit=False,
             autoflush=False,
             autocommit=False,
             class_=AsyncSession,
         )
-    return _AsyncSessionLocal
+    return _WriteSessionLocal
 
 
 def AsyncSessionLocal() -> AsyncSession:
-    return get_async_session_maker()()
+    return get_async_session_maker(read_only=False)()
 
 
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
-    async_session = get_async_session_maker()
+    async_session = get_async_session_maker(read_only=False)
     async with async_session() as session:
         try:
             yield session
@@ -78,15 +518,29 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
 
 
 async def get_write_db() -> AsyncGenerator[AsyncSession, None]:
-    """Sessão assíncrona dedicada a operações de escrita (Primary OLTP)."""
-    async for session in get_async_session():
-        yield session
+    """Sessão assíncrona dedicada a operações de escrita (Primary OLTP — DATABASE_URL)."""
+    async_session = get_async_session_maker(read_only=False)
+    async with async_session() as session:
+        try:
+            yield session
+        except Exception:
+            await session.rollback()
+            raise
+        finally:
+            await session.close()
 
 
 async def get_read_db() -> AsyncGenerator[AsyncSession, None]:
-    """Sessão assíncrona dedicada a consultas de leitura analítica (Replica OLAP)."""
-    async for session in get_async_session():
-        yield session
+    """Sessão assíncrona dedicada a consultas de leitura analítica (Replica OLAP — READ_DATABASE_URL)."""
+    async_session = get_async_session_maker(read_only=True)
+    async with async_session() as session:
+        try:
+            yield session
+        except Exception:
+            await session.rollback()
+            raise
+        finally:
+            await session.close()
 
 
 def get_connection() -> sqlite3.Connection:
@@ -1629,16 +2083,42 @@ def init_db() -> None:
             if col not in user_cols:
                 cur.execute(f"ALTER TABLE users ADD COLUMN {col} {col_t};")
 
-        # Migração de owner_id, team_id e business_unit_id em entidades de dados
-        for table in ["deals", "contacts", "conversations", "institutions"]:
+        # Migração de owner_id, field_owner_id, inside_owner_id, team_id e business_unit_id em entidades de dados
+        for table in ["deals", "contacts", "conversations", "institutions", "kp_partner_agreements"]:
             cur.execute(f"PRAGMA table_info({table});")
             tbl_cols = {row[1] for row in cur.fetchall()}
             if "owner_id" not in tbl_cols:
                 cur.execute(f"ALTER TABLE {table} ADD COLUMN owner_id TEXT;")
+            if "field_owner_id" not in tbl_cols:
+                cur.execute(f"ALTER TABLE {table} ADD COLUMN field_owner_id TEXT;")
+            if "inside_owner_id" not in tbl_cols:
+                cur.execute(f"ALTER TABLE {table} ADD COLUMN inside_owner_id TEXT;")
             if "team_id" not in tbl_cols:
                 cur.execute(f"ALTER TABLE {table} ADD COLUMN team_id TEXT;")
             if "business_unit_id" not in tbl_cols:
                 cur.execute(f"ALTER TABLE {table} ADD COLUMN business_unit_id TEXT;")
+
+        cur.execute("PRAGMA table_info(webhook_subscriptions);")
+        wh_cols = {row[1] for row in cur.fetchall()}
+        if "signing_secret_encrypted" not in wh_cols:
+            cur.execute("ALTER TABLE webhook_subscriptions ADD COLUMN signing_secret_encrypted TEXT;")
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS scoring_history (
+                id TEXT PRIMARY KEY,
+                account_id TEXT NOT NULL,
+                contact_id INTEGER NOT NULL,
+                previous_score INTEGER NOT NULL DEFAULT 0,
+                new_score INTEGER NOT NULL DEFAULT 0,
+                icp_fit_score INTEGER NOT NULL DEFAULT 0,
+                engagement_score INTEGER NOT NULL DEFAULT 0,
+                tier TEXT NOT NULL DEFAULT 'C',
+                trigger_reason TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE
+            );
+        """)
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_scoring_hist_contact ON scoring_history(account_id, contact_id);")
 
         # Migração de status em dentgo_hub_inventory
         cur.execute("PRAGMA table_info(dentgo_hub_inventory);")

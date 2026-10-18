@@ -31,8 +31,13 @@ EMOJI_PATTERN = re.compile(
 # Exceções aceitas de símbolos tipográficos matemáticos / texto puro sem valor emoji
 ALLOWED_CHARS = {"✓", "✕", "➔", "•", "→", "←", "★", "±", "×", "÷", "§"}
 
-TARGET_EXTENSIONS = {".html", ".js", ".css", ".py"}
-IGNORED_DIRS = {".git", ".playwright-mcp", "__pycache__", ".pytest_cache", "node_modules", ".gemini", "venv"}
+TARGET_EXTENSIONS = {".html", ".js", ".css", ".py", ".ts", ".tsx"}
+IGNORED_DIRS = {".git", ".playwright-mcp", "__pycache__", ".pytest_cache", "node_modules", ".gemini", "venv", "dist"}
+
+HEX_COLOR_PATTERN = re.compile(r"#[0-9a-fA-F]{3,8}\b")
+RAW_TAILWIND_PATTERN = re.compile(
+    r"\b(?:bg|text|border)-(?:slate|indigo|cyan|rose|emerald|amber|sky|orange)-\d{2,3}\b"
+)
 
 
 @dataclass
@@ -40,6 +45,47 @@ class GateResult:
     passed: bool
     violations: list[str] = field(default_factory=list)
     files_scanned: int = 0
+
+
+def _scan_file(filepath: Path, repo_root: Path, violations: list[str]) -> None:
+    try:
+        content = filepath.read_text(encoding="utf-8", errors="ignore")
+    except Exception as exc:
+        violations.append(f"{filepath}: Falha de leitura ({exc})")
+        return
+
+    rel_path = filepath.relative_to(repo_root)
+    rel_posix = rel_path.as_posix()
+    is_frontend_tsx = (
+        filepath.suffix.lower() == ".tsx"
+        and (
+            rel_posix.startswith("frontend/src/features/")
+            or rel_posix.startswith("frontend/src/components/")
+        )
+    )
+
+    for line_idx, line in enumerate(content.splitlines(), start=1):
+        matches = EMOJI_PATTERN.findall(line)
+        real_matches = [m for m in matches if m not in ALLOWED_CHARS]
+        if real_matches:
+            preview = line.strip()[:80]
+            violations.append(
+                f"{rel_path}:{line_idx} - Emoji proibido detectado: {real_matches} na linha: '{preview}'"
+            )
+
+        if is_frontend_tsx:
+            hex_matches = HEX_COLOR_PATTERN.findall(line)
+            if hex_matches:
+                preview = line.strip()[:80]
+                violations.append(
+                    f"{rel_path}:{line_idx} - Cor hexadecimal hardcoded proibida ({hex_matches}); use tokens.css: '{preview}'"
+                )
+            tw_matches = RAW_TAILWIND_PATTERN.findall(line)
+            if tw_matches:
+                preview = line.strip()[:80]
+                violations.append(
+                    f"{rel_path}:{line_idx} - Classe de paleta Tailwind crua proibida ({tw_matches}); use tokens.css: '{preview}'"
+                )
 
 
 def scan(repo_root: Path, simulate_bite: bool = False) -> GateResult:
@@ -55,16 +101,26 @@ def scan(repo_root: Path, simulate_bite: bool = False) -> GateResult:
             files_scanned=files_scanned
         )
 
-    # Diretórios a auditar prioritariamente
+    ROOT = repo_root
+    # Diretórios e arquivos a auditar prioritariamente
     scan_targets = [
-        repo_root / "docs" / "reconstruct_rvops" / "05_reconstructed_app",
-        repo_root / "src",
-        repo_root / "docs" / "manuais",
+        ROOT / "docs" / "reconstruct_rvops" / "05_reconstructed_app",
+        ROOT / "src",
+        ROOT / "docs" / "manuais",
+        ROOT / "frontend" / "src",
+        ROOT / "run_server.py",
     ]
 
     for target in scan_targets:
         if not target.exists():
             continue
+        if target.is_file():
+            ext = target.suffix.lower()
+            if ext in TARGET_EXTENSIONS:
+                files_scanned += 1
+                _scan_file(target, repo_root, violations)
+            continue
+
         for root, dirs, files in os.walk(target):
             dirs[:] = [d for d in dirs if d not in IGNORED_DIRS]
             for f in files:
@@ -74,21 +130,7 @@ def scan(repo_root: Path, simulate_bite: bool = False) -> GateResult:
 
                 filepath = Path(root) / f
                 files_scanned += 1
-                try:
-                    content = filepath.read_text(encoding="utf-8", errors="ignore")
-                except Exception as exc:
-                    violations.append(f"{filepath}: Falha de leitura ({exc})")
-                    continue
-
-                for line_idx, line in enumerate(content.splitlines(), start=1):
-                    matches = EMOJI_PATTERN.findall(line)
-                    real_matches = [m for m in matches if m not in ALLOWED_CHARS]
-                    if real_matches:
-                        rel_path = filepath.relative_to(repo_root)
-                        preview = line.strip()[:80]
-                        violations.append(
-                            f"{rel_path}:{line_idx} - Emoji proibido detectado: {real_matches} na linha: '{preview}'"
-                        )
+                _scan_file(filepath, repo_root, violations)
 
     passed = len(violations) == 0
     return GateResult(passed=passed, violations=violations, files_scanned=files_scanned)

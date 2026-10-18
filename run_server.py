@@ -10,7 +10,7 @@ from src.core.database import init_db
 if __name__ == "__main__":
     init_db()
     print("=================================================================")
-    print(" 🚀 REVNAUT ENTERPRISE ENGINE — VSA MONOLITH EM http://localhost:8000")
+    print(" REVNAUT ENTERPRISE ENGINE — VSA MONOLITH EM http://localhost:8000")
     print(" - Swagger Studio:     http://localhost:8000/docs")
     print(" - Webhook Studio:     http://localhost:8000/webhooks")
     print(" - MCP Studio (IA):    http://localhost:8000/mcp")

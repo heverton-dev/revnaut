@@ -57,3 +57,20 @@ def presign_download(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=str(e),
         )
+
+
+@router.get("/presign-download/{file_id:path}", response_model=PresignDownloadResponse)
+def presign_download_by_path(
+    file_id: str,
+    x_account_id: Optional[str] = Header(None, alias="X-Account-ID"),
+):
+    account_id = x_account_id or "0f14ffff"
+    try:
+        storage_client.validate_tenant_access(tenant_id=account_id, key=file_id)
+        res = storage_client.generate_presigned_download_url(key=file_id, expires_in=900)
+        return PresignDownloadResponse(**res)
+    except StorageSecurityException as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e),
+        )

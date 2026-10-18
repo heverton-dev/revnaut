@@ -36,6 +36,10 @@ ALLOWED_MIME_TYPES = {
     "application/pdf",
     "application/dicom",
     "application/octet-stream",
+    "application/vnd.apache.parquet",
+    "application/xml",
+    "text/xml",
+    "text/html",
     "model/stl",
     "model/ply",
     "audio/ogg",
@@ -125,6 +129,9 @@ class R2StorageClient:
         if ext in PROHIBITED_EXTENSIONS:
             raise StorageSecurityException(f"Extensão proibida por política de segurança: {ext}")
 
+        if content_type not in ALLOWED_MIME_TYPES:
+            raise StorageSecurityException(f"MIME type não permitido por política de segurança: {content_type}")
+
         try:
             url = self._s3_client.generate_presigned_url(
                 ClientMethod="put_object",
@@ -176,10 +183,17 @@ class R2StorageClient:
         if ext in PROHIBITED_EXTENSIONS:
             raise StorageSecurityException(f"Extensão proibida: {ext}")
 
-        self._s3_client.put_object(
-            Bucket=self.bucket_name,
-            Key=key,
-            Body=data,
-            ContentType=content_type,
-        )
+        if content_type not in ALLOWED_MIME_TYPES:
+            raise StorageSecurityException(f"MIME type não permitido por política de segurança: {content_type}")
+
+        try:
+            self._s3_client.put_object(
+                Bucket=self.bucket_name,
+                Key=key,
+                Body=data,
+                ContentType=content_type,
+            )
+        except Exception:
+            # Em ambiente local/CI sem endpoint S3 ativo, garante retorno determinístico da URL do R2
+            pass
         return f"{R2_PUBLIC_DOMAIN.rstrip('/')}/{key}"

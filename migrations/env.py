@@ -10,15 +10,24 @@ from alembic import context
 # sys.path configuration
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from src.core.config import DB_PATH
+from src.core.database import Base
 
 config = context.config
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-target_metadata = None
+target_metadata = Base.metadata
 
-def get_url():
+
+def get_url() -> str:
+    env_url = os.getenv("DATABASE_URL")
+    if env_url:
+        if env_url.startswith("postgresql+asyncpg://"):
+            return "postgresql://" + env_url[len("postgresql+asyncpg://"):]
+        if env_url.startswith("sqlite+aiosqlite:///"):
+            return "sqlite:///" + env_url[len("sqlite+aiosqlite:///"):]
+        return env_url
     db_str = str(DB_PATH).replace("\\", "/")
     return f"sqlite:///{db_str}"
 

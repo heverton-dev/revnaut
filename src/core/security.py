@@ -118,16 +118,94 @@ def check_user_permission(user_context: Optional[UserContext], required_permissi
 
 
 def enforce_user_permission(conn, user_id: Optional[str], account_id: str, required_permission: str) -> None:
-    """Bloqueia com HTTP 403 Forbidden caso o usuário não possua a permissão necessária."""
-    if not user_id:
-        # Se não há user_id no header em ambiente de dev/seed default, consulta se o usuário padrão tem acesso
-        return
+    """Bloqueia com HTTP 401/403 caso o usuário não esteja autenticado ou não possua a permissão necessária."""
+    if user_id is None or not str(user_id).strip():
+        raise HTTPException(
+            status_code=401,
+            detail="Não autenticado: cabeçalho X-User-ID é obrigatório.",
+        )
     user_ctx = get_user_context(conn, user_id, account_id)
     if not check_user_permission(user_ctx, required_permission):
         raise HTTPException(
             status_code=403, 
             detail=f"Acesso negado: a função do usuário não possui a permissão '{required_permission}'."
         )
+
+
+def get_scoped_user_ids(conn, user_context: Optional[UserContext]) -> List[str]:
+    """
+    Resolve de forma determinística todos os IDs de usuários pertencentes ao escopo
+    hierárquico (DAG) do usuário autenticado (SELF, TEAM, SUBTREE, BUSINESS_UNIT, TENANT_GLOBAL).
+    """
+    if not user_context:
+        return []
+
+    cur = conn.cursor()
+    scope = user_context.data_scope
+
+    if user_context.is_superadmin or scope == DataScopeEnum.TENANT_GLOBAL:
+        cur.execute(
+            "SELECT id FROM users WHERE account_id = ?",
+            (user_context.account_id,),
+        )
+        ids = [r[0] for r in cur.fetchall()]
+        if user_context.user_id not in ids:
+            ids.append(user_context.user_id)
+        return ids
+
+    if scope == DataScopeEnum.SELF or not user_context.team_id:
+        return [user_context.user_id]
+
+    if scope == DataScopeEnum.TEAM:
+        cur.execute(
+            "SELECT id FROM users WHERE account_id = ? AND team_id = ?",
+            (user_context.account_id, user_context.team_id),
+        )
+        ids = [r[0] for r in cur.fetchall()]
+        if user_context.user_id not in ids:
+            ids.append(user_context.user_id)
+        return ids
+
+    if scope == DataScopeEnum.SUBTREE:
+        cur.execute(
+            """
+            WITH RECURSIVE team_tree(id) AS (
+                SELECT id FROM teams WHERE id = ? AND account_id = ?
+                UNION ALL
+                SELECT t.id FROM teams t
+                JOIN team_tree tt ON t.parent_id = tt.id
+                WHERE t.account_id = ?
+            )
+            SELECT id FROM users
+            WHERE account_id = ? AND team_id IN (SELECT id FROM team_tree);
+            """,
+            (
+                user_context.team_id,
+                user_context.account_id,
+                user_context.account_id,
+                user_context.account_id,
+            ),
+        )
+        ids = [r[0] for r in cur.fetchall()]
+        if user_context.user_id not in ids:
+            ids.append(user_context.user_id)
+        return ids
+
+    if scope == DataScopeEnum.BUSINESS_UNIT and user_context.business_unit_id:
+        cur.execute(
+            """
+            SELECT u.id FROM users u
+            JOIN teams t ON u.team_id = t.id
+            WHERE u.account_id = ? AND t.business_unit_id = ?
+            """,
+            (user_context.account_id, user_context.business_unit_id),
+        )
+        ids = [r[0] for r in cur.fetchall()]
+        if user_context.user_id not in ids:
+            ids.append(user_context.user_id)
+        return ids
+
+    return [user_context.user_id]
 
 
 def resolve_data_scope_clause(
@@ -138,7 +216,7 @@ def resolve_data_scope_clause(
 ) -> Tuple[str, List[Any]]:
     """
     Retorna uma tupla (sql_clause, params) para injeção direta em consultas SQL.
-    Aplica isolamento por linha (Row-Level Security / Territory Management).
+    Aplica isolamento por linha (Row-Level Security / Territory Management Dual Field + Inside).
     """
     prefix = f"{table_alias}." if table_alias else ""
 
@@ -163,20 +241,26 @@ def resolve_data_scope_clause(
             [user_context.account_id, user_context.user_id, user_context.user_id, user_context.user_id]
         )
 
-    # 5. Escopo de Time Direto (Gestor Regional)
+    # 5. Escopo de Time Direto (Gestor Regional — inclui registros do time e de subordinados Field/Inside)
     if scope == DataScopeEnum.TEAM:
         if not user_context.team_id:
-            # Fallback seguro: se não tiver time, cai para self dual
             return (
                 f"{prefix}account_id = ? AND ({prefix}owner_id = ? OR {prefix}field_owner_id = ? OR {prefix}inside_owner_id = ?)",
                 [user_context.account_id, user_context.user_id, user_context.user_id, user_context.user_id]
             )
+        scoped_users = get_scoped_user_ids(conn, user_context)
+        u_placeholders = ", ".join("?" for _ in scoped_users)
         return (
-            f"{prefix}account_id = ? AND {prefix}team_id = ?",
-            [user_context.account_id, user_context.team_id]
+            f"{prefix}account_id = ? AND ("
+            f"{prefix}team_id = ? "
+            f"OR {prefix}owner_id IN ({u_placeholders}) "
+            f"OR {prefix}field_owner_id IN ({u_placeholders}) "
+            f"OR {prefix}inside_owner_id IN ({u_placeholders})"
+            f")",
+            [user_context.account_id, user_context.team_id] + scoped_users + scoped_users + scoped_users
         )
 
-    # 6. Escopo de Subárvore Recursiva (Gestor Distrital)
+    # 6. Escopo de Subárvore Recursiva (Gestor Distrital — inclui sub-times e subordinados Field/Inside)
     if scope == DataScopeEnum.SUBTREE:
         if not user_context.team_id:
             return (
@@ -202,18 +286,25 @@ def resolve_data_scope_clause(
         if not sub_teams:
             sub_teams = [user_context.team_id]
 
-        placeholders = ", ".join("?" for _ in sub_teams)
+        scoped_users = get_scoped_user_ids(conn, user_context)
+        t_placeholders = ", ".join("?" for _ in sub_teams)
+        u_placeholders = ", ".join("?" for _ in scoped_users)
         return (
-            f"{prefix}account_id = ? AND {prefix}team_id IN ({placeholders})",
-            [user_context.account_id] + sub_teams
+            f"{prefix}account_id = ? AND ("
+            f"{prefix}team_id IN ({t_placeholders}) "
+            f"OR {prefix}owner_id IN ({u_placeholders}) "
+            f"OR {prefix}field_owner_id IN ({u_placeholders}) "
+            f"OR {prefix}inside_owner_id IN ({u_placeholders})"
+            f")",
+            [user_context.account_id] + sub_teams + scoped_users + scoped_users + scoped_users
         )
 
     # 7. Escopo de Unidade de Negócio / Business Unit (Diretor de Divisão)
     if scope == DataScopeEnum.BUSINESS_UNIT:
         if not user_context.business_unit_id:
             return (
-                f"{prefix}account_id = ? AND {prefix}owner_id = ?",
-                [user_context.account_id, user_context.user_id]
+                f"{prefix}account_id = ? AND ({prefix}owner_id = ? OR {prefix}field_owner_id = ? OR {prefix}inside_owner_id = ?)",
+                [user_context.account_id, user_context.user_id, user_context.user_id, user_context.user_id]
             )
 
         cur = conn.cursor()
