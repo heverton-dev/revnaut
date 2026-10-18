@@ -465,7 +465,7 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
 - **Validation Command:** `python -m pytest tests/test_chatwoot_context_sidebar.py -q`
 - **Blocked by:** TICKET-17, TICKET-20, TICKET-23
 
-#### [TICKET-25] Vídeo Suporte Cirúrgico Crítico em 1 Clique ("SOS Mesa Cirúrgica" via LiveKit)
+#### [TICKET-25] [x] DONE - Vídeo Suporte Cirúrgico Crítico em 1 Clique ("SOS Mesa Cirúrgica" via LiveKit)
 - **Descrição:** Implementação do fluxo de emergência clínica em `src/features/tickets/surgical_sos.py`: quando um cirurgião em procedimento aciona suporte urgente (dúvida de sequência de fresagem, estabilidade primária ou componente protético), o sistema cria um ticket crítico `P0_SURGICAL_TABLE`, gera uma sala de vídeo instantânea no **LiveKit** e conecta a câmera do celular da clínica ao assessor técnico de plantão em menos de $10\text{ segundos}$.
 - **Como Implementar (Detalhes Técnicos):**
   1. Detectar gatilho de urgência no WhatsApp/DENTGO ou botão "SOS Cirurgia" no app.

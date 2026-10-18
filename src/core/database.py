@@ -923,6 +923,19 @@ def init_db() -> None:
 
         cur.execute("CREATE INDEX IF NOT EXISTS idx_dentgo_orders_courier ON dentgo_orders(courier_id);")
 
+        cur.execute("PRAGMA table_info(tickets)")
+        ticket_cols = {row["name"] for row in cur.fetchall()}
+        for col_name, col_def in [
+            ("livekit_room_url", "TEXT DEFAULT NULL"),
+            ("customer_phone", "TEXT DEFAULT NULL"),
+            ("cro_uf", "TEXT DEFAULT NULL"),
+            ("dentgo_order_id", "TEXT DEFAULT NULL"),
+            ("clinical_notes", "TEXT DEFAULT NULL"),
+        ]:
+            if col_name not in ticket_cols:
+                cur.execute(f"ALTER TABLE tickets ADD COLUMN {col_name} {col_def}")
+
+
 
 
         # Seed determinístico inicial se conta padrão não existir
