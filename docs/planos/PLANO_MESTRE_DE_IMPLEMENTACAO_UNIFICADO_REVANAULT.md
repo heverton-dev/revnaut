@@ -364,7 +364,7 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
 - **Validation Command:** `python -m pytest tests/test_keypartners_custody_ledger.py -q`
 - **Blocked by:** TICKET-04, TICKET-14
 
-#### [TICKET-17] Fluxo Operacional de Remessa, Conferência de Lacre e Baixa Pós-Cirúrgica (Inside + Field)
+#### [TICKET-17] [x] DONE - Fluxo Operacional de Remessa, Conferência de Lacre e Baixa Pós-Cirúrgica (Inside + Field)
 - **Descrição:** Implementação da máquina de estados do ciclo cirúrgico consignado no KeyPartners (`SOLICITADO_FIELD` $\rightarrow$ `APROVADO_INSIDE` $\rightarrow$ `TERMO_ASSINADO` $\rightarrow$ `EM_TRANSITO` $\rightarrow$ `EM_POSSE_CLINICA` $\rightarrow$ `CONCILIACAO_POS_OP` $\rightarrow$ `FATURADO_E_REPOSTO`), integrando o consultor de campo e o analista interno em `frontend/src/features/keypartners/ConsignmentSurgicalBoard.tsx`.
 - **Como Implementar (Detalhes Técnicos):**
   1. O Consultor Externo solicita a remessa pelo app móvel informando a data da cirurgia e a grade de implantes desejada.

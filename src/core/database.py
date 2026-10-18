@@ -697,10 +697,32 @@ def init_db() -> None:
             FOREIGN KEY (agreement_id) REFERENCES kp_partner_agreements(id)
         );
 
+        CREATE TABLE IF NOT EXISTS kp_surgical_orders (
+            id TEXT PRIMARY KEY,
+            account_id TEXT NOT NULL,
+            agreement_id TEXT NOT NULL,
+            patient_identifier TEXT,
+            surgery_date TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'SOLICITADO_FIELD',
+            field_consultant_id TEXT,
+            inside_analyst_id TEXT,
+            remitted_items_json TEXT DEFAULT '[]',
+            consumed_items_json TEXT DEFAULT '[]',
+            returned_items_json TEXT DEFAULT '[]',
+            seal_photo_r2_key TEXT,
+            billing_order_id TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (account_id) REFERENCES accounts(id),
+            FOREIGN KEY (agreement_id) REFERENCES kp_partner_agreements(id)
+        );
+
         CREATE INDEX IF NOT EXISTS idx_kp_agr_acc ON kp_partner_agreements(account_id);
         CREATE INDEX IF NOT EXISTS idx_kp_kits_agr ON kp_consignment_kits(current_agreement_id);
         CREATE INDEX IF NOT EXISTS idx_kp_ledger_agr ON kp_custody_ledger(agreement_id);
         CREATE INDEX IF NOT EXISTS idx_kp_ledger_batch ON kp_custody_ledger(batch_number);
+        CREATE INDEX IF NOT EXISTS idx_kp_surg_agr ON kp_surgical_orders(agreement_id);
+        CREATE INDEX IF NOT EXISTS idx_kp_surg_status ON kp_surgical_orders(status);
         """)
 
 

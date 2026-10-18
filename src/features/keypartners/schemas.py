@@ -107,3 +107,64 @@ class CustodySummaryResponse(BaseModel):
     total_custodied_value: float
     total_items_count: int
     ledger_entries: List[LedgerEntryOut]
+
+
+class SurgicalOrderCreate(BaseModel):
+    agreement_id: str = Field(..., description="ID do acordo de parceria da clínica")
+    patient_identifier: Optional[str] = Field(default=None, description="Identificador anônimo do paciente")
+    surgery_date: str = Field(..., description="Data prevista para a cirurgia (YYYY-MM-DD)")
+    field_consultant_id: Optional[str] = Field(default=None, description="ID do consultor comercial externo")
+    items: List[LedgerItemIn] = Field(..., min_length=1, description="Grade de implantes e instrumentais solicitados")
+    account_id: Optional[str] = Field(default="0f14ffff", description="ID da conta tenant")
+
+
+class SurgicalOrderApproveRequest(BaseModel):
+    inside_analyst_id: Optional[str] = Field(default="usr-inside-01", description="ID do analista interno que homologa a remessa")
+    account_id: Optional[str] = Field(default="0f14ffff", description="ID da conta tenant")
+
+
+class ConsumedItemIn(BaseModel):
+    product_id: str = Field(..., description="Código do produto utilizado")
+    product_name: str = Field(..., description="Descrição técnica")
+    anvisa_reg: str = Field(..., description="Registro ANVISA")
+    batch_number: str = Field(..., description="Lote do produto instalado no paciente")
+    quantity: int = Field(default=1, ge=1, description="Quantidade consumida")
+    unit_value: float = Field(..., ge=0.0, description="Valor unitário acordado em R$")
+    patient_notes: Optional[str] = Field(default=None, description="Observações clínicas / torque / sítio cirúrgico")
+
+
+class SurgicalPostopReportRequest(BaseModel):
+    consumed_items: List[ConsumedItemIn] = Field(..., min_length=1, description="Itens efetivamente instalados no paciente")
+    seal_photo_r2_key: Optional[str] = Field(default=None, description="Chave R2 da foto comprobatória do lacre dos itens não utilizados")
+    account_id: Optional[str] = Field(default="0f14ffff", description="ID da conta tenant")
+
+
+class SurgicalPostopReportResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    status: str
+    order_id: str
+    agreement_id: str
+    billed_amount: float
+    cfop: str
+    consumed_units: int
+    retained_units: int
+    billing_order_id: str
+
+
+class SurgicalOrderOut(BaseModel):
+    model_config = {"extra": "allow"}
+    id: str
+    account_id: str
+    agreement_id: str
+    patient_identifier: Optional[str] = None
+    surgery_date: str
+    status: str
+    field_consultant_id: Optional[str] = None
+    inside_analyst_id: Optional[str] = None
+    remitted_items_json: str
+    consumed_items_json: str
+    returned_items_json: str
+    seal_photo_r2_key: Optional[str] = None
+    billing_order_id: Optional[str] = None
+    created_at: str
+    updated_at: str
