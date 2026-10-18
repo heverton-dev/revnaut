@@ -111,4 +111,32 @@ class OrderOut(BaseModel):
     urgency_fee: float
     total_amount: float
     status: str
+    courier_id: Optional[str] = None
+    seal_code: Optional[str] = None
+    delivery_pin: Optional[str] = None
+    proof_of_delivery_r2_key: Optional[str] = None
+    recipient_signature_name: Optional[str] = None
+    delivered_at: Optional[str] = None
     created_at: str
+
+
+class OrderPickingRequest(BaseModel):
+    scanned_barcode: str = Field(..., description="Código de barras ou DataMatrix bipado na separação")
+    account_id: Optional[str] = Field(default="0f14ffff", description="ID da conta tenant")
+
+
+class OrderSealRequest(BaseModel):
+    seal_code: str = Field(..., description="Código do lacre inviolável da maleta térmica")
+    account_id: Optional[str] = Field(default="0f14ffff", description="ID da conta tenant")
+
+
+class OrderAssignCourierRequest(BaseModel):
+    courier_id: str = Field(..., description="ID ou matrícula do entregador especializado")
+    account_id: Optional[str] = Field(default="0f14ffff", description="ID da conta tenant")
+
+
+class OrderDeliveryVerifyRequest(BaseModel):
+    entered_pin: str = Field(..., min_length=4, max_length=4, description="PIN de 4 dígitos informado pelo cirurgião/recepcionista")
+    proof_photo_r2_key: str = Field(..., description="Chave R2 da foto comprovante de entrega (POD)")
+    recipient_name: str = Field(..., description="Nome do recebedor na clínica")
+    account_id: Optional[str] = Field(default="0f14ffff", description="ID da conta tenant")

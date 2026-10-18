@@ -793,6 +793,12 @@ def init_db() -> None:
             urgency_fee REAL NOT NULL DEFAULT 0.0,
             total_amount REAL NOT NULL DEFAULT 0.0,
             status TEXT NOT NULL DEFAULT 'ORDER_PLACED',
+            courier_id TEXT,
+            seal_code TEXT,
+            delivery_pin TEXT,
+            proof_of_delivery_r2_key TEXT,
+            recipient_signature_name TEXT,
+            delivered_at TIMESTAMP,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (hub_id) REFERENCES dentgo_hubs(id),
             FOREIGN KEY (account_id) REFERENCES accounts(id)
@@ -844,6 +850,21 @@ def init_db() -> None:
         ]:
             if col_name not in contact_cols:
                 cur.execute(f"ALTER TABLE contacts ADD COLUMN {col_name} {col_def}")
+
+        cur.execute("PRAGMA table_info(dentgo_orders)")
+        order_cols = {row["name"] for row in cur.fetchall()}
+        for col_name, col_def in [
+            ("courier_id", "TEXT DEFAULT NULL"),
+            ("seal_code", "TEXT DEFAULT NULL"),
+            ("delivery_pin", "TEXT DEFAULT NULL"),
+            ("proof_of_delivery_r2_key", "TEXT DEFAULT NULL"),
+            ("recipient_signature_name", "TEXT DEFAULT NULL"),
+            ("delivered_at", "TIMESTAMP DEFAULT NULL")
+        ]:
+            if col_name not in order_cols:
+                cur.execute(f"ALTER TABLE dentgo_orders ADD COLUMN {col_name} {col_def}")
+
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_dentgo_orders_courier ON dentgo_orders(courier_id);")
 
 
 

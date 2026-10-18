@@ -10,9 +10,12 @@ from src.features.dentgo.schemas import (
     HubCreate, HubOut,
     HubInventoryCreate, HubInventoryOut,
     EmergencySearchRequest, EmergencySearchResultOut,
-    OrderCheckoutRequest, OrderOut
+    OrderCheckoutRequest, OrderOut,
+    OrderPickingRequest, OrderSealRequest,
+    OrderAssignCourierRequest, OrderDeliveryVerifyRequest
 )
 from src.features.dentgo import service
+from src.features.dentgo import logistics_dispatch
 
 router = APIRouter(prefix="/api/v1/dentgo", tags=["DENTGO • Marketplace B2B & Logística Express"])
 
@@ -86,3 +89,65 @@ def get_order(order_id: str, account_id: str = "0f14ffff"):
         return service.get_order(order_id=order_id, account_id=account_id)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.post("/orders/{order_id}/picking", response_model=OrderOut, summary="Bipar DataMatrix/lote e iniciar separação")
+def order_picking(order_id: str, payload: OrderPickingRequest):
+    try:
+        return logistics_dispatch.bip_picking(
+            order_id=order_id,
+            scanned_barcode=payload.scanned_barcode,
+            account_id=payload.account_id or "0f14ffff"
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/orders/{order_id}/seal", response_model=OrderOut, summary="Lacrar maleta térmica e gerar PIN de conferência")
+def order_seal(order_id: str, payload: OrderSealRequest):
+    try:
+        return logistics_dispatch.seal_package(
+            order_id=order_id,
+            seal_code=payload.seal_code,
+            account_id=payload.account_id or "0f14ffff"
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/orders/{order_id}/assign-courier", response_model=OrderOut, summary="Atribuir entregador cirúrgico especializado")
+def order_assign_courier(order_id: str, payload: OrderAssignCourierRequest):
+    try:
+        return logistics_dispatch.assign_courier(
+            order_id=order_id,
+            courier_id=payload.courier_id,
+            account_id=payload.account_id or "0f14ffff"
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/orders/{order_id}/start-transit", response_model=OrderOut, summary="Iniciar rota de entrega express em tempo real")
+def order_start_transit(order_id: str, account_id: str = "0f14ffff"):
+    try:
+        return logistics_dispatch.start_transit(
+            order_id=order_id,
+            account_id=account_id
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/orders/{order_id}/verify-delivery", response_model=OrderOut, summary="Validar PIN, anexar foto POD no R2 e concluir entrega")
+def order_verify_delivery(order_id: str, payload: OrderDeliveryVerifyRequest):
+    try:
+        return logistics_dispatch.verify_and_complete_delivery(
+            order_id=order_id,
+            entered_pin=payload.entered_pin,
+            proof_photo_r2_key=payload.proof_photo_r2_key,
+            recipient_name=payload.recipient_name,
+            account_id=payload.account_id or "0f14ffff"
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+

@@ -404,7 +404,7 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
 - **Validation Command:** `python -m pytest tests/test_dentgo_marketplace_routing.py -q`
 - **Blocked by:** TICKET-06, TICKET-16
 
-#### [TICKET-20] Máquina de Despacho Last-Mile, Custódia por Lacre Térmico e Comprovante no R2
+#### [TICKET-20] [x] DONE - Máquina de Despacho Last-Mile, Custódia por Lacre Térmico e Comprovante no R2
 - **Descrição:** Implementação do módulo de logística sanitária e controle de entregadores (`src/features/dentgo/logistics_dispatch.py` e `frontend/src/features/dentgo/DentgoExpressCockpit.tsx`), gerenciando a bipagem no CD, o código de lacre inviolável da maleta térmica, o rastreamento em tempo real e a prova de entrega (POD - *Proof of Delivery*) com foto e assinatura salvas no Cloudflare R2.
 - **Como Implementar (Detalhes Técnicos):**
   1. Criar estados logísticos: `ORDER_PLACED` $\rightarrow$ `PICKING_BIPADO` $\rightarrow$ `SEALED_READY` $\rightarrow$ `COURIER_ASSIGNED` $\rightarrow$ `IN_TRANSIT_LIVE` $\rightarrow$ `DELIVERED_VERIFIED`.
