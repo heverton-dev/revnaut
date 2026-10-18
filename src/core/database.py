@@ -574,6 +574,55 @@ def init_db() -> None:
         );
 
         CREATE INDEX IF NOT EXISTS idx_objections_deal ON deal_objections(deal_id);
+
+        CREATE TABLE IF NOT EXISTS products_catalog (
+            id TEXT PRIMARY KEY,
+            account_id TEXT NOT NULL,
+            sku TEXT NOT NULL UNIQUE,
+            name TEXT NOT NULL,
+            category TEXT NOT NULL,
+            anvisa_reg TEXT,
+            prosthetic_platform TEXT,
+            diameter REAL,
+            length REAL,
+            recommended_torque INTEGER DEFAULT 35,
+            base_price REAL NOT NULL,
+            is_active INTEGER NOT NULL DEFAULT 1,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (account_id) REFERENCES accounts(id)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_prod_cat_sku ON products_catalog(sku);
+
+        CREATE TABLE IF NOT EXISTS price_tables (
+            id TEXT PRIMARY KEY,
+            account_id TEXT NOT NULL,
+            table_key TEXT NOT NULL,
+            name TEXT NOT NULL,
+            discount_factor REAL NOT NULL DEFAULT 1.0,
+            is_active INTEGER NOT NULL DEFAULT 1,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (account_id) REFERENCES accounts(id)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_price_tables_key ON price_tables(account_id, table_key);
+
+        CREATE TABLE IF NOT EXISTS deal_discount_requests (
+            id TEXT PRIMARY KEY,
+            account_id TEXT NOT NULL,
+            deal_id TEXT NOT NULL,
+            requested_by_user_id TEXT NOT NULL,
+            discount_pct REAL NOT NULL,
+            max_allowed_pct REAL NOT NULL,
+            status TEXT NOT NULL DEFAULT 'PENDING_APPROVAL',
+            approved_by_user_id TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            resolved_at TIMESTAMP,
+            FOREIGN KEY (account_id) REFERENCES accounts(id),
+            FOREIGN KEY (deal_id) REFERENCES deals(id)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_disc_req_deal ON deal_discount_requests(deal_id);
         """)
 
         # Migração idempotente para colunas complementares em deals e contacts
@@ -587,9 +636,11 @@ def init_db() -> None:
             ("split_commission_field_pct", "REAL DEFAULT 70.0"),
             ("split_commission_inside_pct", "REAL DEFAULT 30.0"),
             ("executive_summary", "TEXT DEFAULT NULL"),
+            ("approval_status", "TEXT DEFAULT 'APPROVED'"),
         ]:
             if col_name not in existing_cols:
                 cur.execute(f"ALTER TABLE deals ADD COLUMN {col_name} {col_def}")
+
 
 
         cur.execute("PRAGMA table_info(contacts)")
@@ -831,6 +882,38 @@ def init_db() -> None:
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 flows_data
             )
+
+        # Seed idempotente de Tabelas de Preço Odontológicas
+        cur.execute("SELECT COUNT(*) FROM price_tables")
+        if cur.fetchone()[0] == 0:
+            price_tables_data = [
+                ("pt-1", "0f14ffff", "BALCAO", "Tabela Balcão Padrão", 1.0, 1),
+                ("pt-2", "0f14ffff", "FRANQUIA", "Tabela Franquias Odontológicas", 0.85, 1),
+                ("pt-3", "0f14ffff", "DISTRIBUIDOR", "Tabela Distribuidores e Atacado", 0.70, 1),
+                ("pt-4", "0f14ffff", "UNIVERSIDADE_ENSINO", "Tabela Universidades & Pós-Graduação", 0.60, 1),
+                ("pt-5", "0f14ffff", "KOL_PARCEIRO", "Tabela Parceiros KOL & Speakers", 0.50, 1),
+            ]
+            cur.executemany(
+                "INSERT INTO price_tables (id, account_id, table_key, name, discount_factor, is_active) "
+                "VALUES (?, ?, ?, ?, ?, ?)",
+                price_tables_data
+            )
+
+        # Seed idempotente do Catálogo de Produtos Odontológicos
+        cur.execute("SELECT COUNT(*) FROM products_catalog")
+        if cur.fetchone()[0] == 0:
+            catalog_products_data = [
+                ("prod-1", "0f14ffff", "IMP-CM-37511", "Implante Cone Morse 3.75x11mm", "Implantes", "ANVISA-80123456789", "Cone Morse", 3.75, 11.0, 45, 450.0, 1),
+                ("prod-2", "0f14ffff", "IMP-CM-4313", "Implante Cone Morse 4.3x13mm", "Implantes", "ANVISA-80123456789", "Cone Morse", 4.30, 13.0, 45, 480.0, 1),
+                ("prod-3", "0f14ffff", "KIT-CIR-PRO", "Kit Cirúrgico Guiado Titanium Pro", "Kits Cirúrgicos", "ANVISA-80987654321", "Universal", None, None, None, 6500.0, 1),
+                ("prod-4", "0f14ffff", "BIO-OS-05G", "Biomaterial Ósseo Particulado 0.5g", "Biomateriais", "ANVISA-80112233445", "Universal", None, None, None, 320.0, 1),
+            ]
+            cur.executemany(
+                "INSERT INTO products_catalog (id, account_id, sku, name, category, anvisa_reg, prosthetic_platform, diameter, length, recommended_torque, base_price, is_active) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                catalog_products_data
+            )
+
 
         # Atualização canônica dos nomes dos pipelines para a Indústria Dental (RevOps Puro)
         cur.execute("UPDATE pipelines SET name = 'Cirurgiões & Venda Direta / Consignação de Caixas' WHERE id = 1")

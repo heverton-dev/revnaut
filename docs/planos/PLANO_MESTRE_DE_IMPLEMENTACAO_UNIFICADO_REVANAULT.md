@@ -322,7 +322,7 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
 - **Validation Command:** `python -m pytest tests/test_granola_copilot_zerotouch.py -q`
 - **Blocked by:** TICKET-12
 
-#### [TICKET-14] Motor Dinâmico de Catálogo Odontológico, Multi-Tabela de Preços e Alçadas de Desconto
+#### [TICKET-14] [x] DONE - Motor Dinâmico de Catálogo Odontológico, Multi-Tabela de Preços e Alçadas de Desconto
 - **Descrição:** Implementação do motor de catálogo técnico e precificação (`src/features/deals/catalog_pricing.py`) com taxonomia odontológica (Implantes, Componentes Protéticos, Biomateriais, Kits Cirúrgicos, Motores/Scanners), tabelas diferenciadas por perfil de comprador e trava de alçada de desconto por nível hierárquico RBAC.
 - **Como Implementar (Detalhes Técnicos):**
   1. Criar tabelas `products_catalog` (com SKU, registro ANVISA, plataforma protética, diâmetro, comprimento, torque recomendado) e `price_tables` (`BALCAO`, `FRANQUIA`, `DISTRIBUIDOR`, `UNIVERSIDADE_ENSINO`, `KOL_PARCEIRO`).

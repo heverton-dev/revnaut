@@ -11,11 +11,16 @@ from src.features.deals.schemas import (
     DealCreate, DealMove, DealUpdate, PipelineItemOut,
     PipelineMetricsOut, DealsListResponse, DealCreateResponse,
     DealMoveResponse, DealDetailOut, DealTimelineResponse,
-    DealApproveCreditResponse
+    DealApproveCreditResponse,
+    ProductCatalogItemOut, PriceTableOut,
+    CalculateProposalRequest, CalculateProposalResponse,
+    ApproveDiscountRequest, ApproveDiscountResponse,
 )
 from src.features.deals import service
+from src.features.deals import catalog_pricing
 from src.core.database import get_connection
 from src.core.security import enforce_user_permission
+
 
 router = APIRouter(tags=["Vendas & Funil"])
 
@@ -110,4 +115,40 @@ def export_deals_csv(
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=pipeline_revnaut_dental.csv"}
     )
+
+
+@router.get("/api/v1/deals/catalog/products", response_model=List[ProductCatalogItemOut], summary="Listar catálogo técnico odontológico")
+def get_catalog_products(account_id: str = "0f14ffff"):
+    return catalog_pricing.list_catalog_products(account_id=account_id)
+
+
+@router.get("/api/v1/deals/catalog/price-tables", response_model=List[PriceTableOut], summary="Listar tabelas de preço odontológicas")
+def get_price_tables(account_id: str = "0f14ffff"):
+    return catalog_pricing.list_price_tables(account_id=account_id)
+
+
+@router.post("/api/v1/deals/catalog/calculate-proposal", response_model=CalculateProposalResponse, summary="Calcular proposta e validar alçada de desconto")
+def calculate_proposal(payload: CalculateProposalRequest):
+    return catalog_pricing.calculate_proposal_pricing(
+        deal_id=payload.deal_id,
+        table_key=payload.table_key,
+        items=[item.model_dump() for item in payload.items],
+        requested_discount_pct=payload.requested_discount_pct,
+        user_id=payload.user_id,
+        user_role=payload.user_role,
+        account_id=payload.account_id or "0f14ffff"
+    )
+
+
+@router.post("/api/v1/deals/catalog/approve-discount", response_model=ApproveDiscountResponse, summary="Aprovação de solicitação de desconto por gestor")
+def approve_discount(payload: ApproveDiscountRequest):
+    try:
+        return catalog_pricing.approve_discount_request(
+            request_id=payload.request_id,
+            approver_user_id=payload.approver_user_id,
+            account_id=payload.account_id or "0f14ffff"
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
 

@@ -89,4 +89,69 @@ class DealApproveCreditResponse(BaseModel):
     credit_limit: float | None = None
 
 
+class ProductCatalogItemOut(BaseModel):
+    model_config = {"extra": "allow"}
+    id: str
+    sku: str
+    name: str
+    category: str
+    anvisa_reg: str | None = None
+    prosthetic_platform: str | None = None
+    diameter: float | None = None
+    length: float | None = None
+    recommended_torque: int | None = 35
+    base_price: float
+    is_active: int = 1
+
+
+class PriceTableOut(BaseModel):
+    model_config = {"extra": "allow"}
+    id: str
+    table_key: str
+    name: str
+    discount_factor: float
+    is_active: int = 1
+
+
+class ProposalItem(BaseModel):
+    sku: str = Field(..., description="SKU do produto no catálogo")
+    quantity: int = Field(default=1, gt=0, description="Quantidade de unidades")
+
+
+class CalculateProposalRequest(BaseModel):
+    deal_id: str = Field(..., description="ID do Deal vinculado")
+    table_key: str = Field(default="BALCAO", description="Tabela de preço: BALCAO | FRANQUIA | DISTRIBUIDOR | UNIVERSIDADE_ENSINO | KOL_PARCEIRO")
+    items: list[ProposalItem] = Field(..., min_length=1, description="Lista de itens e quantidades")
+    requested_discount_pct: float = Field(default=0.0, ge=0.0, le=100.0, description="Percentual de desconto solicitado")
+    user_id: str | None = Field(default=None, description="ID do usuário que está propondo")
+    user_role: str | None = Field(default="consultor", description="Cargo do usuário para validação de alçada RBAC")
+    account_id: str | None = Field(default="0f14ffff", description="ID do tenant")
+
+
+class CalculateProposalResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    status: str
+    requires_approval: bool
+    base_value: float
+    final_value: float
+    requested_discount_pct: float
+    max_allowed_pct: float
+    request_id: str | None = None
+
+
+class ApproveDiscountRequest(BaseModel):
+    request_id: str = Field(..., description="ID da solicitação de desconto")
+    approver_user_id: str = Field(..., description="ID do gestor aprovador")
+    account_id: str | None = Field(default="0f14ffff", description="ID do tenant")
+
+
+class ApproveDiscountResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    success: bool
+    request_id: str
+    deal_id: str
+    status: str
+
+
+
 
