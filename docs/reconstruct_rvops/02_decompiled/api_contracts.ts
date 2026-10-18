@@ -322,4 +322,97 @@ export interface ChurnRiskResponse {
   radar: ChurnRiskItem[];
 }
 
+// =============================================================================
+// FASE 8: ERP Fiscal Hub, Orthanc DICOM 3D & Webhooks Outbound (TICKETS 38-40)
+// =============================================================================
+
+export interface ErpFiscalInvoice {
+  id: string;
+  account_id: string;
+  erp_type: 'totvs_protheus' | 'sap_b1' | 'sankhya';
+  flow_type: 'REMITTANCE_5917' | 'RETURN_1918' | 'SALE_5113';
+  reference_id?: string;
+  cfop: string;
+  nfe_number: string;
+  nfe_series: string;
+  nfe_access_key: string;
+  recipient_cnpj_cpf: string;
+  recipient_name: string;
+  total_invoice_value: number;
+  xml_r2_key: string;
+  danfe_pdf_r2_key: string;
+  xml_url?: string;
+  danfe_pdf_url?: string;
+  status: string;
+  sefaz_protocol?: string;
+  windmill_job_id?: string;
+  created_at?: string;
+}
+
+export interface ImagingStudy {
+  id: string;
+  account_id: string;
+  patient_name?: string | null;
+  patient_anonymized_id: string;
+  deal_id?: string | null;
+  ticket_id?: string | null;
+  study_type: 'DICOM_CBCT' | 'INTRAORAL_STL' | 'INTRAORAL_PLY' | 'GUIDED_SURGERY_PLAN';
+  orthanc_study_id?: string | null;
+  r2_storage_key: string;
+  file_name: string;
+  file_size_bytes: number;
+  slice_count: number;
+  jaw_type: 'MAXILA' | 'MANDIBULA' | 'AMBAS' | 'PERIAPICAL';
+  bone_density_estimate: string;
+  implant_site?: string | null;
+  is_anonymized: boolean;
+  created_at?: string;
+}
+
+export interface ImagingStudyViewerSession {
+  study_id: string;
+  viewer_token: string;
+  viewer_stream_url: string;
+  r2_public_url: string;
+  study_type: string;
+  patient_anonymized_id: string;
+  jaw_type: string;
+  bone_density_estimate: string;
+  implant_site?: string | null;
+  slice_count: number;
+  recommended_implant_diameter_mm: number;
+  recommended_implant_length_mm: number;
+  bone_thickness_mm: number;
+  expires_in_seconds: number;
+}
+
+export interface WebhookSubscription {
+  id: string;
+  account_id: string;
+  name: string;
+  target_url: string;
+  subscribed_events: string[];
+  signing_secret: string;
+  is_active: boolean;
+  consecutive_failures: number;
+  circuit_breaker_tripped: boolean;
+  created_at?: string;
+}
+
+export interface WebhookDeliveryLog {
+  id: string;
+  subscription_id: string;
+  account_id: string;
+  event_name: string;
+  target_url: string;
+  signature_header: string;
+  status_code?: number;
+  response_body?: string;
+  latency_ms: number;
+  attempt: number;
+  success: boolean;
+  created_at?: string;
+}
+
+
 

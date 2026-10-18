@@ -675,7 +675,8 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
 - **Validation Command:** `python -m pytest tests/test_outbound_webhooks_hmac.py -q`
 - **Blocked by:** TICKET-02, TICKET-05
 
-#### [TICKET-41] Unificação do Cockpit Odontológico 360° (React 19 + TypeScript SPA) e Sincronia Estrita de Contratos
+#### [TICKET-41] [x] DONE Unificação do Cockpit Odontológico 360° (React 19 + TypeScript SPA) e Sincronia Estrita de Contratos
+- **Status:** [x] CONCLUIDO (AppRouter integrado no React 19 com as 6 suítes verticais, api_contracts.ts sincronizado 1:1 com FastAPI, 3/3 testes de sincronia de contratos aprovados, conformidade estrita com a Lei #14).
 - **Descrição:** Consolidação de todas as features em fatias verticais na aplicação principal **React 19 + TypeScript + TanStack Query + shadcn/ui** (`frontend/src/App.tsx`), garantindo paridade visual nos ativos de auditoria (`docs/reconstruct_rvops/05_reconstructed_app/`) e sincronização $1:1$ dos contratos tipados em `api_contracts.ts`.
 - **Como Implementar (Detalhes Técnicos):**
   1. Integrar no roteador tipado do React (`frontend/src/router.tsx`) todas as 6 suítes (Marketing GrapesJS/Mautic, Vendas + Copiloto Granola, KeyPartners Consignados, DENTGO Express, CX Chatwoot/SOS LiveKit e BI Superset/DICOM 3D) utilizando os primitivos do Design System e respeitando o RBAC Dual.

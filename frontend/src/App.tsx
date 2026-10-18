@@ -10,6 +10,7 @@ import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { Tabs } from "@/components/ui/Tabs";
 import { Deal } from "@/types/api_contracts";
 import { Plus, RefreshCw, FileText, CheckCircle2, ShieldAlert } from "lucide-react";
+import { AppRouter } from "./router";
 
 export function App() {
   const [activeTab, setActiveTab] = React.useState<"success" | "loading" | "empty" | "error">("success");
@@ -107,97 +108,102 @@ export function App() {
 
   return (
     <AppShell activeNav={activeNav} onNavigate={setActiveNav}>
-      <div className="space-y-6 max-w-7xl mx-auto">
-        {/* Cabeçalho da Página */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-text-main">
-              Cockpit de Negócios & Consignação Cirúrgica
-            </h1>
-            <p className="text-sm text-text-secondary mt-1">
-              Operação unificada RevOps + KeyPartners (Kits & ANVISA) + DENTGO (Logística Same-Day).
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button variant="secondary" size="sm" className="inline-flex items-center gap-2">
-              <RefreshCw className="h-4 w-4" />
-              Sincronizar
-            </Button>
-            <Button size="sm" className="inline-flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              Novo Negócio
-            </Button>
-          </div>
-        </div>
-
-        {/* Seletor de Demonstração dos 4 Estados Obrigatórios */}
-        <Card className="border-border">
-          <CardHeader className="py-3 px-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <CardTitle className="text-sm">Auditoria de Estados de Interface (Design System SSOT)</CardTitle>
-              <div className="flex items-center gap-1.5">
-                <Button
-                  size="sm"
-                  variant={activeTab === "success" ? "default" : "outline"}
-                  onClick={() => setActiveTab("success")}
-                >
-                  1. Success State
+      <AppRouter
+        currentRoute={activeNav}
+        defaultComponent={
+          <div className="space-y-6 max-w-7xl mx-auto">
+            {/* Cabeçalho da Página */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h1 className="text-2xl font-bold tracking-tight text-text-main">
+                  Cockpit de Negócios & Consignação Cirúrgica
+                </h1>
+                <p className="text-sm text-text-secondary mt-1">
+                  Operação unificada RevOps + KeyPartners (Kits & ANVISA) + DENTGO (Logística Same-Day).
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button variant="secondary" size="sm" className="inline-flex items-center gap-2">
+                  <RefreshCw className="h-4 w-4" />
+                  Sincronizar
                 </Button>
-                <Button
-                  size="sm"
-                  variant={activeTab === "loading" ? "default" : "outline"}
-                  onClick={() => setActiveTab("loading")}
-                >
-                  2. Loading State
-                </Button>
-                <Button
-                  size="sm"
-                  variant={activeTab === "empty" ? "default" : "outline"}
-                  onClick={() => setActiveTab("empty")}
-                >
-                  3. Empty State
-                </Button>
-                <Button
-                  size="sm"
-                  variant={activeTab === "error" ? "danger" : "outline"}
-                  onClick={() => setActiveTab("error")}
-                >
-                  4. Error State
+                <Button size="sm" className="inline-flex items-center gap-2">
+                  <Plus className="h-4 w-4" />
+                  Novo Negócio
                 </Button>
               </div>
             </div>
-          </CardHeader>
-        </Card>
 
-        {/* Renderização Condicional dos 4 Estados Reais */}
-        {activeTab === "success" && (
-          <div className="space-y-4">
-            <DataTable columns={columns} data={sampleDeals} />
+            {/* Seletor de Demonstração dos 4 Estados Obrigatórios */}
+            <Card className="border-border">
+              <CardHeader className="py-3 px-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <CardTitle className="text-sm">Auditoria de Estados de Interface (Design System SSOT)</CardTitle>
+                  <div className="flex items-center gap-1.5">
+                    <Button
+                      size="sm"
+                      variant={activeTab === "success" ? "default" : "outline"}
+                      onClick={() => setActiveTab("success")}
+                    >
+                      1. Success State
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={activeTab === "loading" ? "default" : "outline"}
+                      onClick={() => setActiveTab("loading")}
+                    >
+                      2. Loading State
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={activeTab === "empty" ? "default" : "outline"}
+                      onClick={() => setActiveTab("empty")}
+                    >
+                      3. Empty State
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={activeTab === "error" ? "danger" : "outline"}
+                      onClick={() => setActiveTab("error")}
+                    >
+                      4. Error State
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+            </Card>
+
+            {/* Renderização Condicional dos 4 Estados Reais */}
+            {activeTab === "success" && (
+              <div className="space-y-4">
+                <DataTable columns={columns} data={sampleDeals} />
+              </div>
+            )}
+
+            {activeTab === "loading" && (
+              <div className="space-y-4">
+                <DataTable columns={columns} data={[]} isLoading={true} />
+              </div>
+            )}
+
+            {activeTab === "empty" && (
+              <EmptyState
+                icon={FileText}
+                title="Nenhum negócio cirúrgico registrado neste período"
+                description="Cadastre uma nova proposta de kit cirúrgico ou acione um pedido emergencial no DENTGO."
+                actionLabel="Cadastrar Primeiro Negócio"
+                onAction={() => setActiveTab("success")}
+              />
+            )}
+
+            {activeTab === "error" && (
+              <ErrorBoundary>
+                <SimulatedErrorComponent onReset={() => setActiveTab("success")} />
+              </ErrorBoundary>
+            )}
           </div>
-        )}
-
-        {activeTab === "loading" && (
-          <div className="space-y-4">
-            <DataTable columns={columns} data={[]} isLoading={true} />
-          </div>
-        )}
-
-        {activeTab === "empty" && (
-          <EmptyState
-            icon={FileText}
-            title="Nenhum negócio cirúrgico registrado neste período"
-            description="Cadastre uma nova proposta de kit cirúrgico ou acione um pedido emergencial no DENTGO."
-            actionLabel="Cadastrar Primeiro Negócio"
-            onAction={() => setActiveTab("success")}
-          />
-        )}
-
-        {activeTab === "error" && (
-          <ErrorBoundary>
-            <SimulatedErrorComponent onReset={() => setActiveTab("success")} />
-          </ErrorBoundary>
-        )}
-      </div>
+        }
+      />
     </AppShell>
   );
 }
