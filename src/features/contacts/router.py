@@ -8,13 +8,16 @@ from fastapi import APIRouter, Header, status, HTTPException
 from src.features.contacts.schemas import (
     ContactCreate, ContactImportRequest, ContactImportResponse,
     ContactOut, ContactProfileResponse, ContactTimelineResponse,
-    ContactTimelineCommentResponse
+    ContactTimelineCommentResponse, CroValidateRequest, CroValidateResponse,
+    CfoComplianceRequest, CfoComplianceResponse
 )
+from src.features.contacts.cro_validator import verify_cro_status, validate_cfo_marketing_compliance
 from src.features.contacts import service
 from src.core.database import get_connection
 from src.core.security import enforce_user_permission
 
 router = APIRouter(tags=["Contatos & Leads"])
+
 
 
 @router.get("/api/v1/contacts", response_model=List[ContactOut], summary="Buscar e Listar Contatos com Escopo Hierárquico")
@@ -85,6 +88,27 @@ def add_timeline_comment(
         user_id=x_user_id, 
         author_name=payload.author_name or "Consultor Especialista"
     )
+
+
+@router.post("/api/v1/contacts/validate-cro", response_model=CroValidateResponse, summary="Validar Registro Profissional Odontológico no CRO")
+def validate_cro_endpoint(payload: CroValidateRequest):
+    result = verify_cro_status(
+        cro_number=payload.cro,
+        uf=payload.uf,
+        category=payload.category or "CD",
+    )
+    return CroValidateResponse(**result)
+
+
+@router.post("/api/v1/contacts/validate-cfo-compliance", response_model=CfoComplianceResponse, summary="Escanear Conformidade Ética CFO Resolução 196/2019")
+def validate_cfo_endpoint(payload: CfoComplianceRequest):
+    result = validate_cfo_marketing_compliance(
+        text=payload.text,
+        has_responsible_cro=payload.has_responsible_cro or False,
+        responsible_cro=payload.responsible_cro,
+    )
+    return CfoComplianceResponse(**result)
+
 
 
 

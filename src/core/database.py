@@ -499,6 +499,8 @@ def init_db() -> None:
             ("team_id", "TEXT DEFAULT NULL"),
             ("business_unit_id", "TEXT DEFAULT NULL"),
             ("cro", "TEXT DEFAULT NULL"),
+            ("cro_uf", "TEXT DEFAULT NULL"),
+            ("cro_verified", "INTEGER DEFAULT 0"),
             ("uf", "TEXT DEFAULT NULL"),
             ("specialty", "TEXT DEFAULT NULL"),
             ("clinic_name", "TEXT DEFAULT NULL"),
@@ -508,6 +510,7 @@ def init_db() -> None:
         ]:
             if col_name not in contact_cols:
                 cur.execute(f"ALTER TABLE contacts ADD COLUMN {col_name} {col_def}")
+
 
 
         # Seed determinístico inicial se conta padrão não existir

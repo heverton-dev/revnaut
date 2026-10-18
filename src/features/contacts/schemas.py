@@ -15,6 +15,7 @@ class ContactCreate(BaseModel):
     tags: List[str] = Field(default_factory=list, description="Lista de etiquetas")
     cro: Optional[str] = Field(None, description="Registro no Conselho Regional de Odontologia")
     cro_uf: Optional[str] = Field(None, description="UF do conselho (Ex: SP, PR)")
+    cro_verified: Optional[bool] = Field(default=False, description="Flag de verificação oficial no CRO")
     specialty: Optional[str] = Field(default="Implantodontia", description="Especialidade odontológica")
     work_model: Optional[str] = Field(default="Clínica Própria", description="Modelo de atuação clínica")
     monthly_implants_volume: Optional[str] = Field(default="20-50/mês", description="Volume de implantes/mês")
@@ -30,6 +31,7 @@ class ContactImportItem(BaseModel):
     company: Optional[str] = None
     cro: Optional[str] = None
     cro_uf: Optional[str] = None
+    cro_verified: Optional[bool] = False
     specialty: Optional[str] = "Implantodontia"
     work_model: Optional[str] = "Clínica Própria"
     monthly_implants_volume: Optional[str] = "20-50/mês"
@@ -67,6 +69,7 @@ class ContactOut(BaseModel):
     score: Optional[int] = 50
     cro: Optional[str] = None
     cro_uf: Optional[str] = None
+    cro_verified: Optional[bool] = False
     specialty: Optional[str] = None
     work_model: Optional[str] = None
     monthly_implants_volume: Optional[str] = None
@@ -99,6 +102,40 @@ class ContactTimelineCommentResponse(BaseModel):
     status: Optional[str] = None
     id: Optional[int] = None
     message: Optional[str] = None
+
+
+class CroValidateRequest(BaseModel):
+    cro: str
+    uf: Optional[str] = None
+    category: Optional[str] = "CD"
+
+
+class CroValidateResponse(BaseModel):
+    is_valid: bool
+    status: str
+    verified: bool
+    canonical_cro: Optional[str] = None
+    professional_name: Optional[str] = None
+    uf: Optional[str] = None
+    clean_number: Optional[str] = None
+    category: Optional[str] = None
+    cached: Optional[bool] = False
+    error: Optional[str] = None
+
+
+class CfoComplianceRequest(BaseModel):
+    text: str
+    has_responsible_cro: Optional[bool] = False
+    responsible_cro: Optional[str] = None
+
+
+class CfoComplianceResponse(BaseModel):
+    is_compliant: bool
+    violations: List[str] = []
+    warnings: List[str] = []
+    has_responsible_cro: bool
+    detected_cro: Optional[str] = None
+
 
 
 

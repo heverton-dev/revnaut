@@ -41,20 +41,39 @@ def list_contacts(
 
 
 def create_contact(payload: ContactCreate) -> Dict[str, Any]:
+    from src.features.contacts.cro_validator import verify_cro_status
+
+    cro_verified = False
+    effective_cro = payload.cro
+    effective_uf = payload.cro_uf
+
+    if payload.cro:
+        res = verify_cro_status(payload.cro, payload.cro_uf)
+        if res.get("verified"):
+            cro_verified = True
+            effective_cro = payload.cro
+            effective_uf = res.get("uf") or payload.cro_uf
+
+
     conn = get_connection()
     cur = conn.cursor()
     tags_json = json.dumps(payload.tags)
     cur.execute("""
-        INSERT INTO contacts (account_id, name, email, phone, company, tags, score, cro, cro_uf, specialty, work_model, monthly_implants_volume, customer_type, city, state)
-        VALUES ('0f14ffff', ?, ?, ?, ?, ?, 60, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO contacts (
+            account_id, name, email, phone, company, tags, score, 
+            cro, cro_uf, cro_verified, specialty, work_model, 
+            monthly_implants_volume, customer_type, city, state
+        )
+        VALUES ('0f14ffff', ?, ?, ?, ?, ?, 60, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         payload.name,
         payload.email,
         payload.phone,
         payload.company,
         tags_json,
-        payload.cro,
-        payload.cro_uf,
+        effective_cro,
+        effective_uf,
+        1 if cro_verified else 0,
         payload.specialty,
         payload.work_model,
         payload.monthly_implants_volume,
@@ -71,8 +90,9 @@ def create_contact(payload: ContactCreate) -> Dict[str, Any]:
         "email": payload.email,
         "company": payload.company,
         "score": 60,
-        "cro": payload.cro,
-        "cro_uf": payload.cro_uf,
+        "cro": effective_cro,
+        "cro_uf": effective_uf,
+        "cro_verified": cro_verified,
         "specialty": payload.specialty,
         "work_model": payload.work_model,
         "monthly_implants_volume": payload.monthly_implants_volume,
@@ -80,6 +100,7 @@ def create_contact(payload: ContactCreate) -> Dict[str, Any]:
         "city": payload.city,
         "state": payload.state
     }
+
 
 
 def parse_csv_contacts(csv_text: str) -> List[Dict[str, Any]]:
