@@ -809,6 +809,28 @@ def init_db() -> None:
         CREATE UNIQUE INDEX IF NOT EXISTS idx_dentgo_inv_hub_batch ON dentgo_hub_inventory(hub_id, product_id, batch_number);
         CREATE INDEX IF NOT EXISTS idx_dentgo_orders_hub ON dentgo_orders(hub_id);
         CREATE INDEX IF NOT EXISTS idx_dentgo_orders_status ON dentgo_orders(status);
+
+        CREATE TABLE IF NOT EXISTS dentgo_financial_splits (
+            id TEXT PRIMARY KEY,
+            account_id TEXT NOT NULL,
+            order_id TEXT NOT NULL,
+            gross_amount REAL NOT NULL,
+            items_amount REAL NOT NULL,
+            delivery_fee_total REAL NOT NULL,
+            platform_take_rate_pct REAL NOT NULL DEFAULT 5.0,
+            platform_fee_amount REAL NOT NULL,
+            courier_net_payout REAL NOT NULL,
+            seller_net_payout REAL NOT NULL,
+            payment_method TEXT NOT NULL DEFAULT 'PIX_INSTANT',
+            agreement_id TEXT,
+            settlement_status TEXT NOT NULL DEFAULT 'SETTLED',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (order_id) REFERENCES dentgo_orders(id) ON DELETE CASCADE,
+            FOREIGN KEY (account_id) REFERENCES accounts(id)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_dentgo_splits_order ON dentgo_financial_splits(order_id);
+        CREATE INDEX IF NOT EXISTS idx_dentgo_splits_acc ON dentgo_financial_splits(account_id);
         """)
 
 

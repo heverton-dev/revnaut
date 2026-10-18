@@ -427,7 +427,7 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
 - **Validation Command:** `python -m pytest tests/test_keypartners_dentgo_synergy.py -q`
 - **Blocked by:** TICKET-17, TICKET-20
 
-#### [TICKET-22] Motor de Monetização do Marketplace: Take-Rate, Frete Cirúrgico e Split de Pagamentos
+#### [TICKET-22] [x] DONE - Motor de Monetização do Marketplace: Take-Rate, Frete Cirúrgico e Split de Pagamentos
 - **Descrição:** Implementação do motor financeiro do DENTGO (`src/features/dentgo/financial_split.py`) calculando e segregando na fonte as três receitas transacionais: valor líquido do fornecedor (Indústria/Dental), remuneração do entregador especializado (*Express Surgical Delivery Fee*) e comissão da plataforma REVNAULT (*Take-Rate* de $3\%$ a $7\%$).
 - **Como Implementar (Detalhes Técnicos):**
   1. Criar tabela `dentgo_financial_splits` registrando para cada pedido: `gross_amount`, `platform_take_rate_pct`, `platform_fee_amount`, `delivery_fee_total`, `courier_net_payout`, `seller_net_payout`, `settlement_status`.

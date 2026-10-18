@@ -167,3 +167,29 @@ class ReplenishmentOrderResponse(BaseModel):
     hub_id: str
     items_count: int
 
+
+class FinancialSplitRequest(BaseModel):
+    platform_take_rate_pct: float = Field(default=5.0, ge=1.0, le=30.0, description="Percentual de comissão da plataforma REVNAULT (ex: 5.0%)")
+    payment_method: str = Field(default="PIX_INSTANT", description="Método de pagamento: PIX_INSTANT ou CORPORATE_CREDIT")
+    agreement_id: Optional[str] = Field(default=None, description="ID do acordo KeyPartners para faturamento corporativo quinzenal")
+    account_id: Optional[str] = Field(default="0f14ffff", description="ID da conta tenant")
+
+
+class FinancialSplitOut(BaseModel):
+    model_config = {"extra": "allow"}
+    id: str
+    account_id: str
+    order_id: str
+    gross_amount: float
+    items_amount: float
+    delivery_fee_total: float
+    platform_take_rate_pct: float
+    platform_fee_amount: float
+    courier_net_payout: float
+    seller_net_payout: float
+    payment_method: str
+    agreement_id: Optional[str] = None
+    settlement_status: str
+    created_at: str
+
+

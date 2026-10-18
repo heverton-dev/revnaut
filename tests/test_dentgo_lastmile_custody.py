@@ -23,6 +23,7 @@ def clean_dentgo_tables():
     conn = get_connection()
     try:
         cur = conn.cursor()
+        cur.execute("DELETE FROM dentgo_financial_splits")
         cur.execute("DELETE FROM dentgo_orders")
         cur.execute("DELETE FROM dentgo_hub_inventory")
         cur.execute("DELETE FROM dentgo_hubs")

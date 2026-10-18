@@ -12,10 +12,12 @@ from src.features.dentgo.schemas import (
     EmergencySearchRequest, EmergencySearchResultOut,
     OrderCheckoutRequest, OrderOut,
     OrderPickingRequest, OrderSealRequest,
-    OrderAssignCourierRequest, OrderDeliveryVerifyRequest
+    OrderAssignCourierRequest, OrderDeliveryVerifyRequest,
+    FinancialSplitRequest, FinancialSplitOut
 )
 from src.features.dentgo import service
 from src.features.dentgo import logistics_dispatch
+from src.features.dentgo import financial_split
 
 router = APIRouter(prefix="/api/v1/dentgo", tags=["DENTGO • Marketplace B2B & Logística Express"])
 
@@ -150,4 +152,32 @@ def order_verify_delivery(order_id: str, payload: OrderDeliveryVerifyRequest):
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/orders/{order_id}/split", response_model=FinancialSplitOut, summary="Calcular e segregar split financeiro do pedido DENTGO")
+def split_order(order_id: str, payload: FinancialSplitRequest):
+    try:
+        return financial_split.process_order_financial_split(
+            order_id=order_id,
+            platform_take_rate_pct=payload.platform_take_rate_pct,
+            payment_method=payload.payment_method,
+            agreement_id=payload.agreement_id,
+            account_id=payload.account_id or "0f14ffff"
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/orders/{order_id}/split", response_model=FinancialSplitOut, summary="Consultar extrato de split financeiro do pedido")
+def get_split(order_id: str, account_id: str = "0f14ffff"):
+    try:
+        return financial_split.get_order_financial_split(order_id=order_id, account_id=account_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.get("/splits", response_model=List[FinancialSplitOut], summary="Listar conciliações financeiras e splits do marketplace")
+def list_splits(account_id: str = "0f14ffff"):
+    return financial_split.list_financial_splits(account_id=account_id)
+
 
