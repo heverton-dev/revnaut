@@ -13,6 +13,7 @@ COPY backend/ ./backend/
 COPY data/ ./data/
 COPY static/ ./static/
 COPY docs/ ./docs/
+COPY scripts/ ./scripts/
 COPY run_server.py .
 
 EXPOSE 8000

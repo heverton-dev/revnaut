@@ -50,10 +50,14 @@ def make_tarball(source_dir: Path, output_filename: str):
         if gates_src.exists():
             tar.add(str(gates_src), arcname="gates")
 
+        scripts_src = source_dir / "scripts"
+        if scripts_src.exists():
+            tar.add(str(scripts_src), arcname="scripts")
+
 
 def deploy():
     print("=================================================================")
-    print(" 🚀 INICIANDO DEPLOY DE PRODUÇÃO NA VPS:", VPS_HOST)
+    print(" [DEPLOY] INICIANDO DEPLOY DE PRODUCAO NA VPS:", VPS_HOST)
     print("=================================================================")
     
     source_dir = Path(__file__).resolve().parent.parent
@@ -61,7 +65,7 @@ def deploy():
     tar_path = str(source_dir / "deploy_package.tar.gz")
 
     try:
-        print("[1/5] Compactando artefatos de produção...")
+        print("[1/5] Compactando artefatos de producao...")
         make_tarball(source_dir, tar_path)
 
         print("[2/5] Conectando via SSH e SFTP...")
@@ -98,12 +102,12 @@ def deploy():
         print(stdout.read().decode('utf-8'))
 
         print("=================================================================")
-        print(" ✅ DEPLOY CONCLUÍDO COM SUCESSO!")
-        print(" - Aplicação & Frontend: https://revnaut.vpsconexao.org")
+        print(" [SUCESSO] DEPLOY CONCLUIDO COM SUCESSO!")
+        print(" - Aplicacao & Frontend: https://revnaut.vpsconexao.org")
         print(" - Swagger Studio:       https://revnaut.vpsconexao.org/docs")
         print(" - Webhook Studio:       https://revnaut.vpsconexao.org/webhooks")
         print(" - MCP Studio (IA):      https://revnaut.vpsconexao.org/mcp")
-        print(" - Guia do Usuário:      https://revnaut.vpsconexao.org/docs/guia")
+        print(" - Guia do Usuario:      https://revnaut.vpsconexao.org/docs/guia")
         print("=================================================================")
         return True
 

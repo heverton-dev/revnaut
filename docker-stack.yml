@@ -1,6 +1,8 @@
 version: "3.8"
 
 networks:
+  network_conexao:
+    external: true
   revnault_edge:
     driver: overlay
     attachable: true
@@ -27,6 +29,7 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - DATABASE_URL=sqlite+aiosqlite:////app/data/revnaut.db
     networks:
+      - network_conexao
       - revnault_edge
       - revnault_app
       - revnault_data
@@ -45,7 +48,7 @@ services:
         condition: on-failure
       labels:
         - "traefik.enable=true"
-        - "traefik.docker.network=revnault_edge"
+        - "traefik.docker.network=network_conexao"
         
         # Router HTTPS (websecure)
         - "traefik.http.routers.revnaut.entrypoints=websecure"
