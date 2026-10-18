@@ -5,10 +5,45 @@ Resolve cláusulas SQL determinísticas baseadas no contexto e organograma do us
 """
 
 from __future__ import annotations
+import base64
+import os
 from typing import Optional, Dict, Any, Tuple, List
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.hazmat.primitives import hashes
 from fastapi import Header, HTTPException
+from src.core.config import SECRET_KEY
 from src.core.database import get_connection
 from src.features.hierarchy.schemas import DataScopeEnum, UserContext
+
+
+def _get_aes_key() -> bytes:
+    kdf = PBKDF2HMAC(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=b"revnaut-vault-salt-2026",
+        iterations=100000,
+    )
+    return kdf.derive(SECRET_KEY.encode())
+
+
+def encrypt_secret(plaintext: str) -> str:
+    """Criptografa segredo com AES-256-GCM e retorna string codificada em base64."""
+    key = _get_aes_key()
+    aesgcm = AESGCM(key)
+    nonce = os.urandom(12)
+    ct = aesgcm.encrypt(nonce, plaintext.encode("utf-8"), None)
+    return base64.b64encode(nonce + ct).decode("utf-8")
+
+
+def decrypt_secret(ciphertext: str) -> str:
+    """Descriptografa string base64 criptografada com AES-256-GCM."""
+    key = _get_aes_key()
+    aesgcm = AESGCM(key)
+    raw = base64.b64decode(ciphertext.encode("utf-8"))
+    nonce, ct = raw[:12], raw[12:]
+    return aesgcm.decrypt(nonce, ct, None).decode("utf-8")
+
 
 
 def get_user_context(conn, user_id: str, account_id: str = "0f14ffff") -> Optional[UserContext]:

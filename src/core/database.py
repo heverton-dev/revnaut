@@ -459,6 +459,20 @@ def init_db() -> None:
         );
 
         CREATE INDEX IF NOT EXISTS idx_embeddings_tenant ON semantic_embeddings(tenant_id, entity_type);
+
+        CREATE TABLE IF NOT EXISTS tenant_credentials (
+            id TEXT PRIMARY KEY,
+            account_id TEXT NOT NULL,
+            service_name TEXT NOT NULL,
+            credential_type TEXT NOT NULL,
+            encrypted_payload TEXT NOT NULL,
+            metadata_json TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (account_id) REFERENCES accounts(id)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_creds_account ON tenant_credentials(account_id, service_name);
         """)
 
 

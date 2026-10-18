@@ -335,3 +335,111 @@ def reset_password_with_token(token: str, new_password: str) -> Dict[str, Any]:
 
     return {"success": True, "message": "Senha alterada com sucesso! Você já pode realizar o login."}
 
+
+def store_tenant_credential(
+    account_id: str,
+    service_name: str,
+    credential_type: str,
+    secret_payload: str,
+    metadata: Optional[Dict[str, Any]] = None,
+) -> str:
+    """Criptografa e armazena credencial com AES-256-GCM."""
+    import uuid
+    import json
+    from src.core.security import encrypt_secret
+
+    cred_id = f"cred-{uuid.uuid4().hex[:12]}"
+    encrypted = encrypt_secret(secret_payload)
+    meta_json = json.dumps(metadata or {})
+
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            INSERT INTO tenant_credentials (
+                id, account_id, service_name, credential_type, encrypted_payload, metadata_json
+            ) VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (cred_id, account_id, service_name, credential_type, encrypted, meta_json),
+        )
+        conn.commit()
+        return cred_id
+    finally:
+        conn.close()
+
+
+def get_decrypted_credential(account_id: str, credential_id: str) -> str:
+    """Recupera e descriptografa credencial em memória para serviço autorizado."""
+    from src.core.security import decrypt_secret
+
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT encrypted_payload FROM tenant_credentials WHERE id = ? AND account_id = ?",
+            (credential_id, account_id),
+        )
+        row = cur.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Credencial não encontrada.")
+        return decrypt_secret(row["encrypted_payload"])
+    finally:
+        conn.close()
+
+
+def list_tenant_credentials(account_id: str) -> List[Dict[str, Any]]:
+    """Lista credenciais do tenant com valores mascarados."""
+    import json
+    from src.core.security import decrypt_secret
+
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT id, account_id, service_name, credential_type, encrypted_payload, metadata_json, created_at
+            FROM tenant_credentials
+            WHERE account_id = ?
+            ORDER BY created_at DESC
+            """,
+            (account_id,),
+        )
+        rows = cur.fetchall()
+        result = []
+        for r in rows:
+            meta = json.loads(r["metadata_json"]) if r["metadata_json"] else {}
+            try:
+                decrypted = decrypt_secret(r["encrypted_payload"])
+                last4 = decrypted[-4:] if len(decrypted) >= 4 else "****"
+            except Exception:
+                last4 = "****"
+            result.append({
+                "id": r["id"],
+                "account_id": r["account_id"],
+                "service_name": r["service_name"],
+                "credential_type": r["credential_type"],
+                "masked_value": f"****{last4}",
+                "metadata": meta,
+                "created_at": r["created_at"],
+            })
+        return result
+    finally:
+        conn.close()
+
+
+def delete_tenant_credential(account_id: str, credential_id: str) -> bool:
+    """Remove credencial do cofre."""
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            "DELETE FROM tenant_credentials WHERE id = ? AND account_id = ?",
+            (credential_id, account_id),
+        )
+        conn.commit()
+        return cur.rowcount > 0
+    finally:
+        conn.close()
+
+

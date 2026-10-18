@@ -102,3 +102,27 @@ class ResetPasswordWithTokenResponse(BaseModel):
     success: bool = True
     message: str
 
+
+class TenantCredentialCreate(BaseModel):
+    service_name: str
+    credential_type: str
+    secret_payload: str
+    metadata: Optional[dict] = None
+
+
+class TenantCredentialResponse(BaseModel):
+    id: str
+    account_id: str
+    service_name: str
+    credential_type: str
+    masked_value: str
+    metadata: Optional[dict] = None
+    created_at: Optional[str] = None
+
+
+class CredentialDeleteResponse(BaseModel):
+    success: bool = True
+    message: str
+
+
+

@@ -168,3 +168,62 @@ def reset_with_token(payload: ResetPasswordWithTokenRequest):
     return reset_password_with_token(token=payload.token, new_password=payload.new_password)
 
 
+from src.features.auth.schemas import (
+    TenantCredentialCreate,
+    TenantCredentialResponse,
+    CredentialDeleteResponse,
+)
+from src.features.auth.service import (
+    store_tenant_credential,
+    list_tenant_credentials,
+    delete_tenant_credential,
+)
+
+
+@router.post("/credentials", response_model=TenantCredentialResponse, summary="Armazenar credencial com AES-256 no cofre")
+def create_credential(
+    payload: TenantCredentialCreate,
+    x_account_id: Optional[str] = Header(None, alias="X-Account-ID"),
+):
+    account_id = x_account_id or "0f14ffff"
+    cred_id = store_tenant_credential(
+        account_id=account_id,
+        service_name=payload.service_name,
+        credential_type=payload.credential_type,
+        secret_payload=payload.secret_payload,
+        metadata=payload.metadata,
+    )
+    last4 = payload.secret_payload[-4:] if len(payload.secret_payload) >= 4 else "****"
+    return TenantCredentialResponse(
+        id=cred_id,
+        account_id=account_id,
+        service_name=payload.service_name,
+        credential_type=payload.credential_type,
+        masked_value=f"****{last4}",
+        metadata=payload.metadata,
+    )
+
+
+@router.get("/credentials", response_model=list[TenantCredentialResponse], summary="Listar credenciais do tenant com valores mascarados")
+def get_credentials(
+    x_account_id: Optional[str] = Header(None, alias="X-Account-ID"),
+):
+    account_id = x_account_id or "0f14ffff"
+    creds = list_tenant_credentials(account_id)
+    return [TenantCredentialResponse(**c) for c in creds]
+
+
+@router.delete("/credentials/{credential_id}", response_model=CredentialDeleteResponse, summary="Remover credencial do cofre")
+def remove_credential(
+    credential_id: str,
+    x_account_id: Optional[str] = Header(None, alias="X-Account-ID"),
+):
+    account_id = x_account_id or "0f14ffff"
+    success = delete_tenant_credential(account_id, credential_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Credencial não encontrada.")
+    return CredentialDeleteResponse(success=True, message="Credencial removida com sucesso.")
+
+
+
+
