@@ -232,20 +232,29 @@ def scan_and_generate_flash_deals(
 
                 # Valida compatibilidade de produto / alto giro
                 s_tags = s.get("tags") or "[]"
+                try:
+                    vol = float(s.get("monthly_implants_volume") or 0)
+                except (ValueError, TypeError):
+                    vol = 0.0
+                try:
+                    sc = float(s.get("score") or 0)
+                except (ValueError, TypeError):
+                    sc = 0.0
+
                 if is_biomaterial:
-                    consumes = "biomateriais" in s_tags.lower() or "enxerto" in s_tags.lower() or (s.get("monthly_implants_volume") or 0) > 0
+                    consumes = "biomateriais" in s_tags.lower() or "enxerto" in s_tags.lower() or vol > 0
                 else:
-                    consumes = "implante" in s_tags.lower() or (s.get("monthly_implants_volume") or 0) > 0
+                    consumes = "implante" in s_tags.lower() or vol > 0
 
                 if consumes or s.get("customer_type") == "CIRURGIAO":
-                    matched_surgeons.append(s)
+                    matched_surgeons.append((s, vol, sc))
 
             # Ordena por volume de consumo e score
             matched_surgeons.sort(
-                key=lambda s: (s.get("monthly_implants_volume") or 0, s.get("score") or 0),
+                key=lambda item: (item[1], item[2]),
                 reverse=True
             )
-            targeted_surgeons = matched_surgeons[:max_target_surgeons]
+            targeted_surgeons = [item[0] for item in matched_surgeons[:max_target_surgeons]]
 
             # Registra a oferta no banco
             cur.execute("""

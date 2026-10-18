@@ -15,11 +15,20 @@ interface TaskItem {
 }
 
 export interface GranolaCopilotCardProps {
-  dealId: string;
+  dealId?: string;
   onApplySuccess?: () => void;
 }
 
-export const GranolaCopilotCard: React.FC<GranolaCopilotCardProps> = ({ dealId, onApplySuccess }) => {
+interface DealOption {
+  id: string;
+  title: string;
+  company?: string;
+  value?: number;
+}
+
+export const GranolaCopilotCard: React.FC<GranolaCopilotCardProps> = ({ dealId: initialDealId, onApplySuccess }) => {
+  const [deals, setDeals] = useState<DealOption[]>([]);
+  const [selectedDealId, setSelectedDealId] = useState<string>(initialDealId || "");
   const [transcriptionInput, setTranscriptionInput] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [result, setResult] = useState<{
@@ -30,15 +39,42 @@ export const GranolaCopilotCard: React.FC<GranolaCopilotCardProps> = ({ dealId, 
     suggestedValue?: number;
   } | null>(null);
 
+  React.useEffect(() => {
+    if (initialDealId) {
+      setSelectedDealId(initialDealId);
+    }
+  }, [initialDealId]);
+
+  React.useEffect(() => {
+    const fetchDeals = async () => {
+      try {
+        const res = await fetch("/api/v1/deals");
+        if (res.ok) {
+          const data = await res.json();
+          const list = Array.isArray(data) ? data : data.deals || [];
+          setDeals(list);
+          if (!selectedDealId && list.length > 0) {
+            setSelectedDealId(list[0].id);
+          }
+        }
+      } catch {
+        // Fallback silencioso
+      }
+    };
+    fetchDeals();
+  }, []);
+
+  const effectiveDealId = selectedDealId || initialDealId || "d-default";
+
   const handleExtractAndApply = async () => {
-    if (!transcriptionInput.trim()) return;
+    if (!transcriptionInput.trim() || !effectiveDealId) return;
     setIsProcessing(true);
     try {
       const res = await fetch("/api/v1/intelligence/copilot/extract-and-apply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          deal_id: dealId,
+          deal_id: effectiveDealId,
           transcription_text: transcriptionInput,
         }),
       });
@@ -81,6 +117,25 @@ export const GranolaCopilotCard: React.FC<GranolaCopilotCardProps> = ({ dealId, 
           <ShieldCheck className="h-3.5 w-3.5" />
           <span>LiteLLM Ativo</span>
         </div>
+      </div>
+
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-surface-bg p-2.5 rounded-xl border border-border">
+        <label className="text-xs font-medium text-text-secondary">Oportunidade Comercial (Deal):</label>
+        {deals.length > 0 ? (
+          <select
+            value={effectiveDealId}
+            onChange={(e) => setSelectedDealId(e.target.value)}
+            className="rounded-lg border border-border bg-surface-card px-2.5 py-1 text-xs text-text-main focus:outline-none focus:ring-1 focus:ring-brand-primary"
+          >
+            {deals.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.id} • {d.title} ({d.company || "Sem empresa"})
+              </option>
+            ))}
+          </select>
+        ) : (
+          <span className="font-mono text-xs text-brand-primary">{effectiveDealId}</span>
+        )}
       </div>
 
       <div className="space-y-2">

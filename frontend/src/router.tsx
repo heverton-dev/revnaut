@@ -7,13 +7,13 @@ import { SupersetEmbeddedDashboard } from "@/features/bi/SupersetEmbeddedDashboa
 import { DicomStl3DViewer } from "@/features/imaging/DicomStl3DViewer";
 import { RbacHierarchyTree } from "@/features/rbac/RbacHierarchyTree";
 import { CredentialsVaultPage } from "@/features/settings/CredentialsVaultPage";
-import { GranolaCopilotCard } from "@/features/deals/components/GranolaCopilotCard";
 import { LiveKitDealRoomModal } from "@/features/communications/LiveKitDealRoomModal";
 import { IcpScoringDashboard } from "@/features/scoring/IcpScoringDashboard";
 import { ContactsCrmWorkspace } from "@/features/contacts/ContactsCrmWorkspace";
 import { ContractsDocumensoWorkspace } from "@/features/contracts/ContractsDocumensoWorkspace";
 import { SupportAnvisaWorkspace } from "@/features/support/SupportAnvisaWorkspace";
 import { CalcomReactivationWorkspace } from "@/features/scheduling/CalcomReactivationWorkspace";
+import { IntelligenceSuiteWorkspace } from "@/features/intelligence/IntelligenceSuiteWorkspace";
 
 export type AppRoute =
   | "dashboard"
@@ -97,11 +97,7 @@ export const AppRouter: React.FC<RouterProps> = ({ currentRoute, defaultComponen
     case "contracts":
       return <ContractsDocumensoWorkspace />;
     case "intelligence":
-      return (
-        <div className="space-y-6 max-w-5xl mx-auto">
-          <GranolaCopilotCard dealId="d-101" />
-        </div>
-      );
+      return <IntelligenceSuiteWorkspace />;
     case "scheduling":
       return <CalcomReactivationWorkspace />;
     case "support":

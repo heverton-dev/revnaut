@@ -24,6 +24,7 @@ def setup_fefo_test_db():
         cur.execute("DELETE FROM fefo_flash_deal_reservations WHERE account_id = '0f14ffff'")
         cur.execute("DELETE FROM fefo_flash_deals WHERE account_id = '0f14ffff'")
         cur.execute("DELETE FROM dentgo_hub_inventory WHERE account_id = '0f14ffff'")
+        cur.execute("DELETE FROM kp_custody_ledger WHERE account_id = '0f14ffff'")
         cur.execute("DELETE FROM dentgo_hubs WHERE cnpj = '11222333000199'")
         cur.execute("DELETE FROM contacts WHERE email LIKE ?", ("%@fefo-test.com",))
         cur.execute("DELETE FROM omnichannel_messages WHERE account_id = '0f14ffff'")

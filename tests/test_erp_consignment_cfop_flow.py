@@ -173,7 +173,7 @@ def test_postop_settlement_symbolic_return_1918_and_sale_5113():
     conn = get_connection()
     try:
         cur = conn.cursor()
-        cur.execute("SELECT COUNT(*) as cnt FROM erp_fiscal_invoices WHERE account_id = '0f14ffff'")
+        cur.execute("SELECT COUNT(*) as cnt FROM erp_fiscal_invoices WHERE account_id = '0f14ffff' AND reference_id = 'surg-rep-8899'")
         assert cur.fetchone()["cnt"] == 2
     finally:
         conn.close()
