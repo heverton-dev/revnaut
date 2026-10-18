@@ -19,9 +19,17 @@ from src.features.campaigns.schemas import (
     LandingPageTemplateOut,
     ListmonkBroadcastRequest,
     ListmonkBroadcastResponse,
+    ReferralLinkGenerateRequest,
+    ReferralLinkResponse,
+    ReferralRegisterRequest,
+    ReferralRegisterResponse,
+    ReferralQualifyRequest,
+    ReferralQualifyResponse,
+    ReferralDashboardResponse,
 )
 from src.features.campaigns import service
 from src.features.campaigns import landing_pages
+from src.features.campaigns import referral_mgm
 from src.features.campaigns.listmonk_adapter import ListmonkClient
 
 
@@ -102,5 +110,58 @@ def broadcast_listmonk_endpoint(payload: ListmonkBroadcastRequest):
         list_id=payload.listmonk_list_id or 1,
     )
     return ListmonkBroadcastResponse(**result)
+
+
+@router.post("/referral/generate-link", response_model=ReferralLinkResponse, summary="Gerar link unico de indicacao B2B para o parceiro")
+def generate_mgm_link(payload: ReferralLinkGenerateRequest):
+    try:
+        return referral_mgm.generate_referral_link(
+            referrer_id=payload.referrer_id,
+            referrer_name=payload.referrer_name,
+            referrer_cro_uf=payload.referrer_cro_uf,
+            account_id=payload.account_id or "0f14ffff"
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/referral/register", response_model=ReferralRegisterResponse, status_code=status.HTTP_201_CREATED, summary="Cadastrar colega indicado via link MGM com score acelerado")
+def register_mgm_lead(payload: ReferralRegisterRequest):
+    try:
+        return referral_mgm.register_referral_lead(
+            referral_code=payload.referral_code,
+            referred_name=payload.referred_name,
+            referred_cro_uf=payload.referred_cro_uf,
+            referred_phone=payload.referred_phone,
+            referred_email=payload.referred_email,
+            account_id=payload.account_id or "0f14ffff"
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/referral/qualify", response_model=ReferralQualifyResponse, summary="Qualificar indicacao e bonificar ambos no primeiro deal faturado")
+def qualify_mgm_deal(payload: ReferralQualifyRequest):
+    try:
+        return referral_mgm.qualify_referral_deal_won(
+            deal_id=payload.deal_id,
+            referred_cro_uf=payload.referred_cro_uf,
+            account_id=payload.account_id or "0f14ffff"
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/referral/dashboard/{referrer_id}", response_model=ReferralDashboardResponse, summary="Obter metricas e lista de colegas indicados pelo parceiro")
+def get_mgm_dashboard(referrer_id: str, account_id: str = "0f14ffff"):
+    try:
+        return referral_mgm.get_referral_dashboard(referrer_id=referrer_id, account_id=account_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 

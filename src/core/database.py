@@ -1021,6 +1021,46 @@ def init_db() -> None:
 
         CREATE INDEX IF NOT EXISTS idx_kp_rewards_acc ON kp_loyalty_rewards_catalog(account_id);
 
+        CREATE TABLE IF NOT EXISTS referral_links (
+            id TEXT PRIMARY KEY,
+            account_id TEXT NOT NULL,
+            referrer_id TEXT NOT NULL,
+            referrer_name TEXT NOT NULL,
+            referrer_cro_uf TEXT NOT NULL,
+            referral_code TEXT NOT NULL UNIQUE,
+            referral_url TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_ref_links_acc ON referral_links(account_id);
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_ref_links_code ON referral_links(referral_code);
+
+        CREATE TABLE IF NOT EXISTS referral_conversions (
+            id TEXT PRIMARY KEY,
+            account_id TEXT NOT NULL,
+            referral_link_id TEXT NOT NULL,
+            referrer_id TEXT NOT NULL,
+            referred_contact_id TEXT NOT NULL,
+            referred_name TEXT NOT NULL,
+            referred_cro_uf TEXT NOT NULL,
+            lead_id TEXT,
+            lead_score_boost INTEGER NOT NULL DEFAULT 40,
+            tags TEXT DEFAULT '["origem_indicacao_kol"]',
+            first_deal_id TEXT,
+            status TEXT NOT NULL DEFAULT 'LEAD_CAPTURED',
+            referrer_bonus_amount REAL NOT NULL DEFAULT 600.0,
+            referred_bonus_amount REAL NOT NULL DEFAULT 600.0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            qualified_at TIMESTAMP,
+            FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE,
+            FOREIGN KEY (referral_link_id) REFERENCES referral_links(id) ON DELETE CASCADE
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_ref_conv_link ON referral_conversions(referral_link_id);
+        CREATE INDEX IF NOT EXISTS idx_ref_conv_referrer ON referral_conversions(referrer_id);
+        CREATE INDEX IF NOT EXISTS idx_ref_conv_referred ON referral_conversions(referred_contact_id);
+
         CREATE TABLE IF NOT EXISTS whatsapp_instances (
 
 

@@ -4,7 +4,7 @@ Vertical Slice: Campaigns Schemas (RevOps Marketing & Atribuição de Mídia)
 """
 
 from __future__ import annotations
-from typing import Optional
+from typing import Optional, List, Dict, Any
 from pydantic import BaseModel, Field
 
 
@@ -147,5 +147,78 @@ class ListmonkBroadcastResponse(BaseModel):
     queued_count: int
     listmonk_campaign_id: Optional[int] = None
     message: str
+
+
+class ReferralLinkGenerateRequest(BaseModel):
+    referrer_id: str = Field(..., description="ID do cirurgiao promotor ou parceiro")
+    referrer_name: str = Field(..., description="Nome do parceiro que indica")
+    referrer_cro_uf: str = Field(..., description="CRO/UF do indicador (ex: CRO-SP 11111)")
+    account_id: Optional[str] = Field(default="0f14ffff", description="ID do tenant")
+
+
+class ReferralLinkResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    id: str
+    account_id: str
+    referrer_id: str
+    referrer_name: str
+    referrer_cro_uf: str
+    referral_code: str
+    referral_url: str
+    created_at: str
+
+
+class ReferralRegisterRequest(BaseModel):
+    referral_code: str = Field(..., description="Codigo do link de indicacao MGM")
+    referred_name: str = Field(..., description="Nome do cirurgiao indicado")
+    referred_cro_uf: str = Field(..., description="CRO/UF do indicado")
+    referred_phone: Optional[str] = Field(default=None, description="Telefone WhatsApp do indicado")
+    referred_email: Optional[str] = Field(default=None, description="Email do indicado")
+    account_id: Optional[str] = Field(default="0f14ffff", description="ID do tenant")
+
+
+class ReferralRegisterResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    conversion_id: str
+    referral_code: str
+    referrer_id: str
+    referrer_name: str
+    referred_contact_id: str
+    referred_name: str
+    referred_cro_uf: str
+    lead_score_boost: int
+    status: str
+    message: str
+
+
+class ReferralQualifyRequest(BaseModel):
+    deal_id: str = Field(..., description="ID do primeiro deal fechado pelo indicado")
+    referred_cro_uf: Optional[str] = Field(default=None, description="CRO/UF do indicado se conhecido")
+    account_id: Optional[str] = Field(default="0f14ffff", description="ID do tenant")
+
+
+class ReferralQualifyResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    status: str
+    conversion_id: str
+    deal_id: Optional[str] = None
+    referrer_id: Optional[str] = None
+    referred_contact_id: Optional[str] = None
+    referrer_bonus_amount: float
+    referred_bonus_amount: float
+    qualified_at: Optional[str] = None
+    message: str
+
+
+class ReferralDashboardResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    referrer_id: str
+    referral_code: Optional[str] = None
+    referral_url: Optional[str] = None
+    total_referrals: int
+    qualified_referrals: int
+    total_bonus_earned: float
+    conversions: List[Dict[str, Any]] = Field(default_factory=list)
+
 
 

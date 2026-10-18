@@ -596,7 +596,7 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
 - **Validation Command:** `python -m pytest tests/test_surgical_loyalty_engine.py -q`
 - **Blocked by:** TICKET-18, TICKET-22, TICKET-33
 
-#### [TICKET-35] Loop Viral de Indicação B2B (Member-Get-Member Cirúrgico entre Colegas de Pós/CRO)
+#### [TICKET-35] [x] DONE - Loop Viral de Indicação B2B (Member-Get-Member Cirúrgico entre Colegas de Pós/CRO)
 - **Descrição:** Implementação do motor de indicação estruturada (`src/features/campaigns/referral_mgm.py`) que transforma cirurgiões com $HSC > 75$ e CSAT alto em recrutadores ativos de novos colegas implantodontistas, recompensando ambos com créditos em implantes/insumos após a positivação da primeira cirurgia do indicado.
 - **Como Implementar (Detalhes Técnicos):**
   1. Gerar links únicos rastreáveis (`/r/{referral_code}`) para cirurgiões promotores e disparar convite personalizado no WhatsApp assinado pelo consultor da conta.
