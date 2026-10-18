@@ -106,7 +106,7 @@ export const GranolaCopilotCard: React.FC<GranolaCopilotCardProps> = ({ dealId: 
           <div>
             <h4 className="text-sm font-semibold tracking-tight text-text-main flex items-center space-x-1.5">
               <span>Copiloto Comercial Granola-like</span>
-              <span className="rounded-full bg-brand-primary-subtle px-2 py-0.5 text-[10px] font-medium text-brand-primary">
+              <span className="rounded-full bg-brand-primary-subtle px-2 py-0.5 text-[10px] font-medium text-brand-primary whitespace-nowrap shrink-0">
                 Zero-Touch
               </span>
             </h4>

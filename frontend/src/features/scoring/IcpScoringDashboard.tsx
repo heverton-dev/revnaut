@@ -10,6 +10,7 @@ import {
   Trash2,
   Edit2,
   Zap,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -515,13 +516,14 @@ export const IcpScoringDashboard: React.FC = () => {
             <div className="flex items-center justify-between border-b border-border pb-2.5">
               <h3 className="text-sm font-bold text-text-main flex items-center gap-2">
                 <Sliders className="h-4 w-4 text-brand-primary" />
-                {editingRuleId ? "Editar Regra de Pontuação" : "Nova Regra de Pontuação ICP"}
+                {editingRuleId ? "Editar Regra de Pontuação (PUT)" : "Nova Regra de Pontuação ICP (POST)"}
               </h3>
               <button
+                type="button"
                 onClick={() => setShowRuleModal(false)}
-                className="text-text-muted hover:text-text-main text-sm"
+                className="text-text-muted hover:text-text-main p-1"
               >
-                ✕
+                <X className="h-4 w-4" />
               </button>
             </div>
 
@@ -611,7 +613,11 @@ export const IcpScoringDashboard: React.FC = () => {
                   size="sm"
                   disabled={savingRule}
                 >
-                  {savingRule ? "Salvando..." : "Salvar Regra"}
+                  {savingRule
+                    ? "Salvando..."
+                    : editingRuleId
+                    ? "Atualizar Regra (PUT)"
+                    : "Criar Regra (POST)"}
                 </Button>
               </div>
             </form>

@@ -110,11 +110,12 @@ app.include_router(dentgo_router)
 # Montagem de Estáticos e Frontend Root (React 19 SPA + Fallback Auditável)
 _project_root = Path(__file__).resolve().parent.parent
 _frontend_dist_dir = _project_root / "frontend" / "dist"
+_docker_dist_dir = Path("/app/frontend/dist")
 _legacy_reconstruct_dir = _project_root / "docs" / "reconstruct_rvops" / "05_reconstructed_app"
 
 _possible_static_paths = [
     _frontend_dist_dir,
-    Path("/app/frontend/dist"),
+    _docker_dist_dir,
     _legacy_reconstruct_dir,
     Path("/app/static"),
     Path(__file__).resolve().parent / "static",
@@ -129,6 +130,8 @@ for p in _possible_static_paths:
 _assets_dir = None
 if _frontend_dist_dir.exists() and (_frontend_dist_dir / "assets").exists():
     _assets_dir = _frontend_dist_dir / "assets"
+elif _docker_dist_dir.exists() and (_docker_dist_dir / "assets").exists():
+    _assets_dir = _docker_dist_dir / "assets"
 elif _active_static_dir and (_active_static_dir / "assets").exists():
     _assets_dir = _active_static_dir / "assets"
 

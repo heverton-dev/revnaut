@@ -52,13 +52,13 @@ export const LiveKitDealRoomModal: React.FC<LiveKitDealRoomModalProps> = ({
   isOpen = true,
   inline = false,
   onClose,
-  dealId = "deal-01",
+  dealId,
   dealTitle = "Suporte Emergencial SOS Mesa Cirúrgica",
   contactName = "Cirurgião em Campo Operatório",
   contactPhone = "",
 }) => {
   const [deals, setDeals] = useState<DealOption[]>([]);
-  const [selectedDealId, setSelectedDealId] = useState<string>(dealId);
+  const [selectedDealId, setSelectedDealId] = useState<string>(dealId || "");
   const [activeTab, setActiveTab] = useState<"video" | "voip" | "recordings">("video");
   const [isConnected, setIsConnected] = useState(false);
   const [isMicMuted, setIsMicMuted] = useState(false);
@@ -316,12 +316,12 @@ export const LiveKitDealRoomModal: React.FC<LiveKitDealRoomModalProps> = ({
               )}
 
               {isRecording && (
-                <div className="absolute top-3 left-3 flex items-center space-x-1.5 rounded-full bg-status-danger-subtle border border-status-danger/30 px-3 py-1 text-xs text-status-danger">
+                <div className="absolute top-3 left-3 flex items-center space-x-1.5 rounded-full bg-status-danger-subtle border border-status-danger/30 px-3 py-1 text-xs text-status-danger whitespace-nowrap shrink-0">
                   <Disc className="h-3 w-3 animate-spin" />
                   <span>REC R2</span>
                 </div>
               )}
-              <div className="absolute top-3 right-3 flex items-center space-x-1.5 rounded-full bg-surface-card border border-border px-3 py-1 text-xs text-text-secondary">
+              <div className="absolute top-3 right-3 flex items-center space-x-1.5 rounded-full bg-surface-card border border-border px-3 py-1 text-xs text-text-secondary whitespace-nowrap shrink-0">
                 <Shield className="h-3 w-3 text-brand-navy" />
                 <span>Criptografia E2EE</span>
               </div>
@@ -406,7 +406,7 @@ export const LiveKitDealRoomModal: React.FC<LiveKitDealRoomModalProps> = ({
                     <div className="space-y-0.5">
                       <div className="flex items-center gap-2">
                         <span className="font-mono font-bold text-brand-primary">{rec.id}</span>
-                        <span className="px-1.5 py-0.5 rounded text-[10px] uppercase font-mono bg-status-success-subtle text-status-success border border-status-success/30">
+                        <span className="px-1.5 py-0.5 rounded text-[10px] uppercase font-mono bg-status-success-subtle text-status-success border border-status-success/30 whitespace-nowrap shrink-0">
                           {rec.status}
                         </span>
                         <span className="text-[10px] text-text-muted font-mono">

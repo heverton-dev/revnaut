@@ -559,9 +559,8 @@ def main() -> int:
             proc.wait(timeout=5)
         except Exception:
             proc.kill()
-        if built_temporarily and dist_dir.exists():
-            import shutil
-            shutil.rmtree(dist_dir, ignore_errors=True)
+        # Keep frontend/dist permanently intact for production serving
+        pass
 
     full_report = {
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),

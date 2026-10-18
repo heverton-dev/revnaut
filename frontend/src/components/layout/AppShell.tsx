@@ -26,6 +26,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   ArrowRight,
+  LogOut,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
@@ -58,6 +59,7 @@ export interface AppShellProps {
   accountName?: string;
   currentUserId?: string;
   onSelectUser?: (userId: string) => void;
+  onLogout?: () => void;
 }
 
 export function AppShell({
@@ -69,6 +71,7 @@ export function AppShell({
   accountName = "Sales Rocket",
   currentUserId: propUserId,
   onSelectUser,
+  onLogout,
 }: AppShellProps) {
   const [isCommandOpen, setIsCommandOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
@@ -195,6 +198,7 @@ export function AppShell({
       { id: "contracts", label: "Gerar Contrato Digital Documenso SHA-256", section: "Ação Rápida", shortcut: "T" },
       { id: "support", label: "Abrir Queixa Técnica ANVISA RMA ou SOS Cirúrgico", section: "Ação Rápida", shortcut: "A" },
       { id: "analytics", label: "Consultar Agente Analítico Text-to-SQL", section: "Ação Rápida", shortcut: "B" },
+      { id: "logout", label: "Encerrar Sessão (Logout)", section: "Sessão & Conta", shortcut: "Q" },
     ],
     []
   );
@@ -220,6 +224,13 @@ export function AppShell({
   }, [allNavItems, quickCommands, searchQuery]);
 
   const handleSelectNav = (routeId: string) => {
+    if (routeId === "logout") {
+      setIsMobileDrawerOpen(false);
+      setIsCommandOpen(false);
+      setSearchQuery("");
+      if (onLogout) onLogout();
+      return;
+    }
     const nextHash = `#!/${routeId}`;
     if (typeof window !== "undefined" && window.location.hash !== nextHash) {
       window.location.hash = nextHash;
@@ -355,7 +366,7 @@ export function AppShell({
                           {!isCompactSidebar && item.badge && (
                             <span
                               className={cn(
-                                "text-[10px] px-1.5 py-0.5 rounded-full font-semibold shrink-0",
+                                "text-[10px] px-1.5 py-0.5 rounded-full font-semibold shrink-0 whitespace-nowrap",
                                 isActive
                                   ? "bg-white/20 text-white"
                                   : "bg-white/10 text-white/80"
@@ -375,17 +386,30 @@ export function AppShell({
 
           {/* Footer do Usuário e Seletor de Contexto RBAC na Sidebar */}
           <div className="p-2.5 border-t border-white/10 shrink-0 space-y-2">
-            <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-md bg-white/5">
-              <Avatar
-                fallback={displayUserName}
-                size="sm"
-                className="border-white/20 text-white bg-brand-primary shrink-0"
-              />
-              {!isCompactSidebar && (
-                <div className="flex flex-col min-w-0 flex-1">
-                  <span className="text-xs font-semibold text-white truncate">{displayUserName}</span>
-                  <span className="text-[10px] text-white/60 truncate">{displayUserRole}</span>
-                </div>
+            <div className="flex items-center justify-between gap-1.5 px-2 py-1.5 rounded-md bg-white/5">
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <Avatar
+                  fallback={displayUserName}
+                  size="sm"
+                  className="border-white/20 text-white bg-brand-primary shrink-0"
+                />
+                {!isCompactSidebar && (
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <span className="text-xs font-semibold text-white truncate">{displayUserName}</span>
+                    <span className="text-[10px] text-white/60 truncate">{displayUserRole}</span>
+                  </div>
+                )}
+              </div>
+              {onLogout && (
+                <button
+                  type="button"
+                  onClick={onLogout}
+                  title="Sair da Aplicação (Logout)"
+                  aria-label="Sair da aplicação"
+                  className="p-1.5 rounded text-white/60 hover:text-status-danger hover:bg-white/10 transition-colors shrink-0 cursor-pointer"
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                </button>
               )}
             </div>
 
@@ -445,7 +469,7 @@ export function AppShell({
 
           {/* Ações Rápidas do Topbar */}
           <div className="flex items-center gap-2 shrink-0">
-            <div className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-full bg-status-success-subtle text-status-success text-[11px] sm:text-xs font-medium border border-status-success/20">
+            <div className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-full bg-status-success-subtle text-status-success text-[11px] sm:text-xs font-medium border border-status-success/20 whitespace-nowrap shrink-0">
               <CheckCircle className="h-3.5 w-3.5 shrink-0" />
               <span className="hidden md:inline">
                 {healthStatus

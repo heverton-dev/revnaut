@@ -20,6 +20,7 @@ client = TestClient(app)
 def setup_targets_fixture():
     """Configura ambiente limpo e determinístico para testes de metas e comissões."""
     conn = get_connection()
+    conn.execute("PRAGMA foreign_keys = OFF;")
     with conn:
         acc = "0f14ffff"
         # Garante role de consultor e gerente regional
@@ -41,6 +42,8 @@ def setup_targets_fixture():
         )
 
         # Deals ganhos (stage_id = 105)
+        for tbl in ["deal_audit_logs", "deal_objections", "deal_discount_requests", "deal_contracts", "call_transcriptions", "call_recordings"]:
+            conn.execute(f"DELETE FROM {tbl} WHERE deal_id IN ('d-won-1', 'd-won-2')")
         conn.execute("DELETE FROM deals WHERE id IN ('d-won-1', 'd-won-2')")
         conn.execute(
             "INSERT INTO deals (id, account_id, pipeline_id, stage_id, title, value, company, contact_name, priority, owner_id, team_id) "

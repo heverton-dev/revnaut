@@ -27,6 +27,8 @@ def make_tarball(source_dir: Path, output_filename: str):
         for file in [
             "Dockerfile",
             "docker-stack.yml",
+            "docker-compose.prod.yml",
+            "alembic.ini",
             "requirements.txt",
             "run_server.py"
         ]:
@@ -38,9 +40,20 @@ def make_tarball(source_dir: Path, output_filename: str):
         tar.add(str(source_dir / "backend"), arcname="backend")
         tar.add(str(source_dir / "data"), arcname="data")
         
+        migrations_src = source_dir / "migrations"
+        if migrations_src.exists():
+            tar.add(str(migrations_src), arcname="migrations")
+
+        frontend_src = source_dir / "frontend"
+        if frontend_src.exists():
+            tar.add(
+                str(frontend_src),
+                arcname="frontend",
+                filter=lambda ti: None if "node_modules" in ti.name or ".vite" in ti.name else ti
+            )
+
         frontend_dist = source_dir / "frontend" / "dist"
         if frontend_dist.exists():
-            tar.add(str(frontend_dist), arcname="frontend/dist")
             tar.add(str(frontend_dist), arcname="static")
         else:
             static_src = source_dir / "docs" / "reconstruct_rvops" / "05_reconstructed_app"
@@ -95,16 +108,27 @@ def deploy():
         cmd_build = f"cd {REMOTE_DIR} && tar -xzf deploy.tar.gz && docker build --no-cache -t {version_tag} . && docker tag {version_tag} rvops_app:latest"
         stdin, stdout, stderr = ssh.exec_command(cmd_build)
         exit_status = stdout.channel.recv_exit_status()
+        out_build = stdout.read().decode('utf-8')
+        err_build = stderr.read().decode('utf-8')
+        print("[STDOUT BUILD]", out_build)
+        if err_build:
+            print("[STDERR BUILD]", err_build)
         if exit_status != 0:
-            print("[ERRO] Falha no docker build:")
-            print(stderr.read().decode('utf-8'))
+            print(f"[ERRO] Falha no docker build (exit status {exit_status})")
             return False
 
         print("[5/5] Disparando Docker Stack Deploy com Traefik SSL...")
         cmd_deploy = f"cd {REMOTE_DIR} && sed -i 's|image: rvops_app:.*|image: {version_tag}|' docker-stack.yml && docker stack deploy -c docker-stack.yml rvops && docker service update --image {version_tag} --force rvops_app && docker service update --image {version_tag} --force rvops_worker"
         stdin, stdout, stderr = ssh.exec_command(cmd_deploy)
-        stdout.channel.recv_exit_status()
-        print(stdout.read().decode('utf-8'))
+        deploy_exit_status = stdout.channel.recv_exit_status()
+        out_deploy = stdout.read().decode('utf-8')
+        err_deploy = stderr.read().decode('utf-8')
+        print("[STDOUT DEPLOY]", out_deploy)
+        if err_deploy:
+            print("[STDERR DEPLOY]", err_deploy)
+        if deploy_exit_status != 0:
+            print(f"[ERRO] Falha no docker stack deploy (exit status {deploy_exit_status})")
+            return False
 
         print("=================================================================")
         print(" [SUCESSO] DEPLOY CONCLUIDO COM SUCESSO!")

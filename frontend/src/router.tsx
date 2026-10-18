@@ -79,14 +79,13 @@ export const AppRouter: React.FC<RouterProps> = ({ currentRoute, defaultComponen
         <div className="space-y-6 max-w-5xl mx-auto">
           <LiveKitDealRoomModal
             inline
-            dealId="sos-mesa-01"
             dealTitle="Suporte Emergencial SOS Mesa Cirúrgica"
             contactName="Cirurgião em Campo Operatório"
           />
         </div>
       );
     case "imaging":
-      return <DicomStl3DViewer studyId="study-demo-01" />;
+      return <DicomStl3DViewer />;
     case "contracts":
       return <ContractsDocumensoWorkspace />;
     case "intelligence":
@@ -99,9 +98,9 @@ export const AppRouter: React.FC<RouterProps> = ({ currentRoute, defaultComponen
       return <IcpScoringDashboard />;
     case "marketing":
     case "campaigns":
-      return <LandingPageBuilder campaignId="camp-allon4-sp" />;
+      return <LandingPageBuilder />;
     case "rbac":
-      return <RbacHierarchyTree accountId="0f14ffff" />;
+      return <RbacHierarchyTree />;
     case "settings":
       return <CredentialsVaultPage />;
     default:

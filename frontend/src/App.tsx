@@ -30,6 +30,7 @@ import {
   Save,
 } from "lucide-react";
 import { AppRouter } from "./router";
+import { LoginPage } from "@/features/auth/LoginPage";
 
 interface MetricsSummary {
   total_deals?: number;
@@ -103,8 +104,36 @@ function getInitialRouteFromHash(): string {
 }
 
 export function App() {
+  const [authToken, setAuthToken] = React.useState<string | null>(() => {
+    if (typeof window === "undefined") return "demo-token";
+    return localStorage.getItem("revnaut_auth_token");
+  });
   const [activeNav, setActiveNav] = React.useState<string>(getInitialRouteFromHash);
-  const [currentUserId, setCurrentUserId] = React.useState<string>("usr-superadmin-god");
+  const [currentUserId, setCurrentUserId] = React.useState<string>(() => {
+    if (typeof window === "undefined") return "usr-superadmin-god";
+    return localStorage.getItem("revnaut_user_id") || "usr-superadmin-god";
+  });
+
+  const handleLogout = React.useCallback(() => {
+    try {
+      fetch("/api/v1/auth/logout", { method: "POST" });
+    } catch {
+      // Ignora falha de rede ao deslogar
+    }
+    localStorage.removeItem("revnaut_auth_token");
+    localStorage.removeItem("revnaut_user");
+    setAuthToken(null);
+    if (typeof window !== "undefined") {
+      window.location.hash = "";
+    }
+  }, []);
+
+  const handleLoginSuccess = React.useCallback((token: string, user: any) => {
+    setAuthToken(token);
+    if (user?.id) {
+      setCurrentUserId(user.id);
+    }
+  }, []);
 
   // Estados de filtro, busca e visão de Deals (HOMOLOG-03)
   const [selectedPipelineId, setSelectedPipelineId] = React.useState<string>("1");
@@ -528,12 +557,17 @@ export function App() {
   const metrics = metricsQuery.data;
   const pipelines = pipelinesQuery.data || [{ id: 1, name: "Funil Principal RevOps" }];
 
+  if (!authToken) {
+    return <LoginPage onLoginSuccess={handleLoginSuccess} />;
+  }
+
   return (
     <AppShell
       activeNav={activeNav}
       onNavigate={handleNavigate}
       currentUserId={currentUserId}
       onSelectUser={setCurrentUserId}
+      onLogout={handleLogout}
     >
       <ErrorBoundary onReset={() => dealsQuery.refetch()}>
         <AppRouter

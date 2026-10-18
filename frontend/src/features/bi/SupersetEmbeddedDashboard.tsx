@@ -747,7 +747,7 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
                       setRawSqlInput("");
                       runTextToSql(preset, "");
                     }}
-                    className="px-2.5 py-1 rounded-full text-xs bg-surface-bg hover:bg-brand-primary-subtle text-text-secondary hover:text-brand-primary border border-border transition-colors"
+                    className="px-2.5 py-1 rounded-full text-xs bg-surface-bg hover:bg-brand-primary-subtle text-text-secondary hover:text-brand-primary border border-border transition-colors whitespace-nowrap shrink-0"
                   >
                     {preset}
                   </button>

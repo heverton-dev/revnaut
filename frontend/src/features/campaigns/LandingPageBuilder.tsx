@@ -16,6 +16,7 @@ import {
   Play,
   RotateCw,
   Activity,
+  Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -100,6 +101,22 @@ export const LandingPageBuilder: React.FC<LandingPageBuilderProps> = ({
   const grapesInstanceRef = useRef<any>(null);
 
   const [savedPages, setSavedPages] = useState<LandingPageItem[]>([]);
+  const [resolvedCampaignId, setResolvedCampaignId] = useState<string>(campaignId || "");
+
+  useEffect(() => {
+    if (!campaignId) {
+      fetch("/api/v1/campaigns")
+        .then((r) => r.json())
+        .then((data) => {
+          if (Array.isArray(data) && data.length > 0) {
+            setResolvedCampaignId(data[0].id);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [campaignId]);
+
+  const activeCampaignId = campaignId || resolvedCampaignId || "camp-01";
   const [title, setTitle] = useState(initialTitle);
   const [slug, setSlug] = useState(campaignId ? `${initialSlug}-${campaignId}` : initialSlug);
   const [cfoCro, setCfoCro] = useState("CRO-SP 123456");
@@ -289,7 +306,50 @@ export const LandingPageBuilder: React.FC<LandingPageBuilderProps> = ({
   }, [activeMainTab, cfoName, cfoCro]);
 
   // Ações Tab 1: Salvar & Publicar
-  const handleSavePage = async () => {
+  const handleCreateLandingPage = async () => {
+    setIsSaving(true);
+    setCfoStatus(null);
+    try {
+      const html = grapesInstanceRef.current ? grapesInstanceRef.current.getHtml() : "<p>Conteúdo da LP</p>";
+      const css = grapesInstanceRef.current ? grapesInstanceRef.current.getCss() : "";
+
+      const payload = {
+        title,
+        slug: slug || `lp-${Date.now()}`,
+        html,
+        css,
+        cfo_cro: cfoCro,
+        cfo_name: cfoName,
+        campaign_id: activeCampaignId,
+        account_id: "0f14ffff",
+      };
+
+      const res = await fetch("/api/v1/campaigns/landing-pages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || "Erro ao criar landing page.");
+      }
+
+      const saved = await res.json();
+      setCurrentId(saved.id);
+      setCfoStatus(saved.cfo_compliance_status || "COMPLIANT");
+      await fetchLandingPages();
+    } catch (e: any) {
+      alert(e.message || "Falha ao criar landing page");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleUpdateLandingPage = async () => {
+    if (!currentId) {
+      return handleCreateLandingPage();
+    }
     setIsSaving(true);
     setCfoStatus(null);
     try {
@@ -303,32 +363,34 @@ export const LandingPageBuilder: React.FC<LandingPageBuilderProps> = ({
         css,
         cfo_cro: cfoCro,
         cfo_name: cfoName,
-        campaign_id: campaignId || "camp-01",
-        account_id: "0f14ffff",
       };
 
-      const url = currentId ? `/api/v1/campaigns/landing-pages/${currentId}` : "/api/v1/campaigns/landing-pages";
-      const method = currentId ? "PUT" : "POST";
-
-      const res = await fetch(url, {
-        method,
+      const res = await fetch(`/api/v1/campaigns/landing-pages/${currentId}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.detail || "Erro ao salvar página.");
+        throw new Error(err.detail || "Erro ao atualizar landing page.");
       }
 
       const saved = await res.json();
-      setCurrentId(saved.id);
       setCfoStatus(saved.cfo_compliance_status || "COMPLIANT");
       await fetchLandingPages();
     } catch (e: any) {
-      alert(e.message || "Falha ao salvar página");
+      alert(e.message || "Falha ao atualizar landing page");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleSavePage = async () => {
+    if (currentId) {
+      await handleUpdateLandingPage();
+    } else {
+      await handleCreateLandingPage();
     }
   };
 
@@ -634,12 +696,22 @@ export const LandingPageBuilder: React.FC<LandingPageBuilderProps> = ({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleSavePage}
+                onClick={handleCreateLandingPage}
+                disabled={isSaving}
+                className="flex items-center gap-1.5 text-xs"
+              >
+                {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+                Nova LP (POST)
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleUpdateLandingPage}
                 disabled={isSaving}
                 className="flex items-center gap-1.5 text-xs"
               >
                 {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-                Salvar Rascunho
+                Salvar HTML/CSS (PUT)
               </Button>
               <Button
                 variant="default"
@@ -975,7 +1047,7 @@ export const LandingPageBuilder: React.FC<LandingPageBuilderProps> = ({
                       <td className="p-2 font-mono text-[11px]">{f.execution_count}</td>
                       <td className="p-2">
                         <span
-                          className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border ${
+                          className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border whitespace-nowrap shrink-0 inline-block ${
                             f.is_active
                               ? "bg-status-success-subtle text-status-success border-status-success/30"
                               : "bg-surface-bg text-text-muted border-border"

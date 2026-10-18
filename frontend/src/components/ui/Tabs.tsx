@@ -33,7 +33,7 @@ export function Tabs({ tabs, activeTab, onChange, className }: TabsProps) {
             {tab.count !== undefined && (
               <span
                 className={cn(
-                  "rounded-full px-2 py-0.5 text-xs font-semibold",
+                  "rounded-full px-2 py-0.5 text-xs font-semibold whitespace-nowrap shrink-0",
                   isActive
                     ? "bg-brand-primary-subtle text-brand-primary"
                     : "bg-surface-bg text-text-muted"

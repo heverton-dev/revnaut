@@ -76,9 +76,26 @@ export interface RbacHierarchyTreeProps {
 }
 
 export function RbacHierarchyTree({
-  accountId = "0f14ffff",
+  accountId: initialAccountId,
   className,
 }: RbacHierarchyTreeProps) {
+  const [accountId, setAccountId] = React.useState<string>(initialAccountId || "");
+
+  React.useEffect(() => {
+    if (!initialAccountId) {
+      fetch("/api/v1/hierarchy/business-units")
+        .then((r) => r.json())
+        .then((data) => {
+          if (Array.isArray(data) && data.length > 0 && data[0].account_id) {
+            setAccountId(data[0].account_id);
+          } else {
+            setAccountId("0f14ffff");
+          }
+        })
+        .catch(() => setAccountId("0f14ffff"));
+    }
+  }, [initialAccountId]);
+
   const [activeTab, setActiveTab] = React.useState<string>("tree");
 
   // ==========================================

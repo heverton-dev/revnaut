@@ -60,7 +60,7 @@ export function KanbanBoard<T extends { id: string | number }>({
                 {stage.name}
               </span>
             </div>
-            <span className="text-xs font-medium text-text-muted bg-surface-card border border-border px-2 py-0.5 rounded-full shrink-0">
+            <span className="text-xs font-medium text-text-muted bg-surface-card border border-border px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap">
               {stage.items.length}
             </span>
           </div>

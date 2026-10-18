@@ -60,6 +60,11 @@
   --shadow-card: 0 2px 8px rgba(18, 56, 91, 0.06);
   --shadow-dropdown: 0 10px 25px -5px rgba(18, 56, 91, 0.15);
   --shadow-modal: 0 20px 40px -15px rgba(0, 0, 0, 0.25);
+
+  /* Scrollbar Tokens (Max 4px, 70% Transparência) */
+  --color-scrollbar-thumb: hsla(215, 14%, 60%, 0.3);
+  --color-scrollbar-thumb-hover: hsla(215, 14%, 50%, 0.5);
+  --color-scrollbar-track: transparent;
 }
 
 body {
@@ -69,3 +74,54 @@ body {
   color: var(--color-text-main);
   -webkit-font-smoothing: antialiased;
 }
+
+/* Global Ultra-Thin Scrollbars (4px, 70% transparência) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-scrollbar-thumb) var(--color-scrollbar-track);
+}
+
+*::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--color-scrollbar-track);
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--color-scrollbar-thumb);
+  border-radius: var(--radius-full);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-scrollbar-thumb-hover);
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Utilitários para ocultar scrollbars quando necessário */
+.no-scrollbar::-webkit-scrollbar,
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar,
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Invariante Global: Badges NUNCA sofrem quebra de linha (Zero Wrap) */
+[data-badge],
+.badge,
+[role="status"].badge,
+span[class*="rounded-full"][class*="text-"] {
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+}
+
+

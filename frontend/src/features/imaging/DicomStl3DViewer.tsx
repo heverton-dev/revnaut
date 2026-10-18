@@ -44,11 +44,11 @@ export interface DicomStl3DViewerProps {
 }
 
 export const DicomStl3DViewer: React.FC<DicomStl3DViewerProps> = ({
-  studyId = "study-demo-01",
+  studyId,
   dealId,
   onClose,
 }) => {
-  const [activeStudyId, setActiveStudyId] = useState<string>(studyId);
+  const [activeStudyId, setActiveStudyId] = useState<string>(studyId || "");
   const [studies, setStudies] = useState<ImagingStudy[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -75,7 +75,11 @@ export const DicomStl3DViewer: React.FC<DicomStl3DViewerProps> = ({
       const res = await fetch("/api/v1/imaging/studies");
       if (res.ok) {
         const data = await res.json();
-        setStudies(data.studies || []);
+        const list = data.studies || [];
+        setStudies(list);
+        if (!studyId && list.length > 0) {
+          setActiveStudyId(list[0].id);
+        }
       }
     } catch {
       // silent fallback
@@ -87,6 +91,10 @@ export const DicomStl3DViewer: React.FC<DicomStl3DViewerProps> = ({
   }, []);
 
   const fetchViewerData = async () => {
+    if (!activeStudyId) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
