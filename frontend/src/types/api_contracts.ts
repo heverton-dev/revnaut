@@ -767,6 +767,7 @@ export const API_V1_ROUTES = [
   '/api/v1/dentgo/hubs/{hub_id}/inventory',
   '/api/v1/dentgo/orders',
   '/api/v1/dentgo/orders/checkout',
+  '/api/v1/dentgo/orders/express',
   '/api/v1/dentgo/orders/{order_id}',
   '/api/v1/dentgo/orders/{order_id}/assign-courier',
   '/api/v1/dentgo/orders/{order_id}/picking',

@@ -4,6 +4,7 @@ Vertical Slice: DENTGO Router
 Endpoints REST OpenAPI 3.1 para Marketplace B2B, Hubs Urbanos e Entregas Cirúrgicas Expressas.
 """
 
+import re
 from typing import List, Optional
 from fastapi import APIRouter, HTTPException, status
 from src.features.dentgo.schemas import (
@@ -83,6 +84,31 @@ def checkout_order(payload: OrderCheckoutRequest):
             delivery_lng=payload.delivery_lng,
             items=items_dict,
             voucher_code=payload.voucher_code,
+            account_id=payload.account_id or "0f14ffff"
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+EXPRESS_VOUCHER_PATTERN = re.compile(r"^(MOEDA-EXPRESS|DENTGO-EXPRESS)-[A-Z0-9]+$")
+
+
+@router.post("/orders/express", response_model=OrderOut, status_code=status.HTTP_201_CREATED, summary="Checkout express multi-item com voucher MOEDA-EXPRESS-* / DENTGO-EXPRESS-*")
+def express_order(payload: OrderCheckoutRequest):
+    voucher = (payload.voucher_code or "").strip().upper()
+    if voucher and not EXPRESS_VOUCHER_PATTERN.match(voucher):
+        raise HTTPException(
+            status_code=400,
+            detail="Voucher inválido: use o formato MOEDA-EXPRESS-* ou DENTGO-EXPRESS-*.",
+        )
+    try:
+        return service.create_express_order(
+            customer_cro_uf=payload.customer_cro_uf,
+            delivery_address=payload.delivery_address,
+            delivery_lat=payload.delivery_lat,
+            delivery_lng=payload.delivery_lng,
+            items=[it.model_dump() for it in payload.items],
+            voucher_code=voucher or None,
             account_id=payload.account_id or "0f14ffff"
         )
     except ValueError as e:
