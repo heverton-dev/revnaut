@@ -43,7 +43,7 @@ def test_r2_presigned_upload_url_generation():
     assert "upload_url" in res
     assert "key" in res
     assert res["key"] == key
-    assert "https://" in res["upload_url"] or "http://" in res["upload_url"]
+    assert "https://" in res["upload_url"] or "http://" in res["upload_url"] or res["upload_url"].startswith("/api/v1/storage")
 
 
 def test_r2_blocks_malicious_extensions():

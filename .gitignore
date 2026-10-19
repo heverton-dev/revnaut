@@ -22,6 +22,7 @@ Thumbs.db
 data/*.db
 data/*.db-shm
 data/*.db-wal
+data/storage/
 scratch/
 .gemini_active_dev
 
@@ -38,3 +39,7 @@ tmp/
 *.mp4
 *.webm
 *.bmp
+
+# Reversa
+.reversa/config.user.toml
+_revnault_sdd/

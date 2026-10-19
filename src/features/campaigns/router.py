@@ -3,9 +3,9 @@
 Vertical Slice: Campaigns Router (FastAPI)
 """
 
-from __future__ import annotations
 from typing import List, Optional
 from fastapi import APIRouter, HTTPException, status
+from fastapi.responses import HTMLResponse
 from src.features.campaigns.schemas import (
     CampaignCreate,
     CampaignOut,

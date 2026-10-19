@@ -102,10 +102,13 @@ class LandingPageOut(BaseModel):
 
 
 class LandingPagePublishResponse(BaseModel):
+    model_config = {"extra": "allow"}
     id: str
     slug: str
     is_published: bool = True
     published_r2_url: str
+    published_url: Optional[str] = None
+    r2_url: Optional[str] = None
     cfo_compliance_status: str
     message: str
 

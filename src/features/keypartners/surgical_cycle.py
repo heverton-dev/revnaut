@@ -99,10 +99,12 @@ def dispatch_surgical_order(
         if not order:
             raise ValueError(f"Ordem cirúrgica {order_id} não encontrada")
 
+        order_dict = dict(order)
+        default_exp = order_dict.get("sterilization_expiry_date") or "2027-12-31"
         items = json.loads(order["remitted_items_json"])
         for it in items:
             if not it.get("sterilization_expiry_date"):
-                it["sterilization_expiry_date"] = "2027-12-31"
+                it["sterilization_expiry_date"] = default_exp
         agreement_id = order["agreement_id"]
 
         # Despacha e audita validade e limites através do kp_service

@@ -2199,6 +2199,36 @@ def init_db() -> None:
                     45219800, 360, 'MANDIBULA', 'D1_DENSO', '46', 1
                 )
             """)
+        # Auto-Healing: Sanitização determinística de preços em products_catalog
+        try:
+            cur.execute("SELECT id, base_price FROM products_catalog")
+            for p_row in cur.fetchall():
+                pid, raw_p = p_row[0], p_row[1]
+                if isinstance(raw_p, str):
+                    cleaned = raw_p.replace("R$", "").replace("US$", "").replace("€", "").replace("$", "").strip()
+                    if "," in cleaned and "." in cleaned:
+                        if cleaned.rfind(",") > cleaned.rfind("."):
+                            cleaned = cleaned.replace(".", "").replace(",", ".")
+                        else:
+                            cleaned = cleaned.replace(",", "")
+                    elif "," in cleaned:
+                        cleaned = cleaned.replace(",", ".")
+                    try:
+                        num_p = float(cleaned)
+                        cur.execute("UPDATE products_catalog SET base_price = ? WHERE id = ?", (num_p, pid))
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+
+        # Auto-Healing: Normalização dos status de ordens cirúrgicas
+        try:
+            cur.execute("UPDATE kp_surgical_orders SET status = 'REQUESTED' WHERE status = 'AGUARDANDO_SEPARACAO'")
+            cur.execute("UPDATE kp_surgical_orders SET status = 'APPROVED_PREPARING' WHERE status IN ('APROVADA', 'EM_SEPARACAO')")
+            cur.execute("UPDATE kp_surgical_orders SET status = 'DISPATCHED_SEALED' WHERE status IN ('EM_TRANSITO', 'DESPACHADA')")
+            cur.execute("UPDATE kp_surgical_orders SET status = 'POSTOP_REPORTED' WHERE status = 'CONCLUIDA'")
+        except Exception:
+            pass
 
     conn.close()
 

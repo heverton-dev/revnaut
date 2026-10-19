@@ -865,6 +865,7 @@ export const API_V1_ROUTES = [
   '/api/v1/storage/presign-download/{file_id:path}',
   '/api/v1/storage/presign-upload',
   '/api/v1/storage/upload-direct',
+  '/api/v1/storage/upload-direct/{file_key:path}',
   '/api/v1/tasks',
   '/api/v1/tasks/{task_id}/toggle',
   '/api/v1/tickets',

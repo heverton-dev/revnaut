@@ -270,8 +270,36 @@ def process_patient_feedback(
         conn.close()
 
 
+def _normalize_milestones(raw_json: Any) -> List[Dict[str, Any]]:
+    """Normaliza os marcos pós-operatórios prevenindo KeyError em contratos legados ou parciais."""
+    if not raw_json:
+        return []
+    try:
+        items = json.loads(raw_json) if isinstance(raw_json, str) else raw_json
+    except Exception:
+        return []
+    normalized = []
+    for m in items:
+        if not isinstance(m, dict):
+            continue
+        code = m.get("milestone") or m.get("code") or "24h"
+        target_date = m.get("scheduled_at") or m.get("target_date") or m.get("date") or ""
+        normalized.append({
+            "code": code,
+            "milestone": code,
+            "target_date": target_date,
+            "scheduled_at": target_date,
+            "title": m.get("title") or f"Marco {code}",
+            "status": m.get("status") or "SCHEDULED",
+            "template_message": m.get("template_message") or "",
+            "feedback_received": m.get("feedback_received"),
+            "evaluated_alert": m.get("evaluated_alert"),
+        })
+    return normalized
+
+
 def get_postop_schedule(schedule_id: str, account_id: str = "0f14ffff") -> Optional[Dict[str, Any]]:
-    """Consulta detalhes e linha do tempo de uma régua pós-operatória."""
+    """Consulta detalhes e linha do tempo de uma régua pós-operatória com tratamento seguro de chaves."""
     init_db()
     conn = get_connection()
     try:
@@ -279,7 +307,8 @@ def get_postop_schedule(schedule_id: str, account_id: str = "0f14ffff") -> Optio
         cur.execute("""
             SELECT id, account_id, patient_name, patient_phone, surgeon_name,
                    surgeon_phone, procedure_name, surgery_date, status, milestones_json,
-                   alert_ticket_id, last_interaction_notes, created_at
+                   alert_ticket_id, last_interaction_notes, feedback_text, alert_triggered,
+                   completed_at, created_at
             FROM postop_patient_care_schedules
             WHERE id = ? AND account_id = ?
         """, (schedule_id, account_id))
@@ -296,9 +325,12 @@ def get_postop_schedule(schedule_id: str, account_id: str = "0f14ffff") -> Optio
             "procedure_name": r["procedure_name"],
             "surgery_date": r["surgery_date"],
             "status": r["status"],
-            "milestones": json.loads(r["milestones_json"]),
+            "milestones": _normalize_milestones(r["milestones_json"]),
             "alert_ticket_id": r["alert_ticket_id"],
             "last_interaction_notes": r["last_interaction_notes"],
+            "feedback_text": r["feedback_text"] if "feedback_text" in r.keys() else None,
+            "alert_triggered": bool(r["alert_triggered"]) if "alert_triggered" in r.keys() and r["alert_triggered"] is not None else False,
+            "completed_at": r["completed_at"] if "completed_at" in r.keys() else None,
             "created_at": str(r["created_at"])
         }
     finally:
@@ -309,7 +341,7 @@ def list_postop_schedules(
     account_id: str = "0f14ffff",
     status: Optional[str] = None
 ) -> List[Dict[str, Any]]:
-    """Lista réguas pós-operatórias ativas ou com alerta disparado."""
+    """Lista réguas pós-operatórias ativas ou com alerta disparado com normalização segura."""
     init_db()
     conn = get_connection()
     try:
@@ -335,9 +367,12 @@ def list_postop_schedules(
                 "procedure_name": r["procedure_name"],
                 "surgery_date": r["surgery_date"],
                 "status": r["status"],
-                "milestones": json.loads(r["milestones_json"]),
+                "milestones": _normalize_milestones(r["milestones_json"]),
                 "alert_ticket_id": r["alert_ticket_id"],
                 "last_interaction_notes": r["last_interaction_notes"],
+                "feedback_text": r["feedback_text"] if "feedback_text" in r.keys() else None,
+                "alert_triggered": bool(r["alert_triggered"]) if "alert_triggered" in r.keys() and r["alert_triggered"] is not None else False,
+                "completed_at": r["completed_at"] if "completed_at" in r.keys() else None,
                 "created_at": str(r["created_at"])
             })
         return result

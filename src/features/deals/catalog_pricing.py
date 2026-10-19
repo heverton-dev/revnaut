@@ -45,6 +45,9 @@ def parse_price(val: Any) -> float:
         return 0.0
 
 
+_to_float = parse_price
+
+
 def list_catalog_products(account_id: str = "0f14ffff") -> List[Dict[str, Any]]:
     """Lista todos os produtos ativos do catálogo odontológico."""
     init_db()

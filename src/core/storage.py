@@ -23,6 +23,13 @@ from src.core.config import (
 )
 
 
+LOCAL_STORAGE_ROOT = Path(os.getenv("LOCAL_STORAGE_DIR", "data/storage"))
+try:
+    LOCAL_STORAGE_ROOT.mkdir(parents=True, exist_ok=True)
+except Exception:
+    pass
+
+
 class StorageSecurityException(Exception):
     """Exceção levantada em caso de violação de segurança no storage (MIME ou cross-tenant)."""
     pass
@@ -71,6 +78,7 @@ class R2StorageClient:
         self.secret_access_key = secret_access_key or R2_SECRET_ACCESS_KEY
         self.bucket_name = bucket_name or R2_BUCKET_NAME
         self.endpoint_url = endpoint_url or R2_ENDPOINT_URL
+        self.mock_mode = not self.access_key_id or self.access_key_id.startswith("mock-") or "internal" in str(self.endpoint_url)
 
         self._s3_client = boto3.client(
             "s3",
@@ -120,33 +128,52 @@ class R2StorageClient:
 
     def generate_presigned_upload_url(
         self,
-        key: str,
-        content_type: str,
+        key: Optional[str] = None,
+        content_type: str = "application/octet-stream",
         expires_in: int = 900,
+        filename: Optional[str] = None,
+        module: Optional[str] = None,
+        tenant_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
-        Gera URL pré-assinada para PUT direto no Cloudflare R2 (sem passar pela memória da VPS).
+        Gera URL pré-assinada para PUT direto no Cloudflare R2 ou endpoint local FastAPI.
         """
-        _, ext = os.path.splitext(key.lower())
+        effective_key = key
+        if not effective_key:
+            if filename and module and tenant_id:
+                effective_key = self.generate_storage_key(tenant_id, module, filename)
+            else:
+                raise StorageSecurityException("Chave do objeto ou (filename, module, tenant_id) é obrigatório.")
+
+        _, ext = os.path.splitext(effective_key.lower())
         if ext in PROHIBITED_EXTENSIONS:
             raise StorageSecurityException(f"Extensão proibida por política de segurança: {ext}")
 
         if content_type not in ALLOWED_MIME_TYPES:
             raise StorageSecurityException(f"MIME type não permitido por política de segurança: {content_type}")
 
+        if self.mock_mode:
+            return {
+                "upload_url": f"/api/v1/storage/upload-direct/{effective_key}",
+                "key": effective_key,
+                "expires_in": expires_in,
+                "method": "PUT",
+                "headers": {"Content-Type": content_type},
+            }
+
         try:
             url = self._s3_client.generate_presigned_url(
                 ClientMethod="put_object",
                 Params={
                     "Bucket": self.bucket_name,
-                    "Key": key,
+                    "Key": effective_key,
                     "ContentType": content_type,
                 },
                 ExpiresIn=expires_in,
             )
             return {
                 "upload_url": url,
-                "key": key,
+                "key": effective_key,
                 "expires_in": expires_in,
                 "method": "PUT",
                 "headers": {"Content-Type": content_type},
@@ -158,12 +185,15 @@ class R2StorageClient:
         self,
         key: str,
         expires_in: int = 900,
+        tenant_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Gera URL temporária para leitura/download direto do Cloudflare R2 ou storage local.
         """
-        is_mock = not self.access_key_id or self.access_key_id.startswith("mock-") or "internal" in str(self.endpoint_url)
-        if is_mock:
+        if tenant_id:
+            self.validate_tenant_access(tenant_id=tenant_id, key=key)
+
+        if self.mock_mode:
             return {
                 "download_url": f"/api/v1/storage/files/{key}",
                 "key": key,
@@ -194,7 +224,7 @@ class R2StorageClient:
         *,
         data_bytes: Optional[bytes] = None,
     ) -> str:
-        """Upload direto de bytes para workers internos com persistência em disco local e R2."""
+        """Upload direto de bytes com persistência em disco local e R2."""
         payload = data if data is not None else (data_bytes or b"")
         _, ext = os.path.splitext(key.lower())
         if ext in PROHIBITED_EXTENSIONS:
@@ -203,17 +233,15 @@ class R2StorageClient:
         if content_type not in ALLOWED_MIME_TYPES:
             raise StorageSecurityException(f"MIME type não permitido por política de segurança: {content_type}")
 
-        # Persistência em disco local (data/storage/{key})
-        local_dir = Path(os.getenv("LOCAL_STORAGE_DIR", "data/storage"))
-        local_file = local_dir / key
+        # Persistência em disco local (LOCAL_STORAGE_ROOT / key)
+        local_file = LOCAL_STORAGE_ROOT / key
         try:
             local_file.parent.mkdir(parents=True, exist_ok=True)
             local_file.write_bytes(payload)
         except Exception:
             pass
 
-        is_mock = not self.access_key_id or self.access_key_id.startswith("mock-") or "internal" in str(self.endpoint_url)
-        if not is_mock:
+        if not self.mock_mode:
             try:
                 self._s3_client.put_object(
                     Bucket=self.bucket_name,

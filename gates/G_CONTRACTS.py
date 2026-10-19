@@ -23,7 +23,7 @@ from pathlib import Path
 
 EXCLUDED_DIRS = {
     ".git", "__pycache__", "node_modules", ".venv", "venv",
-    "dist", "build", ".mypy_cache", ".pytest_cache",
+    "dist", "build", ".mypy_cache", ".pytest_cache", ".claude",
 }
 
 DRAFT_2020_12_URI = "https://json-schema.org/draft/2020-12/schema"

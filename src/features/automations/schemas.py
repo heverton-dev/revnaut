@@ -90,6 +90,9 @@ class PostOpCareScheduleOut(BaseModel):
     milestones: list[PostOpMilestoneItem] = Field(default_factory=list)
     alert_ticket_id: Optional[str] = None
     last_interaction_notes: Optional[str] = None
+    feedback_text: Optional[str] = None
+    alert_triggered: Optional[bool] = None
+    completed_at: Optional[str] = None
     created_at: str
 
 

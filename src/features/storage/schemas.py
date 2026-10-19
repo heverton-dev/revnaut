@@ -24,8 +24,9 @@ class PresignDownloadResponse(BaseModel):
 
 
 class DirectUploadResponse(BaseModel):
+    model_config = {"extra": "allow"}
     status: str
     key: str
     url: str
-    size_bytes: int
-    content_type: str
+    size_bytes: Optional[int] = 0
+    content_type: Optional[str] = "application/octet-stream"

@@ -107,6 +107,24 @@ app.include_router(storage_router)
 app.include_router(keypartners_router)
 app.include_router(dentgo_router)
 
+
+# Rotas Públicas: Landing Pages e Convites VIP de Indicação (MGM)
+@app.get("/lp/{slug}", response_class=HTMLResponse, tags=["Páginas Públicas"])
+def serve_public_landing_page(slug: str):
+    from src.features.campaigns.landing_pages import render_landing_page_html
+    html = render_landing_page_html(slug)
+    if not html:
+        return HTMLResponse(content=f"<!DOCTYPE html><html><body><h1>Landing page '{slug}' não encontrada.</h1></body></html>", status_code=404)
+    return HTMLResponse(content=html)
+
+
+@app.get("/r/{referral_code}", response_class=HTMLResponse, tags=["Páginas Públicas"])
+def serve_public_referral_invite(referral_code: str):
+    from src.features.campaigns.referral_mgm import render_referral_invite_html
+    html = render_referral_invite_html(referral_code)
+    return HTMLResponse(content=html)
+
+
 # Montagem de Estáticos e Frontend Root (React 19 SPA + Fallback Auditável)
 _project_root = Path(__file__).resolve().parent.parent
 _frontend_dist_dir = _project_root / "frontend" / "dist"

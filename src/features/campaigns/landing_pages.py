@@ -311,12 +311,71 @@ def publish_landing_page(
         )
 
     slug = lp["slug"]
+    cfo_cro = lp.get("cfo_responsible_cro") or "CRO-SP 00000"
+    cfo_name = lp.get("cfo_responsible_name") or "Responsável Técnico Clínico"
+
+    cfo_footer_html = f"""
+    <footer class="cfo-compliance-footer" style="text-align: center; font-size: 0.8rem; color: #64748b; padding: 28px 16px; margin-top: 40px; border-top: 1px solid #e2e8f0; background: #f8fafc; font-family: Inter, system-ui, sans-serif;">
+        <p style="margin: 0 0 6px 0; font-weight: 600; color: #334155;">Responsável Técnico: {cfo_name} — {cfo_cro}</p>
+        <p style="margin: 0; line-height: 1.4;">Divulgação estritamente em conformidade com o Art. 43 do Código de Ética Odontológica e a Resolução CFO 196/2019. Resultados clínicos dependem de diagnóstico e anamnese individualizada.</p>
+        <p style="margin: 8px 0 0 0; font-size: 0.75rem; color: #94a3b8;">&copy; 2026 Revnaut Health Technologies. Todos os direitos reservados.</p>
+    </footer>
+    """
+
+    interactive_script = f"""
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {{
+        const forms = document.querySelectorAll("form");
+        forms.forEach(function(form) {{
+            form.addEventListener("submit", async function(e) {{
+                e.preventDefault();
+                const formData = new FormData(form);
+                const payload = {{
+                    name: formData.get("name") || "",
+                    email: formData.get("email") || "",
+                    phone: formData.get("phone") || "",
+                    cro: formData.get("cro") || "",
+                    cro_uf: formData.get("cro_uf") || formData.get("cro") || "",
+                    specialty: formData.get("specialty") || "Implantodontia"
+                }};
+                const btn = form.querySelector("button[type='submit']") || form.querySelector("button");
+                const oldText = btn ? btn.innerText : "";
+                if (btn) {{ btn.disabled = true; btn.innerText = "Enviando..."; }}
+                try {{
+                    const res = await fetch("/api/v1/campaigns/public/lp/{slug}/submit", {{
+                        method: "POST",
+                        headers: {{"Content-Type": "application/json"}},
+                        body: JSON.stringify(payload)
+                    }});
+                    const data = await res.json();
+                    if (res.ok) {{
+                        form.innerHTML = "<div style='padding:24px;background:#ecfdf5;color:#065f46;border-radius:8px;text-align:center;font-family:sans-serif;'><h3>Solicitação Confirmada com Sucesso!</h3><p style='margin-top:8px;'>Nossa equipe de consultoria entrará em contato em breve.</p></div>";
+                    }} else {{
+                        alert("Erro ao registrar: " + (data.detail || "Verifique os dados informados."));
+                        if (btn) {{ btn.disabled = false; btn.innerText = oldText; }}
+                    }}
+                }} catch(err) {{
+                    alert("Erro ao conectar ao servidor. Tente novamente em instantes.");
+                    if (btn) {{ btn.disabled = false; btn.innerText = oldText; }}
+                }}
+            }});
+        }});
+    }});
+    </script>
+    """
+
+    body_content = lp.get("gjs_html") or ""
+    if cfo_cro:
+        body_content = body_content.replace("CRO-SP 00000", cfo_cro).replace("Dr. Consultor Clínico", cfo_name)
+    if "cfo-compliance-footer" not in body_content:
+        body_content += cfo_footer_html
+
     html_doc = (
         f"<!DOCTYPE html>\n<html lang=\"pt-BR\">\n<head>\n"
         f"<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
         f"<title>{lp['title']}</title>\n"
         f"<style>\n{lp.get('gjs_css') or ''}\n</style>\n</head>\n"
-        f"<body>\n{lp.get('gjs_html') or ''}\n</body>\n</html>"
+        f"<body>\n{body_content}\n{interactive_script}\n</body>\n</html>"
     )
     html_bytes = html_doc.encode("utf-8")
 
@@ -327,7 +386,10 @@ def publish_landing_page(
         filename=f"{slug}.html",
         custom_uuid=slug,
     )
-    published_url = storage.upload_bytes(r2_key, html_bytes, "text/html")
+    r2_upload_res = storage.upload_bytes(r2_key, html_bytes, "text/html")
+    published_r2_url = f"https://r2.revnaut.internal/{r2_key}"
+    published_url = f"/lp/{slug}"
+    r2_url = f"/api/v1/storage/files/{r2_key}"
 
     conn = get_connection()
     try:
@@ -338,7 +400,7 @@ def publish_landing_page(
                 published_r2_url = ?,
                 updated_at = CURRENT_TIMESTAMP
             WHERE id = ? AND tenant_id = ?
-        """, (published_url, page_id, tenant_id))
+        """, (published_r2_url, page_id, tenant_id))
         conn.commit()
     finally:
         conn.close()
@@ -349,11 +411,87 @@ def publish_landing_page(
         "id": page_id,
         "slug": slug,
         "is_published": True,
-        "published_r2_url": published_url,
+        "published_r2_url": published_r2_url,
+        "published_url": published_url,
+        "r2_url": r2_url,
         "r2_key": r2_key,
         "cfo_compliance_status": status_msg,
         "message": "Landing page compilada e publicada no Cloudflare R2 com sucesso."
     }
+
+
+def render_landing_page_html(slug: str) -> Optional[str]:
+    """Compila ou recupera o HTML5 completo da landing page para exibição direta no navegador."""
+    lp = get_landing_page_by_slug(slug)
+    if not lp:
+        return None
+
+    cfo_cro = lp.get("cfo_responsible_cro") or "CRO-SP 00000"
+    cfo_name = lp.get("cfo_responsible_name") or "Responsável Técnico Clínico"
+
+    cfo_footer_html = f"""
+    <footer class="cfo-compliance-footer" style="text-align: center; font-size: 0.8rem; color: #64748b; padding: 28px 16px; margin-top: 40px; border-top: 1px solid #e2e8f0; background: #f8fafc; font-family: Inter, system-ui, sans-serif;">
+        <p style="margin: 0 0 6px 0; font-weight: 600; color: #334155;">Responsável Técnico: {cfo_name} — {cfo_cro}</p>
+        <p style="margin: 0; line-height: 1.4;">Divulgação estritamente em conformidade com o Art. 43 do Código de Ética Odontológica e a Resolução CFO 196/2019. Resultados clínicos dependem de diagnóstico e anamnese individualizada.</p>
+        <p style="margin: 8px 0 0 0; font-size: 0.75rem; color: #94a3b8;">&copy; 2026 Revnaut Health Technologies. Todos os direitos reservados.</p>
+    </footer>
+    """
+
+    interactive_script = f"""
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {{
+        const forms = document.querySelectorAll("form");
+        forms.forEach(function(form) {{
+            form.addEventListener("submit", async function(e) {{
+                e.preventDefault();
+                const formData = new FormData(form);
+                const payload = {{
+                    name: formData.get("name") || "",
+                    email: formData.get("email") || "",
+                    phone: formData.get("phone") || "",
+                    cro: formData.get("cro") || "",
+                    cro_uf: formData.get("cro_uf") || formData.get("cro") || "",
+                    specialty: formData.get("specialty") || "Implantodontia"
+                }};
+                const btn = form.querySelector("button[type='submit']") || form.querySelector("button");
+                const oldText = btn ? btn.innerText : "";
+                if (btn) {{ btn.disabled = true; btn.innerText = "Enviando..."; }}
+                try {{
+                    const res = await fetch("/api/v1/campaigns/public/lp/{slug}/submit", {{
+                        method: "POST",
+                        headers: {{"Content-Type": "application/json"}},
+                        body: JSON.stringify(payload)
+                    }});
+                    const data = await res.json();
+                    if (res.ok) {{
+                        form.innerHTML = "<div style='padding:24px;background:#ecfdf5;color:#065f46;border-radius:8px;text-align:center;font-family:sans-serif;'><h3>Solicitação Confirmada com Sucesso!</h3><p style='margin-top:8px;'>Nossa equipe de consultoria entrará em contato em breve.</p></div>";
+                    }} else {{
+                        alert("Erro ao registrar: " + (data.detail || "Verifique os dados informados."));
+                        if (btn) {{ btn.disabled = false; btn.innerText = oldText; }}
+                    }}
+                }} catch(err) {{
+                    alert("Erro ao conectar ao servidor. Tente novamente em instantes.");
+                    if (btn) {{ btn.disabled = false; btn.innerText = oldText; }}
+                }}
+            }});
+        }});
+    }});
+    </script>
+    """
+
+    body_content = lp.get("gjs_html") or "<h1>Revnaut Landing Page</h1>"
+    if cfo_cro:
+        body_content = body_content.replace("CRO-SP 00000", cfo_cro).replace("Dr. Consultor Clínico", cfo_name)
+    if "cfo-compliance-footer" not in body_content:
+        body_content += cfo_footer_html
+
+    return (
+        f"<!DOCTYPE html>\n<html lang=\"pt-BR\">\n<head>\n"
+        f"<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
+        f"<title>{lp['title']}</title>\n"
+        f"<style>\n{lp.get('gjs_css') or ''}\n</style>\n</head>\n"
+        f"<body>\n{body_content}\n{interactive_script}\n</body>\n</html>"
+    )
 
 
 def submit_public_lead(slug: str, data: LandingPageSubmissionCreate) -> Dict[str, Any]:

@@ -150,31 +150,168 @@ def validate_safe_readonly_sql(sql_query: str) -> None:
 def natural_language_to_sql(nl_query: str, account_id: str = "0f14ffff") -> str:
     """
     Mapeia perguntas analíticas em linguagem natural para consultas SQL analíticas sobre o schema do Revnault.
+    Suporta deals, contacts, kp_consignment_kits, kp_custody_ledger, kp_surgical_orders, dentgo_orders,
+    anvisa_rma_claims, clinical_procedure_margins, kp_surgical_health_scores, erp_fiscal_invoices e tasks.
+    Extrai filtros de UF (SP, RJ, MG, PR, RS), agregações (SUM, COUNT, AVG) e cláusulas LIMIT.
     """
     ensure_analytical_schema_indexed(account_id=account_id)
     q = nl_query.lower().strip()
 
-    # 1. Total faturado / Receita
-    if any(k in q for k in ["total faturado", "faturamento total", "receita total", "quanto faturou"]):
-        return ANALYTICAL_SCHEMA_DOCS[0]["sql"]
+    # 1. Extração de UF
+    uf_match = re.search(r"\b(sp|rj|mg|pr|rs)\b", q)
+    detected_uf = uf_match.group(1).upper() if uf_match else None
+    if not detected_uf:
+        if "são paulo" in q or "sao paulo" in q:
+            detected_uf = "SP"
+        elif "rio de janeiro" in q:
+            detected_uf = "RJ"
+        elif "minas gerais" in q or "minas" in q:
+            detected_uf = "MG"
+        elif "paraná" in q or "parana" in q:
+            detected_uf = "PR"
+        elif "rio grande do sul" in q:
+            detected_uf = "RS"
 
-    # 2. Faturamento por regional / time
+    # 2. Extração de LIMIT
+    limit_match = re.search(r"\b(?:top|limite|limit|primeir[oa]s?|as|os)\s+(\d+)\b", q)
+    if not limit_match:
+        limit_match = re.search(r"\b(\d+)\s+(?:principais|primeir[oa]s?|registros|linhas|itens|tarefas|pedidos)\b", q)
+    if not limit_match:
+        limit_match = re.search(r"\blimit\s+(\d+)\b", q)
+    limit_val = int(limit_match.group(1)) if limit_match else None
+
+    # 3. Extração de Agregação
+    has_avg = any(k in q for k in ["média", "medio", "media", "médio", "avg"])
+    has_sum = any(k in q for k in ["total", "soma", "somar", "quanto", "faturamento", "receita", "sum"])
+    has_count = any(k in q for k in ["quantos", "quantas", "contagem", "quantidade", "número de", "numero de", "count"])
+
+    # 4. Detecção da Tabela Alvo e Construção da Query
+    # 4.1 Faturamento por regional (compatibilidade estrita com teste existente)
     if any(k in q for k in ["regional", "por time", "faturamento por regional", "ranking regional"]):
-        return ANALYTICAL_SCHEMA_DOCS[1]["sql"]
+        sql = ANALYTICAL_SCHEMA_DOCS[1]["sql"]
+        if limit_val:
+            sql += f" LIMIT {limit_val}"
+        return sql
 
-    # 3. Consignação / Lotes de Implantes
-    if any(k in q for k in ["consignado", "implantes por lote", "custodia", "lotes", "estoque de implantes"]):
-        return ANALYTICAL_SCHEMA_DOCS[2]["sql"]
+    # 4.2 erp_fiscal_invoices (notas fiscais, nfe, faturamento fiscal, danfe, cfop)
+    if any(k in q for k in ["fiscal", "nota fiscal", "notas fiscais", "nfe", "danfe", "cfop", "invoices"]):
+        lim = limit_val or 15
+        if has_sum:
+            return f"SELECT cfop, COUNT(*) AS total_notas, COALESCE(SUM(total_invoice_value), 0.0) AS valor_total_faturado FROM erp_fiscal_invoices GROUP BY cfop ORDER BY valor_total_faturado DESC LIMIT {lim}"
+        elif has_avg:
+            return f"SELECT cfop, COALESCE(AVG(total_invoice_value), 0.0) AS ticket_medio_nfe, COUNT(*) AS total_notas FROM erp_fiscal_invoices GROUP BY cfop LIMIT {lim}"
+        elif has_count:
+            return "SELECT status AS status_nfe, COUNT(*) AS total_notas FROM erp_fiscal_invoices GROUP BY status"
+        else:
+            return f"SELECT nfe_number, nfe_series, cfop, recipient_name, total_invoice_value, status, sefaz_protocol, created_at FROM erp_fiscal_invoices ORDER BY created_at DESC LIMIT {lim}"
 
-    # 4. Pedidos e entregas DENTGO
-    if any(k in q for k in ["dentgo", "entregas", "pedidos express", "courier", "motoboy"]):
-        return ANALYTICAL_SCHEMA_DOCS[3]["sql"]
+    # 4.3 clinical_procedure_margins (margem clínica, lucratividade, rentabilidade cirúrgica)
+    if any(k in q for k in ["margem", "margens", "lucro", "rentabilidade", "lucratividade", "margin", "cadeira", "custo cirurgico", "procedimento cirurgico"]):
+        lim = limit_val or 10
+        if has_avg:
+            return f"SELECT procedure_name AS procedimento, COALESCE(AVG(net_margin_percent), 0.0) AS margem_media_percent, COALESCE(AVG(net_margin_value), 0.0) AS margem_media_reais FROM clinical_procedure_margins GROUP BY procedure_name ORDER BY margem_media_percent DESC LIMIT {lim}"
+        elif has_sum:
+            return f"SELECT procedure_name AS procedimento, COALESCE(SUM(gross_revenue), 0.0) AS faturamento_bruto, COALESCE(SUM(net_margin_value), 0.0) AS lucro_liquido_total FROM clinical_procedure_margins GROUP BY procedure_name ORDER BY lucro_liquido_total DESC LIMIT {lim}"
+        elif has_count:
+            return "SELECT is_low_margin AS alerta_baixa_margem, COUNT(*) AS total_procedimentos FROM clinical_procedure_margins GROUP BY is_low_margin"
+        else:
+            return f"SELECT procedure_name, gross_revenue, supplies_cost, surgeon_fee, net_margin_value, net_margin_percent FROM clinical_procedure_margins ORDER BY net_margin_percent DESC LIMIT {lim}"
 
-    # 5. Cosmovigilância ANVISA / Queixas Técnicas
-    if any(k in q for k in ["anvisa", "queixas", "perda", "nao-osseointegrado", "rma"]):
-        return ANALYTICAL_SCHEMA_DOCS[4]["sql"]
+    # 4.4 kp_surgical_health_scores (health score cirúrgico, índice de saúde do parceiro)
+    if any(k in q for k in ["health score", "health_score", "hsc", "saude do parceiro", "classificacao cirurgica", "score cirurgico"]):
+        lim = limit_val or 10
+        if has_avg:
+            return "SELECT classification AS faixa_hsc, COALESCE(AVG(hsc_score), 0.0) AS score_medio, COUNT(*) AS total_parceiros FROM kp_surgical_health_scores GROUP BY classification"
+        elif has_count:
+            return "SELECT classification AS faixa_hsc, COUNT(*) AS total_parceiros FROM kp_surgical_health_scores GROUP BY classification ORDER BY total_parceiros DESC"
+        else:
+            return f"SELECT partner_name, hsc_score, classification, f_cirurgica, g_consignado, s_atendimento, e_canal FROM kp_surgical_health_scores ORDER BY hsc_score DESC LIMIT {lim}"
 
-    # 6. Recuperação semântica vetorial sobre os metadados do schema analítico
+    # 4.5 anvisa_rma_claims (tecnovigilância, queixas, perda de implante)
+    if any(k in q for k in ["anvisa", "rma", "queixa", "queixas", "falha", "osseointegra", "perda", "reclamac"]):
+        lim = limit_val or 15
+        if has_count:
+            return "SELECT failure_reason AS motivo_reclamado, COUNT(*) AS total_ocorrencias FROM anvisa_rma_claims GROUP BY failure_reason ORDER BY total_ocorrencias DESC"
+        return f"SELECT batch_number, failure_reason, patient_age, bone_type, status, quarantine_status FROM anvisa_rma_claims ORDER BY created_at DESC LIMIT {lim}"
+
+    # 4.6 dentgo_orders (entregas express, motoboy, courier, logística)
+    if any(k in q for k in ["dentgo", "entrega", "entregas", "courier", "motoboy", "express", "km", "logistica"]):
+        lim = limit_val or 15
+        if has_sum:
+            return "SELECT status AS status_entrega, COUNT(*) AS total_pedidos, COALESCE(SUM(distance_km), 0.0) AS km_total FROM dentgo_orders GROUP BY status ORDER BY total_pedidos DESC"
+        elif has_avg:
+            return "SELECT status AS status_entrega, COUNT(*) AS total_pedidos, COALESCE(AVG(distance_km), 0.0) AS km_medio FROM dentgo_orders GROUP BY status ORDER BY km_medio DESC"
+        elif has_count:
+            return "SELECT urgency, COUNT(*) AS total_por_urgencia FROM dentgo_orders GROUP BY urgency ORDER BY total_por_urgencia DESC"
+        else:
+            return ANALYTICAL_SCHEMA_DOCS[3]["sql"]
+
+    # 4.7 kp_surgical_orders (cirurgias, ordens cirúrgicas, pós-operatório)
+    if any(k in q for k in ["cirurgia", "cirurgias", "ordem cirurgica", "ordens cirurgicas", "surgical_order", "paciente"]):
+        lim = limit_val or 15
+        if has_count:
+            return "SELECT status AS status_cirurgia, COUNT(*) AS total_ordens FROM kp_surgical_orders GROUP BY status ORDER BY total_ordens DESC"
+        return f"SELECT id, patient_identifier, surgery_date, status, agreement_id FROM kp_surgical_orders ORDER BY surgery_date DESC LIMIT {lim}"
+
+    # 4.8 kp_consignment_kits (caixas, kits cirúrgicos, maletas)
+    if any(k in q for k in ["consignment_kit", "kit consignado", "kits consignados", "caixa consignada", "caixas", "maleta", "maletas", "instrumental"]):
+        lim = limit_val or 20
+        if has_count:
+            return "SELECT status, COUNT(*) AS total_kits FROM kp_consignment_kits GROUP BY status ORDER BY total_kits DESC"
+        return f"SELECT serial_number, name, qr_code, status, current_agreement_id FROM kp_consignment_kits ORDER BY created_at DESC LIMIT {lim}"
+
+    # 4.9 kp_custody_ledger (custódia, lotes de implantes, estoque consignado)
+    if any(k in q for k in ["consignad", "custodia", "custódia", "lote", "lotes", "estoque"]):
+        lim = limit_val or 10
+        if has_sum:
+            return f"SELECT batch_number AS lote, COALESCE(SUM(quantity), 0) AS total_unidades, COALESCE(SUM(total_value), 0.0) AS valor_imobilizado FROM kp_custody_ledger GROUP BY batch_number ORDER BY total_unidades DESC LIMIT {lim}"
+        elif has_avg:
+            return f"SELECT batch_number AS lote, COALESCE(AVG(unit_value), 0.0) AS valor_medio_unitario, SUM(quantity) AS total_unidades FROM kp_custody_ledger GROUP BY batch_number LIMIT {lim}"
+        elif has_count:
+            return "SELECT movement_type, COUNT(*) AS total_movimentacoes, COALESCE(SUM(quantity), 0) AS total_pecas FROM kp_custody_ledger GROUP BY movement_type"
+        else:
+            return ANALYTICAL_SCHEMA_DOCS[2]["sql"]
+
+    # 4.10 tasks (tarefas pendentes, atividades, follow-ups)
+    if any(k in q for k in ["tarefa", "tarefas", "task", "tasks", "atividade", "atividades", "pendenc", "follow-up", "followup"]):
+        lim = limit_val or 15
+        if has_count:
+            return f"SELECT priority AS prioridade, COUNT(*) AS total_tarefas FROM tasks GROUP BY priority LIMIT {lim}"
+        return f"SELECT title, due_date, assignee, priority, completed FROM tasks ORDER BY created_at DESC LIMIT {lim}"
+
+    # 4.11 Contacts (cirurgiões, dentistas, leads, CRO)
+    if any(k in q for k in ["contato", "contatos", "cirurgião", "cirurgioes", "cirurgiões", "dentista", "dentistas", "lead", "leads", "médico", "medico", "cro"]):
+        where_parts = []
+        if detected_uf:
+            where_parts.append(f"(uf = '{detected_uf}' OR cro_uf LIKE '%{detected_uf}%')")
+        where_str = f" WHERE {' AND '.join(where_parts)}" if where_parts else ""
+
+        if has_avg:
+            return f"SELECT 'Média Score Cirurgiões' AS metrica, COALESCE(AVG(score), 0.0) AS media_score, COUNT(*) AS total_cirurgioes FROM contacts{where_str}"
+        elif has_count:
+            return f"SELECT 'Total de Cirurgiões Cadastrados' AS metrica, COUNT(*) AS total_contatos FROM contacts{where_str}"
+        else:
+            lim = limit_val or 20
+            return f"SELECT name, email, phone, cro_uf, specialty, score, created_at FROM contacts{where_str} ORDER BY score DESC LIMIT {lim}"
+
+    # 4.12 Deals (faturamento, oportunidades)
+    if any(k in q for k in ["deal", "deals", "faturad", "faturamento", "receita", "oportunidade", "venda", "ganho", "ticket"]):
+        where_parts = []
+        if detected_uf:
+            where_parts.append(f"(company LIKE '%{detected_uf}%' OR contact_name LIKE '%{detected_uf}%' OR title LIKE '%{detected_uf}%')")
+        where_str = f" WHERE {' AND '.join(where_parts)}" if where_parts else ""
+
+        if has_avg:
+            return f"SELECT 'Ticket Médio Deals' AS metrica, COALESCE(AVG(value), 0.0) AS ticket_medio, COUNT(*) AS total_deals FROM deals{where_str}"
+        elif has_sum or ("quanto" in q):
+            return f"SELECT 'Total Faturado' AS metrica, COALESCE(SUM(value), 0.0) AS total_faturamento, COUNT(*) AS total_deals FROM deals{where_str}"
+        elif has_count:
+            return f"SELECT 'Total de Oportunidades' AS metrica, COUNT(*) AS total_deals, COALESCE(SUM(value), 0.0) AS total_valor FROM deals{where_str}"
+        else:
+            lim = limit_val or 15
+            return f"SELECT title, value, company, contact_name, priority, created_at FROM deals{where_str} ORDER BY created_at DESC LIMIT {lim}"
+
+    # 5. Recuperação semântica vetorial como fallback inteligente
     query_vec = compute_semantic_embedding(q)
     best_sql = None
     best_sim = 0.0
@@ -186,11 +323,8 @@ def natural_language_to_sql(nl_query: str, account_id: str = "0f14ffff") -> str:
     if best_sql and best_sim >= 0.45:
         return best_sql
 
-    # Fallback padrão: Últimos deals e oportunidades ativas
-    return (
-        "SELECT title, value, company, contact_name, created_at "
-        "FROM deals ORDER BY created_at DESC LIMIT 15"
-    )
+    lim = limit_val or 15
+    return f"SELECT title, value, company, contact_name, created_at FROM deals ORDER BY created_at DESC LIMIT {lim}"
 
 
 def inject_rls_filter(sql: str, rls_clause: str) -> str:
@@ -233,7 +367,7 @@ def execute_analytical_query(
     if raw_sql and raw_sql.strip():
         sql_base = raw_sql.strip()
     elif natural_language_query and natural_language_query.strip():
-        sql_base = natural_language_to_sql(natural_language_query)
+        sql_base = natural_language_to_sql(natural_language_query, account_id=account_id)
     else:
         raise ValueError("É necessário fornecer uma pergunta em linguagem natural ou uma consulta SQL direta.")
 
@@ -248,11 +382,13 @@ def execute_analytical_query(
         # Ajuste seguro de alias: se a query tiver joins com alias 'd.', adapta a cláusula
         if "FROM deals d" in sql_base or "from deals d" in sql_base:
             adapted_rls = rls_clause.replace("account_id =", "d.account_id =").replace("owner_id =", "d.owner_id =").replace("team_id =", "d.team_id =")
-        elif "FROM kp_custody_ledger" in sql_base:
-            # kp_custody_ledger não possui owner_id, filtra por account_id
-            adapted_rls = f"account_id = '{account_id}'" if "owner_id" in rls_clause else rls_clause
-        elif "FROM dentgo_orders" in sql_base or "FROM anvisa_rma_claims" in sql_base:
-            adapted_rls = f"account_id = '{account_id}'" if "owner_id" in rls_clause else rls_clause
+        elif any(tbl in sql_base for tbl in [
+            "FROM kp_custody_ledger", "FROM dentgo_orders", "FROM anvisa_rma_claims",
+            "FROM kp_consignment_kits", "FROM kp_surgical_orders", "FROM clinical_procedure_margins",
+            "FROM kp_surgical_health_scores", "FROM erp_fiscal_invoices"
+        ]):
+            # Tabelas operacionais indexadas por account_id
+            adapted_rls = f"account_id = '{account_id}'" if ("owner_id" in rls_clause or "team_id" in rls_clause) else rls_clause
         else:
             adapted_rls = rls_clause
 
