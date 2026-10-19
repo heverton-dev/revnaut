@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
+  <NFe><infNFe Id="NFe35261012345678000190550010001746961391828700" versao="4.00">
+    <ide><nNF>174696</nNF><serie>1</serie><CFOP>5917</CFOP></ide>
+    <dest><CNPJ>12.345.678/0001-90</CNPJ><xNome>Instituto Odontológico Paulista Ltda</xNome></dest>
+    <total><ICMSTot><vNF>11000.00</vNF></ICMSTot></total>
+  </infNFe></NFe>
+  <protNFe versao="4.00"><infProt><chNFe>35261012345678000190550010001746961391828700</chNFe><nProt>1352600005834465</nProt><cStat>100</cStat></infProt></protNFe>
+</nfeProc>

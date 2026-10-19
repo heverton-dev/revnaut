@@ -25,6 +25,26 @@ ROLE_DISCOUNT_LIMITS: Dict[str, float] = {
 }
 
 
+def parse_price(val: Any) -> float:
+    """Converte valores monetários (numéricos ou strings como 'R$ 289,90' e 'US$ 145.00') em float determinístico."""
+    if val is None:
+        return 0.0
+    if isinstance(val, (int, float)):
+        return float(val)
+    cleaned = str(val).replace("R$", "").replace("US$", "").replace("€", "").replace("$", "").strip()
+    if "," in cleaned and "." in cleaned:
+        if cleaned.rfind(",") > cleaned.rfind("."):
+            cleaned = cleaned.replace(".", "").replace(",", ".")
+        else:
+            cleaned = cleaned.replace(",", "")
+    elif "," in cleaned:
+        cleaned = cleaned.replace(",", ".")
+    try:
+        return float(cleaned)
+    except Exception:
+        return 0.0
+
+
 def list_catalog_products(account_id: str = "0f14ffff") -> List[Dict[str, Any]]:
     """Lista todos os produtos ativos do catálogo odontológico."""
     init_db()
@@ -39,6 +59,8 @@ def list_catalog_products(account_id: str = "0f14ffff") -> List[Dict[str, Any]]:
             ORDER BY category ASC, name ASC
         """, (account_id,))
         rows = [dict(r) for r in cur.fetchall()]
+        for row in rows:
+            row["base_price"] = parse_price(row.get("base_price"))
         return rows
     finally:
         conn.close()
@@ -93,7 +115,7 @@ def calculate_proposal_pricing(
             cur.execute("SELECT base_price FROM products_catalog WHERE account_id = ? AND sku = ?", (account_id, sku))
             p_row = cur.fetchone()
             if p_row:
-                unit_price = float(p_row["base_price"]) * table_factor
+                unit_price = parse_price(p_row["base_price"]) * table_factor
                 base_total += unit_price * quantity
             else:
                 # Preço padrão unitário de segurança caso SKU não seja localizado

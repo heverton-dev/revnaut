@@ -128,6 +128,7 @@ def dial_sip(payload: VoipDialRequest):
 
 
 @router.post("/api/v1/communications/livekit/webhook", response_model=LiveKitWebhookResponse, summary="Webhook de eventos do LiveKit (Egress / Room Finished)")
+@router.post("/api/v1/communications/webhooks/livekit", response_model=LiveKitWebhookResponse, summary="Webhook de eventos do LiveKit (Alias)")
 def livekit_webhook(payload: Dict[str, Any] = Body(...)):
     return livekit_service.handle_livekit_webhook(payload)
 

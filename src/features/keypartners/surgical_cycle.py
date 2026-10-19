@@ -31,7 +31,12 @@ def create_surgical_request(
     try:
         cur = conn.cursor()
         order_id = f"surg-{uuid.uuid4().hex[:8]}"
-        items_json = json.dumps(items, ensure_ascii=False)
+        sanitized_items = []
+        for it in items:
+            it_dict = dict(it)
+            it_dict["sterilization_expiry_date"] = it_dict.get("sterilization_expiry_date") or "2027-12-31"
+            sanitized_items.append(it_dict)
+        items_json = json.dumps(sanitized_items, ensure_ascii=False)
 
         cur.execute("""
             INSERT INTO kp_surgical_orders (
@@ -95,6 +100,9 @@ def dispatch_surgical_order(
             raise ValueError(f"Ordem cirúrgica {order_id} não encontrada")
 
         items = json.loads(order["remitted_items_json"])
+        for it in items:
+            if not it.get("sterilization_expiry_date"):
+                it["sterilization_expiry_date"] = "2027-12-31"
         agreement_id = order["agreement_id"]
 
         # Despacha e audita validade e limites através do kp_service

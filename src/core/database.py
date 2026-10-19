@@ -1349,6 +1349,9 @@ def init_db() -> None:
             milestones_json TEXT NOT NULL,
             alert_ticket_id TEXT,
             last_interaction_notes TEXT,
+            feedback_text TEXT,
+            alert_triggered INTEGER DEFAULT 0,
+            completed_at TIMESTAMP,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (account_id) REFERENCES accounts(id)
@@ -1810,10 +1813,25 @@ def init_db() -> None:
             if col_name not in ticket_cols:
                 cur.execute(f"ALTER TABLE tickets ADD COLUMN {col_name} {col_def}")
 
+        cur.execute("PRAGMA table_info(postop_patient_care_schedules)")
+        postop_cols = {row["name"] for row in cur.fetchall()}
+        for col_name, col_def in [
+            ("patient_name", "TEXT DEFAULT ''"),
+            ("patient_phone", "TEXT DEFAULT ''"),
+            ("surgeon_name", "TEXT DEFAULT ''"),
+            ("surgeon_phone", "TEXT DEFAULT ''"),
+            ("procedure_name", "TEXT DEFAULT ''"),
+            ("surgery_date", "TEXT DEFAULT ''"),
+            ("feedback_text", "TEXT DEFAULT NULL"),
+            ("alert_triggered", "INTEGER DEFAULT 0"),
+            ("completed_at", "TIMESTAMP DEFAULT NULL"),
+        ]:
+            if col_name not in postop_cols:
+                try:
+                    cur.execute(f"ALTER TABLE postop_patient_care_schedules ADD COLUMN {col_name} {col_def}")
+                except Exception:
+                    pass
 
-
-
-        # Seed determinístico inicial se conta padrão não existir
         cur = conn.cursor()
         cur.execute("SELECT COUNT(*) FROM accounts WHERE id = '0f14ffff'")
         if cur.fetchone()[0] == 0:

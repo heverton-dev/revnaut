@@ -1,0 +1,2 @@
+id,account_id,pipeline_id,stage_id,title,value,company,contact_name,priority,created_at,expected_close_date,field_owner_id,inside_owner_id,split_commission_field_pct,split_commission_inside_pct,executive_summary,approval_status,owner_id,team_id,business_unit_id
+deal-bi-01,0f14ffff,1,101,Consignação Clínica Curitiba,15000.0,Clínica Curitiba Odonto,Dr. Curitiba,media,2026-10-19 14:17:34,,,,70.0,30.0,,APPROVED,usr-consultant-pr,,

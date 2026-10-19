@@ -162,9 +162,10 @@ def seed_multinational_enterprise(db_path: Path | str | None = None, clean_reset
     ]
     cur.executemany("INSERT OR REPLACE INTO stages (id, pipeline_id, name, color, step_order, probability) VALUES (?, ?, ?, ?, ?, ?)", stages_data)
 
-    # 7. PRICE TABLES (5) & PRODUCTS CATALOG (10)
+    # 7. PRICE TABLES (6) & PRODUCTS CATALOG (13)
     price_tables_data = [
         ("pt-retail-br", ACCOUNT_ID, "RETAIL_BR", "Tabela Venda Avulsa Brasil (Balcão)", 1.0, 1, now_iso),
+        ("pt-balcao", ACCOUNT_ID, "BALCAO", "Tabela Balcão Padrão", 1.0, 1, now_iso),
         ("pt-consignment-br", ACCOUNT_ID, "CONSIGNMENT_BR", "Tabela Parceiro Consignado Brasil (KeyPartners)", 0.82, 1, now_iso),
         ("pt-dso-us", ACCOUNT_ID, "DSO_USA", "Tabela Corporativa DSO Flórida Volume", 0.75, 1, now_iso),
         ("pt-iberia-eu", ACCOUNT_ID, "IBERIA_DIGITAL", "Tabela Europa Reabilitação Digital", 0.85, 1, now_iso),
@@ -173,16 +174,19 @@ def seed_multinational_enterprise(db_path: Path | str | None = None, clean_reset
     cur.executemany("INSERT OR REPLACE INTO price_tables (id, account_id, table_key, name, discount_factor, is_active, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)", price_tables_data)
 
     products_data = [
-        ("prd-cm-375", ACCOUNT_ID, "IMP-CM-375-115", "Implante Cone Morse Acqua 3.75x11.5mm", "IMPLANTES", "ANVISA-1034567001", "CONE_MORSE", "3.75", "11.5", "45 Ncm", 420.0, 1, now_iso),
-        ("prd-gm-430", ACCOUNT_ID, "IMP-GM-430-130", "Implante Grand Morse Helix 4.3x13mm", "IMPLANTES", "ANVISA-1034567002", "GRAND_MORSE", "4.30", "13.0", "60 Ncm", 480.0, 1, now_iso),
-        ("prd-zyg-45", ACCOUNT_ID, "IMP-ZYG-QUAD-45", "Implante Zygoma Quad 45mm Ancoragem", "IMPLANTES_ESPECIAIS", "ANVISA-1034567003", "ZYGOMATIC", "4.00", "45.0", "50 Ncm", 1850.0, 1, now_iso),
-        ("prd-kit-full", ACCOUNT_ID, "KIT-GUIDED-FULL", "Kit Cirúrgico Guiado Full Arch Master", "INSTRUMENTAIS", "ANVISA-1034567004", "UNIVERSAL", "N/A", "N/A", "N/A", 12500.0, 1, now_iso),
-        ("prd-bio-bov", ACCOUNT_ID, "BIO-BONE-1G", "Biomaterial Enxerto Ósseo Bovino 1g Granulado", "BIOMATERIAIS", "ANVISA-1034567005", "N/A", "N/A", "N/A", "N/A", 350.0, 1, now_iso),
-        ("prd-mem-col", ACCOUNT_ID, "MEM-COLLAGEN-30", "Membrana Colágeno Reabsorvível 30x20mm", "BIOMATERIAIS", "ANVISA-1034567006", "N/A", "N/A", "N/A", "N/A", 290.0, 1, now_iso),
-        ("prd-scan-3d", ACCOUNT_ID, "SCAN-3D-WIRELESS", "Scanner Intraoral 3D Wireless Ultra", "EQUIPAMENTOS", "ANVISA-1034567007", "DIGITAL", "N/A", "N/A", "N/A", 89000.0, 1, now_iso),
-        ("prd-comp-ti", ACCOUNT_ID, "COMP-TI-BASE-CM", "Componente Protético Ti-Base Cone Morse", "COMPONENTES", "ANVISA-1034567008", "CONE_MORSE", "3.75", "4.0", "30 Ncm", 145.0, 1, now_iso),
-        ("prd-cic-gm", ACCOUNT_ID, "CIC-HEALING-GM", "Cicatrizador de Titânio Grand Morse 4.5x3mm", "COMPONENTES", "ANVISA-1034567009", "GRAND_MORSE", "4.50", "3.0", "15 Ncm", 95.0, 1, now_iso),
-        ("prd-motor-surg", ACCOUNT_ID, "MOTOR-SURG-LED", "Motor Cirúrgico com Peça Reta LED 20:1", "EQUIPAMENTOS", "ANVISA-1034567010", "UNIVERSAL", "N/A", "N/A", "N/A", 18500.0, 1, now_iso),
+        ("prd-cm-375", ACCOUNT_ID, "IMP-CM-375-115", "Implante Cone Morse Acqua 3.75x11.5mm", "IMPLANTES", "ANVISA-1034567001", "CONE_MORSE", 3.75, 11.5, 45, 420.0, 1, now_iso),
+        ("prd-gm-430", ACCOUNT_ID, "IMP-GM-430-130", "Implante Grand Morse Helix 4.3x13mm", "IMPLANTES", "ANVISA-1034567002", "GRAND_MORSE", 4.30, 13.0, 60, 480.0, 1, now_iso),
+        ("prd-zyg-45", ACCOUNT_ID, "IMP-ZYG-QUAD-45", "Implante Zygoma Quad 45mm Ancoragem", "IMPLANTES_ESPECIAIS", "ANVISA-1034567003", "ZYGOMATIC", 4.00, 45.0, 50, 1850.0, 1, now_iso),
+        ("prd-kit-full", ACCOUNT_ID, "KIT-GUIDED-FULL", "Kit Cirúrgico Guiado Full Arch Master", "INSTRUMENTAIS", "ANVISA-1034567004", "UNIVERSAL", None, None, None, 12500.0, 1, now_iso),
+        ("prd-bio-bov", ACCOUNT_ID, "BIO-BONE-1G", "Biomaterial Enxerto Ósseo Bovino 1g Granulado", "BIOMATERIAIS", "ANVISA-1034567005", "N/A", None, None, None, 350.0, 1, now_iso),
+        ("prd-mem-col", ACCOUNT_ID, "MEM-COLLAGEN-30", "Membrana Colágeno Reabsorvível 30x20mm", "BIOMATERIAIS", "ANVISA-1034567006", "N/A", None, None, None, 290.0, 1, now_iso),
+        ("prd-scan-3d", ACCOUNT_ID, "SCAN-3D-WIRELESS", "Scanner Intraoral 3D Wireless Ultra", "EQUIPAMENTOS", "ANVISA-1034567007", "DIGITAL", None, None, None, 89000.0, 1, now_iso),
+        ("prd-comp-ti", ACCOUNT_ID, "COMP-TI-BASE-CM", "Componente Protético Ti-Base Cone Morse", "COMPONENTES", "ANVISA-1034567008", "CONE_MORSE", 3.75, 4.0, 30, 145.0, 1, now_iso),
+        ("prd-cic-gm", ACCOUNT_ID, "CIC-HEALING-GM", "Cicatrizador de Titânio Grand Morse 4.5x3mm", "COMPONENTES", "ANVISA-1034567009", "GRAND_MORSE", 4.50, 3.0, 15, 95.0, 1, now_iso),
+        ("prd-motor-surg", ACCOUNT_ID, "MOTOR-SURG-LED", "Motor Cirúrgico com Peça Reta LED 20:1", "EQUIPAMENTOS", "ANVISA-1034567010", "UNIVERSAL", None, None, None, 18500.0, 1, now_iso),
+        ("IMP-CM-37511", ACCOUNT_ID, "IMP-CM-37511", "Implante Cone Morse Helix 3.75x11.5mm", "IMPLANTES", "ANVISA-1034567001", "CONE_MORSE", 3.75, 11.5, 45, 420.0, 1, now_iso),
+        ("IMP-CM-4311", ACCOUNT_ID, "IMP-CM-4311", "Implante Cone Morse Helix 4.3x11.5mm", "IMPLANTES", "ANVISA-1034567001", "CONE_MORSE", 4.30, 11.5, 45, 450.0, 1, now_iso),
+        ("IMP-CM-3513", ACCOUNT_ID, "IMP-CM-3513", "Implante Cone Morse Helix 3.5x13mm", "IMPLANTES", "ANVISA-1034567001", "CONE_MORSE", 3.50, 13.0, 45, 430.0, 1, now_iso),
     ]
     cur.executemany("""
         INSERT OR REPLACE INTO products_catalog (id, account_id, sku, name, category, anvisa_reg, prosthetic_platform, diameter, length, recommended_torque, base_price, is_active, created_at)
@@ -500,6 +504,14 @@ def seed_multinational_enterprise(db_path: Path | str | None = None, clean_reset
             f"Maleta Cirúrgica Avançada Multi-Linhas #{k_idx:02d}", json.dumps(comp), status_k,
             agr_id if status_k == "CONSIGNED" else None, now_iso
         ))
+    kits_data.append((
+        "kit-consign-kit-cm-2026-009", ACCOUNT_ID, "KIT-CM-2026-009", "QR-KIT-009",
+        "Maleta Cirúrgica Avançada Cone Morse #009", json.dumps([
+            {"product_id": "prd-cm-375", "name": "Implante Cone Morse 3.75x11.5", "quantity": 10},
+            {"product_id": "prd-gm-430", "name": "Implante Grand Morse 4.3x13", "quantity": 10},
+            {"product_id": "prd-comp-ti", "name": "Ti-Base Cone Morse", "quantity": 6}
+        ]), "IN_FIELD", "agr-01", now_iso
+    ))
     cur.executemany("""
         INSERT OR REPLACE INTO kp_consignment_kits (id, account_id, serial_number, qr_code, name, composition_json, status, current_agreement_id, created_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -514,6 +526,11 @@ def seed_multinational_enterprise(db_path: Path | str | None = None, clean_reset
             "ANVISA-1034567001", f"LOTE-2026-{l_idx:03d}", f"SN-IMP-{l_idx:04d}", 5, 420.0, 2100.0,
             (now + timedelta(days=500)).strftime("%Y-%m-%d"), now_iso
         ))
+    ledger_data.append((
+        "ledg-rem-lote-1122", ACCOUNT_ID, "agr-01", "REMESSA", "IMP-CM-3513", "Implante Cone Morse Helix 3.5x13mm",
+        "ANVISA-1034567001", "LOTE-1122", "SN-IMP-LOTE1122", 10, 430.0, 4300.0,
+        (now + timedelta(days=500)).strftime("%Y-%m-%d"), now_iso
+    ))
     cur.executemany("""
         INSERT OR REPLACE INTO kp_custody_ledger (
             id, account_id, agreement_id, movement_type, product_id, product_name, anvisa_reg,
@@ -522,20 +539,30 @@ def seed_multinational_enterprise(db_path: Path | str | None = None, clean_reset
     """, ledger_data)
 
     # 12 surgical orders in every status
-    order_statuses = ["SOLICITADO", "APROVADO", "DESPACHADO_LACRADO", "CONCLUIDO_POS_OP"]
+    order_statuses = ["REQUESTED", "APPROVED_PREPARING", "DISPATCHED_SEALED", "POSTOP_REPORTED"]
     surg_orders_data = []
     for s_idx in range(1, 13):
         agr_id = f"agr-{((s_idx - 1) % 10) + 1:02d}"
         s_status = order_statuses[(s_idx - 1) % len(order_statuses)]
-        rem_items = [{"sku": "IMP-CM-375-115", "qty": 4}, {"sku": "IMP-GM-430-130", "qty": 2}]
-        cons_items = [{"sku": "IMP-CM-375-115", "qty": 2}] if s_status == "CONCLUIDO_POS_OP" else []
-        ret_items = [{"sku": "IMP-CM-375-115", "qty": 2}, {"sku": "IMP-GM-430-130", "qty": 2}] if s_status == "CONCLUIDO_POS_OP" else []
+        rem_items = [{
+            "product_id": "prd-cm-375",
+            "sku": "IMP-CM-375-115",
+            "product_name": "Implante Cone Morse Acqua 3.75x11.5mm",
+            "anvisa_reg": "ANVISA-1034567001",
+            "batch_number": "LOT-EXP-2026-0101",
+            "quantity": 4,
+            "qty": 4,
+            "unit_value": 420.0,
+            "sterilization_expiry_date": "2028-10-19"
+        }]
+        cons_items = [{"sku": "IMP-CM-375-115", "qty": 2}] if s_status in ["POSTOP_REPORTED", "FATURADO_E_REPOSTO"] else []
+        ret_items = [{"sku": "IMP-CM-375-115", "qty": 2}, {"sku": "IMP-GM-430-130", "qty": 2}] if s_status in ["POSTOP_REPORTED", "FATURADO_E_REPOSTO"] else []
         surg_orders_data.append((
             f"so-order-{s_idx:02d}", ACCOUNT_ID, agr_id, f"PAC-CIRURGICO-{s_idx:03d}",
             (now + timedelta(days=s_idx % 5)).strftime("%Y-%m-%d"), s_status, "usr-field-ricardo",
             "usr-inside-camila", json.dumps(rem_items), json.dumps(cons_items), json.dumps(ret_items),
-            f"seals/order_{s_idx:02d}_thermal_seal.jpg" if s_status in ["DESPACHADO_LACRADO", "CONCLUIDO_POS_OP"] else None,
-            f"nf-order-{s_idx:02d}" if s_status == "CONCLUIDO_POS_OP" else None, now_iso, now_iso
+            f"seals/order_{s_idx:02d}_thermal_seal.jpg" if s_status in ["DISPATCHED_SEALED", "POSTOP_REPORTED", "EM_POSSE_CLINICA", "FATURADO_E_REPOSTO"] else None,
+            f"nf-order-{s_idx:02d}" if s_status in ["POSTOP_REPORTED", "FATURADO_E_REPOSTO"] else None, now_iso, now_iso
         ))
     cur.executemany("""
         INSERT OR REPLACE INTO kp_surgical_orders (
@@ -575,6 +602,10 @@ def seed_multinational_enterprise(db_path: Path | str | None = None, clean_reset
             f"ltx-{w_idx:02d}", ACCOUNT_ID, f"wal-{w_idx:02d}", agr_id, "CREDIT_SURGERY", "Surgical Order Settlement",
             500, pts, f"Crédito por faturamento de implantes na ordem #so-order-{w_idx:02d}", f"so-order-{w_idx:02d}", now_iso
         ))
+    wallets_data.append((
+        "wal-cnt-01", ACCOUNT_ID, "cnt-01", "Dr. Roberto Martins", 6800, 12000,
+        "GOLD", 68, now_iso, now_iso
+    ))
     cur.executemany("""
         INSERT OR REPLACE INTO kp_loyalty_wallets (id, account_id, partner_id, partner_name, points_balance, lifetime_points, current_tier, implants_billed_total, created_at, updated_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -610,6 +641,11 @@ def seed_multinational_enterprise(db_path: Path | str | None = None, clean_reset
             "PARCEIRO_ESTRATEGICO" if hsc >= 88 else "PARCEIRO_ATIVO", None, f"DENTGO-VIP-{p_idx:02d}", 1, 1,
             "Parceria sólida em plena conformidade ANVISA e comissionamento equilibrado.", now_iso
         ))
+    health_scores_data.append((
+        "hsc-cnt-01", ACCOUNT_ID, "cnt-01", "Dr. Roberto Martins", 92.0, 88.0, 90.0, 86.0, 89.0,
+        "PARCEIRO_ESTRATEGICO", None, "DENTGO-VIP-CNT01", 1, 1,
+        "Parceria de alta performance e fidelidade plena.", now_iso
+    ))
     cur.executemany("""
         INSERT OR REPLACE INTO kp_predictive_inventory_scores (
             id, account_id, agreement_id, sok_score, is_idle, pr_score, current_stock, replenishment_needed, recommendation, deal_id, created_at
@@ -668,6 +704,12 @@ def seed_multinational_enterprise(db_path: Path | str | None = None, clean_reset
                 f"fefo-res-{h_idx:02d}-{p_idx:02d}", ACCOUNT_ID, fefo_id, h_idx, f"Dr. Cirurgião Hub {h_idx}",
                 f"CRO-SP-120{h_idx:02d}", 5, round(flash_price * 5, 2), "RESERVED", now_iso
             ))
+
+    hub_inv_data.extend([
+        ("dhi-sp-moema-37511", "hub-sp-moema", ACCOUNT_ID, "IMP-CM-37511", "Implante Cone Morse Helix 3.75x11.5mm", "ANVISA-1034567001", "LOT-EXP-2026-37511", 50, 420.0, "2028-10-19", now_iso, "AVAILABLE"),
+        ("dhi-sp-moema-4311", "hub-sp-moema", ACCOUNT_ID, "IMP-CM-4311", "Implante Cone Morse Helix 4.3x11.5mm", "ANVISA-1034567001", "LOT-EXP-2026-4311", 50, 450.0, "2028-10-19", now_iso, "AVAILABLE"),
+        ("dhi-sp-moema-3513", "hub-sp-moema", ACCOUNT_ID, "IMP-CM-3513", "Implante Cone Morse Helix 3.5x13mm", "ANVISA-1034567001", "LOTE-1122", 50, 430.0, "2028-10-19", now_iso, "AVAILABLE"),
+    ])
 
     cur.executemany("""
         INSERT OR REPLACE INTO dentgo_hub_inventory (
@@ -883,7 +925,12 @@ def seed_multinational_enterprise(db_path: Path | str | None = None, clean_reset
     """, batch_quarantines_data)
 
     postop_care_data = [
-        ("postop-01", ACCOUNT_ID, "Paciente João Silveira", "+55 11 98765-4321", "Dr. Roberto Martins", "+55 11 98888-0001", "Reabilitação Protocolo Inferior", (now - timedelta(days=2)).strftime("%Y-%m-%d"), "EM_ACOMPANHAMENTO", json.dumps([{"day": 1, "status": "CHECK_OK"}, {"day": 7, "status": "PENDING"}]), "t-01", "Paciente relatou analgesia controlada e cicatrização inicial sem edema excessivo.", now_iso, now_iso),
+        ("postop-01", ACCOUNT_ID, "Paciente João Silveira", "+55 11 98765-4321", "Dr. Roberto Martins", "+55 11 98888-0001", "Reabilitação Protocolo Inferior", (now - timedelta(days=2)).strftime("%Y-%m-%d"), "EM_ACOMPANHAMENTO", json.dumps([
+            {"code": "24h", "title": "Check-in Pós-Op 24h", "target_date": (now - timedelta(days=1)).strftime("%Y-%m-%d"), "status": "COMPLETED", "template_message": "Olá! Como estão as primeiras 24h pós-cirurgia?"},
+            {"code": "48h", "title": "Check-in Pós-Op 48h", "target_date": now.strftime("%Y-%m-%d"), "status": "SENT", "template_message": "Lembrete de medicação e gelo local 48h."},
+            {"code": "72h", "title": "Check-in Pós-Op 72h", "target_date": (now + timedelta(days=1)).strftime("%Y-%m-%d"), "status": "SCHEDULED", "template_message": "Acompanhamento 72h: regressão do edema."},
+            {"code": "7d", "title": "Remoção de Sutura 7d", "target_date": (now + timedelta(days=5)).strftime("%Y-%m-%d"), "status": "PENDING", "template_message": "Agende seu retorno de 7 dias com o cirurgião."}
+        ]), "t-01", "Paciente relatou analgesia controlada e cicatrização inicial sem edema excessivo.", now_iso, now_iso),
     ]
     cur.executemany("""
         INSERT OR REPLACE INTO postop_patient_care_schedules (id, account_id, patient_name, patient_phone, surgeon_name, surgeon_phone, procedure_name, surgery_date, status, milestones_json, alert_ticket_id, last_interaction_notes, created_at, updated_at)
@@ -908,6 +955,7 @@ def seed_multinational_enterprise(db_path: Path | str | None = None, clean_reset
 
     clinical_margins_data = [
         ("cpm-01", ACCOUNT_ID, "inst-01", "so-order-01", "Reabilitação Protocolo All-on-4 Superior", "PAC-DEMO-01", 24000.0, 4200.0, 3800.0, 5000.0, 3.5, 350.0, 1225.0, 8.0, 1920.0, 7855.0, 32.7, 0, "Margem excelente; manter sequência cirúrgica padrão.", now_iso),
+        ("cpm-clinic-sp-01", ACCOUNT_ID, "clinic-sp-01", "so-order-01", "Reabilitação Protocolo Clinic SP 01", "PAC-DEMO-SP01", 28000.0, 4500.0, 3900.0, 5500.0, 4.0, 350.0, 1400.0, 8.0, 2240.0, 10460.0, 37.3, 0, "Margem excelente; manter sequência cirúrgica padrão.", now_iso),
     ]
     cur.executemany("""
         INSERT OR REPLACE INTO clinical_procedure_margins (id, account_id, clinic_id, surgery_order_id, procedure_name, patient_identifier, gross_revenue, supplies_cost, lab_cost, surgeon_fee, chair_hours, chair_hour_cost, total_chair_cost, tax_rate_percent, tax_amount, net_margin_value, net_margin_percent, is_low_margin, recommendation, created_at)
@@ -1026,8 +1074,20 @@ def seed_multinational_enterprise(db_path: Path | str | None = None, clean_reset
     return table_counts
 
 
+def seed_all(db_path: Path | str | None = None, clean_reset: bool = False) -> Dict[str, int]:
+    """Alias canônico para execução completa do seed multinacional enterprise."""
+    return seed_multinational_enterprise(db_path=db_path, clean_reset=clean_reset)
+
+
+
 if __name__ == "__main__":
-    db_file = sys.argv[1] if len(sys.argv) > 1 else None
+    clean_flag = "--clean" in sys.argv or "-c" in sys.argv
+    db_file = None
+    for arg in sys.argv[1:]:
+        if not arg.startswith("-"):
+            db_file = arg
+            break
+
     print(f"Iniciando Seed Multinacional Enterprise em: {db_file or get_db_path()}")
     counts = seed_multinational_enterprise(db_file, clean_reset=True)
     zero_tables = [t for t, c in counts.items() if c == 0]

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 export interface ImagingStudy {
   id: string;
@@ -60,6 +60,20 @@ export const DicomStl3DViewer: React.FC<DicomStl3DViewerProps> = ({
   const [contrastLevel, setContrastLevel] = useState<number>(450);
   const [showImplantGuide, setShowImplantGuide] = useState<boolean>(true);
   const [rotationAngle, setRotationAngle] = useState<number>(0);
+  const [viewPlane, setViewPlane] = useState<"AXIAL" | "CORONAL" | "SAGITTAL" | "3D_VOLUME">("CORONAL");
+  const [zoomLevel, setZoomLevel] = useState<number>(1.2);
+  const [measureTool, setMeasureTool] = useState<boolean>(false);
+  const [measurePoints, setMeasurePoints] = useState<{ x: number; y: number }[]>([]);
+  const [implantPos, setImplantPos] = useState<{ x: number; y: number }>({ x: 200, y: 150 });
+  const [orbit, setOrbit] = useState<{ x: number; y: number }>({ x: 25, y: -30 });
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [dragStart, setDragStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [stlMeshName, setStlMeshName] = useState<string | null>(null);
+  const [stlTriangles, setStlTriangles] = useState<Array<{ v1: [number, number, number]; v2: [number, number, number]; v3: [number, number, number] }>>([]);
+  const [approvedOrderId, setApprovedOrderId] = useState<string | null>(null);
+  const [approvingOrder, setApprovingOrder] = useState<boolean>(false);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Upload Presign Modal State
   const [showUploadModal, setShowUploadModal] = useState<boolean>(false);
@@ -152,6 +166,418 @@ export const DicomStl3DViewer: React.FC<DicomStl3DViewerProps> = ({
       setUploading(false);
     }
   };
+
+  const handleStlFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setStlMeshName(file.name);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const buffer = event.target?.result as ArrayBuffer;
+      if (!buffer) return;
+      try {
+        const text = new TextDecoder().decode(buffer.slice(0, 80));
+        if (text.startsWith("solid")) {
+          const fullText = new TextDecoder().decode(buffer);
+          const triangles: Array<{ v1: [number, number, number]; v2: [number, number, number]; v3: [number, number, number] }> = [];
+          const vertexRegex = /vertex\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)/g;
+          let match;
+          const vertices: [number, number, number][] = [];
+          while ((match = vertexRegex.exec(fullText)) !== null) {
+            vertices.push([parseFloat(match[1]), parseFloat(match[2]), parseFloat(match[3])]);
+            if (vertices.length === 3) {
+              triangles.push({ v1: vertices[0], v2: vertices[1], v3: vertices[2] });
+              vertices.length = 0;
+            }
+          }
+          if (triangles.length > 0) {
+            setStlTriangles(triangles.slice(0, 500));
+            setViewPlane("3D_VOLUME");
+          }
+        } else {
+          const dataView = new DataView(buffer);
+          const numTriangles = dataView.getUint32(80, true);
+          const triangles: Array<{ v1: [number, number, number]; v2: [number, number, number]; v3: [number, number, number] }> = [];
+          let offset = 84;
+          for (let i = 0; i < Math.min(numTriangles, 500); i++) {
+            offset += 12;
+            const v1: [number, number, number] = [dataView.getFloat32(offset, true), dataView.getFloat32(offset + 4, true), dataView.getFloat32(offset + 8, true)];
+            offset += 12;
+            const v2: [number, number, number] = [dataView.getFloat32(offset, true), dataView.getFloat32(offset + 4, true), dataView.getFloat32(offset + 8, true)];
+            offset += 12;
+            const v3: [number, number, number] = [dataView.getFloat32(offset, true), dataView.getFloat32(offset + 4, true), dataView.getFloat32(offset + 8, true)];
+            offset += 14;
+            triangles.push({ v1, v2, v3 });
+          }
+          if (triangles.length > 0) {
+            setStlTriangles(triangles);
+            setViewPlane("3D_VOLUME");
+          }
+        }
+      } catch {
+        // fallback
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  const handleApproveSurgicalOrder = async () => {
+    setApprovingOrder(true);
+    try {
+      const res = await fetch("/api/v1/keypartners/surgical-orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          agreement_id: "agr-01",
+          patient_identifier: study?.patient_anonymized_id || "PAC-3D-GUIDED",
+          surgery_date: new Date(Date.now() + 86400000 * 3).toISOString().slice(0, 10),
+          items: [
+            {
+              product_id: "prd-cm-375",
+              sku: `IMP-CM-${Math.round(selectedDiameter * 100)}-115`,
+              product_name: `Implante Cone Morse Ø${selectedDiameter}x${study?.recommended_implant_length_mm || 11.5}mm`,
+              quantity: 1,
+              unit_value: 420.0,
+              sterilization_expiry_date: "2028-10-19",
+            },
+            {
+              product_id: "prd-kit-full",
+              sku: "KIT-GUIDED-FULL",
+              product_name: "Kit Cirúrgico Guiado Full Arch Master",
+              quantity: 1,
+              unit_value: 12500.0,
+              sterilization_expiry_date: "2028-10-19",
+            },
+          ],
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setApprovedOrderId(data.id || "SO-ORDER-OK");
+      }
+    } catch {
+      // silent fallback
+    } finally {
+      setApprovingOrder(false);
+    }
+  };
+
+  const handleCanvasMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    setIsDragging(true);
+    setDragStart({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleCanvasMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!isDragging) return;
+    const dx = e.clientX - dragStart.x;
+    const dy = e.clientY - dragStart.y;
+    setDragStart({ x: e.clientX, y: e.clientY });
+    if (viewPlane === "3D_VOLUME") {
+      setOrbit((prev) => ({ x: prev.x + dy * 0.5, y: prev.y + dx * 0.5 }));
+    } else {
+      setImplantPos((prev) => ({ x: prev.x + dx, y: prev.y + dy }));
+    }
+  };
+
+  const handleCanvasMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const clickX = ((e.clientX - rect.left) / rect.width) * canvas.width;
+    const clickY = ((e.clientY - rect.top) / rect.height) * canvas.height;
+
+    if (measureTool) {
+      setMeasurePoints((prev) => (prev.length >= 2 ? [{ x: clickX, y: clickY }] : [...prev, { x: clickX, y: clickY }]));
+    } else if (viewPlane !== "3D_VOLUME") {
+      setImplantPos({ x: clickX, y: clickY });
+    }
+  };
+
+  const handleWheel = (e: React.WheelEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    if (e.deltaY < 0) {
+      setZoomLevel((prev) => Math.min(prev + 0.1, 3.0));
+    } else {
+      setZoomLevel((prev) => Math.max(prev - 0.1, 0.6));
+    }
+  };
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const width = canvas.width;
+    const height = canvas.height;
+
+    ctx.fillStyle = "rgb(10, 15, 29)";
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
+    ctx.lineWidth = 1;
+    for (let x = 0; x < width; x += 40) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, height);
+      ctx.stroke();
+    }
+    for (let y = 0; y < height; y += 40) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(width, y);
+      ctx.stroke();
+    }
+
+    ctx.save();
+    ctx.translate(width / 2, height / 2);
+    ctx.rotate((rotationAngle * Math.PI) / 180);
+    ctx.scale(zoomLevel, zoomLevel);
+    ctx.translate(-width / 2, -height / 2);
+
+    const windowFactor = Math.max(0.3, Math.min(2.5, 1500 / contrastWindow));
+    const levelShift = (contrastLevel - 450) / 10;
+
+    if (viewPlane === "3D_VOLUME") {
+      ctx.save();
+      ctx.translate(width / 2, height / 2);
+      const radX = (orbit.x * Math.PI) / 180;
+      const radY = (orbit.y * Math.PI) / 180;
+
+      const project3D = (x: number, y: number, z: number): [number, number] => {
+        const x1 = x * Math.cos(radY) + z * Math.sin(radY);
+        const z1 = -x * Math.sin(radY) + z * Math.cos(radY);
+        const y2 = y * Math.cos(radX) - z1 * Math.sin(radX);
+        const z2 = y * Math.sin(radX) + z1 * Math.cos(radX);
+        const scale = 240 / (240 + z2 * 0.5);
+        return [x1 * scale, y2 * scale];
+      };
+
+      if (stlTriangles.length > 0) {
+        stlTriangles.forEach((tri, i) => {
+          const p1 = project3D(tri.v1[0], tri.v1[1], tri.v1[2]);
+          const p2 = project3D(tri.v2[0], tri.v2[1], tri.v2[2]);
+          const p3 = project3D(tri.v3[0], tri.v3[1], tri.v3[2]);
+          ctx.beginPath();
+          ctx.moveTo(p1[0], p1[1]);
+          ctx.lineTo(p2[0], p2[1]);
+          ctx.lineTo(p3[0], p3[1]);
+          ctx.closePath();
+          const shade = ((i * 13) % 80) + 120;
+          ctx.fillStyle = `rgb(${shade}, ${shade + 20}, ${shade + 40})`;
+          ctx.fill();
+          ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
+          ctx.stroke();
+        });
+      } else {
+        const teethCount = 14;
+        const archRadiusX = 110;
+        const archRadiusY = 85;
+
+        ctx.beginPath();
+        for (let a = -Math.PI * 0.8; a <= -Math.PI * 0.2; a += 0.08) {
+          const bx = Math.cos(a) * archRadiusX;
+          const by = 40;
+          const bz = Math.sin(a) * archRadiusY;
+          const p = project3D(bx, by, bz);
+          if (a === -Math.PI * 0.8) ctx.moveTo(p[0], p[1]);
+          else ctx.lineTo(p[0], p[1]);
+        }
+        for (let a = -Math.PI * 0.2; a >= -Math.PI * 0.8; a -= 0.08) {
+          const bx = Math.cos(a) * (archRadiusX - 30);
+          const by = 40;
+          const bz = Math.sin(a) * (archRadiusY - 20);
+          const p = project3D(bx, by, bz);
+          ctx.lineTo(p[0], p[1]);
+        }
+        ctx.closePath();
+        ctx.fillStyle = "rgba(215, 225, 235, 0.75)";
+        ctx.fill();
+        ctx.strokeStyle = "rgba(56, 189, 248, 0.6)";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        for (let i = 0; i < teethCount; i++) {
+          const angle = -Math.PI * 0.78 + (i / (teethCount - 1)) * (Math.PI * 0.56);
+          const tx = Math.cos(angle) * (archRadiusX - 15);
+          const tz = Math.sin(angle) * (archRadiusY - 10);
+          const isImplantSite = i === 5;
+
+          if (isImplantSite && showImplantGuide) {
+            const tipTop = project3D(tx, -35, tz);
+            const tipApex = project3D(tx, 35, tz);
+            ctx.beginPath();
+            ctx.moveTo(tipTop[0] - selectedDiameter * 2, tipTop[1]);
+            ctx.lineTo(tipTop[0] + selectedDiameter * 2, tipTop[1]);
+            ctx.lineTo(tipApex[0] + selectedDiameter * 1.5, tipApex[1]);
+            ctx.lineTo(tipApex[0] - selectedDiameter * 1.5, tipApex[1]);
+            ctx.closePath();
+            ctx.fillStyle = "rgba(16, 185, 129, 0.85)";
+            ctx.fill();
+            ctx.strokeStyle = "rgb(16, 185, 129)";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+          } else {
+            const pTop = project3D(tx, -15, tz);
+            const pBot = project3D(tx, 35, tz);
+            ctx.beginPath();
+            ctx.arc(pTop[0], pTop[1], 8, 0, Math.PI * 2);
+            ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
+            ctx.fill();
+            ctx.strokeStyle = "rgba(148, 163, 184, 0.8)";
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(pTop[0], pTop[1]);
+            ctx.lineTo(pBot[0], pBot[1]);
+            ctx.strokeStyle = "rgba(148, 163, 184, 0.4)";
+            ctx.stroke();
+          }
+        }
+      }
+
+      ctx.restore();
+    } else {
+      const centerX = width / 2;
+      const centerY = height / 2;
+      const sliceOffset = (currentSlice - 32) * 1.2;
+
+      ctx.beginPath();
+      if (viewPlane === "CORONAL") {
+        const wTop = 45 * windowFactor;
+        const wBase = 80 * windowFactor;
+        ctx.moveTo(centerX - wTop, centerY - 90 + sliceOffset * 0.1);
+        ctx.quadraticCurveTo(centerX, centerY - 105 + sliceOffset * 0.1, centerX + wTop, centerY - 90 + sliceOffset * 0.1);
+        ctx.quadraticCurveTo(centerX + wBase, centerY + 60, centerX + wBase - 15, centerY + 110);
+        ctx.quadraticCurveTo(centerX, centerY + 130, centerX - wBase + 15, centerY + 110);
+        ctx.quadraticCurveTo(centerX - wBase, centerY + 60, centerX - wTop, centerY - 90 + sliceOffset * 0.1);
+      } else if (viewPlane === "SAGITTAL") {
+        ctx.moveTo(centerX - 120, centerY - 40 + sliceOffset * 0.2);
+        ctx.quadraticCurveTo(centerX, centerY - 60 + sliceOffset * 0.2, centerX + 120, centerY - 40 + sliceOffset * 0.2);
+        ctx.lineTo(centerX + 110, centerY + 80);
+        ctx.quadraticCurveTo(centerX, centerY + 100, centerX - 110, centerY + 80);
+      } else {
+        ctx.moveTo(centerX - 130, centerY + 90);
+        ctx.quadraticCurveTo(centerX, centerY - 90 + sliceOffset * 0.5, centerX + 130, centerY + 90);
+        ctx.lineTo(centerX + 100, centerY + 105);
+        ctx.quadraticCurveTo(centerX, centerY - 60 + sliceOffset * 0.5, centerX - 100, centerY + 105);
+      }
+      ctx.closePath();
+
+      const grad = ctx.createRadialGradient(centerX, centerY, 10, centerX, centerY, 130);
+      const bri = Math.max(30, Math.min(220, 110 + levelShift));
+      grad.addColorStop(0, `rgb(${bri}, ${bri}, ${bri + 10})`);
+      grad.addColorStop(0.7, `rgb(${bri - 25}, ${bri - 25}, ${bri - 15})`);
+      grad.addColorStop(1, `rgb(${bri + 40}, ${bri + 40}, ${bri + 50})`);
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      ctx.strokeStyle = `rgba(${bri + 60}, ${bri + 60}, ${bri + 70}, 0.9)`;
+      ctx.lineWidth = 3.5 * windowFactor;
+      ctx.stroke();
+
+      const nerveY = centerY + 65;
+      ctx.beginPath();
+      ctx.arc(centerX + 8, nerveY, 12, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(239, 68, 68, 0.35)";
+      ctx.fill();
+      ctx.strokeStyle = "rgb(239, 68, 68)";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.fillStyle = "rgb(239, 68, 68)";
+      ctx.font = "10px monospace";
+      ctx.fillText("N. ALVEOLAR", centerX + 24, nerveY + 3);
+
+      if (showImplantGuide) {
+        const impW = selectedDiameter * 8;
+        const impH = (study?.recommended_implant_length_mm || 11.5) * 8;
+        const impX = implantPos.x;
+        const impY = implantPos.y;
+
+        ctx.beginPath();
+        ctx.rect(impX - impW / 2, impY - impH / 2, impW, impH);
+        ctx.fillStyle = "rgba(16, 185, 129, 0.75)";
+        ctx.fill();
+        ctx.strokeStyle = "rgb(5, 150, 105)";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.7)";
+        ctx.lineWidth = 1;
+        for (let ty = impY - impH / 2 + 10; ty < impY + impH / 2 - 5; ty += 10) {
+          ctx.beginPath();
+          ctx.moveTo(impX - impW / 2 + 2, ty);
+          ctx.lineTo(impX + impW / 2 - 2, ty);
+          ctx.stroke();
+        }
+
+        const apexY = impY + impH / 2;
+        ctx.beginPath();
+        ctx.setLineDash([4, 4]);
+        ctx.moveTo(impX, apexY);
+        ctx.lineTo(impX, nerveY - 12);
+        ctx.strokeStyle = "rgb(245, 158, 11)";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        const distMm = Math.max(0.5, (nerveY - 12 - apexY) / 8).toFixed(1);
+        ctx.fillStyle = "rgb(245, 158, 11)";
+        ctx.font = "10px monospace";
+        ctx.fillText(`Margem: ${distMm} mm`, impX + 8, (apexY + nerveY - 12) / 2);
+      }
+
+      if (measurePoints.length > 0) {
+        measurePoints.forEach((p, idx) => {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+          ctx.fillStyle = "rgb(56, 189, 248)";
+          ctx.fill();
+          ctx.strokeStyle = "rgb(255, 255, 255)";
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          ctx.fillStyle = "rgb(56, 189, 248)";
+          ctx.font = "9px monospace";
+          ctx.fillText(`P${idx + 1}`, p.x + 6, p.y - 4);
+        });
+
+        if (measurePoints.length >= 2) {
+          const p1 = measurePoints[0];
+          const p2 = measurePoints[1];
+          ctx.beginPath();
+          ctx.moveTo(p1.x, p1.y);
+          ctx.lineTo(p2.x, p2.y);
+          ctx.strokeStyle = "rgb(56, 189, 248)";
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+
+          const dx = p2.x - p1.x;
+          const dy = p2.y - p1.y;
+          const distPx = Math.sqrt(dx * dx + dy * dy);
+          const distMm = (distPx * 0.12).toFixed(1);
+          ctx.fillStyle = "rgb(56, 189, 248)";
+          ctx.font = "11px monospace";
+          ctx.fillText(`${distMm} mm`, (p1.x + p2.x) / 2 + 8, (p1.y + p2.y) / 2 - 6);
+        }
+      }
+    }
+
+    ctx.restore();
+
+    ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+    ctx.font = "10px monospace";
+    ctx.fillText(`Plano: ${viewPlane}`, 12, 20);
+    ctx.fillText(`Corte: ${currentSlice}/${study?.slice_count || 120}`, 12, 34);
+    ctx.fillText(`Zoom: ${zoomLevel.toFixed(1)}x`, 12, 48);
+    ctx.fillText(`W: ${contrastWindow} HU  L: ${contrastLevel} HU`, 12, 62);
+    if (stlMeshName) {
+      ctx.fillStyle = "rgb(56, 189, 248)";
+      ctx.fillText(`Malha 3D: ${stlMeshName} (${stlTriangles.length} facetas)`, 12, 78);
+    }
+  }, [viewPlane, currentSlice, zoomLevel, rotationAngle, contrastWindow, contrastLevel, showImplantGuide, selectedDiameter, implantPos, measurePoints, orbit, stlTriangles, stlMeshName, study]);
 
   if (loading) {
     return (
@@ -346,10 +772,62 @@ export const DicomStl3DViewer: React.FC<DicomStl3DViewerProps> = ({
             <div>W/L: {contrastWindow} / {contrastLevel} HU</div>
           </div>
 
-          <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
+          <div className="absolute top-4 right-4 z-10 flex flex-wrap items-center gap-1.5 bg-surface-card/90 p-1.5 rounded-lg border border-border">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleStlFileUpload}
+              accept=".stl,.dcm"
+              className="hidden"
+            />
+            <div className="flex rounded border border-border overflow-hidden">
+              {(["CORONAL", "AXIAL", "SAGITTAL", "3D_VOLUME"] as const).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setViewPlane(p)}
+                  className={`px-2 py-1 text-[11px] font-mono font-medium transition-colors ${
+                    viewPlane === p
+                      ? "bg-brand-primary text-text-inverse"
+                      : "bg-surface-bg text-text-secondary hover:text-text-main"
+                  }`}
+                >
+                  {p === "3D_VOLUME" ? "3D Mesh" : p}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="px-2 py-1 bg-surface-bg hover:bg-surface-card text-text-main border border-border rounded text-[11px] font-mono flex items-center gap-1"
+              title="Carregar Malha STL ou DICOM local"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+              </svg>
+              STL
+            </button>
+
+            <button
+              onClick={() => {
+                setMeasureTool(!measureTool);
+                setMeasurePoints([]);
+              }}
+              className={`px-2 py-1 border rounded text-[11px] font-mono flex items-center gap-1 transition-colors ${
+                measureTool
+                  ? "bg-brand-primary text-text-inverse border-brand-primary"
+                  : "bg-surface-bg text-text-secondary border-border hover:text-text-main"
+              }`}
+              title="Régua Calibrada (mm)"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 6l3 12h12l3-12H3z" />
+              </svg>
+              {measureTool ? "Régua ON" : "Medir"}
+            </button>
+
             <button
               onClick={() => setRotationAngle((prev) => (prev - 45) % 360)}
-              className="p-1.5 bg-surface-card text-text-main border border-border rounded text-xs flex items-center gap-1 font-mono"
+              className="p-1 bg-surface-bg text-text-main border border-border rounded text-[11px] flex items-center gap-1 font-mono"
               title="Rotacionar Arco"
             >
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -359,120 +837,42 @@ export const DicomStl3DViewer: React.FC<DicomStl3DViewerProps> = ({
                   d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
                 />
               </svg>
-              Rotacionar
             </button>
+
             <button
               onClick={() => setShowImplantGuide(!showImplantGuide)}
-              className={`p-1.5 border rounded text-xs flex items-center gap-1 font-mono transition-colors ${
+              className={`px-2 py-1 border rounded text-[11px] flex items-center gap-1 font-mono transition-colors ${
                 showImplantGuide
                   ? "bg-status-success-subtle border-status-success text-status-success"
-                  : "bg-surface-card border-border text-text-secondary"
+                  : "bg-surface-bg border-border text-text-secondary"
               }`}
             >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                />
-              </svg>
               {showImplantGuide ? "Guia ON" : "Guia OFF"}
             </button>
           </div>
 
-          <div
-            className="w-full h-full flex items-center justify-center p-8 transition-transform duration-300"
-            style={{ transform: `rotate(${rotationAngle}deg)` }}
-          >
-            <svg className="w-80 h-80 max-w-full text-text-muted" viewBox="0 0 300 300" fill="none">
-              <path
-                d="M 50 250 C 70 120, 100 80, 150 80 C 200 80, 230 120, 250 250 Z"
-                fill="var(--color-surface-card)"
-                stroke="var(--color-border)"
-                strokeWidth="2"
-              />
-              <path
-                d="M 75 250 C 90 140, 115 110, 150 110 C 185 110, 210 140, 225 250 Z"
-                fill="var(--color-surface-bg)"
-                stroke="var(--color-border-subtle)"
-                strokeWidth="1.5"
-                strokeDasharray="4 2"
-              />
-
-              <circle
-                cx="150"
-                cy="220"
-                r="14"
-                fill="var(--color-danger-subtle)"
-                stroke="var(--color-danger)"
-                strokeWidth="1.5"
-              />
-              <text x="150" y="224" textAnchor="middle" fill="var(--color-danger)" fontSize="9" fontFamily="monospace">
-                N. ALV
-              </text>
-
-              {showImplantGuide && (
-                <g className="transition-all duration-200">
-                  <rect
-                    x={150 - (selectedDiameter * 3.5) / 2}
-                    y="75"
-                    width={selectedDiameter * 3.5}
-                    height="85"
-                    rx="3"
-                    fill="var(--color-brand-primary)"
-                    fillOpacity="0.75"
-                    stroke="var(--color-brand-navy)"
-                    strokeWidth="1.5"
-                  />
-                  <line
-                    x1={150 - (selectedDiameter * 3.5) / 2}
-                    y1="95"
-                    x2={150 + (selectedDiameter * 3.5) / 2}
-                    y2="95"
-                    stroke="var(--color-text-inverse)"
-                    strokeWidth="1"
-                  />
-                  <line
-                    x1={150 - (selectedDiameter * 3.5) / 2}
-                    y1="115"
-                    x2={150 + (selectedDiameter * 3.5) / 2}
-                    y2="115"
-                    stroke="var(--color-text-inverse)"
-                    strokeWidth="1"
-                  />
-                  <line
-                    x1={150 - (selectedDiameter * 3.5) / 2}
-                    y1="135"
-                    x2={150 + (selectedDiameter * 3.5) / 2}
-                    y2="135"
-                    stroke="var(--color-text-inverse)"
-                    strokeWidth="1"
-                  />
-
-                  <line
-                    x1="150"
-                    y1="160"
-                    x2="150"
-                    y2="206"
-                    stroke="var(--color-warning)"
-                    strokeWidth="1.5"
-                    strokeDasharray="3 3"
-                  />
-                  <text x="160" y="185" fill="var(--color-warning)" fontSize="9" fontFamily="monospace">
-                    Segurança: 4.8mm
-                  </text>
-                </g>
-              )}
-            </svg>
+          <div className="w-full h-full flex items-center justify-center p-2 relative">
+            <canvas
+              ref={canvasRef}
+              width={620}
+              height={440}
+              onMouseDown={handleCanvasMouseDown}
+              onMouseMove={handleCanvasMouseMove}
+              onMouseUp={handleCanvasMouseUp}
+              onClick={handleCanvasClick}
+              onWheel={handleWheel}
+              className="w-full h-full max-h-[460px] object-contain cursor-crosshair rounded-lg bg-surface-sidebar"
+            />
           </div>
 
           <div className="absolute bottom-4 left-6 right-6 z-10 bg-surface-card border border-border p-2.5 rounded-lg flex items-center gap-4">
-            <span className="text-xs text-text-secondary font-mono whitespace-nowrap">Corte Axial:</span>
+            <span className="text-xs text-text-secondary font-mono whitespace-nowrap">
+              {viewPlane === "3D_VOLUME" ? "Camada Axial:" : `Corte ${viewPlane}:`}
+            </span>
             <input
               type="range"
               min={1}
-              max={study.slice_count || 64}
+              max={study.slice_count || 120}
               value={currentSlice}
               onChange={(e) => setCurrentSlice(Number(e.target.value))}
               className="w-full cursor-pointer"
@@ -566,14 +966,20 @@ export const DicomStl3DViewer: React.FC<DicomStl3DViewerProps> = ({
 
           <div className="pt-4 border-t border-border flex flex-col gap-2">
             <button
-              onClick={() => {}}
-              className="w-full py-2.5 bg-status-success text-text-inverse text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 shadow-card"
+              onClick={handleApproveSurgicalOrder}
+              disabled={approvingOrder}
+              className="w-full py-2.5 bg-status-success hover:opacity-90 disabled:opacity-50 text-text-inverse text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 shadow-card"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
-              Aprovar Guia & Separar Kit Consignado
+              {approvingOrder ? "Criando Ordem Cirúrgica..." : "Aprovar Guia & Separar Kit Consignado"}
             </button>
+            {approvedOrderId && (
+              <div className="p-2.5 bg-status-success-subtle border border-status-success text-status-success rounded-lg text-xs font-mono text-center">
+                Ordem Cirúrgica Criada: <strong>#{approvedOrderId}</strong>
+              </div>
+            )}
             <div className="text-[10px] text-center text-text-muted font-mono">
               Orthanc PACS v24.3 // Cloudflare R2 Presigned
             </div>

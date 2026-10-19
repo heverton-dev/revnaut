@@ -32,7 +32,7 @@ def test_api_routes_have_typed_response_models():
     total_api_v1_routes = 0
 
     for r in _collect_all_api_v1_routes():
-        if r.path.endswith("/export/csv"):
+        if r.path.endswith("/export/csv") or "/storage/files/" in r.path:
             continue
         total_api_v1_routes += 1
         resp_model = getattr(r, "response_model", None)

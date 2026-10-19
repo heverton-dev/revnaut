@@ -21,3 +21,11 @@ class PresignDownloadResponse(BaseModel):
     download_url: str
     key: str
     expires_in: int
+
+
+class DirectUploadResponse(BaseModel):
+    status: str
+    key: str
+    url: str
+    size_bytes: int
+    content_type: str

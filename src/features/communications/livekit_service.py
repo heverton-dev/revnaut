@@ -201,42 +201,58 @@ def handle_livekit_webhook(payload: Dict[str, Any]) -> Dict[str, Any]:
         room_info = payload.get("room", {})
         room_name = room_info.get("name", "")
 
+    if not room_name and payload.get("room_name"):
+        room_name = payload.get("room_name")
+    if not audio_key and payload.get("audio_key"):
+        audio_key = payload.get("audio_key")
+    if not duration and payload.get("duration_seconds"):
+        duration = int(payload.get("duration_seconds"))
+
     if not room_name:
         return {"success": False, "reason": "room_name not found in event"}
 
-    r2_public_url = os.getenv("R2_PUBLIC_URL", "https://r2.revnaut.internal")
-    recording_url = f"{r2_public_url}/{audio_key}" if audio_key else None
+    custom_url = payload.get("r2_recording_url") or payload.get("recording_url")
+    if custom_url:
+        recording_url = custom_url
+    elif audio_key:
+        if audio_key.startswith("/") or audio_key.startswith("http"):
+            recording_url = audio_key
+        else:
+            recording_url = f"/api/v1/storage/files/{audio_key}"
+    else:
+        recording_url = None
 
     conn = get_connection()
     call_id = None
-    deal_id = None
-    account_id = "0f14ffff"
+    deal_id = payload.get("deal_id")
+    account_id = payload.get("account_id") or "0f14ffff"
     try:
         cur = conn.cursor()
         cur.execute("SELECT id, deal_id, account_id FROM call_recordings WHERE room_name = ? ORDER BY created_at DESC LIMIT 1", (room_name,))
         row = cur.fetchone()
         if row:
             call_id = row["id"]
-            deal_id = row["deal_id"]
-            account_id = row["account_id"]
+            deal_id = deal_id or row["deal_id"]
+            account_id = row["account_id"] or account_id
             cur.execute("""
                 UPDATE call_recordings
                 SET status = 'completed',
+                    deal_id = COALESCE(?, deal_id),
                     duration_seconds = ?,
                     r2_audio_key = ?,
                     r2_recording_url = ?,
                     egress_id = ?,
                     ended_at = CURRENT_TIMESTAMP
                 WHERE id = ?
-            """, (duration, audio_key, recording_url, egress_id, call_id))
+            """, (deal_id, duration, audio_key, recording_url, egress_id, call_id))
         else:
             call_id = f"call-rec-{uuid.uuid4().hex[:8]}"
             cur.execute("""
                 INSERT INTO call_recordings (
                     id, account_id, room_name, deal_id, caller_identity,
                     call_type, status, duration_seconds, r2_audio_key, r2_recording_url, egress_id, ended_at
-                ) VALUES (?, ?, ?, NULL, 'system', 'webrtc', 'completed', ?, ?, ?, ?, CURRENT_TIMESTAMP)
-            """, (call_id, account_id, room_name, duration, audio_key, recording_url, egress_id))
+                ) VALUES (?, ?, ?, ?, 'system', 'webrtc', 'completed', ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            """, (call_id, account_id, room_name, deal_id, duration, audio_key, recording_url, egress_id))
         conn.commit()
     finally:
         conn.close()

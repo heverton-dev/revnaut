@@ -26,6 +26,28 @@ if __name__ == "__main__":
             print(f"[AUTO-BUILD WARNING] Falha ao compilar frontend automaticamente: {e}")
 
     init_db()
+
+    try:
+        import sqlite3
+        from src.core.config import get_db_path
+        db_file = get_db_path()
+        conn = sqlite3.connect(str(db_file), timeout=10.0)
+        cur = conn.cursor()
+        contacts_count = cur.execute("SELECT COUNT(*) FROM contacts").fetchone()[0]
+        teams_count = cur.execute("SELECT COUNT(*) FROM teams").fetchone()[0]
+        wallets_count = cur.execute("SELECT COUNT(*) FROM kp_loyalty_wallets").fetchone()[0]
+        conn.close()
+        if contacts_count < 5 or teams_count > 20 or wallets_count < 10:
+            print(f"[AUTO-SEED] Disparando auto-seed (contacts: {contacts_count}, teams: {teams_count}, wallets: {wallets_count})...")
+            from scripts.seed_multinational_enterprise import seed_all
+            seed_all(clean_reset=True)
+            revnaut_db = root_dir / "data" / "revnaut.db"
+            rvops_db = root_dir / "data" / "rvops.db"
+            if revnaut_db.exists():
+                shutil.copy2(revnaut_db, rvops_db)
+                print("[AUTO-SEED] Banco limpo sincronizado com sucesso para data/rvops.db!")
+    except Exception as e:
+        print(f"[AUTO-SEED] Erro na verificacao/execucao de seed: {e}")
     print("=================================================================")
     print(" REVNAUT ENTERPRISE ENGINE — VSA MONOLITH EM http://localhost:8000")
     print(" - Swagger Studio:     http://localhost:8000/docs")

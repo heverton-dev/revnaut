@@ -7,6 +7,7 @@ Particionamento multi-tenant determinístico, URLs pré-assinadas e blindagem de
 from __future__ import annotations
 import datetime
 import os
+from pathlib import Path
 import uuid
 from typing import Any, Dict, Optional
 import boto3
@@ -159,8 +160,15 @@ class R2StorageClient:
         expires_in: int = 900,
     ) -> Dict[str, Any]:
         """
-        Gera URL temporária para leitura/download direto do Cloudflare R2.
+        Gera URL temporária para leitura/download direto do Cloudflare R2 ou storage local.
         """
+        is_mock = not self.access_key_id or self.access_key_id.startswith("mock-") or "internal" in str(self.endpoint_url)
+        if is_mock:
+            return {
+                "download_url": f"/api/v1/storage/files/{key}",
+                "key": key,
+                "expires_in": expires_in,
+            }
         try:
             url = self._s3_client.generate_presigned_url(
                 ClientMethod="get_object",
@@ -186,7 +194,7 @@ class R2StorageClient:
         *,
         data_bytes: Optional[bytes] = None,
     ) -> str:
-        """Upload direto de bytes para workers internos."""
+        """Upload direto de bytes para workers internos com persistência em disco local e R2."""
         payload = data if data is not None else (data_bytes or b"")
         _, ext = os.path.splitext(key.lower())
         if ext in PROHIBITED_EXTENSIONS:
@@ -195,14 +203,28 @@ class R2StorageClient:
         if content_type not in ALLOWED_MIME_TYPES:
             raise StorageSecurityException(f"MIME type não permitido por política de segurança: {content_type}")
 
+        # Persistência em disco local (data/storage/{key})
+        local_dir = Path(os.getenv("LOCAL_STORAGE_DIR", "data/storage"))
+        local_file = local_dir / key
         try:
-            self._s3_client.put_object(
-                Bucket=self.bucket_name,
-                Key=key,
-                Body=payload,
-                ContentType=content_type,
-            )
+            local_file.parent.mkdir(parents=True, exist_ok=True)
+            local_file.write_bytes(payload)
         except Exception:
-            # Em ambiente local/CI sem endpoint S3 ativo, garante retorno determinístico da URL do R2
             pass
-        return f"{R2_PUBLIC_DOMAIN.rstrip('/')}/{key}"
+
+        is_mock = not self.access_key_id or self.access_key_id.startswith("mock-") or "internal" in str(self.endpoint_url)
+        if not is_mock:
+            try:
+                self._s3_client.put_object(
+                    Bucket=self.bucket_name,
+                    Key=key,
+                    Body=payload,
+                    ContentType=content_type,
+                )
+                if R2_PUBLIC_DOMAIN and "internal" not in R2_PUBLIC_DOMAIN:
+                    return f"{R2_PUBLIC_DOMAIN.rstrip('/')}/{key}"
+            except Exception:
+                pass
+
+        return f"/api/v1/storage/files/{key}"
+

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
+  <NFe><infNFe Id="NFe35261011222333000144550010008012431949762387" versao="4.00">
+    <ide><nNF>801243</nNF><serie>1</serie><CFOP>5917</CFOP></ide>
+    <dest><CNPJ>11.222.333/0001-44</CNPJ><xNome>Clínica OdontoCampinas</xNome></dest>
+    <total><ICMSTot><vNF>900.00</vNF></ICMSTot></total>
+  </infNFe></NFe>
+  <protNFe versao="4.00"><infProt><chNFe>35261011222333000144550010008012431949762387</chNFe><nProt>13526000BAB9B127</nProt><cStat>100</cStat></infProt></protNFe>
+</nfeProc>

@@ -21,7 +21,7 @@ export interface SurgicalOrder {
   agreement_id: string;
   patient_identifier?: string;
   surgery_date: string;
-  status: "SOLICITADO_FIELD" | "APROVADO_INSIDE" | "EM_POSSE_CLINICA" | "FATURADO_E_REPOSTO";
+  status: "SOLICITADO_FIELD" | "APROVADO_INSIDE" | "EM_POSSE_CLINICA" | "FATURADO_E_REPOSTO" | "REQUESTED" | "APPROVED_PREPARING" | "DISPATCHED_SEALED" | "POSTOP_REPORTED" | string;
   field_consultant_id?: string;
   inside_analyst_id?: string;
   remitted_items_json: string;
@@ -31,6 +31,14 @@ export interface SurgicalOrder {
   billing_order_id?: string;
   created_at: string;
 }
+
+export const normalizeOrderStatus = (status: string): "SOLICITADO_FIELD" | "APROVADO_INSIDE" | "EM_POSSE_CLINICA" | "FATURADO_E_REPOSTO" => {
+  if (status === "REQUESTED" || status === "SOLICITADO_FIELD") return "SOLICITADO_FIELD";
+  if (status === "APPROVED_PREPARING" || status === "APROVADO_INSIDE") return "APROVADO_INSIDE";
+  if (status === "DISPATCHED_SEALED" || status === "EM_POSSE_CLINICA") return "EM_POSSE_CLINICA";
+  if (status === "POSTOP_REPORTED" || status === "FATURADO_E_REPOSTO" || status === "CONCLUIDO_POS_OP") return "FATURADO_E_REPOSTO";
+  return "SOLICITADO_FIELD";
+};
 
 export interface PartnerAgreement {
   id: string;
@@ -705,7 +713,7 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {columns.map((col) => {
-                const colOrders = orders.filter((o) => o.status === col.id);
+                const colOrders = orders.filter((o) => normalizeOrderStatus(o.status) === col.id);
                 return (
                   <div
                     key={col.id}
@@ -720,70 +728,73 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
                       </span>
                     </div>
                     <div className="flex-1 space-y-3 overflow-y-auto">
-                      {colOrders.map((order) => (
-                        <div
-                          key={order.id}
-                          onClick={() => setSelectedOrder(order)}
-                          className="p-3 bg-surface-bg hover:bg-surface-card border border-border hover:border-brand-primary rounded-md cursor-pointer transition-all shadow-card"
-                        >
-                          <div className="flex justify-between items-start mb-2">
-                            <span className="text-xs font-mono text-brand-primary font-semibold">
-                              {order.id}
-                            </span>
-                            <span className="text-[11px] text-text-secondary font-mono">
-                              {order.surgery_date}
-                            </span>
-                          </div>
-                          <h4 className="text-sm font-medium text-text-main mb-2">
-                            {order.patient_identifier || "Paciente Sem Identificação"}
-                          </h4>
-
-                          {order.status === "SOLICITADO_FIELD" && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleApprove(order.id);
-                              }}
-                              className="w-full mt-2 py-1.5 px-3 bg-brand-primary hover:bg-brand-primary-hover text-text-inverse text-xs font-semibold rounded transition-colors flex items-center justify-center gap-1.5"
-                            >
-                              <CheckCircle2 className="w-3.5 h-3.5" />
-                              Aprovar Remessa
-                            </button>
-                          )}
-
-                          {order.status === "APROVADO_INSIDE" && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDispatch(order.id);
-                              }}
-                              className="w-full mt-2 py-1.5 px-3 bg-status-success text-text-inverse text-xs font-semibold rounded transition-colors flex items-center justify-center gap-1.5"
-                            >
-                              <Truck className="w-3.5 h-3.5" />
-                              Despachar Maleta
-                            </button>
-                          )}
-
-                          {order.status === "EM_POSSE_CLINICA" && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setPostopOrder(order);
-                              }}
-                              className="w-full mt-2 py-1.5 px-3 bg-brand-navy-subtle hover:bg-brand-primary text-brand-navy hover:text-text-inverse border border-brand-navy/30 text-xs font-semibold rounded transition-colors flex items-center justify-center gap-1.5"
-                            >
-                              <FileText className="w-3.5 h-3.5" />
-                              Conciliar Pós-Op CFOP 5.113
-                            </button>
-                          )}
-
-                          {order.status === "FATURADO_E_REPOSTO" && (
-                            <div className="mt-2 text-[11px] text-status-success font-mono bg-status-success-subtle p-1.5 rounded border border-status-success/20">
-                              Nota: {order.billing_order_id || "CFOP 5.113 Emitida"}
+                      {colOrders.map((order) => {
+                        const normStatus = normalizeOrderStatus(order.status);
+                        return (
+                          <div
+                            key={order.id}
+                            onClick={() => setSelectedOrder(order)}
+                            className="p-3 bg-surface-bg hover:bg-surface-card border border-border hover:border-brand-primary rounded-md cursor-pointer transition-all shadow-card"
+                          >
+                            <div className="flex justify-between items-start mb-2">
+                              <span className="text-xs font-mono text-brand-primary font-semibold">
+                                {order.id}
+                              </span>
+                              <span className="text-[11px] text-text-secondary font-mono">
+                                {order.surgery_date}
+                              </span>
                             </div>
-                          )}
-                        </div>
-                      ))}
+                            <h4 className="text-sm font-medium text-text-main mb-2">
+                              {order.patient_identifier || "Paciente Sem Identificação"}
+                            </h4>
+
+                            {normStatus === "SOLICITADO_FIELD" && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleApprove(order.id);
+                                }}
+                                className="w-full mt-2 py-1.5 px-3 bg-brand-primary hover:bg-brand-primary-hover text-text-inverse text-xs font-semibold rounded transition-colors flex items-center justify-center gap-1.5"
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                Aprovar Remessa
+                              </button>
+                            )}
+
+                            {normStatus === "APROVADO_INSIDE" && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDispatch(order.id);
+                                }}
+                                className="w-full mt-2 py-1.5 px-3 bg-status-success text-text-inverse text-xs font-semibold rounded transition-colors flex items-center justify-center gap-1.5"
+                              >
+                                <Truck className="w-3.5 h-3.5" />
+                                Despachar Maleta
+                              </button>
+                            )}
+
+                            {normStatus === "EM_POSSE_CLINICA" && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setPostopOrder(order);
+                                }}
+                                className="w-full mt-2 py-1.5 px-3 bg-brand-navy-subtle hover:bg-brand-primary text-brand-navy hover:text-text-inverse border border-brand-navy/30 text-xs font-semibold rounded transition-colors flex items-center justify-center gap-1.5"
+                              >
+                                <FileText className="w-3.5 h-3.5" />
+                                Conciliar Pós-Op CFOP 5.113
+                              </button>
+                            )}
+
+                            {normStatus === "FATURADO_E_REPOSTO" && (
+                              <div className="mt-2 text-[11px] text-status-success font-mono bg-status-success-subtle p-1.5 rounded border border-status-success/20">
+                                Nota: {order.billing_order_id || "CFOP 5.113 Emitida"}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                       {colOrders.length === 0 && (
                         <div className="h-24 flex items-center justify-center border border-dashed border-border rounded text-xs text-text-muted">
                           Sem ordens neste estágio
