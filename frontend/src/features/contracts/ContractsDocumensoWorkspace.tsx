@@ -115,7 +115,7 @@ export const ContractsDocumensoWorkspace: React.FC = () => {
 
       if (dealsRes.ok) {
         const dJson = await dealsRes.json();
-        const dList: DealOption[] = Array.isArray(dJson) ? dJson : dJson.deals || [];
+        const dList: DealOption[] = Array.isArray(dJson) ? dJson : (Array.isArray(dJson?.deals) ? dJson.deals : []);
         setDeals(dList);
         if (dList.length > 0) {
           setSelectedDealId(String(dList[0].id));
@@ -360,10 +360,10 @@ export const ContractsDocumensoWorkspace: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-text-main">
-            Central de Contratos Digitais Documenso, Catálogo ANVISA & Alçadas
+            Propostas e Contratos com Assinatura Digital
           </h1>
           <p className="text-xs sm:text-sm text-text-secondary mt-1">
-            Emissão de minutas de comodato cirúrgico com assinatura SHA-256, calculadora de propostas multi-tabela e custódia no Cloudflare R2.
+            Emissão de propostas comerciais e contratos com assinatura digital, catálogo de produtos e custódia segura de arquivos.
           </p>
         </div>
         <Button
@@ -408,9 +408,9 @@ export const ContractsDocumensoWorkspace: React.FC = () => {
         activeTab={activeTab}
         onChange={setActiveTab}
         tabs={[
-          { id: "documenso_lifecycle", label: "Ciclo de Vida de Contratos Documenso", count: contracts.length },
-          { id: "anvisa_catalog_pricing", label: "Catálogo ANVISA & Simulador de Proposta", count: products.length },
-          { id: "r2_custody", label: "Custódia de Minutas PDF no R2" },
+          { id: "documenso_lifecycle", label: "Propostas e Contratos Digitais", count: contracts.length },
+          { id: "anvisa_catalog_pricing", label: "Catálogo & Simulador de Proposta", count: products.length },
+          { id: "r2_custody", label: "Arquivos Salvos e Minutas PDF" },
         ]}
       />
 
@@ -524,16 +524,16 @@ export const ContractsDocumensoWorkspace: React.FC = () => {
                               {c.title}
                             </span>
                             <Badge variant={isSigned ? "success" : "warning"}>
-                              {isSigned ? "ASSINADO SHA-256" : c.status}
+                              {isSigned ? "ASSINADO DIGITALMENTE" : c.status}
                             </Badge>
                           </div>
                           <p className="text-xs text-text-secondary">
-                            Signatário: {c.signer_name || signerName} • Doc ID:{" "}
+                            Signatário: {c.signer_name || signerName} • Código:{" "}
                             <code className="font-mono">{c.documenso_document_id || c.id}</code>
                           </p>
                           {c.sha256_hash && (
                             <p className="text-[11px] font-mono text-status-success break-all">
-                              SHA-256: {c.sha256_hash}
+                              Validação Digital: {c.sha256_hash.slice(0, 24)}...
                             </p>
                           )}
                         </div>
@@ -546,7 +546,7 @@ export const ContractsDocumensoWorkspace: React.FC = () => {
                             className="shrink-0 gap-1.5"
                           >
                             <ShieldCheck className="h-3.5 w-3.5 text-status-success" />
-                            Simular Assinatura SHA-256
+                            Simular Assinatura Digital
                           </Button>
                         )}
                       </div>
@@ -721,9 +721,9 @@ export const ContractsDocumensoWorkspace: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="border-border">
             <CardHeader>
-              <CardTitle>Upload Direto de Minutas PDF no Cloudflare R2</CardTitle>
+              <CardTitle>Upload Direto de Minutas PDF (Arquivos Salvos)</CardTitle>
               <CardDescription>
-                Envio criptografado via Presigned PUT URL S3 v4 com isolamento por tenant.
+                Armazenamento seguro com isolamento por conta.
               </CardDescription>
             </CardHeader>
             <CardContent>

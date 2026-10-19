@@ -11,23 +11,35 @@ import tempfile
 from pathlib import Path
 import pytest
 
+# ISOLAMENTO GLOBAL IMEDIATO: configurado antes de qualquer teste carregar módulos
+_tmp_dir = Path("/tmp") if Path("/tmp").exists() else Path(tempfile.gettempdir())
+try:
+    _tmp_dir.mkdir(parents=True, exist_ok=True)
+except Exception:
+    pass
+
+_test_db_path = str((_tmp_dir / "test_revnaut.db").resolve())
+os.environ["REVNAUT_DB_PATH"] = _test_db_path
+os.environ["RVOPS_DB_PATH"] = _test_db_path
+
+import src.core.config
+src.core.config.DB_PATH = Path(_test_db_path)
+
+# Remove banco de teste anterior se existir para garantir isolamento limpo
+try:
+    if os.path.exists(_test_db_path):
+        os.remove(_test_db_path)
+except Exception:
+    pass
+
+from src.core.database import init_db
+init_db()
+
 @pytest.fixture(scope="session", autouse=True)
 def setup_isolated_test_database():
-    temp_dir = tempfile.mkdtemp(prefix="revnaut_test_")
-    test_db_path = os.path.join(temp_dir, "test_rvops.db")
-    
-    # Define caminhos de ambiente isolados
-    os.environ["REVNAUT_DB_PATH"] = test_db_path
-    os.environ["RVOPS_DB_PATH"] = test_db_path
-    
-    # Inicializa o schema e seeds limpos no banco de testes
-    from src.core.database import init_db
-    init_db()
-    
-    yield test_db_path
-    
-    # Teardown: limpa o diretório temporário após a suíte de testes
+    yield _test_db_path
     try:
-        shutil.rmtree(temp_dir, ignore_errors=True)
+        if os.path.exists(_test_db_path):
+            os.remove(_test_db_path)
     except Exception:
         pass

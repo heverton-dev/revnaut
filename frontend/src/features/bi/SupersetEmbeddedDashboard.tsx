@@ -172,12 +172,12 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
   const [activeAccount] = useState<string>(initialAccountId || "0f14ffff");
   const [studioTab, setStudioTab] = useState<string>("rls_studio");
 
-  // Estados BI RLS & Export
   const [loadingToken, setLoadingToken] = useState<boolean>(true);
   const [tokenData, setTokenData] = useState<GuestTokenData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState<boolean>(false);
   const [exportSuccess, setExportSuccess] = useState<string | null>(null);
+  const [showTechnicalDetails, setShowTechnicalDetails] = useState<boolean>(false);
 
   // Estados Cockpit Executivo
   const [pipelineMetrics, setPipelineMetrics] = useState<PipelineMetrics | null>(null);
@@ -381,10 +381,10 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
               <TrendingUp className="h-4 w-4 text-brand-primary" />
             </div>
             <p className="text-xl font-bold text-text-main mt-2">
-              {formatBrl(pipelineMetrics?.pipelineTotal ?? pipelineMetrics?.total_value ?? pipelineMetrics?.pipeline_total ?? 0)}
+              {formatBrl(pipelineMetrics?.total_value ?? pipelineMetrics?.pipelineTotal ?? pipelineMetrics?.pipeline_total ?? 0)}
             </p>
             <p className="text-xs text-text-secondary mt-1">
-              {(pipelineMetrics?.totalDeals ?? pipelineMetrics?.total_deals ?? 0)} oportunidades • Conv. {(pipelineMetrics?.conversionRate ?? pipelineMetrics?.conversion_rate ?? pipelineMetrics?.win_rate ?? 0)}%
+              {(pipelineMetrics?.total_deals ?? pipelineMetrics?.totalDeals ?? pipelineMetrics?.dealsCount ?? 0)} oportunidades • Conv. {(pipelineMetrics?.conversion_rate ?? pipelineMetrics?.conversionRate ?? pipelineMetrics?.win_rate ?? 0)}%
             </p>
           </Card>
 
@@ -396,10 +396,10 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
               <BarChart3 className="h-4 w-4 text-status-success" />
             </div>
             <p className="text-xl font-bold text-status-success mt-2">
-              {formatBrl(pipelineMetrics?.mrr ?? pipelineMetrics?.closedWonMRR ?? pipelineMetrics?.won_value ?? 0)}
+              {formatBrl(pipelineMetrics?.won_value ?? pipelineMetrics?.mrr ?? pipelineMetrics?.closedWonMRR ?? 0)}
             </p>
             <p className="text-xs text-text-secondary mt-1">
-              Fechado Ganho: {formatBrl(pipelineMetrics?.closedWonMRR ?? pipelineMetrics?.won_value ?? pipelineMetrics?.mrr ?? 0)}
+              Fechado Ganho: {formatBrl(pipelineMetrics?.won_value ?? pipelineMetrics?.closedWonMRR ?? pipelineMetrics?.mrr ?? 0)}
             </p>
           </Card>
 
@@ -647,13 +647,23 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
             <CardContent className="space-y-4">
               {/* Gráfico SVG Nativo do Painel Selecionado */}
               <div className="p-4 rounded-lg bg-surface-bg border border-border-subtle space-y-3">
-                <div className="flex items-center justify-between text-xs">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs gap-2">
                   <span className="font-semibold text-text-main">
                     Curva de Performance Operacional ({selectedDashType})
                   </span>
-                  <span className="text-text-secondary">
-                    Escopo: {tokenData?.rls_clause || "account_id = '0f14ffff'"}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-text-secondary">
+                      {showTechnicalDetails ? `Escopo: ${tokenData?.rls_clause || "account_id = '0f14ffff'"}` : "Escopo: Todos os dados da unidade"}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowTechnicalDetails((prev) => !prev)}
+                      className="text-[11px] h-6 px-2 text-text-muted hover:text-text-main border border-border-subtle"
+                    >
+                      {showTechnicalDetails ? "Ocultar Detalhes" : "Detalhes Técnicos (Avançado)"}
+                    </Button>
+                  </div>
                 </div>
                 <svg className="w-full h-36" viewBox="0 0 400 110">
                   <line x1="20" y1="95" x2="390" y2="95" stroke="currentColor" className="text-border" strokeWidth="1" />
@@ -666,69 +676,71 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                   <div className="p-2 rounded bg-surface-card border border-border-subtle">
                     <span className="text-text-muted block">Volume Pipeline</span>
-                    <strong className="text-text-main">{formatBrl(pipelineMetrics?.pipelineTotal ?? pipelineMetrics?.total_value ?? pipelineMetrics?.pipeline_total ?? 0)}</strong>
+                    <strong className="text-text-main">{formatBrl(pipelineMetrics?.total_value ?? pipelineMetrics?.pipelineTotal ?? pipelineMetrics?.pipeline_total ?? 0)}</strong>
                   </div>
                   <div className="p-2 rounded bg-surface-card border border-border-subtle">
                     <span className="text-text-muted block">Negócios Mapeados</span>
-                    <strong className="text-text-main">{pipelineMetrics?.totalDeals ?? pipelineMetrics?.total_deals ?? 0}</strong>
+                    <strong className="text-text-main">{pipelineMetrics?.total_deals ?? pipelineMetrics?.totalDeals ?? 0}</strong>
                   </div>
                   <div className="p-2 rounded bg-surface-card border border-border-subtle">
                     <span className="text-text-muted block">Conversão Funil</span>
-                    <strong className="text-status-success">{(pipelineMetrics?.conversionRate ?? pipelineMetrics?.conversion_rate ?? pipelineMetrics?.win_rate ?? 0)}%</strong>
+                    <strong className="text-status-success">{(pipelineMetrics?.conversion_rate ?? pipelineMetrics?.conversionRate ?? pipelineMetrics?.win_rate ?? 0)}%</strong>
                   </div>
                   <div className="p-2 rounded bg-surface-card border border-border-subtle">
-                    <span className="text-text-muted block">TTL Guest Token</span>
-                    <strong className="text-text-main">{tokenData?.expires_in_seconds ?? 3600}s</strong>
+                    <span className="text-text-muted block">Status do Sistema</span>
+                    <strong className="text-status-success">Online</strong>
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-border">
-            <CardHeader>
-              <CardTitle>Inspeção Criptográfica Guest Token</CardTitle>
-              <CardDescription>
-                Manifesto JWT HS256 assinado para sessão analítica isolada.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3 text-xs">
-              <div className="p-3 rounded-md bg-surface-bg border border-border-subtle space-y-1.5">
-                <div className="flex justify-between">
-                  <span className="text-text-secondary">Usuário:</span>
-                  <code className="font-mono text-text-main">{selectedUserId}</code>
+          {showTechnicalDetails && (
+            <Card className="border-border">
+              <CardHeader>
+                <CardTitle>Inspeção Criptográfica Guest Token</CardTitle>
+                <CardDescription>
+                  Manifesto JWT HS256 assinado para sessão analítica isolada.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3 text-xs">
+                <div className="p-3 rounded-md bg-surface-bg border border-border-subtle space-y-1.5">
+                  <div className="flex justify-between">
+                    <span className="text-text-secondary">Usuário:</span>
+                    <code className="font-mono text-text-main">{selectedUserId}</code>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-text-secondary">Dashboard:</span>
+                    <code className="font-mono text-text-main">{tokenData?.dashboard_id || resolvedDashboardId}</code>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-text-secondary">Domínio Superset:</span>
+                    <code className="font-mono text-text-main truncate max-w-[160px]">
+                      {tokenData?.superset_domain || "local-rls-engine"}
+                    </code>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-text-secondary">Dashboard:</span>
-                  <code className="font-mono text-text-main">{tokenData?.dashboard_id || resolvedDashboardId}</code>
+                <div>
+                  <span className="text-[11px] font-semibold uppercase text-text-secondary block mb-1">
+                    Token JWT Emitido
+                  </span>
+                  <div className="p-2.5 rounded bg-surface-bg border border-border font-mono text-[10px] text-text-secondary break-all max-h-28 overflow-y-auto">
+                    {tokenData?.token || "Carregando token..."}
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-text-secondary">Domínio Superset:</span>
-                  <code className="font-mono text-text-main truncate max-w-[160px]">
-                    {tokenData?.superset_domain || "local-rls-engine"}
-                  </code>
-                </div>
-              </div>
-              <div>
-                <span className="text-[11px] font-semibold uppercase text-text-secondary block mb-1">
-                  Token JWT Emitido
-                </span>
-                <div className="p-2.5 rounded bg-surface-bg border border-border font-mono text-[10px] text-text-secondary break-all max-h-28 overflow-y-auto">
-                  {tokenData?.token || "Carregando token..."}
-                </div>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={fetchGuestToken}
-                disabled={loadingToken}
-                className="w-full gap-1.5"
-              >
-                <RefreshCw className="h-3.5 w-3.5" />
-                Renovar Guest Token RLS
-              </Button>
-            </CardContent>
-          </Card>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={fetchGuestToken}
+                  disabled={loadingToken}
+                  className="w-full gap-1.5"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  Renovar Token Analítico
+                </Button>
+              </CardContent>
+            </Card>
+          )}
         </div>
       ) : (
         /* Console Analítico Text-to-SQL */

@@ -203,7 +203,7 @@ export function RbacHierarchyTree({
         setRoles(list);
         if (list.length > 0 && !selectedRoleId) {
           setSelectedRoleId(list[0].id);
-          setRolePermissions(list[0].permissions || []);
+          setRolePermissions(Array.isArray(list[0].permissions) ? list[0].permissions : []);
           setNewCommRoleId(list[0].id);
         }
       }
@@ -259,7 +259,7 @@ export function RbacHierarchyTree({
       const res = await fetch(`/api/v1/hierarchy/roles/${roleId}/permissions?account_id=${accountId}`);
       if (res.ok) {
         const data = await res.json();
-        setRolePermissions(data.permissions || []);
+        setRolePermissions(Array.isArray(data?.permissions) ? data.permissions : []);
       }
     } catch {
       // fallback
@@ -481,14 +481,14 @@ export function RbacHierarchyTree({
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold text-text-main flex items-center gap-2">
               <Shield className="h-5 w-5 text-brand-primary" />
-              Governança RBAC Dual Tree & Comissionamento Multinível
+              Equipes, Metas e Comissões
             </h1>
             <Badge variant="outline" className="border-brand-primary/30 text-brand-primary bg-brand-primary-subtle text-xs">
               18 Endpoints Expostos
             </Badge>
           </div>
           <p className="text-xs text-text-secondary mt-0.5">
-            Organograma DAG, matriz de permissões por escopo, metas progressivas e comissionamento bipartido (70% Field / 30% Inside).
+            Estrutura de equipes e unidades de negócio, metas de vendas e comissionamento.
           </p>
         </div>
       </div>
@@ -498,7 +498,7 @@ export function RbacHierarchyTree({
         activeTab={activeTab}
         onChange={(tabId) => setActiveTab(tabId)}
         tabs={[
-          { id: "tree", label: "Organograma DAG Dual Tree", count: teams.length },
+          { id: "tree", label: "Estrutura de Equipes e Unidades", count: teams.length },
           { id: "permissions", label: "Cargos & Matriz de Permissões", count: roles.length },
           { id: "targets", label: "Metas Comerciais & Sugestão", count: targets.length },
           { id: "commissions", label: "Comissionamento Bipartido (70/30)", count: commissionRules.length },
@@ -506,7 +506,7 @@ export function RbacHierarchyTree({
       />
 
       {/* ========================================================================= */}
-      {/* TAB 1: ORGANOGRAMA DAG DUAL TREE */}
+      {/* TAB 1: ESTRUTURA DE EQUIPES E UNIDADES */}
       {/* ========================================================================= */}
       {activeTab === "tree" && (
         <div className="space-y-4">
@@ -522,7 +522,7 @@ export function RbacHierarchyTree({
               <div className="flex items-center gap-2">
                 <Button size="sm" variant="outline" onClick={() => setShowBuModal(true)} className="text-xs">
                   <Plus className="h-3.5 w-3.5 mr-1" />
-                  Nova Business Unit
+                  Nova Unidade de Negócio
                 </Button>
                 <Button size="sm" variant="default" onClick={() => setShowTeamModal(true)} className="text-xs">
                   <Plus className="h-3.5 w-3.5 mr-1" />
@@ -579,15 +579,15 @@ export function RbacHierarchyTree({
               </div>
             </Card>
 
-            {/* Coluna 2: Equipes Regionais DAG */}
+            {/* Coluna 2: Equipes Regionais */}
             <Card className="lg:col-span-2 p-4 border border-border bg-surface-card space-y-3">
               <div className="flex items-center justify-between border-b border-border pb-2">
                 <h3 className="text-xs font-bold text-text-main flex items-center gap-1.5">
                   <GitFork className="h-4 w-4 text-status-success" />
-                  Árvore DAG de Equipes & Reparenting Anti-Loop ({teams.length})
+                  Estrutura de Equipes e Unidades ({teams.length})
                 </h3>
                 <span className="text-[10px] text-text-muted font-mono">
-                  Validação Matemática de Ciclos no Grafo
+                  Validação de Hierarquia Ativa
                 </span>
               </div>
 
@@ -631,7 +631,7 @@ export function RbacHierarchyTree({
                         </span>
                       </div>
                       <div className="text-[11px] text-text-secondary font-mono mt-0.5">
-                        BU: {team.business_unit_id} {team.parent_id ? `| Pai: ${team.parent_id}` : "| Top Level (Raiz)"}
+                        Unidade: {team.business_unit_id} {team.parent_id ? `| Pai: ${team.parent_id}` : "| Top Level (Raiz)"}
                       </div>
                     </div>
                   </div>
@@ -640,14 +640,14 @@ export function RbacHierarchyTree({
             </Card>
           </div>
 
-          {/* Modal Criar BU */}
+          {/* Modal Criar Unidade */}
           {showBuModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
               <Card className="w-full max-w-sm p-4 bg-surface-card border border-border space-y-3 shadow-xl text-xs">
-                <h3 className="font-bold text-text-main text-sm">Nova Business Unit</h3>
+                <h3 className="font-bold text-text-main text-sm">Nova Unidade de Negócio</h3>
                 <form onSubmit={handleCreateBu} className="space-y-2">
                   <Input
-                    placeholder="Nome da BU (ex: Divisão Implantes)"
+                    placeholder="Nome da Unidade (ex: Divisão Implantes)"
                     value={newBuName}
                     onChange={(e) => setNewBuName(e.target.value)}
                     required
@@ -660,7 +660,7 @@ export function RbacHierarchyTree({
                   />
                   <div className="flex justify-end gap-2 pt-2">
                     <Button type="button" variant="outline" size="sm" onClick={() => setShowBuModal(false)}>Cancelar</Button>
-                    <Button type="submit" variant="default" size="sm">Criar BU</Button>
+                    <Button type="submit" variant="default" size="sm">Criar Unidade</Button>
                   </div>
                 </form>
               </Card>
@@ -680,7 +680,7 @@ export function RbacHierarchyTree({
                     required
                   />
                   <div>
-                    <label className="text-[11px] text-text-secondary block mb-1">Business Unit</label>
+                    <label className="text-[11px] text-text-secondary block mb-1">Unidade de Negócio</label>
                     <select
                       value={newTeamBuId}
                       onChange={(e) => setNewTeamBuId(e.target.value)}
@@ -699,7 +699,7 @@ export function RbacHierarchyTree({
                       onChange={(e) => setNewTeamParentId(e.target.value)}
                       className="w-full p-1.5 rounded border border-border bg-surface-bg text-xs"
                     >
-                      <option value="">Nenhuma (Raiz da BU)</option>
+                      <option value="">Nenhuma (Raiz da Unidade)</option>
                       {teams.map((t) => (
                         <option key={t.id} value={t.id}>{t.name}</option>
                       ))}
@@ -843,11 +843,11 @@ export function RbacHierarchyTree({
                       onChange={(e) => setNewRoleScope(e.target.value)}
                       className="w-full p-1.5 rounded border border-border bg-surface-bg text-xs"
                     >
-                      <option value="self">Próprio (Self - apenas leads atribuídos)</option>
-                      <option value="team">Equipe (Team - registros da regional)</option>
-                      <option value="subtree">Sub-árvore (Subtree - time e descendentes)</option>
-                      <option value="business_unit">Divisão (Business Unit)</option>
-                      <option value="tenant_global">Global (Tenant Global - C-Level)</option>
+                      <option value="self">Individual (Apenas registros atribuídos)</option>
+                      <option value="team">Equipe (Registros da regional)</option>
+                      <option value="subtree">Sub-árvore (Time e equipes subordinadas)</option>
+                      <option value="business_unit">Unidade de Negócio</option>
+                      <option value="tenant_global">Global (Toda a empresa)</option>
                     </select>
                   </div>
                   <div className="flex justify-end gap-2 pt-2">
@@ -896,7 +896,7 @@ export function RbacHierarchyTree({
                   >
                     <option value="team">Equipe Regional</option>
                     <option value="user">Consultor Individual</option>
-                    <option value="bu">Business Unit</option>
+                    <option value="bu">Unidade de Negócio</option>
                   </select>
                 </div>
 

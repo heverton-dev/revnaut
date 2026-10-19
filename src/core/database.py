@@ -2133,29 +2133,37 @@ def init_db() -> None:
         cur.execute("CREATE INDEX IF NOT EXISTS idx_contacts_scope ON contacts(account_id, team_id, owner_id);")
         cur.execute("CREATE INDEX IF NOT EXISTS idx_conversations_scope ON conversations(account_id, team_id, owner_id);")
 
-        # Garantia determinística do Super Admin (User God único - Heverton Eduardo Peres)
-        # Regra Inegociável: Nenhum outro usuário no sistema pode possuir is_superadmin = 1
+        # Garantia determinística do Super Admin e dos 6 perfis canônicos operacionais (Cognitive RBAC)
         superadmin_email = "hevertoneduardoperes@gmail.com"
         superadmin_id = "usr-superadmin-god"
-        superadmin_name = "Heverton Eduardo Peres (Super Admin)"
         superadmin_pwd_hash = "579ac58e034634060983ac3b0100617b0e10fa05438675d44bb19b1533cdb0a6"
+        dev_pwd_hash = "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9"
 
-        cur.execute("UPDATE users SET is_superadmin = 0 WHERE email != ? AND id != ?", (superadmin_email, superadmin_id))
-        cur.execute("SELECT id FROM users WHERE email = ? OR id = ?", (superadmin_email, superadmin_id))
-        existing_god = cur.fetchone()
-        if existing_god:
-            cur.execute(
-                "UPDATE users SET name = ?, email = ?, role = 'Super Admin', is_superadmin = 1, password_hash = ? WHERE id = ?",
-                (superadmin_name, superadmin_email, superadmin_pwd_hash, existing_god[0])
-            )
-        else:
-            cur.execute(
-                "INSERT INTO users (id, account_id, name, email, role, is_superadmin, password_hash) VALUES "
-                "(?, '0f14ffff', ?, ?, 'Super Admin', 1, ?)",
-                (superadmin_id, superadmin_name, superadmin_email, superadmin_pwd_hash)
-            )
+        canonical_users = [
+            (superadmin_id, "0f14ffff", "Heverton Eduardo Peres", superadmin_email, "Super Admin", 1, superadmin_pwd_hash, "+55 11 99999-0001"),
+            ("usr-field-ricardo", "0f14ffff", "Ricardo Mendes", "ricardo.campo@salesrocketbrasil.com.br", "Consultor Externo (Campo)", 0, dev_pwd_hash, "+55 11 99999-0002"),
+            ("usr-inside-camila", "0f14ffff", "Camila Ramos", "camila.atendimento@salesrocketbrasil.com.br", "Consultor Interno (Atendimento)", 0, dev_pwd_hash, "+55 11 99999-0003"),
+            ("usr-log-marcos", "0f14ffff", "Marcos Silva", "marcos.logistica@salesrocketbrasil.com.br", "Logística e Estoque (Expedição)", 0, dev_pwd_hash, "+55 11 99999-0004"),
+            ("usr-support-juliana", "0f14ffff", "Dra. Juliana Frota", "juliana.clinico@salesrocketbrasil.com.br", "Suporte Clínico e Pós-Venda", 0, dev_pwd_hash, "+55 11 99999-0005"),
+            ("usr-manager-roberto", "0f14ffff", "Roberto Silveira", "roberto.gerente@salesrocketbrasil.com.br", "Gerente Comercial", 0, dev_pwd_hash, "+55 11 99999-0006"),
+        ]
+
+        for uid, acc_id, uname, uemail, urole, is_god, pwd_h, uphone in canonical_users:
+            cur.execute("SELECT id FROM users WHERE id = ? OR email = ?", (uid, uemail))
+            found_u = cur.fetchone()
+            if found_u:
+                cur.execute(
+                    "UPDATE users SET name = ?, email = ?, role = ?, is_superadmin = ?, password_hash = ?, phone = ?, is_active = 1 WHERE id = ?",
+                    (uname, uemail, urole, is_god, pwd_h, uphone, found_u[0])
+                )
+            else:
+                cur.execute(
+                    "INSERT INTO users (id, account_id, name, email, role, is_superadmin, password_hash, phone, is_active) VALUES "
+                    "(?, ?, ?, ?, ?, ?, ?, ?, 1)",
+                    (uid, acc_id, uname, uemail, urole, is_god, pwd_h, uphone)
+                )
+
         cur.execute("UPDATE users SET is_superadmin = 0 WHERE email != ?", (superadmin_email,))
-        cur.execute("UPDATE users SET role = 'Consultor Comercial' WHERE email != ? AND role = 'Super Admin'", (superadmin_email,))
 
         # Seed determinístico do estudo de demonstração DICOM/STL (HOMOLOG-15)
         cur.execute("SELECT id FROM imaging_studies WHERE id = 'study-demo-01'")

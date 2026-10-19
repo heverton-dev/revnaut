@@ -16,7 +16,7 @@ def get_db_path() -> Path:
         p = Path(db_env)
         p.parent.mkdir(parents=True, exist_ok=True)
         return p
-    return DATA_DIR / "rvops.db"
+    return DATA_DIR / "revnaut.db"
 
 DB_PATH = get_db_path()
 

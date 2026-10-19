@@ -51,7 +51,7 @@ export const GranolaCopilotCard: React.FC<GranolaCopilotCardProps> = ({ dealId: 
         const res = await fetch("/api/v1/deals");
         if (res.ok) {
           const data = await res.json();
-          const list = Array.isArray(data) ? data : data.deals || [];
+          const list = Array.isArray(data) ? data : (Array.isArray(data?.deals) ? data.deals : []);
           setDeals(list);
           if (!selectedDealId && list.length > 0) {
             setSelectedDealId(list[0].id);

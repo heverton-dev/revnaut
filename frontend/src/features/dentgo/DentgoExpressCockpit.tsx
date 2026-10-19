@@ -493,10 +493,10 @@ export const DentgoExpressCockpit: React.FC = () => {
   };
 
   const tabsConfig = [
-    { id: "orders", label: "Despacho Same-Day & 6 Estágios" },
-    { id: "hubs", label: "Micro-Hubs & Radar Haversine" },
-    { id: "fefo", label: "Liquidação FEFO (Flash Deals)" },
-    { id: "split", label: "Split Financeiro & Repasses" },
+    { id: "orders", label: "Despacho Rápido (45 min)" },
+    { id: "hubs", label: "Busca de Estoque Mais Próximo" },
+    { id: "fefo", label: "Ofertas de Lotes Próximos do Vencimento" },
+    { id: "split", label: "Repasses e Custos de Entrega" },
   ];
 
   return (
@@ -510,10 +510,10 @@ export const DentgoExpressCockpit: React.FC = () => {
             </div>
             <div>
               <h1 className="text-xl font-bold tracking-tight text-text-main">
-                DENTGO Express • Cockpit de Logística e Despacho Cirúrgico
+                Entrega Rápida (45 min) • Logística e Despacho Cirúrgico
               </h1>
               <p className="text-xs text-text-secondary mt-0.5">
-                Esteira de 6 estágios, Radar Haversine, Liquidação Preventiva FEFO e Split Automático.
+                Despacho prioritário, busca de estoque mais próximo, ofertas de lotes e controle de entregas.
               </p>
             </div>
           </div>
@@ -914,10 +914,10 @@ export const DentgoExpressCockpit: React.FC = () => {
               <div className="flex items-center justify-between border-b border-border pb-3">
                 <div>
                   <h3 className="text-sm font-bold text-text-main">
-                    Radar Geográfico Haversine de Suprimento Emergencial
+                    Busca de Estoque Mais Próximo para Atendimento Imediato
                   </h3>
                   <p className="text-xs text-text-secondary">
-                    Localização instantânea do Hub mais próximo com lote ANVISA em estoque e ETA estimado
+                    Localização instantânea da unidade mais próxima com lote esterilizado em estoque e tempo de entrega estimado
                   </p>
                 </div>
                 <span className="text-[10px] font-mono bg-surface-bg px-2 py-0.5 rounded text-text-muted border border-border">
@@ -1013,14 +1013,14 @@ export const DentgoExpressCockpit: React.FC = () => {
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-surface-card border border-border rounded-xl p-4 shadow-card">
             <div>
-              <h3 className="text-sm font-bold text-text-main">Motor de Ofertas Relâmpago FEFO</h3>
+              <h3 className="text-sm font-bold text-text-main">Ofertas de Lotes Próximos do Vencimento</h3>
               <p className="text-xs text-text-secondary">
-                Detecção inteligente de lotes esterilizados com validade residual entre 6 e 9 meses
+                Identificação automática de lotes com validade entre 6 e 9 meses para venda com desconto
               </p>
             </div>
             <Button size="sm" onClick={handleRunFefoScan} disabled={scanningFefo} className="gap-1.5">
               <Zap className="w-3.5 h-3.5" />
-              {scanningFefo ? "Escaneando Lotes..." : "Escanear Lotes FEFO (<180-275d)"}
+              {scanningFefo ? "Verificando Lotes..." : "Verificar Lotes com Vencimento Próximo"}
             </Button>
           </div>
 
@@ -1038,7 +1038,7 @@ export const DentgoExpressCockpit: React.FC = () => {
               </div>
             ) : fefoDeals.length === 0 ? (
               <div className="col-span-full py-12 text-center text-xs text-text-muted border border-dashed border-border rounded-xl">
-                Nenhum Flash Deal FEFO ativo no momento. Clique no botão acima para escanear lotes.
+                Nenhuma oferta especial ativa no momento. Clique no botão acima para verificar os lotes.
               </div>
             ) : (
               fefoDeals.map((deal) => (

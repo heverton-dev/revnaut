@@ -611,14 +611,14 @@ export const LandingPageBuilder: React.FC<LandingPageBuilderProps> = ({
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold text-text-main flex items-center gap-2">
               <Globe className="h-5 w-5 text-brand-primary" />
-              Suíte de Marketing Odontológico & Growth B2B
+              Campanhas e Indicações
             </h1>
             <Badge variant="outline" className="border-brand-primary/30 text-brand-primary bg-brand-primary-subtle text-xs">
-              GrapesJS + Listmonk + Mautic + MGM
+              Páginas, E-mails & Indicações
             </Badge>
           </div>
           <p className="text-xs text-text-secondary mt-0.5">
-            Criação de Landing Pages CFO-Compliant no Cloudflare R2, réguas de automação e Member-Get-Member cirúrgico.
+            Criação de páginas para captação de clientes, réguas de automação e programa de indicações.
           </p>
         </div>
       </div>
@@ -628,9 +628,9 @@ export const LandingPageBuilder: React.FC<LandingPageBuilderProps> = ({
         activeTab={activeMainTab}
         onChange={(tabId) => setActiveMainTab(tabId)}
         tabs={[
-          { id: "builder", label: "Construtor GrapesJS & R2" },
-          { id: "automations", label: "Listmonk & Automação Mautic", count: flows.length },
-          { id: "referral", label: "Loop Viral B2B (MGM)", count: mgmDashboard?.total_referrals },
+          { id: "builder", label: "Páginas de Captura" },
+          { id: "automations", label: "Disparo de E-mails & Mensagens Automáticas", count: flows.length },
+          { id: "referral", label: "Programa de Indicações", count: mgmDashboard?.total_referrals },
         ]}
       />
 

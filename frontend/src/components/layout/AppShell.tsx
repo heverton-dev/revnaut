@@ -27,10 +27,11 @@ import {
   PanelLeftOpen,
   ArrowRight,
   LogOut,
+  AlertCircle,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
-import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils";
+import { getActiveUserId, setActiveUserId, ToastPayload } from "@/lib/api";
 
 export interface NavItem {
   id: string;
@@ -48,6 +49,68 @@ export interface AuthUserItem {
   role: string;
   account_id?: string;
   team_id?: string | null;
+  is_superadmin?: boolean | number;
+}
+
+export interface RoleWorkspaceConfig {
+  roleKey: string;
+  displayName: string;
+  visibleRoutes: string[];
+  defaultLandingRoute: string;
+}
+
+export const ROLE_WORKSPACES: Record<string, RoleWorkspaceConfig> = {
+  field_sales: {
+    roleKey: "field_sales",
+    displayName: "Consultor Externo (Campo)",
+    visibleRoutes: ["deals", "contacts", "keypartners", "dentgo", "video_sos", "intelligence"],
+    defaultLandingRoute: "deals",
+  },
+  inside_sales: {
+    roleKey: "inside_sales",
+    displayName: "Consultor Interno (Atendimento)",
+    visibleRoutes: ["omnichannel", "deals", "contacts", "contracts", "scoring", "scheduling"],
+    defaultLandingRoute: "omnichannel",
+  },
+  logistics: {
+    roleKey: "logistics",
+    displayName: "Logística e Estoque (Expedição)",
+    visibleRoutes: ["dentgo", "keypartners", "support", "settings"],
+    defaultLandingRoute: "dentgo",
+  },
+  clinical_support: {
+    roleKey: "clinical_support",
+    displayName: "Suporte Clínico e Pós-Venda",
+    visibleRoutes: ["support", "video_sos", "imaging", "omnichannel", "scheduling"],
+    defaultLandingRoute: "support",
+  },
+  sales_manager: {
+    roleKey: "sales_manager",
+    displayName: "Gerente Comercial",
+    visibleRoutes: ["dashboard", "deals", "contacts", "keypartners", "contracts", "rbac", "marketing"],
+    defaultLandingRoute: "dashboard",
+  },
+  superadmin: {
+    roleKey: "superadmin",
+    displayName: "Diretoria / Administrador Geral",
+    visibleRoutes: [
+      "dashboard", "deals", "contacts", "omnichannel", "scoring", "marketing",
+      "keypartners", "dentgo", "contracts", "video_sos", "imaging",
+      "intelligence", "analytics", "scheduling", "support", "rbac", "settings"
+    ],
+    defaultLandingRoute: "dashboard",
+  },
+};
+
+export function resolveRoleConfig(roleString?: string): RoleWorkspaceConfig {
+  const s = (roleString || "").toLowerCase();
+  if (s.includes("campo") || s.includes("field") || s.includes("externo")) return ROLE_WORKSPACES.field_sales;
+  if (s.includes("inside") || s.includes("atendimento") || s.includes("interno")) return ROLE_WORKSPACES.inside_sales;
+  if (s.includes("log") || s.includes("estoque") || s.includes("expedição") || s.includes("expedicao")) return ROLE_WORKSPACES.logistics;
+  if (s.includes("clínico") || s.includes("clinico") || s.includes("suporte") || s.includes("pós") || s.includes("pos")) return ROLE_WORKSPACES.clinical_support;
+  if (s.includes("gerente") || s.includes("manager")) return ROLE_WORKSPACES.sales_manager;
+  if (s.includes("admin") || s.includes("diretor") || s.includes("super")) return ROLE_WORKSPACES.superadmin;
+  return ROLE_WORKSPACES.superadmin;
 }
 
 export interface AppShellProps {
@@ -79,10 +142,11 @@ export function AppShell({
   const [isCompactSidebar, setIsCompactSidebar] = React.useState(false);
 
   const [selectedUserId, setSelectedUserId] = React.useState<string>(
-    propUserId || "usr-superadmin-god"
+    propUserId || getActiveUserId()
   );
   const [currentUserProfile, setCurrentUserProfile] = React.useState<AuthUserItem | null>(null);
   const [availableUsers, setAvailableUsers] = React.useState<AuthUserItem[]>([]);
+  const [toasts, setToasts] = React.useState<(ToastPayload & { id: string })[]>([]);
   const [healthStatus, setHealthStatus] = React.useState<{
     status: string;
     sqlite_journal_mode: string;
@@ -90,8 +154,25 @@ export function AppShell({
   } | null>(null);
 
   React.useEffect(() => {
+    const handleToastEvent = (e: Event) => {
+      const custom = e as CustomEvent<ToastPayload>;
+      if (custom.detail) {
+        const id = String(Date.now() + Math.random());
+        const newToast = { ...custom.detail, id };
+        setToasts((prev) => [...prev.slice(-4), newToast]);
+        setTimeout(() => {
+          setToasts((prev) => prev.filter((t) => t.id !== id));
+        }, 5000);
+      }
+    };
+    window.addEventListener("revnaut:toast", handleToastEvent);
+    return () => window.removeEventListener("revnaut:toast", handleToastEvent);
+  }, []);
+
+  React.useEffect(() => {
     if (propUserId && propUserId !== selectedUserId) {
       setSelectedUserId(propUserId);
+      setActiveUserId(propUserId);
     }
   }, [propUserId, selectedUserId]);
 
@@ -149,55 +230,75 @@ export function AppShell({
     };
   }, [selectedUserId]);
 
-  const navSections: { title: string; items: NavItem[] }[] = [
+  const [showAllModules, setShowAllModules] = React.useState(false);
+
+  const displayUserName = currentUserProfile?.name || userName;
+  const displayUserRole = currentUserProfile?.role || userRole;
+
+  const currentRoleConfig = React.useMemo(() => {
+    return resolveRoleConfig(currentUserProfile?.role || userRole);
+  }, [currentUserProfile?.role, userRole]);
+
+  const rawNavSections: { title: string; items: NavItem[] }[] = [
     {
-      title: "Core CRM & Vendas",
+      title: "Vendas e Atendimento",
       items: [
-        { id: "dashboard", label: "Cockpit Executivo", icon: BarChart3, scope: "all", shortcut: "1" },
-        { id: "deals", label: "Pipeline & Deals", icon: Briefcase, scope: "all", badge: "Live", shortcut: "D" },
-        { id: "contacts", label: "Cirurgiões & Clínicas", icon: Users, scope: "all", shortcut: "C" },
-        { id: "omnichannel", label: "Inbox Omnichannel", icon: MessageSquare, scope: "inside", badge: "3", shortcut: "O" },
-        { id: "scoring", label: "Lead Scoring ICP", icon: Target, scope: "all", shortcut: "S" },
-        { id: "marketing", label: "Marketing & LPs", icon: Megaphone, scope: "inside", shortcut: "M" },
+        { id: "dashboard", label: "Visão do Dia", icon: BarChart3, shortcut: "1" },
+        { id: "deals", label: "Negociações (Funil)", icon: Briefcase, badge: "Ativo", shortcut: "D" },
+        { id: "contacts", label: "Dentistas e Clínicas", icon: Users, shortcut: "C" },
+        { id: "scoring", label: "Qualificação de Clientes", icon: Target, shortcut: "S" },
+        { id: "marketing", label: "Campanhas e Indicações", icon: Megaphone, shortcut: "M" },
+        { id: "omnichannel", label: "Atendimento WhatsApp", icon: MessageSquare, badge: "3", shortcut: "O" },
       ],
     },
     {
-      title: "Consignação & Cirurgia",
+      title: "Consignação e Logística",
       items: [
-        { id: "keypartners", label: "KeyPartners (Consignados)", icon: Package, scope: "all", badge: "ANVISA", shortcut: "K" },
-        { id: "dentgo", label: "DENTGO (Same-Day)", icon: Truck, scope: "field", badge: "45min", shortcut: "G" },
-        { id: "video_sos", label: "Vídeo Suporte SOS", icon: Video, scope: "all", shortcut: "V" },
-        { id: "contracts", label: "Contratos Documenso", icon: FileCheck2, scope: "inside", shortcut: "T" },
-        { id: "imaging", label: "PACS 3D DICOM/STL", icon: ScanLine, scope: "all", shortcut: "P" },
+        { id: "keypartners", label: "Malas em Consignação", icon: Package, badge: "ANVISA", shortcut: "K" },
+        { id: "dentgo", label: "Entregas Expressas", icon: Truck, badge: "45min", shortcut: "G" },
+        { id: "video_sos", label: "Chamadas e Vídeo", icon: Video, shortcut: "V" },
+        { id: "contracts", label: "Propostas e Contratos", icon: FileCheck2, shortcut: "T" },
+        { id: "imaging", label: "Exames 3D e Tomografias", icon: ScanLine, shortcut: "P" },
       ],
     },
     {
-      title: "Governança & Inteligência",
+      title: "Gestão e Suporte",
       items: [
-        { id: "intelligence", label: "IA Copilot Granola", icon: Sparkles, scope: "all", shortcut: "I" },
-        { id: "analytics", label: "BI Superset RLS", icon: Database, scope: "inside", shortcut: "B" },
-        { id: "scheduling", label: "Cal.com Reativação", icon: Calendar, scope: "field", shortcut: "R" },
-        { id: "rbac", label: "RBAC & Hierarquia", icon: ShieldCheck, scope: "inside", shortcut: "H" },
-        { id: "support", label: "Suporte & RMA", icon: LifeBuoy, scope: "inside", shortcut: "A" },
-        { id: "settings", label: "Configurações & ERP", icon: Settings, scope: "inside", shortcut: "E" },
+        { id: "intelligence", label: "Assistente Comercial", icon: Sparkles, shortcut: "I" },
+        { id: "analytics", label: "Relatórios e Metas", icon: Database, shortcut: "B" },
+        { id: "scheduling", label: "Retorno de Pacientes", icon: Calendar, shortcut: "R" },
+        { id: "support", label: "Suporte Clínico e Garantias", icon: LifeBuoy, shortcut: "A" },
+        { id: "rbac", label: "Equipes e Acessos", icon: ShieldCheck, shortcut: "H" },
+        { id: "settings", label: "Configurações e Notas Fiscais", icon: Settings, shortcut: "E" },
       ],
     },
   ];
 
+  const navSections = React.useMemo(() => {
+    if (showAllModules) return rawNavSections;
+    const allowed = new Set(currentRoleConfig.visibleRoutes);
+    return rawNavSections
+      .map((sec) => ({
+        ...sec,
+        items: sec.items.filter((item) => allowed.has(item.id)),
+      }))
+      .filter((sec) => sec.items.length > 0);
+  }, [showAllModules, currentRoleConfig]);
+
   const allNavItems = React.useMemo(
-    () => navSections.flatMap((sec) => sec.items.map((item) => ({ ...item, section: sec.title }))),
+    () => rawNavSections.flatMap((sec) => sec.items.map((item) => ({ ...item, section: sec.title }))),
     []
   );
 
   const quickCommands = React.useMemo(
     () => [
-      { id: "deals", label: "Criar Novo Negócio / Deal Cirúrgico", section: "Ação Rápida", shortcut: "D" },
-      { id: "contacts", label: "Validar Registro CRO/UF ou Cadastrar Cirurgião", section: "Ação Rápida", shortcut: "C" },
-      { id: "dentgo", label: "Solicitar Entrega DENTGO Same-Day (45min)", section: "Ação Rápida", shortcut: "G" },
-      { id: "keypartners", label: "Verificar Custódia de Kit KeyPartners (Lote ANVISA)", section: "Ação Rápida", shortcut: "K" },
-      { id: "contracts", label: "Gerar Contrato Digital Documenso SHA-256", section: "Ação Rápida", shortcut: "T" },
-      { id: "support", label: "Abrir Queixa Técnica ANVISA RMA ou SOS Cirúrgico", section: "Ação Rápida", shortcut: "A" },
-      { id: "analytics", label: "Consultar Agente Analítico Text-to-SQL", section: "Ação Rápida", shortcut: "B" },
+      { id: "deals", label: "Criar Nova Negociação", section: "Ação Rápida", shortcut: "D" },
+      { id: "contacts", label: "Cadastrar Dentista ou Clínica", section: "Ação Rápida", shortcut: "C" },
+      { id: "dentgo", label: "Solicitar Entrega Rápida (45 min)", section: "Ação Rápida", shortcut: "G" },
+      { id: "keypartners", label: "Consultar Maletas em Consignação", section: "Ação Rápida", shortcut: "K" },
+      { id: "contracts", label: "Gerar Proposta Comercial ou Contrato", section: "Ação Rápida", shortcut: "T" },
+      { id: "support", label: "Abrir Chamado Pós-Cirúrgico", section: "Ação Rápida", shortcut: "A" },
+      { id: "analytics", label: "Consultar Relatórios e Indicadores", section: "Ação Rápida", shortcut: "B" },
       { id: "logout", label: "Encerrar Sessão (Logout)", section: "Sessão & Conta", shortcut: "Q" },
     ],
     []
@@ -245,13 +346,19 @@ export function AppShell({
 
   const handleUserChange = (newUserId: string) => {
     setSelectedUserId(newUserId);
+    setActiveUserId(newUserId);
+    const targetUser = availableUsers.find((u) => u.id === newUserId);
+    if (targetUser) {
+      setCurrentUserProfile(targetUser);
+      const newRole = resolveRoleConfig(targetUser.role);
+      if (!showAllModules && !newRole.visibleRoutes.includes(activeNav)) {
+        handleSelectNav(newRole.defaultLandingRoute);
+      }
+    }
     if (onSelectUser) {
       onSelectUser(newUserId);
     }
   };
-
-  const displayUserName = currentUserProfile?.name || userName;
-  const displayUserRole = currentUserProfile?.role || userRole;
 
   return (
     <div className="flex h-screen w-full bg-surface-bg text-text-main overflow-hidden font-sans">
@@ -264,7 +371,7 @@ export function AppShell({
         />
       )}
 
-      {/* Sidebar Lateral RBAC Dual: Gaveta deslizante em <1024px (0px quando fechada) e Fixa/Colapsável em >=1024px */}
+      {/* Sidebar Lateral RBAC Dual */}
       <aside
         className={cn(
           "bg-surface-sidebar text-text-inverse flex flex-col justify-between transition-all duration-200 z-50 shrink-0",
@@ -316,22 +423,21 @@ export function AppShell({
               </button>
             </div>
 
-            {/* Seletor de Escopo Operacional Dual */}
+            {/* Indicador de Perfil Operacional Focado */}
             {!isCompactSidebar && (
               <div className="px-3 py-2.5 shrink-0">
                 <div className="flex items-center justify-between px-3 py-1.5 rounded-md bg-white/5 border border-white/10">
-                  <div className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-status-success" />
-                    <span className="text-xs font-medium text-white/90">Dual Tree Active</span>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="h-2 w-2 rounded-full bg-status-success shrink-0" />
+                    <span className="text-xs font-medium text-white/90 truncate">
+                      Área de Trabalho: {currentRoleConfig.displayName}
+                    </span>
                   </div>
-                  <Badge variant="navy" className="text-[10px] uppercase">
-                    Field + Inside
-                  </Badge>
                 </div>
               </div>
             )}
 
-            {/* Navegação Vertical pelas 17 Rotas */}
+            {/* Navegação Vertical pelas Rotas com RBAC Cognitivo */}
             <nav className="px-2.5 py-2 space-y-4 overflow-y-auto flex-1">
               {navSections.map((sec) => (
                 <div key={sec.title}>
@@ -384,7 +490,7 @@ export function AppShell({
             </nav>
           </div>
 
-          {/* Footer do Usuário e Seletor de Contexto RBAC na Sidebar */}
+          {/* Footer do Usuário e Seletor de Perfil na Sidebar */}
           <div className="p-2.5 border-t border-white/10 shrink-0 space-y-2">
             <div className="flex items-center justify-between gap-1.5 px-2 py-1.5 rounded-md bg-white/5">
               <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -414,34 +520,44 @@ export function AppShell({
             </div>
 
             {!isCompactSidebar && availableUsers.length > 0 && (
-              <div className="px-1">
-                <label className="block text-[10px] uppercase tracking-wider text-white/40 mb-1">
-                  Contexto Consultor / RBAC
-                </label>
-                <select
-                  aria-label="Alternar contexto de consultor"
-                  value={selectedUserId}
-                  onChange={(e) => handleUserChange(e.target.value)}
-                  className="w-full rounded border border-white/15 bg-white/10 px-2 py-1 text-[11px] text-white focus:outline-none"
+              <div className="px-1 space-y-2">
+                <div>
+                  <label className="block text-[10px] uppercase tracking-wider text-white/40 mb-1">
+                    Simular Visão do Perfil
+                  </label>
+                  <select
+                    aria-label="Simular Visão do Perfil"
+                    value={selectedUserId}
+                    onChange={(e) => handleUserChange(e.target.value)}
+                    className="w-full rounded border border-white/15 bg-white/10 px-2 py-1 text-[11px] text-white focus:outline-none"
+                  >
+                    {availableUsers.map((u) => (
+                      <option key={u.id} value={u.id} className="text-text-main bg-surface-card">
+                        {u.name} ({u.role})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowAllModules((prev) => !prev)}
+                  className="w-full text-center py-1 text-[10px] text-white/60 hover:text-white transition-colors border border-white/10 rounded bg-white/5"
                 >
-                  {availableUsers.map((u) => (
-                    <option key={u.id} value={u.id} className="text-text-main bg-surface-card">
-                      {u.name} ({u.role})
-                    </option>
-                  ))}
-                </select>
+                  {showAllModules ? "Modo Focado no Cargo" : "Mostrar todos os módulos (17)"}
+                </button>
               </div>
             )}
           </div>
         </div>
       </aside>
 
-      {/* Área Principal de Conteúdo (100% da largura em Mobile 375px e Tablet 768px) */}
+      {/* Área Principal de Conteúdo */}
       <div className="flex flex-col flex-1 min-w-0 w-full overflow-hidden">
-        {/* Topbar Superior Responsiva (Zero Overflow em 375px) */}
+        {/* Topbar Superior */}
         <header className="h-14 sm:h-16 border-b border-border bg-surface-card px-3 sm:px-6 flex items-center justify-between gap-2 shrink-0 w-full overflow-hidden">
           <div className="flex items-center gap-2 min-w-0 flex-1">
-            {/* Botão Hamburger para Mobile/Tablet (< 1024px) */}
+            {/* Botão Hamburger para Mobile/Tablet */}
             <button
               type="button"
               onClick={() => setIsMobileDrawerOpen(true)}
@@ -459,7 +575,7 @@ export function AppShell({
             >
               <div className="flex items-center gap-2 min-w-0">
                 <Search className="h-3.5 w-3.5 text-text-muted shrink-0" />
-                <span className="truncate">Buscar rota, cirurgião, lote ou comando...</span>
+                <span className="truncate">Buscar cliente, negociação, maleta ou funcionalidade...</span>
               </div>
               <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded border border-border bg-surface-card px-1.5 py-0.5 text-[10px] text-text-muted font-mono shrink-0">
                 <Command className="h-2.5 w-2.5" /> K
@@ -469,14 +585,26 @@ export function AppShell({
 
           {/* Ações Rápidas do Topbar */}
           <div className="flex items-center gap-2 shrink-0">
-            <div className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-full bg-status-success-subtle text-status-success text-[11px] sm:text-xs font-medium border border-status-success/20 whitespace-nowrap shrink-0">
+            <button
+              type="button"
+              onClick={() => setShowAllModules((prev) => !prev)}
+              className={cn(
+                "hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium border transition-colors cursor-pointer",
+                showAllModules
+                  ? "bg-brand-primary text-white border-brand-primary"
+                  : "bg-surface-bg text-text-secondary border-border hover:text-text-main"
+              )}
+              title="Alternar entre visualização filtrada por cargo e visualização de todos os 17 módulos"
+            >
+              {showAllModules ? "Modo Visão Completa (Admin)" : "Modo Focado no Cargo"}
+            </button>
+
+            <div
+              className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-full bg-status-success-subtle text-status-success text-[11px] sm:text-xs font-medium border border-status-success/20 whitespace-nowrap shrink-0"
+              title={healthStatus ? `Status: ${healthStatus.status} • SQLite WAL` : "Sistema operacional e sincronizado"}
+            >
               <CheckCircle className="h-3.5 w-3.5 shrink-0" />
-              <span className="hidden md:inline">
-                {healthStatus
-                  ? `SQLite ${String(healthStatus.sqlite_journal_mode).toUpperCase()} • ${healthStatus.accounts_online} Tenant(s)`
-                  : "SQLite WAL Active"}
-              </span>
-              <span className="md:hidden">WAL OK</span>
+              <span>Sistema Online</span>
             </div>
 
             <button
@@ -570,6 +698,44 @@ export function AppShell({
           </div>
         </div>
       )}
+
+      {/* Toast Notifications Container (revnaut:toast) */}
+      <div className="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-sm pointer-events-none">
+        {toasts.map((t) => (
+          <div
+            key={t.id}
+            className={cn(
+              "pointer-events-auto flex items-start gap-2.5 p-3 rounded-lg shadow-lg border text-xs transition-all animate-in fade-in slide-in-from-top-2",
+              t.type === "success"
+                ? "bg-surface-card border-status-success/40 text-text-main"
+                : t.type === "error"
+                ? "bg-surface-card border-status-danger/50 text-text-main"
+                : "bg-surface-card border-border text-text-main"
+            )}
+          >
+            {t.type === "success" ? (
+              <CheckCircle className="h-4 w-4 text-status-success shrink-0 mt-0.5" />
+            ) : (
+              <AlertCircle className="h-4 w-4 text-status-danger shrink-0 mt-0.5" />
+            )}
+            <div className="flex-1 min-w-0">
+              <p className={cn("font-semibold", t.type === "success" ? "text-status-success" : "text-status-danger")}>
+                {t.title}
+              </p>
+              <p className="text-text-secondary mt-0.5 break-words line-clamp-3">
+                {t.message}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setToasts((prev) => prev.filter((item) => item.id !== t.id))}
+              className="text-text-muted hover:text-text-main shrink-0 cursor-pointer p-0.5"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

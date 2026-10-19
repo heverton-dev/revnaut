@@ -121,7 +121,7 @@ export const IcpScoringDashboard: React.FC = () => {
       if (!res.ok) throw new Error("Falha ao recalcular scores da base de cirurgiões.");
       const data = await res.json();
       setRecalcMessage(
-        `Recálculo concluído com sucesso: ${data.total_evaluated ?? 0} cirurgiões avaliados. Tier A: ${data.tier_a_count ?? 0}.`
+        `Recálculo concluído com sucesso: ${data.total_evaluated ?? 0} cirurgiões avaliados. Prioridade Alta: ${data.tier_a_count ?? 0}.`
       );
       await fetchScoringData();
     } catch (err: any) {
@@ -302,10 +302,10 @@ export const IcpScoringDashboard: React.FC = () => {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-text-main flex items-center gap-2">
             <Target className="h-6 w-6 text-brand-primary" />
-            Motor Preditivo de Lead Scoring Odontológico & ICP Fit
+            Classificação de Potencial de Clientes & Prioridades
           </h1>
           <p className="text-sm text-text-secondary mt-1">
-            Classificação ponderada por volume cirúrgico, especialidade CRO e engajamento com handoff automático (Tier A &ge; 80 pts).
+            Pontuação automática por volume cirúrgico, especialidade e engajamento com encaminhamento automático (Prioridade Alta &ge; 80 pts).
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -454,9 +454,9 @@ export const IcpScoringDashboard: React.FC = () => {
       ) : (
         <Card className="border-border">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm">Regras Ativas de Pontuação ICP ({rules.length})</CardTitle>
+            <CardTitle className="text-sm">Critérios Ativos de Pontuação e Prioridade ({rules.length})</CardTitle>
             <CardDescription className="text-xs">
-              Critérios determinísticos avaliados a cada interação omnichannel e submissão de formulário.
+              Critérios aplicados a cada interação comercial e mensagem recebida para definir a prioridade do cliente.
             </CardDescription>
           </CardHeader>
           <CardContent>

@@ -232,7 +232,7 @@ export const IntelligenceSuiteWorkspace: React.FC = () => {
       const res = await fetch("/api/v1/deals");
       if (res.ok) {
         const data = await res.json();
-        const list = Array.isArray(data) ? data : data.deals || [];
+        const list = Array.isArray(data) ? data : (Array.isArray(data?.deals) ? data.deals : []);
         setDeals(list);
         if (list.length > 0 && !selectedDealId) {
           setSelectedDealId(list[0].id);
@@ -537,11 +537,11 @@ export const IntelligenceSuiteWorkspace: React.FC = () => {
   };
 
   const tabsConfig = [
-    { id: "copilot", label: "Copiloto Granola & PTT Whisper" },
-    { id: "rag", label: "Assistente RAG Cirúrgico" },
-    { id: "inventory", label: "Estoque Preditivo (SOK / PR)" },
+    { id: "copilot", label: "Resumo Automático de Reuniões e Áudios" },
+    { id: "rag", label: "Assistente Cirúrgico Inteligente" },
+    { id: "inventory", label: "Maletas Paradas e Reposição Automática" },
     { id: "margin", label: "Margem Líquida Clínica" },
-    { id: "health_score", label: "Health Score Cirúrgico (HSC)" },
+    { id: "health_score", label: "Índice de Saúde do Cliente" },
   ];
 
   return (
@@ -555,10 +555,10 @@ export const IntelligenceSuiteWorkspace: React.FC = () => {
             </div>
             <div>
               <h1 className="text-xl font-bold tracking-tight text-text-main">
-                Suíte de Inteligência Comercial, Clínica & Preditiva
+                Assistente Inteligente & Análise Preditiva
               </h1>
               <p className="text-xs text-text-secondary mt-0.5">
-                Copiloto Zero-Touch, Transcrição Whisper, RAG Cirúrgico, Modelos Preditivos SOK/PR e Rentabilidade Clínica.
+                Resumos de Reuniões, Consulta de Protocolos, Controle de Maletas Paradas e Rentabilidade de Clínicas.
               </p>
             </div>
           </div>

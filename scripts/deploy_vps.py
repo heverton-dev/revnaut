@@ -105,7 +105,7 @@ def deploy():
         print("[4/5] Descompactando e compilando imagem Docker na VPS...")
         import time
         version_tag = f"rvops_app:v{int(time.time())}"
-        cmd_build = f"cd {REMOTE_DIR} && tar -xzf deploy.tar.gz && rm -f /opt/rvops/data/rvops.db* /opt/rvops/data/revnaut.db* && cp -f data/rvops.db /opt/rvops/data/rvops.db && cp -f data/rvops.db /opt/rvops/data/revnaut.db && docker build --no-cache -t {version_tag} . && docker tag {version_tag} rvops_app:latest"
+        cmd_build = f"cd {REMOTE_DIR} && rm -f data/*.db-wal data/*.db-shm && tar -xzf deploy.tar.gz && cp -f data/revnaut.db data/rvops.db 2>/dev/null || true && docker build --no-cache -t {version_tag} . && docker tag {version_tag} rvops_app:latest"
         stdin, stdout, stderr = ssh.exec_command(cmd_build)
         exit_status = stdout.channel.recv_exit_status()
         out_build = stdout.read().decode('utf-8')

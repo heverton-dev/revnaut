@@ -35,12 +35,18 @@ import { LoginPage } from "@/features/auth/LoginPage";
 interface MetricsSummary {
   total_deals?: number;
   totalDeals?: number;
+  total_value?: number;
   pipeline_value?: number;
   pipelineTotal?: number;
-  mrr?: number;
+  pipeline_total?: number;
+  won_value?: number;
   closedWonMRR?: number;
+  mrr?: number;
+  win_rate?: number;
   conversion_rate?: number;
   conversionRate?: number;
+  avg_ticket?: number;
+  avgTicket?: number;
 }
 
 interface PipelineItem {
@@ -110,9 +116,10 @@ export function App() {
   });
   const [activeNav, setActiveNav] = React.useState<string>(getInitialRouteFromHash);
   const [currentUserId, setCurrentUserId] = React.useState<string>(() => {
-    if (typeof window === "undefined") return "usr-superadmin-god";
-    return localStorage.getItem("revnaut_user_id") || "usr-superadmin-god";
+    if (typeof window === "undefined") return "usr-director-br";
+    return localStorage.getItem("revnaut_active_user_id") || localStorage.getItem("revnaut_user_id") || "usr-director-br";
   });
+
 
   const handleLogout = React.useCallback(() => {
     try {
@@ -225,13 +232,26 @@ export function App() {
 
   // Consulta de Métricas (GET /api/v1/metrics)
   const metricsQuery = useQuery<MetricsSummary>({
-    queryKey: ["metrics"],
+    queryKey: ["metrics", currentUserId],
     queryFn: async () => {
       const res = await fetch("/api/v1/metrics");
       if (!res.ok) return {};
       return res.json();
     },
   });
+
+  React.useEffect(() => {
+    const handleUserChanged = (e: Event) => {
+      const custom = e as CustomEvent<{ userId: string }>;
+      if (custom.detail?.userId) {
+        setCurrentUserId(custom.detail.userId);
+        dealsQuery.refetch();
+        metricsQuery.refetch();
+      }
+    };
+    window.addEventListener("revnaut:user_changed", handleUserChanged);
+    return () => window.removeEventListener("revnaut:user_changed", handleUserChanged);
+  }, [dealsQuery, metricsQuery]);
 
   const loadTasks = React.useCallback(async () => {
     try {
@@ -666,7 +686,8 @@ export function App() {
                       style: "currency",
                       currency: "BRL",
                     }).format(
-                      metrics?.pipelineTotal ??
+                      metrics?.total_value ??
+                        metrics?.pipelineTotal ??
                         metrics?.pipeline_value ??
                         filteredDeals.reduce((acc, d) => acc + (d.value || 0), 0)
                     )}
