@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Globe,
   UploadCloud,
@@ -17,7 +17,16 @@ import {
   RotateCw,
   Activity,
   Plus,
+  Monitor,
+  Tablet,
+  Smartphone,
+  Code2,
+  Eye,
+  ExternalLink,
+  Wand2,
+  Trash2,
 } from "lucide-react";
+import { QrCodeSvg } from "@/components/shared/QrCodeSvg";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
@@ -95,10 +104,15 @@ export const LandingPageBuilder: React.FC<LandingPageBuilderProps> = ({
   const [activeMainTab, setActiveMainTab] = useState<string>("builder");
 
   // ==========================================
-  // TAB 1: CONSTRUTOR GRAPESJS & R2
+  // TAB 1: ESTÚDIO VISUAL DE LANDING PAGE & R2
   // ==========================================
-  const editorRef = useRef<HTMLDivElement>(null);
-  const grapesInstanceRef = useRef<any>(null);
+  const [editorHtml, setEditorHtml] = useState<string>("");
+  const [editorCss, setEditorCss] = useState<string>("");
+  const [renderedHtml, setRenderedHtml] = useState<string>("");
+  const [viewport, setViewport] = useState<"desktop" | "tablet" | "mobile">("desktop");
+  const [editorMode, setEditorMode] = useState<"visual" | "code">("visual");
+  const [copyFixLog, setCopyFixLog] = useState<string[]>([]);
+  const [tokenCss, setTokenCss] = useState<string>("");
 
   const [savedPages, setSavedPages] = useState<LandingPageItem[]>([]);
   const [resolvedCampaignId, setResolvedCampaignId] = useState<string>(campaignId || "");
@@ -248,70 +262,156 @@ export const LandingPageBuilder: React.FC<LandingPageBuilderProps> = ({
     }
   }, [activeMainTab, referrerId]);
 
-  // Inicialização GrapesJS no Tab 1
+  // Tokens do design system injetados no iframe (variáveis CSS não atravessam o srcDoc)
   useEffect(() => {
-    if (activeMainTab !== "builder") return;
+    const root = getComputedStyle(document.documentElement);
+    const names = [
+      "--color-brand-primary", "--color-brand-primary-hover", "--color-brand-primary-subtle",
+      "--color-brand-navy", "--color-brand-navy-subtle", "--color-surface-bg", "--color-surface-card",
+      "--color-border", "--color-border-subtle", "--color-text-main", "--color-text-secondary",
+      "--color-text-muted", "--color-text-inverse", "--color-success", "--color-success-subtle",
+      "--color-warning", "--color-warning-subtle", "--color-danger", "--color-danger-subtle",
+    ];
+    const decl = names.map((n) => `${n}:${root.getPropertyValue(n).trim()};`).join("");
+    setTokenCss(`:root{${decl}}body{margin:0;font-family:var(--font-family-sans,sans-serif);color:var(--color-text-main);background:var(--color-surface-card)}`);
+  }, []);
 
-    const initEditor = () => {
-      if (!editorRef.current) return;
-      const win = window as any;
-      if (win.grapesjs && !grapesInstanceRef.current) {
-        try {
-          const editor = win.grapesjs.init({
-            container: editorRef.current,
-            height: "550px",
-            width: "auto",
-            storageManager: false,
-            blockManager: {
-              appendTo: 'div[id="blocks-panel"]',
-              blocks: [
-                {
-                  id: "cfo-responsible",
-                  label: "Responsável Técnico CFO",
-                  category: "Odontologia CFO",
-                  content: `<div class="cfo-banner" style="padding: 12px; background: var(--color-surface-card); border-top: 2px solid var(--color-brand-primary); font-size: 12px; text-align: center; color: var(--color-text-secondary);">
-                    <p>Responsável Técnico: ${cfoName} — ${cfoCro} | Conforme Resolução CFO 196/2019 e Art. 43 do CEO</p>
-                  </div>`,
-                },
-                {
-                  id: "cro-verified-input",
-                  label: "Input CRO/UF Verificado",
-                  category: "Formulários",
-                  content: `<div style="margin-bottom: 12px;">
-                    <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px;">CRO/UF do Cirurgião</label>
-                    <input type="text" name="cro" placeholder="CRO-SP 123456" style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border-subtle); border-radius: 6px;" required />
-                  </div>`,
-                },
-                {
-                  id: "hero-section",
-                  label: "Hero Cirúrgico",
-                  category: "Seções",
-                  content: `<section style="padding: 40px 20px; text-align: center; background: var(--color-brand-navy); color: var(--color-text-inverse);">
-                    <h1 style="font-size: 28px; font-weight: bold; margin-bottom: 12px;">Implantes Dentários de Alta Precisão</h1>
-                    <p style="font-size: 15px; max-width: 600px; margin: 0 auto 20px;">Protocolo cirúrgico guiado com osso D1-D4 e entrega Same-Day DENTGO Express.</p>
-                  </section>`,
-                },
-              ],
-            },
-          });
-          grapesInstanceRef.current = editor;
-        } catch {
-          // fallback
-        }
+  // Recebe edições inline do iframe (sem recarregar para não perder o cursor)
+  useEffect(() => {
+    const onMsg = (ev: MessageEvent) => {
+      if (ev.data && ev.data.type === "lp-inline-edit" && typeof ev.data.html === "string") {
+        setEditorHtml(ev.data.html);
       }
     };
+    window.addEventListener("message", onMsg);
+    return () => window.removeEventListener("message", onMsg);
+  }, []);
 
-    const timer = setTimeout(initEditor, 200);
-    return () => clearTimeout(timer);
-  }, [activeMainTab, cfoName, cfoCro]);
+  const applyContent = (html: string, css: string) => {
+    setEditorHtml(html);
+    setEditorCss(css);
+    setRenderedHtml(html);
+  };
+
+  const loadTemplate = (tpl: LandingPageTemplate) => {
+    setSelectedTemplate(tpl.template_type);
+    applyContent(tpl.html || "", tpl.css || "");
+    setCopyFixLog([]);
+  };
+
+  // Template padrão carregado assim que a lista chega
+  useEffect(() => {
+    if (templates.length > 0 && !editorHtml && !currentId) {
+      const tpl = templates.find((t) => t.template_type === selectedTemplate) || templates[0];
+      applyContent(tpl.html || "", tpl.css || "");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [templates]);
+
+  const loadSavedPage = async (id: string) => {
+    setCurrentId(id || null);
+    const found = savedPages.find((p) => p.id === id);
+    if (!found) return;
+    setTitle(found.title);
+    setSlug(found.slug);
+    if (found.cfo_cro) setCfoCro(found.cfo_cro);
+    if (found.cfo_name) setCfoName(found.cfo_name);
+    if (found.published_url) setPublishedUrl(found.published_url);
+    try {
+      const res = await fetch(`/api/v1/campaigns/landing-pages/${id}`);
+      if (res.ok) {
+        const detail = await res.json();
+        applyContent(detail.html ?? "", detail.css ?? "");
+        return;
+      }
+    } catch {
+      // fallback abaixo
+    }
+    const inline = found as unknown as { html?: string; css?: string };
+    applyContent(inline.html ?? "", inline.css ?? "");
+  };
+
+  const dentalBlocks: Array<{ id: string; label: string; html: string }> = [
+    {
+      id: "hero",
+      label: "Hero Cirúrgico",
+      html: `<section style="padding:48px 20px;text-align:center;background:var(--color-brand-navy);color:var(--color-text-inverse)"><h1 style="font-size:28px;font-weight:700;margin:0 0 12px">Implantes de Alta Precisão com Protocolo Guiado</h1><p style="font-size:15px;max-width:600px;margin:0 auto 20px">Planejamento digital, osso D1-D4 e entrega Same-Day DENTGO Express.</p><a href="#captura" style="display:inline-block;padding:10px 22px;border-radius:6px;background:var(--color-brand-primary);color:var(--color-text-inverse);text-decoration:none;font-weight:600">Quero conhecer o protocolo</a></section>`,
+    },
+    {
+      id: "cfo",
+      label: "Banner Ético CFO 196/2019",
+      html: `<div class="cfo-banner" style="padding:12px;background:var(--color-surface-bg);border-top:2px solid var(--color-brand-primary);font-size:12px;text-align:center;color:var(--color-text-secondary)"><p style="margin:0">Responsável Técnico: ${cfoName} - ${cfoCro} | Conforme Resolução CFO 196/2019 e Art. 43 do CEO</p></div>`,
+    },
+    {
+      id: "torque",
+      label: "Tabela de Torques ANVISA",
+      html: `<section style="padding:28px 20px"><h2 style="font-size:20px;margin:0 0 12px">Torques de Inserção Recomendados</h2><table style="width:100%;border-collapse:collapse;font-size:14px"><thead><tr style="background:var(--color-surface-bg)"><th style="text-align:left;padding:8px;border:1px solid var(--color-border)">Densidade óssea</th><th style="text-align:left;padding:8px;border:1px solid var(--color-border)">Torque (Ncm)</th><th style="text-align:left;padding:8px;border:1px solid var(--color-border)">Registro ANVISA</th></tr></thead><tbody><tr><td style="padding:8px;border:1px solid var(--color-border)">D1</td><td style="padding:8px;border:1px solid var(--color-border)">45 - 60</td><td style="padding:8px;border:1px solid var(--color-border)">Conforme IFU</td></tr><tr><td style="padding:8px;border:1px solid var(--color-border)">D2-D3</td><td style="padding:8px;border:1px solid var(--color-border)">35 - 45</td><td style="padding:8px;border:1px solid var(--color-border)">Conforme IFU</td></tr><tr><td style="padding:8px;border:1px solid var(--color-border)">D4</td><td style="padding:8px;border:1px solid var(--color-border)">20 - 35</td><td style="padding:8px;border:1px solid var(--color-border)">Conforme IFU</td></tr></tbody></table></section>`,
+    },
+    {
+      id: "casos",
+      label: "Galeria de Casos Clínicos com TCLE",
+      html: `<section style="padding:28px 20px"><h2 style="font-size:20px;margin:0 0 12px">Casos Clínicos</h2><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px"><figure style="margin:0;padding:12px;border:1px solid var(--color-border);border-radius:8px"><div style="height:110px;background:var(--color-brand-navy-subtle);border-radius:6px"></div><figcaption style="font-size:12px;margin-top:6px">Caso 01 - Reabilitação unitária</figcaption></figure><figure style="margin:0;padding:12px;border:1px solid var(--color-border);border-radius:8px"><div style="height:110px;background:var(--color-brand-navy-subtle);border-radius:6px"></div><figcaption style="font-size:12px;margin-top:6px">Caso 02 - Protocolo total</figcaption></figure></div><p style="font-size:11px;color:var(--color-text-muted);margin:10px 0 0">Imagens publicadas com Termo de Consentimento Livre e Esclarecido (TCLE) assinado pelo paciente. Resultados individuais variam.</p></section>`,
+    },
+    {
+      id: "form",
+      label: "Formulário de Captura CRO/UF",
+      html: `<section id="captura" style="padding:28px 20px;background:var(--color-surface-bg)"><h2 style="font-size:20px;margin:0 0 12px">Receba o material técnico</h2><form onsubmit="return false" style="display:grid;gap:10px;max-width:420px"><input name="name" placeholder="Nome do cirurgião" style="padding:8px 12px;border:1px solid var(--color-border);border-radius:6px" /><input name="email" placeholder="E-mail" style="padding:8px 12px;border:1px solid var(--color-border);border-radius:6px" /><input name="phone" placeholder="WhatsApp" style="padding:8px 12px;border:1px solid var(--color-border);border-radius:6px" /><input name="cro" placeholder="CRO/UF (ex.: CRO-SP 123456)" style="padding:8px 12px;border:1px solid var(--color-border);border-radius:6px" /><button type="submit" style="padding:10px;border:0;border-radius:6px;background:var(--color-brand-primary);color:var(--color-text-inverse);font-weight:600">Enviar</button></form></section>`,
+    },
+    {
+      id: "kol",
+      label: "Depoimentos KOL",
+      html: `<section style="padding:28px 20px"><h2 style="font-size:20px;margin:0 0 12px">Quem usa recomenda</h2><blockquote style="margin:0;padding:14px;border-left:4px solid var(--color-brand-primary);background:var(--color-brand-primary-subtle);font-size:14px">"O fluxo digital reduziu o tempo cirúrgico e deu previsibilidade ao protocolo."<footer style="margin-top:6px;font-size:12px;color:var(--color-text-secondary)">Dr. Especialista - CRO-SP 000000 (opinião pessoal)</footer></blockquote></section>`,
+    },
+  ];
+
+  const appendBlock = (html: string) => {
+    const next = `${editorHtml}\n${html}`;
+    setEditorHtml(next);
+    setRenderedHtml(next);
+  };
+
+  // Auto-correção determinística da copy conforme CFO 196/2019 (sem LLM)
+  const autoFixCopyCfo = () => {
+    const rules: Array<[RegExp, string, string]> = [
+      [/resultados? garantidos?/gi, "resultados individuais variam", "promessa de resultado"],
+      [/100% (?:de )?(?:sucesso|garantido|seguro)/gi, "alta previsibilidade clínica", "garantia absoluta"],
+      [/o melhor (?:implante )?do (?:brasil|mundo)/gi, "tecnologia com registro ANVISA", "autopromoção superlativa"],
+      [/sem (?:nenhum )?risco/gi, "com riscos informados no TCLE", "ausência de risco"],
+      [/antes e depois/gi, "caso clínico (com TCLE)", "antes/depois sem consentimento"],
+      [/promoção imperdível|preço de banana|desconto imperdível/gi, "condições comerciais informadas", "apelo mercantilista"],
+    ];
+    const log: string[] = [];
+    let out = editorHtml;
+    for (const [re, repl, why] of rules) {
+      if (re.test(out)) {
+        re.lastIndex = 0;
+        out = out.replace(re, repl);
+        log.push(`Substituído: ${why}`);
+      }
+      re.lastIndex = 0;
+    }
+    if (!/cfo-banner|Resolução CFO 196\/2019/i.test(out)) {
+      out += `\n${dentalBlocks[1].html}`;
+      log.push("Adicionado banner de Responsável Técnico CFO 196/2019");
+    }
+    if (log.length === 0) log.push("Copy já conforme: nenhuma alteração necessária.");
+    applyContent(out, editorCss);
+    setCopyFixLog(log);
+  };
+
+  const iframeScript = `(function(){var root=document.getElementById('lp-root');if(!root)return;var sel='h1,h2,h3,h4,p,li,td,th,label,figcaption,blockquote,footer,a,button';root.querySelectorAll(sel).forEach(function(el){el.setAttribute('contenteditable','true');el.style.outline='none'});function send(){var c=root.cloneNode(true);c.querySelectorAll('[contenteditable]').forEach(function(e){e.removeAttribute('contenteditable')});parent.postMessage({type:'lp-inline-edit',html:c.innerHTML},'*')}root.addEventListener('input',send);root.addEventListener('click',function(e){var a=e.target.closest('a');if(a)e.preventDefault()})})();`;
+
+  const previewDoc = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>${tokenCss}</style><style>${editorCss}</style></head><body><div id="lp-root">${renderedHtml}</div><script>${iframeScript}</script></body></html>`;
+
+  const viewportWidth = viewport === "desktop" ? "100%" : viewport === "tablet" ? "768px" : "375px";
 
   // Ações Tab 1: Salvar & Publicar
   const handleCreateLandingPage = async () => {
     setIsSaving(true);
     setCfoStatus(null);
     try {
-      const html = grapesInstanceRef.current ? grapesInstanceRef.current.getHtml() : "<p>Conteúdo da LP</p>";
-      const css = grapesInstanceRef.current ? grapesInstanceRef.current.getCss() : "";
+      const html = editorHtml;
+      const css = editorCss;
 
       const payload = {
         title,
@@ -353,8 +453,8 @@ export const LandingPageBuilder: React.FC<LandingPageBuilderProps> = ({
     setIsSaving(true);
     setCfoStatus(null);
     try {
-      const html = grapesInstanceRef.current ? grapesInstanceRef.current.getHtml() : "<p>Conteúdo da LP</p>";
-      const css = grapesInstanceRef.current ? grapesInstanceRef.current.getCss() : "";
+      const html = editorHtml;
+      const css = editorCss;
 
       const payload = {
         title,
@@ -603,6 +703,67 @@ export const LandingPageBuilder: React.FC<LandingPageBuilderProps> = ({
     }
   };
 
+  // Nova régua de automação
+  const [newFlowName, setNewFlowName] = useState("");
+  const [newFlowCategory, setNewFlowCategory] = useState("NURTURING");
+  const [newFlowTrigger, setNewFlowTrigger] = useState("lead.created");
+  const [newFlowAction, setNewFlowAction] = useState("");
+  const [newFlowHtml, setNewFlowHtml] = useState("");
+  const [newFlowFeedback, setNewFlowFeedback] = useState<string | null>(null);
+
+  const emailPresets = [
+    {
+      id: "boas-vindas",
+      name: "Boas-vindas ao Cirurgião",
+      trigger: "lead.created",
+      subject: "Seu material técnico de implantodontia",
+      action: "Enviar e-mail de boas-vindas com material técnico",
+      html: `<h2 style="color:var(--color-brand-navy)">Olá, Dr(a)!</h2><p>Recebemos seu interesse. Segue o material técnico do protocolo guiado.</p><p style="font-size:11px;color:var(--color-text-muted)">Conforme Resolução CFO 196/2019.</p>`,
+    },
+    {
+      id: "reativacao",
+      name: "Reativação 90 dias",
+      trigger: "contact.inactive_90d",
+      subject: "Novidades para o seu consultório",
+      action: "Reativar cirurgiões sem pedido há 90 dias",
+      html: `<h2 style="color:var(--color-brand-navy)">Sentimos sua falta</h2><p>Há novidades no catálogo cirúrgico e na entrega Same-Day DENTGO Express.</p>`,
+    },
+    {
+      id: "pos-venda",
+      name: "Pós-venda e Rastreabilidade",
+      trigger: "deal.won",
+      subject: "Rastreabilidade do seu lote",
+      action: "Enviar etiqueta de rastreabilidade ANVISA pós-venda",
+      html: `<h2 style="color:var(--color-brand-navy)">Pedido confirmado</h2><p>O registro de rastreabilidade do lote está disponível na sua área.</p>`,
+    },
+  ];
+
+  const handleCreateFlow = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setNewFlowFeedback(null);
+    try {
+      const res = await fetch("/api/v1/automations/flows", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newFlowName,
+          category: newFlowCategory,
+          trigger_event: newFlowTrigger,
+          action_description: newFlowAction,
+          email_html: newFlowHtml,
+          is_active: true,
+          account_id: "0f14ffff",
+        }),
+      });
+      if (!res.ok) throw new Error("Falha ao criar régua de automação");
+      setNewFlowFeedback("Régua criada com sucesso.");
+      setNewFlowName("");
+      await fetchAutomations();
+    } catch (err: any) {
+      setNewFlowFeedback(`Erro: ${err.message}`);
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Top Header */}
@@ -635,7 +796,7 @@ export const LandingPageBuilder: React.FC<LandingPageBuilderProps> = ({
       />
 
       {/* ========================================================================= */}
-      {/* TAB 1: CONSTRUTOR GRAPESJS & R2 */}
+      {/* TAB 1: ESTÚDIO VISUAL DE LANDING PAGE & R2 */}
       {/* ========================================================================= */}
       {activeMainTab === "builder" && (
         <div className="space-y-4">
@@ -648,18 +809,7 @@ export const LandingPageBuilder: React.FC<LandingPageBuilderProps> = ({
                 </label>
                 <select
                   value={currentId || ""}
-                  onChange={(e) => {
-                    const id = e.target.value;
-                    setCurrentId(id || null);
-                    const found = savedPages.find((p) => p.id === id);
-                    if (found) {
-                      setTitle(found.title);
-                      setSlug(found.slug);
-                      if (found.cfo_cro) setCfoCro(found.cfo_cro);
-                      if (found.cfo_name) setCfoName(found.cfo_name);
-                      if (found.published_url) setPublishedUrl(found.published_url);
-                    }
-                  }}
+                  onChange={(e) => loadSavedPage(e.target.value)}
                   className="px-2.5 py-1.5 rounded-lg border border-border bg-surface-bg text-xs font-mono text-text-main"
                 >
                   <option value="">+ Criar Nova Landing Page</option>
@@ -749,10 +899,10 @@ export const LandingPageBuilder: React.FC<LandingPageBuilderProps> = ({
             )}
           </div>
 
-          {/* Editor Workspace GrapesJS */}
-          <div className="flex flex-col md:flex-row gap-4 min-h-[480px]">
-            {/* Sidebar de Blocos & Templates */}
-            <div className="w-full md:w-64 bg-surface-card border border-border rounded-xl p-3 space-y-3">
+          {/* Estúdio Visual de Landing Page (self-contained) */}
+          <div className="flex flex-col lg:flex-row gap-4 min-h-[480px]">
+            {/* Sidebar de Templates & Paleta de Blocos */}
+            <div className="w-full lg:w-64 bg-surface-card border border-border rounded-xl p-3 space-y-3">
               <div>
                 <span className="text-xs font-bold text-text-main flex items-center gap-1 mb-2">
                   <Sparkles className="h-3.5 w-3.5 text-brand-primary" />
@@ -762,7 +912,7 @@ export const LandingPageBuilder: React.FC<LandingPageBuilderProps> = ({
                   {templates.map((tpl) => (
                     <button
                       key={tpl.template_type}
-                      onClick={() => setSelectedTemplate(tpl.template_type)}
+                      onClick={() => loadTemplate(tpl)}
                       className={`w-full text-left p-2 rounded-lg border text-xs transition ${
                         selectedTemplate === tpl.template_type
                           ? "border-brand-primary bg-brand-primary-subtle text-brand-primary font-semibold"
@@ -777,18 +927,150 @@ export const LandingPageBuilder: React.FC<LandingPageBuilderProps> = ({
               </div>
 
               <div>
-                <span className="text-xs font-bold text-text-main block mb-1">Blocos de Anatomia</span>
-                <div id="blocks-panel" className="space-y-1.5" />
+                <span className="text-xs font-bold text-text-main block mb-1">Paleta de Blocos Odontológicos</span>
+                <div className="space-y-1.5">
+                  {dentalBlocks.map((b) => (
+                    <button
+                      key={b.id}
+                      type="button"
+                      onClick={() => appendBlock(b.html)}
+                      className="w-full flex items-center gap-1.5 text-left p-2 rounded-lg border border-border bg-surface-bg text-xs text-text-secondary hover:text-text-main hover:border-brand-primary transition"
+                    >
+                      <Plus className="h-3 w-3 text-brand-primary shrink-0" />
+                      <span className="truncate">{b.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-1.5 pt-2 border-t border-border">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={autoFixCopyCfo}
+                  className="w-full flex items-center justify-center gap-1.5 text-xs"
+                >
+                  <Wand2 className="h-3.5 w-3.5 text-brand-primary" />
+                  Auto-Corrigir Copy CFO 196/2019
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => applyContent("", editorCss)}
+                  className="w-full flex items-center justify-center gap-1.5 text-xs"
+                >
+                  <Trash2 className="h-3.5 w-3.5 text-status-danger" />
+                  Limpar Canvas
+                </Button>
+                {copyFixLog.length > 0 && (
+                  <ul className="text-[10px] text-text-secondary bg-status-success-subtle border border-status-success/30 rounded p-2 space-y-0.5">
+                    {copyFixLog.map((l, i) => (
+                      <li key={i}>{l}</li>
+                    ))}
+                  </ul>
+                )}
               </div>
             </div>
 
-            {/* Canvas GrapesJS */}
-            <div className="flex-1 bg-surface-card border border-border rounded-xl p-3 flex flex-col">
-              <div
-                ref={editorRef}
-                id="gjs"
-                className="flex-1 bg-surface-bg rounded-lg border border-border overflow-hidden min-h-[420px]"
-              />
+            {/* Canvas: Preview Visual Interativo / Editor de Código */}
+            <div className="flex-1 bg-surface-card border border-border rounded-xl p-3 flex flex-col gap-2 min-w-0">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-1">
+                  {([
+                    { id: "desktop", label: "Desktop 100%", Icon: Monitor },
+                    { id: "tablet", label: "Tablet 768px", Icon: Tablet },
+                    { id: "mobile", label: "Mobile 375px", Icon: Smartphone },
+                  ] as const).map(({ id, label, Icon }) => (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => setViewport(id)}
+                      className={`flex items-center gap-1 px-2 py-1 rounded-lg border text-[11px] ${
+                        viewport === id
+                          ? "border-brand-primary bg-brand-primary-subtle text-brand-primary font-semibold"
+                          : "border-border bg-surface-bg text-text-secondary"
+                      }`}
+                    >
+                      <Icon className="h-3.5 w-3.5" />
+                      {label}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRenderedHtml(editorHtml);
+                      setEditorMode("visual");
+                    }}
+                    className={`flex items-center gap-1 px-2 py-1 rounded-lg border text-[11px] ${
+                      editorMode === "visual"
+                        ? "border-brand-primary bg-brand-primary-subtle text-brand-primary font-semibold"
+                        : "border-border bg-surface-bg text-text-secondary"
+                    }`}
+                  >
+                    <Eye className="h-3.5 w-3.5" />
+                    Preview Visual Interativo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditorMode("code")}
+                    className={`flex items-center gap-1 px-2 py-1 rounded-lg border text-[11px] ${
+                      editorMode === "code"
+                        ? "border-brand-primary bg-brand-primary-subtle text-brand-primary font-semibold"
+                        : "border-border bg-surface-bg text-text-secondary"
+                    }`}
+                  >
+                    <Code2 className="h-3.5 w-3.5" />
+                    Editor de Código HTML/CSS
+                  </button>
+                  <a
+                    href={`/lp/${slug}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-1 px-2 py-1 rounded-lg border border-border bg-surface-bg text-[11px] text-brand-primary underline"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    /lp/{slug}
+                  </a>
+                </div>
+              </div>
+
+              {editorMode === "visual" ? (
+                <div className="flex-1 bg-surface-bg rounded-lg border border-border overflow-auto flex justify-center p-2 min-h-[420px]">
+                  <iframe
+                    title="Preview da Landing Page"
+                    srcDoc={previewDoc}
+                    sandbox="allow-scripts"
+                    style={{ width: viewportWidth, maxWidth: "100%" }}
+                    className="bg-surface-card border border-border rounded min-h-[420px] h-full transition-all"
+                  />
+                </div>
+              ) : (
+                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-2 min-h-[420px]">
+                  <div className="flex flex-col">
+                    <label className="text-[11px] font-semibold text-text-secondary mb-1">HTML</label>
+                    <textarea
+                      value={editorHtml}
+                      onChange={(e) => setEditorHtml(e.target.value)}
+                      spellCheck={false}
+                      className="flex-1 min-h-[400px] p-2 rounded-lg border border-border bg-surface-bg text-[11px] text-text-main font-mono"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <label className="text-[11px] font-semibold text-text-secondary mb-1">CSS</label>
+                    <textarea
+                      value={editorCss}
+                      onChange={(e) => setEditorCss(e.target.value)}
+                      spellCheck={false}
+                      className="flex-1 min-h-[400px] p-2 rounded-lg border border-border bg-surface-bg text-[11px] text-text-main font-mono"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -1013,6 +1295,106 @@ export const LandingPageBuilder: React.FC<LandingPageBuilderProps> = ({
             </Card>
           </div>
 
+          {/* Nova Régua de Automação + Preview de E-mail */}
+          <Card className="p-4 border border-border bg-surface-card space-y-3">
+            <div className="flex items-center justify-between border-b border-border pb-2">
+              <h3 className="text-xs font-bold text-text-main flex items-center gap-1.5">
+                <Plus className="h-4 w-4 text-brand-primary" />
+                + Nova Régua de Automação
+              </h3>
+              <Badge variant="outline" className="text-[10px]">
+                POST /api/v1/automations/flows
+              </Badge>
+            </div>
+
+            <div className="flex flex-wrap gap-1.5">
+              {emailPresets.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => {
+                    setNewFlowName(p.name);
+                    setNewFlowTrigger(p.trigger);
+                    setNewFlowAction(p.action);
+                    setNewFlowHtml(p.html);
+                    setBroadcastSubject(p.subject);
+                    setBroadcastHtml(p.html);
+                  }}
+                  className="px-2 py-1 rounded-lg border border-border bg-surface-bg text-[11px] text-text-secondary hover:text-text-main hover:border-brand-primary"
+                >
+                  {p.name}
+                </button>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <form onSubmit={handleCreateFlow} className="space-y-2">
+                <Input
+                  value={newFlowName}
+                  onChange={(e) => setNewFlowName(e.target.value)}
+                  placeholder="Nome da régua"
+                  className="text-xs"
+                  required
+                />
+                <div className="grid grid-cols-2 gap-2">
+                  <select
+                    value={newFlowCategory}
+                    onChange={(e) => setNewFlowCategory(e.target.value)}
+                    className="px-2.5 py-1.5 rounded-lg border border-border bg-surface-bg text-xs text-text-main"
+                  >
+                    <option value="NURTURING">Nutrição</option>
+                    <option value="REACTIVATION">Reativação</option>
+                    <option value="ONBOARDING">Onboarding</option>
+                    <option value="POST_SALE">Pós-venda</option>
+                  </select>
+                  <Input
+                    value={newFlowTrigger}
+                    onChange={(e) => setNewFlowTrigger(e.target.value)}
+                    placeholder="Gatilho (ex.: lead.created)"
+                    className="text-xs font-mono"
+                    required
+                  />
+                </div>
+                <Input
+                  value={newFlowAction}
+                  onChange={(e) => setNewFlowAction(e.target.value)}
+                  placeholder="Descrição da ação"
+                  className="text-xs"
+                  required
+                />
+                <textarea
+                  value={newFlowHtml}
+                  onChange={(e) => setNewFlowHtml(e.target.value)}
+                  rows={5}
+                  className="w-full p-2 rounded-lg border border-border bg-surface-bg text-xs text-text-main font-mono"
+                  placeholder="HTML do e-mail"
+                />
+                <div className="flex items-center justify-between">
+                  {newFlowFeedback ? (
+                    <span className="text-[11px] text-text-secondary">{newFlowFeedback}</span>
+                  ) : (
+                    <span />
+                  )}
+                  <Button type="submit" variant="default" size="sm" className="text-xs">
+                    Criar Régua
+                  </Button>
+                </div>
+              </form>
+
+              <div className="border border-border rounded-lg overflow-hidden bg-surface-bg">
+                <div className="px-2 py-1 text-[10px] font-semibold text-text-secondary border-b border-border">
+                  Preview do E-mail (ao vivo)
+                </div>
+                <iframe
+                  title="Preview do E-mail"
+                  sandbox=""
+                  srcDoc={`<!doctype html><html><head><meta charset="utf-8"><style>${tokenCss}</style></head><body style="padding:12px;font-size:14px">${newFlowHtml || broadcastHtml}</body></html>`}
+                  className="w-full h-56 bg-surface-card"
+                />
+              </div>
+            </div>
+          </Card>
+
           {/* Gerenciador de Fluxos de Automação (Automation Flows) */}
           <Card className="p-4 border border-border bg-surface-card space-y-3">
             <div className="flex items-center justify-between border-b border-border pb-2">
@@ -1151,6 +1533,23 @@ export const LandingPageBuilder: React.FC<LandingPageBuilderProps> = ({
                   <div className="text-[10px] text-text-secondary font-mono">
                     Código: <strong>{referralLinkData.referral_code}</strong>
                   </div>
+                </div>
+              )}
+              {referralLinkData && (
+                <div className="p-3 bg-surface-bg border border-border rounded-lg flex flex-col items-center gap-2">
+                  <QrCodeSvg
+                    value={`${window.location.origin}/r/${referralLinkData.referral_code}`}
+                    size={140}
+                  />
+                  <a
+                    href={`/r/${referralLinkData.referral_code}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-1 text-[11px] font-mono text-brand-primary underline"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    /r/{referralLinkData.referral_code}
+                  </a>
                 </div>
               )}
             </Card>

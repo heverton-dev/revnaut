@@ -8,7 +8,11 @@ import {
   Send,
   CalendarCheck,
   Plus,
+  Video,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
+import { LiveKitDealRoomModal } from "@/features/communications/LiveKitDealRoomModal";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -57,6 +61,8 @@ export const CalcomReactivationWorkspace: React.FC = () => {
   const [surgeryDate, setSurgeryDate] = React.useState<string>("2026-01-15");
   const [scheduling, setScheduling] = React.useState<boolean>(false);
   const [scanning, setScanning] = React.useState<boolean>(false);
+  const [weekOffset, setWeekOffset] = React.useState<number>(0);
+  const [videoBooking, setVideoBooking] = React.useState<CalcomBookingItem | null>(null);
 
   const loadCalcomData = React.useCallback(async () => {
     setLoading(true);
@@ -142,7 +148,37 @@ export const CalcomReactivationWorkspace: React.FC = () => {
     }
   };
 
-  const handleSimulateBookingWebhook = async (sched?: ReactivationScheduleItem) => {
+  const slotHours = Array.from({ length: 11 }, (_, i) => 8 + i); // 08:00 .. 18:00
+
+  const weekDays = React.useMemo(() => {
+    const base = new Date();
+    base.setHours(0, 0, 0, 0);
+    const dow = base.getDay(); // 0=dom
+    const mondayShift = dow === 0 ? 1 : 1 - dow;
+    base.setDate(base.getDate() + mondayShift + weekOffset * 7);
+    return Array.from({ length: 5 }, (_, i) => {
+      const d = new Date(base);
+      d.setDate(base.getDate() + i);
+      return d;
+    });
+  }, [weekOffset]);
+
+  const bookedSlotKeys = React.useMemo(() => {
+    const keys = new Set<string>();
+    for (const b of bookings) {
+      const t = new Date(b.start_time);
+      if (!Number.isNaN(t.getTime())) keys.add(`${t.getFullYear()}-${t.getMonth()}-${t.getDate()}-${t.getHours()}`);
+    }
+    return keys;
+  }, [bookings]);
+
+  const handlePickSlot = (day: Date, hour: number) => {
+    const start = new Date(day);
+    start.setHours(hour, 0, 0, 0);
+    void handleSimulateBookingWebhook(undefined, start);
+  };
+
+  const handleSimulateBookingWebhook = async (sched?: ReactivationScheduleItem, slotStart?: Date) => {
     setErrorMsg(null);
     setFeedbackMsg(null);
     const targetPatient = sched?.patient_name || patientName || "Paciente Retorno";
@@ -157,8 +193,10 @@ export const CalcomReactivationWorkspace: React.FC = () => {
           payload: {
             uid: `cal_uid_${Date.now()}`,
             title: "Manutenção Peri-implantar & Profilaxia Protocolo",
-            startTime: "2026-11-10T14:00:00.000Z",
-            endTime: "2026-11-10T14:45:00.000Z",
+            startTime: (slotStart || new Date("2026-11-10T14:00:00.000Z")).toISOString(),
+            endTime: new Date(
+              (slotStart || new Date("2026-11-10T14:00:00.000Z")).getTime() + 45 * 60 * 1000,
+            ).toISOString(),
             location: "integrations:livekit",
             organizer: {
               name: targetSurgeon,
@@ -271,6 +309,16 @@ export const CalcomReactivationWorkspace: React.FC = () => {
         <Badge variant="success" className="text-[10px]">
           Deal #{b.deal_id || "Gerado"}
         </Badge>
+      ),
+    },
+    {
+      key: "meeting_url",
+      header: "Teleconsulta",
+      render: (b) => (
+        <Button size="sm" variant="secondary" onClick={() => setVideoBooking(b)} className="gap-1.5">
+          <Video className="h-3.5 w-3.5 text-brand-primary" />
+          Abrir Teleconsulta LiveKit
+        </Button>
       ),
     },
   ];
@@ -468,6 +516,69 @@ export const CalcomReactivationWorkspace: React.FC = () => {
           <Card className="border-border">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-brand-primary" />
+                Agenda Visual de Retornos (Seg a Sex, 08:00 a 18:00)
+              </CardTitle>
+              <CardDescription>
+                Clique em um horário livre para confirmar o retorno do paciente via Cal.com.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Button size="sm" variant="outline" onClick={() => setWeekOffset((w) => w - 1)} aria-label="Semana anterior">
+                  <ChevronLeft className="h-3.5 w-3.5" />
+                </Button>
+                <span className="text-xs font-semibold text-text-main">
+                  {weekDays[0].toLocaleDateString("pt-BR")} a {weekDays[4].toLocaleDateString("pt-BR")}
+                </span>
+                <Button size="sm" variant="outline" onClick={() => setWeekOffset((w) => w + 1)} aria-label="Próxima semana">
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+              <div className="overflow-x-auto">
+                <div className="grid gap-1 min-w-[560px]" style={{ gridTemplateColumns: "56px repeat(5, minmax(0, 1fr))" }}>
+                  <div />
+                  {weekDays.map((d) => (
+                    <div key={d.toISOString()} className="text-center text-[11px] font-semibold text-text-secondary pb-1">
+                      {d.toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit" })}
+                    </div>
+                  ))}
+                  {slotHours.map((h) => (
+                    <React.Fragment key={h}>
+                      <div className="text-[11px] font-mono text-text-muted self-center">{String(h).padStart(2, "0")}:00</div>
+                      {weekDays.map((d) => {
+                        const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}-${h}`;
+                        const taken = bookedSlotKeys.has(key);
+                        const past = new Date(d.getFullYear(), d.getMonth(), d.getDate(), h).getTime() < Date.now();
+                        return (
+                          <button
+                            key={key}
+                            type="button"
+                            disabled={taken || past}
+                            onClick={() => handlePickSlot(d, h)}
+                            aria-label={`${d.toLocaleDateString("pt-BR")} ${h}:00 ${taken ? "ocupado" : "disponível"}`}
+                            className={`py-1.5 rounded border text-[10px] transition ${
+                              taken
+                                ? "bg-status-success-subtle text-status-success border-status-success/30"
+                                : past
+                                ? "bg-surface-bg text-text-muted border-border opacity-50 cursor-not-allowed"
+                                : "bg-surface-card text-text-main border-border hover:border-brand-primary hover:bg-brand-primary-subtle"
+                            }`}
+                          >
+                            {taken ? "Confirmado" : past ? "-" : "Livre"}
+                          </button>
+                        );
+                      })}
+                    </React.Fragment>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
                 <CalendarCheck className="h-4 w-4 text-status-success" />
                 Consultas de Manutenção Confirmadas via Cal.com
               </CardTitle>
@@ -488,6 +599,17 @@ export const CalcomReactivationWorkspace: React.FC = () => {
           </Card>
         </div>
       </div>
+
+      {videoBooking && (
+        <LiveKitDealRoomModal
+          isOpen
+          onClose={() => setVideoBooking(null)}
+          dealId={String(videoBooking.deal_id || videoBooking.id)}
+          dealTitle={videoBooking.event_type_title}
+          contactName={videoBooking.patient_name}
+          contactPhone={videoBooking.patient_phone}
+        />
+      )}
     </div>
   );
 };

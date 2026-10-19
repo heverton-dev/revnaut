@@ -17,6 +17,8 @@ import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Tabs } from "@/components/ui/Tabs";
+import { R2DirectUploader } from "@/components/shared/R2DirectUploader";
+import { DentgoRadarMap } from "./DentgoRadarMap";
 
 export interface DentgoExpressOrder {
   id: string;
@@ -108,6 +110,9 @@ export const DentgoExpressCockpit: React.FC = () => {
   const [newOrderProductId, setNewOrderProductId] = useState<string>("IMP-CM-4311");
   const [newOrderQty, setNewOrderQty] = useState<number>(2);
   const [newOrderVoucher, setNewOrderVoucher] = useState<string>("");
+  const [cartItems, setCartItems] = useState<Array<{ product_id: string; quantity: number }>>([]);
+  const [voucherError, setVoucherError] = useState<string | null>(null);
+  const [podPhotoKey, setPodPhotoKey] = useState<string | null>(null);
   const [checkingOut, setCheckingOut] = useState<boolean>(false);
 
   // Transition stage inputs
@@ -305,28 +310,58 @@ export const DentgoExpressCockpit: React.FC = () => {
     }
   };
 
+  const handleAddCartItem = () => {
+    const qty = Math.max(1, Number(newOrderQty) || 1);
+    const pid = newOrderProductId.trim();
+    if (!pid) return;
+    setCartItems((prev) => {
+      const existing = prev.find((i) => i.product_id === pid);
+      if (existing) {
+        return prev.map((i) => (i.product_id === pid ? { ...i, quantity: i.quantity + qty } : i));
+      }
+      return [...prev, { product_id: pid, quantity: qty }];
+    });
+  };
+
   const handleCreateExpressOrder = async () => {
+    const voucher = newOrderVoucher.trim().toUpperCase();
+    if (voucher && !/^(MOEDA-EXPRESS|DENTGO-EXPRESS)-[A-Z0-9]+$/.test(voucher)) {
+      setVoucherError("Voucher inválido. Use o formato MOEDA-EXPRESS-* ou DENTGO-EXPRESS-*.");
+      return;
+    }
+    setVoucherError(null);
     setCheckingOut(true);
     try {
-      const res = await fetch("/api/v1/dentgo/orders/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          customer_cro_uf: newOrderCro,
-          delivery_address: newOrderAddress,
-          delivery_lat: Number(newOrderLat),
-          delivery_lng: Number(newOrderLng),
-          items: [{ product_id: newOrderProductId, quantity: Number(newOrderQty) }],
-          voucher_code: newOrderVoucher || undefined,
-          account_id: "0f14ffff",
-        }),
+      const items =
+        cartItems.length > 0
+          ? cartItems
+          : [{ product_id: newOrderProductId, quantity: Number(newOrderQty) }];
+      const body = JSON.stringify({
+        customer_cro_uf: newOrderCro,
+        delivery_address: newOrderAddress,
+        delivery_lat: Number(newOrderLat),
+        delivery_lng: Number(newOrderLng),
+        items,
+        voucher_code: voucher || undefined,
+        account_id: "0f14ffff",
       });
+      const post = (path: string) =>
+        fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body });
+      let res = await post("/api/v1/dentgo/orders/express");
+      if (res.status === 404 || res.status === 405) {
+        res = await post("/api/v1/dentgo/orders/checkout");
+      }
       if (res.ok) {
         setShowCheckoutModal(false);
+        setCartItems([]);
+        setNewOrderVoucher("");
         fetchOrders();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setVoucherError(typeof err.detail === "string" ? err.detail : "Falha ao despachar o pedido.");
       }
     } catch {
-      // erro
+      setVoucherError("Falha de rede ao despachar o pedido.");
     } finally {
       setCheckingOut(false);
     }
@@ -750,12 +785,25 @@ export const DentgoExpressCockpit: React.FC = () => {
                             className="w-full rounded border border-border bg-surface-card p-1.5 text-xs"
                           />
                         </div>
+                        <div>
+                          <label className="text-[10px] text-text-secondary block mb-1">Foto de Comprovante de Entrega (POD):</label>
+                          <R2DirectUploader
+                            module="consignments"
+                            accept=".png,.jpg,.jpeg"
+                            onUploadComplete={(r) => setPodPhotoKey(r.key)}
+                          />
+                          {podPhotoKey && (
+                            <span className="text-[10px] font-mono text-status-success break-all block mt-1">
+                              POD anexado: {podPhotoKey}
+                            </span>
+                          )}
+                        </div>
                         <Button
                           size="sm"
                           onClick={() =>
                             handleTransition("verify-delivery", {
                               entered_pin: deliveryPin,
-                              proof_photo_r2_key: `pod/${selectedOrder.id}/entrega.jpg`,
+                              proof_photo_r2_key: podPhotoKey || `pod/${selectedOrder.id}/entrega.jpg`,
                               recipient_name: deliveryRecipient,
                             })
                           }
@@ -857,6 +905,12 @@ export const DentgoExpressCockpit: React.FC = () => {
               </Button>
             </div>
           </div>
+
+          <DentgoRadarMap
+            hubs={hubs}
+            orders={orders}
+            clinic={{ label: "Clínica (busca de emergência)", lat: searchLat, lng: searchLng }}
+          />
 
           {inventoryFeedback && (
             <div className="p-3 rounded-lg bg-status-success-subtle text-status-success border border-status-success/20 text-xs font-medium">
@@ -1331,6 +1385,44 @@ export const DentgoExpressCockpit: React.FC = () => {
                     className="w-full rounded-lg border border-border bg-surface-bg p-2 text-text-main font-mono"
                   />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Button type="button" size="sm" variant="outline" onClick={handleAddCartItem} className="w-full gap-1.5">
+                  <Plus className="w-3.5 h-3.5" />
+                  Adicionar Item ao Carrinho
+                </Button>
+                {cartItems.length > 0 && (
+                  <ul className="rounded-lg border border-border divide-y divide-border">
+                    {cartItems.map((i) => (
+                      <li key={i.product_id} className="flex items-center justify-between p-2">
+                        <span className="font-mono">
+                          {i.product_id} x {i.quantity}
+                        </span>
+                        <button
+                          type="button"
+                          aria-label={`Remover ${i.product_id}`}
+                          onClick={() => setCartItems((prev) => prev.filter((x) => x.product_id !== i.product_id))}
+                          className="text-status-danger"
+                        >
+                          Remover
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              <div>
+                <label className="text-text-secondary block mb-1">Voucher (isenção da taxa de urgência)</label>
+                <input
+                  type="text"
+                  value={newOrderVoucher}
+                  onChange={(e) => setNewOrderVoucher(e.target.value)}
+                  placeholder="MOEDA-EXPRESS-XXXX ou DENTGO-EXPRESS-XXXX"
+                  className="w-full rounded-lg border border-border bg-surface-bg p-2 text-text-main font-mono"
+                />
+                {voucherError && <p className="text-status-danger mt-1">{voucherError}</p>}
               </div>
             </div>
             <div className="flex justify-end gap-2 pt-3 border-t border-border">

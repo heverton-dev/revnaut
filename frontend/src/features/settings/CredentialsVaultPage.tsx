@@ -13,6 +13,8 @@ import {
   BookOpen,
   Code2,
   Webhook,
+  FileDown,
+  FileCode2,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -38,6 +40,8 @@ export interface ErpInvoice {
   nfe_access_key: string;
   nfe_number: string;
   danfe_url?: string;
+  danfe_pdf_r2_key?: string;
+  xml_r2_key?: string;
   total_amount: number;
   status: string;
   erp_type: string;
@@ -105,6 +109,7 @@ export function CredentialsVaultPage() {
   const [outboxItems, setOutboxItems] = React.useState<any[]>([]);
   const [, setLoadingInvoices] = React.useState(false);
   const [remittanceFeedback, setRemittanceFeedback] = React.useState<string | null>(null);
+  const [erpType, setErpType] = React.useState<string>("TOTVS_PROTHEUS");
 
   // Formulário Emissão Remessa CFOP 5917
   const [remittanceDealId, setRemittanceDealId] = React.useState("deal-01");
@@ -288,7 +293,7 @@ export function CredentialsVaultPage() {
           partner_name: remittancePartnerName,
           partner_cro_uf: remittanceCro,
           total_amount: Number(remittanceValue),
-          erp_type: "TOTVS_PROTHEUS",
+          erp_type: erpType,
           account_id: "0f14ffff",
         }),
       });
@@ -312,7 +317,7 @@ export function CredentialsVaultPage() {
           deal_id: settlementDealId,
           consumed_amount: Number(settlementConsumedValue),
           returned_amount: Number(settlementReturnedValue),
-          erp_type: "TOTVS_PROTHEUS",
+          erp_type: erpType,
           account_id: "0f14ffff",
         }),
       });
@@ -617,8 +622,20 @@ export function CredentialsVaultPage() {
                     <Input type="number" value={remittanceValue} onChange={(e) => setRemittanceValue(Number(e.target.value))} required />
                   </div>
                 </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-text-secondary block mb-0.5">ERP de Destino</label>
+                  <select
+                    value={erpType}
+                    onChange={(e) => setErpType(e.target.value)}
+                    className="w-full px-2.5 py-1.5 rounded-lg border border-border bg-surface-bg text-xs text-text-main"
+                  >
+                    <option value="TOTVS_PROTHEUS">TOTVS Protheus</option>
+                    <option value="SAP_B1">SAP Business One</option>
+                    <option value="SANKHYA">Sankhya</option>
+                  </select>
+                </div>
                 <Button type="submit" variant="default" size="sm" className="w-full text-xs mt-2">
-                  Despachar NF-e Remessa ao TOTVS
+                  Despachar NF-e Remessa ao ERP
                 </Button>
               </form>
 
@@ -654,8 +671,20 @@ export function CredentialsVaultPage() {
                     <Input type="number" value={settlementReturnedValue} onChange={(e) => setSettlementReturnedValue(Number(e.target.value))} required />
                   </div>
                 </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-text-secondary block mb-0.5">ERP de Destino</label>
+                  <select
+                    value={erpType}
+                    onChange={(e) => setErpType(e.target.value)}
+                    className="w-full px-2.5 py-1.5 rounded-lg border border-border bg-surface-bg text-xs text-text-main"
+                  >
+                    <option value="TOTVS_PROTHEUS">TOTVS Protheus</option>
+                    <option value="SAP_B1">SAP Business One</option>
+                    <option value="SANKHYA">Sankhya</option>
+                  </select>
+                </div>
                 <Button type="submit" variant="secondary" size="sm" className="w-full text-xs mt-2">
-                  Liquidar Cirurgia no TOTVS Protheus
+                  Liquidar Cirurgia no ERP
                 </Button>
               </form>
 
@@ -694,11 +723,32 @@ export function CredentialsVaultPage() {
                       Chave: {inv.nfe_access_key}
                     </div>
                   </div>
-                  <div className="text-right font-mono">
-                    <span className="font-bold text-text-main block">
-                      R$ {inv.total_amount?.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                    </span>
-                    <span className="text-[10px] text-status-success">{inv.status}</span>
+                  <div className="flex flex-col items-end gap-1">
+                    <div className="text-right font-mono">
+                      <span className="font-bold text-text-main block">
+                        R$ {inv.total_amount?.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                      </span>
+                      <span className="text-[10px] text-status-success">{inv.status}</span>
+                    </div>
+                    <div className="flex gap-1.5">
+                      <a
+                        href={`/api/v1/storage/files/${inv.danfe_pdf_r2_key || `0f14ffff/erp_invoices/${inv.nfe_number}.pdf`}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center gap-1 px-2 py-1 rounded border border-border bg-surface-card text-[10px] text-brand-primary hover:border-brand-primary"
+                      >
+                        <FileDown className="h-3 w-3" />
+                        Abrir DANFE (PDF)
+                      </a>
+                      <a
+                        href={`/api/v1/storage/files/${inv.xml_r2_key || `0f14ffff/erp_invoices/${inv.nfe_number}.xml`}`}
+                        download
+                        className="flex items-center gap-1 px-2 py-1 rounded border border-border bg-surface-card text-[10px] text-brand-primary hover:border-brand-primary"
+                      >
+                        <FileCode2 className="h-3 w-3" />
+                        Baixar XML NF-e
+                      </a>
+                    </div>
                   </div>
                 </div>
               ))}

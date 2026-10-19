@@ -13,7 +13,14 @@ import {
   RefreshCw,
   Video,
   Search,
+  Mic,
+  Square,
+  Paperclip,
+  QrCode,
+  PhoneCall,
+  X,
 } from "lucide-react";
+import { QrCodeSvg } from "@/components/shared/QrCodeSvg";
 
 export interface OmnichannelWorkspaceProps {
   onOpenSosVideo?: (croUf: string) => void;
@@ -71,6 +78,22 @@ export const OmnichannelWorkspace: React.FC<OmnichannelWorkspaceProps> = ({
   const [consultantId, setConsultantId] = React.useState<string>("usr-sp-01");
   const [showInstanceModal, setShowInstanceModal] = React.useState<boolean>(false);
   const [searchFilter, setSearchFilter] = React.useState<string>("");
+  const [recording, setRecording] = React.useState<boolean>(false);
+  const [uploadingMedia, setUploadingMedia] = React.useState<boolean>(false);
+  const [composerError, setComposerError] = React.useState<string | null>(null);
+  const [qrInstance, setQrInstance] = React.useState<WhatsappInstance | null>(null);
+  const [callFeedback, setCallFeedback] = React.useState<string | null>(null);
+  const recorderRef = React.useRef<MediaRecorder | null>(null);
+  const chunksRef = React.useRef<Blob[]>([]);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const quickReplies = [
+    "Bom dia, doutor(a). Segue o planejamento do caso para sua avaliação.",
+    "Confirmo o envio do kit cirúrgico hoje, com rastreabilidade ANVISA.",
+    "Poderia enviar a radiografia panorâmica para eu validar o torque e o diâmetro?",
+    "Seu lote está em trânsito pelo DENTGO Express. Envio o PIN de entrega em seguida.",
+    "Posso agendar uma teleconsulta de 15 minutos para alinhar o protocolo?",
+  ];
 
   // 1. Carregar Conversas
   const { data: rawConversations = [], isLoading: loadingConversations, refetch: refetchConversations } = useQuery<ConversationItem[]>({
@@ -177,6 +200,103 @@ export const OmnichannelWorkspace: React.FC<OmnichannelWorkspaceProps> = ({
 
   const activeContact = (Array.isArray(contacts) ? contacts : []).find((c) => c.id === selectedContactId) || contacts[0];
   const activeConversation = (Array.isArray(conversations) ? conversations : []).find((c) => c.id === selectedChatId) || conversations[0];
+
+  const uploadMedia = async (blob: Blob, filename: string): Promise<string> => {
+    const presign = await fetch("/api/v1/storage/presign-upload", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Account-ID": "0f14ffff" },
+      body: JSON.stringify({
+        filename,
+        module: "media",
+        content_type: blob.type || "application/octet-stream",
+      }),
+    });
+    if (!presign.ok) throw new Error("Falha ao obter autorização de upload");
+    const { upload_url, key } = await presign.json();
+    const put = await fetch(upload_url, {
+      method: "PUT",
+      headers: { "Content-Type": blob.type || "application/octet-stream" },
+      body: blob,
+    });
+    if (!put.ok) throw new Error("Falha no upload do arquivo");
+    return key as string;
+  };
+
+  const sendMediaMessage = async (blob: Blob, filename: string, label: string) => {
+    setComposerError(null);
+    setUploadingMedia(true);
+    try {
+      const key = await uploadMedia(blob, filename);
+      sendMessageMutation.mutate(`${label}: /api/v1/storage/files/${key}`);
+    } catch (err: any) {
+      setComposerError(err.message || "Falha ao enviar mídia");
+    } finally {
+      setUploadingMedia(false);
+    }
+  };
+
+  const toggleRecording = async () => {
+    setComposerError(null);
+    if (recording) {
+      recorderRef.current?.stop();
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      chunksRef.current = [];
+      recorder.ondataavailable = (ev) => {
+        if (ev.data.size > 0) chunksRef.current.push(ev.data);
+      };
+      recorder.onstop = () => {
+        stream.getTracks().forEach((t) => t.stop());
+        setRecording(false);
+        const blob = new Blob(chunksRef.current, { type: recorder.mimeType || "audio/webm" });
+        const ext = blob.type.includes("ogg") ? "ogg" : "webm";
+        void sendMediaMessage(blob, `nota-de-voz-${Date.now()}.${ext}`, "Nota de voz");
+      };
+      recorderRef.current = recorder;
+      recorder.start();
+      setRecording(true);
+    } catch {
+      setComposerError("Microfone indisponível ou permissão negada.");
+    }
+  };
+
+  const handleAttachFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    void sendMediaMessage(file, file.name, `Anexo (${file.name})`);
+  };
+
+  const handleSimulateCallOffer = async (inst: WhatsappInstance) => {
+    setCallFeedback(null);
+    try {
+      const res = await fetch("/api/v1/webhooks/evolution", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          event: "CALL_OFFER",
+          instance: inst.instance_name,
+          data: {
+            id: `call-${Date.now()}`,
+            from: `${(inst.phone_number || "5511999998888").replace(/\D/g, "")}@s.whatsapp.net`,
+            isVideo: true,
+            status: "offer",
+          },
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      setCallFeedback(
+        res.ok
+          ? `CALL_OFFER enviado para ${inst.instance_name}.`
+          : `Webhook respondeu ${res.status}: ${typeof data.detail === "string" ? data.detail : "verifique a assinatura HMAC"}`,
+      );
+    } catch (err: any) {
+      setCallFeedback(`Erro: ${err.message}`);
+    }
+  };
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
@@ -383,8 +503,31 @@ export const OmnichannelWorkspace: React.FC<OmnichannelWorkspaceProps> = ({
                       <span>Cons.: {inst.consultant_user_id}</span>
                       <span>{inst.phone_number || "Sem linha fixa"}</span>
                     </div>
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setQrInstance(inst)}
+                        className="flex items-center gap-1 px-2 py-1 rounded border border-border bg-surface-card text-[10px] text-text-main hover:border-brand-primary"
+                      >
+                        <QrCode className="h-3 w-3 text-brand-primary" />
+                        Ver QR Code
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleSimulateCallOffer(inst)}
+                        className="flex items-center gap-1 px-2 py-1 rounded border border-border bg-surface-card text-[10px] text-text-main hover:border-brand-primary"
+                      >
+                        <PhoneCall className="h-3 w-3 text-brand-primary" />
+                        Simular Chamada Vídeo (CALL_OFFER)
+                      </button>
+                    </div>
                   </div>
                 ))}
+                {callFeedback && (
+                  <p className="text-[10px] font-mono text-text-secondary bg-surface-bg border border-border rounded p-2">
+                    {callFeedback}
+                  </p>
+                )}
               </div>
             )}
           </Card>
@@ -465,8 +608,45 @@ export const OmnichannelWorkspace: React.FC<OmnichannelWorkspaceProps> = ({
             </div>
 
             {/* Composer de Mensagem */}
-            <form onSubmit={handleSendMessage} className="p-3 border-t border-border bg-surface-card">
+            <form onSubmit={handleSendMessage} className="p-3 border-t border-border bg-surface-card space-y-2">
+              <div className="flex flex-wrap gap-1.5">
+                {quickReplies.map((q, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setMessageText(q)}
+                    className="px-2 py-1 rounded-full border border-border bg-surface-bg text-[10px] text-text-secondary hover:text-text-main hover:border-brand-primary max-w-full truncate"
+                    title={q}
+                  >
+                    {q.length > 44 ? `${q.slice(0, 44)}...` : q}
+                  </button>
+                ))}
+              </div>
+              {composerError && <p className="text-[11px] text-status-danger">{composerError}</p>}
               <div className="flex items-center gap-2">
+                <input ref={fileInputRef} type="file" accept="image/*,.pdf,.dcm" className="hidden" onChange={handleAttachFile} />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingMedia}
+                  aria-label="Anexar arquivo ou radiografia"
+                  title="Anexar arquivo ou radiografia"
+                >
+                  <Paperclip className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  type="button"
+                  variant={recording ? "default" : "outline"}
+                  size="sm"
+                  onClick={toggleRecording}
+                  disabled={uploadingMedia}
+                  aria-label={recording ? "Parar e enviar nota de voz" : "Gravar nota de voz"}
+                  title={recording ? "Parar e enviar nota de voz" : "Gravar nota de voz"}
+                >
+                  {recording ? <Square className="h-3.5 w-3.5 text-status-danger" /> : <Mic className="h-3.5 w-3.5" />}
+                </Button>
                 <Input
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
@@ -499,6 +679,42 @@ export const OmnichannelWorkspace: React.FC<OmnichannelWorkspaceProps> = ({
           />
         </div>
       </div>
+
+      {qrInstance && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-text-main/60 p-4">
+          <Card className="w-full max-w-sm p-5 bg-surface-card border border-border space-y-3 shadow-xl">
+            <div className="flex items-center justify-between border-b border-border pb-2.5">
+              <h3 className="text-sm font-bold text-text-main">QR Code: {qrInstance.instance_name}</h3>
+              <button
+                type="button"
+                aria-label="Fechar QR Code"
+                onClick={() => setQrInstance(null)}
+                className="text-text-muted hover:text-text-main"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="flex justify-center">
+              {qrInstance.qr_code_base64 ? (
+                <img
+                  src={
+                    qrInstance.qr_code_base64.startsWith("data:")
+                      ? qrInstance.qr_code_base64
+                      : `data:image/png;base64,${qrInstance.qr_code_base64}`
+                  }
+                  alt={`QR Code da instância ${qrInstance.instance_name}`}
+                  className="w-56 h-56"
+                />
+              ) : (
+                <QrCodeSvg value={`evolution://pair/${qrInstance.instance_name}`} size={224} />
+              )}
+            </div>
+            <p className="text-[11px] text-text-secondary text-center">
+              WhatsApp &gt; Aparelhos conectados &gt; Conectar um aparelho e aponte a câmera para o código.
+            </p>
+          </Card>
+        </div>
+      )}
 
       {/* Modal / Criação de Instância WhatsApp */}
       {showInstanceModal && (

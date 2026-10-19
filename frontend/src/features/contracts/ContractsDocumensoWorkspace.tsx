@@ -9,6 +9,11 @@ import {
   FileSignature,
   Package,
   RefreshCw,
+  Eye,
+  PenLine,
+  Plus,
+  Trash2,
+  X,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -35,6 +40,7 @@ interface ContractItem {
   title: string;
   contract_type: string;
   status: string;
+  original_r2_key?: string;
   original_pdf_r2_key?: string;
   signed_pdf_r2_key?: string;
   sha256_hash?: string;
@@ -71,6 +77,103 @@ interface ProposalCalculation {
   request_id?: string | null;
 }
 
+interface SignaturePadModalProps {
+  contractTitle: string;
+  onCancel: () => void;
+  onConfirm: (dataUrl: string) => void;
+}
+
+const SignaturePadModal: React.FC<SignaturePadModalProps> = ({ contractTitle, onCancel, onConfirm }) => {
+  const canvasRef = React.useRef<HTMLCanvasElement>(null);
+  const drawingRef = React.useRef<boolean>(false);
+  const [hasInk, setHasInk] = React.useState<boolean>(false);
+
+  const pointFrom = (clientX: number, clientY: number) => {
+    const canvas = canvasRef.current!;
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: ((clientX - rect.left) / rect.width) * canvas.width,
+      y: ((clientY - rect.top) / rect.height) * canvas.height,
+    };
+  };
+
+  const start = (clientX: number, clientY: number) => {
+    const ctx = canvasRef.current?.getContext("2d");
+    if (!ctx) return;
+    const { x, y } = pointFrom(clientX, clientY);
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = "round";
+    ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue("--color-text-main") || "black";
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    drawingRef.current = true;
+  };
+
+  const move = (clientX: number, clientY: number) => {
+    if (!drawingRef.current) return;
+    const ctx = canvasRef.current?.getContext("2d");
+    if (!ctx) return;
+    const { x, y } = pointFrom(clientX, clientY);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    setHasInk(true);
+  };
+
+  const end = () => {
+    drawingRef.current = false;
+  };
+
+  const clear = () => {
+    const canvas = canvasRef.current;
+    canvas?.getContext("2d")?.clearRect(0, 0, canvas.width, canvas.height);
+    setHasInk(false);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-text-main/50">
+      <div className="bg-surface-card border border-border rounded-xl w-full max-w-xl p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-bold text-text-main">Assinar na Tela: {contractTitle}</h3>
+          <button type="button" onClick={onCancel} aria-label="Fechar" className="text-text-secondary hover:text-text-main">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <p className="text-xs text-text-secondary">Desenhe a assinatura do cirurgião com o mouse ou o dedo.</p>
+        <canvas
+          ref={canvasRef}
+          width={600}
+          height={220}
+          aria-label="Área de assinatura"
+          className="w-full h-44 rounded border border-border bg-surface-bg touch-none"
+          onMouseDown={(e) => start(e.clientX, e.clientY)}
+          onMouseMove={(e) => move(e.clientX, e.clientY)}
+          onMouseUp={end}
+          onMouseLeave={end}
+          onTouchStart={(e) => start(e.touches[0].clientX, e.touches[0].clientY)}
+          onTouchMove={(e) => move(e.touches[0].clientX, e.touches[0].clientY)}
+          onTouchEnd={end}
+        />
+        <div className="flex items-center justify-between">
+          <Button type="button" size="sm" variant="secondary" onClick={clear} className="gap-1.5">
+            <Trash2 className="h-3.5 w-3.5" />
+            Limpar
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            disabled={!hasInk}
+            onClick={() => onConfirm(canvasRef.current!.toDataURL("image/png"))}
+            className="gap-1.5"
+          >
+            <ShieldCheck className="h-3.5 w-3.5" />
+            Confirmar Assinatura
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const ContractsDocumensoWorkspace: React.FC = () => {
   const [activeTab, setActiveTab] = React.useState<string>("documenso_lifecycle");
   const [feedbackMsg, setFeedbackMsg] = React.useState<string | null>(null);
@@ -98,6 +201,9 @@ export const ContractsDocumensoWorkspace: React.FC = () => {
   const [proposalResult, setProposalResult] = React.useState<ProposalCalculation | null>(null);
   const [calculatingProposal, setCalculatingProposal] = React.useState<boolean>(false);
   const [approvingDiscount, setApprovingDiscount] = React.useState<boolean>(false);
+  const [proposalItems, setProposalItems] = React.useState<Array<{ sku: string; quantity: number; name: string }>>([]);
+  const [previewContract, setPreviewContract] = React.useState<ContractItem | null>(null);
+  const [signingContract, setSigningContract] = React.useState<ContractItem | null>(null);
 
   // Estados Tab 3: Custódia R2 & Download Pré-Assinado
   const [r2KeyInput, setR2KeyInput] = React.useState<string>(
@@ -201,7 +307,19 @@ export const ContractsDocumensoWorkspace: React.FC = () => {
     }
   };
 
-  const handleSimulateDocumensoWebhook = async (contract: ContractItem) => {
+  const handleAddProposalItem = () => {
+    const qty = Math.max(1, Number(quantity) || 1);
+    const name = products.find((p) => p.sku === selectedSku)?.name || selectedSku;
+    setProposalItems((prev) => {
+      const existing = prev.find((i) => i.sku === selectedSku);
+      if (existing) {
+        return prev.map((i) => (i.sku === selectedSku ? { ...i, quantity: i.quantity + qty } : i));
+      }
+      return [...prev, { sku: selectedSku, quantity: qty, name }];
+    });
+  };
+
+  const handleSimulateDocumensoWebhook = async (contract: ContractItem, signatureDataUrl?: string) => {
     setErrorMsg(null);
     setFeedbackMsg(null);
     try {
@@ -215,7 +333,10 @@ export const ContractsDocumensoWorkspace: React.FC = () => {
             id: docId,
             title: contract.title,
             status: "COMPLETED",
-            meta: { deal_id: contract.deal_id || selectedDealId },
+            meta: {
+              deal_id: contract.deal_id || selectedDealId,
+              ...(signatureDataUrl ? { signature_png: signatureDataUrl } : {}),
+            },
           },
         }),
       });
@@ -243,7 +364,10 @@ export const ContractsDocumensoWorkspace: React.FC = () => {
         body: JSON.stringify({
           deal_id: selectedDealId || "d-1",
           table_key: selectedTableKey,
-          items: [{ sku: selectedSku, quantity: Math.max(1, Number(quantity) || 1) }],
+          items:
+            proposalItems.length > 0
+              ? proposalItems.map((i) => ({ sku: i.sku, quantity: i.quantity }))
+              : [{ sku: selectedSku, quantity: Math.max(1, Number(quantity) || 1) }],
           requested_discount_pct: Number(discountPct) || 0,
           user_id: "usr-consultant-pr",
           user_role: userRole,
@@ -538,17 +662,39 @@ export const ContractsDocumensoWorkspace: React.FC = () => {
                           )}
                         </div>
 
-                        {!isSigned && (
+                        <div className="flex flex-wrap gap-2 shrink-0">
                           <Button
                             size="sm"
                             variant="secondary"
-                            onClick={() => handleSimulateDocumensoWebhook(c)}
-                            className="shrink-0 gap-1.5"
+                            onClick={() => setPreviewContract(c)}
+                            className="gap-1.5"
                           >
-                            <ShieldCheck className="h-3.5 w-3.5 text-status-success" />
-                            Simular Assinatura Digital
+                            <Eye className="h-3.5 w-3.5 text-brand-primary" />
+                            Visualizar PDF
                           </Button>
-                        )}
+                          {!isSigned && (
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => setSigningContract(c)}
+                              className="gap-1.5"
+                            >
+                              <PenLine className="h-3.5 w-3.5 text-brand-primary" />
+                              Assinar na Tela (Signature Pad)
+                            </Button>
+                          )}
+                          {!isSigned && (
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => handleSimulateDocumensoWebhook(c)}
+                              className="gap-1.5"
+                            >
+                              <ShieldCheck className="h-3.5 w-3.5 text-status-success" />
+                              Simular Assinatura Digital
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
@@ -630,6 +776,35 @@ export const ContractsDocumensoWorkspace: React.FC = () => {
                       />
                     </div>
                   </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    onClick={handleAddProposalItem}
+                    className="w-full gap-1.5"
+                  >
+                    <Plus className="h-3.5 w-3.5 text-brand-primary" />
+                    Adicionar Item ao Carrinho da Proposta
+                  </Button>
+                  {proposalItems.length > 0 && (
+                    <ul className="rounded-lg border border-border divide-y divide-border text-xs">
+                      {proposalItems.map((i) => (
+                        <li key={i.sku} className="flex items-center justify-between gap-2 p-2">
+                          <span className="min-w-0 truncate">
+                            <code className="font-mono">{i.sku}</code> x {i.quantity} - {i.name}
+                          </span>
+                          <button
+                            type="button"
+                            aria-label={`Remover ${i.sku}`}
+                            onClick={() => setProposalItems((prev) => prev.filter((x) => x.sku !== i.sku))}
+                            className="text-status-danger shrink-0"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                   <Select
                     label="Alçada do Proponente"
                     value={userRole}
@@ -776,6 +951,41 @@ export const ContractsDocumensoWorkspace: React.FC = () => {
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {previewContract && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-text-main/50">
+          <div className="bg-surface-card border border-border rounded-xl w-full max-w-3xl p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-text-main truncate">{previewContract.title}</h3>
+              <button
+                type="button"
+                aria-label="Fechar visualização"
+                onClick={() => setPreviewContract(null)}
+                className="text-text-secondary hover:text-text-main"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <iframe
+              title="Pré-visualização do PDF do contrato"
+              src={`/api/v1/storage/files/${previewContract.original_r2_key || previewContract.original_pdf_r2_key || "0f14ffff/contracts/minuta.pdf"}`}
+              className="w-full h-96 rounded border border-border"
+            />
+          </div>
+        </div>
+      )}
+
+      {signingContract && (
+        <SignaturePadModal
+          contractTitle={signingContract.title}
+          onCancel={() => setSigningContract(null)}
+          onConfirm={async (dataUrl) => {
+            const target = signingContract;
+            setSigningContract(null);
+            await handleSimulateDocumensoWebhook(target, dataUrl);
+          }}
+        />
       )}
     </div>
   );

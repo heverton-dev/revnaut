@@ -28,7 +28,10 @@ import {
   CheckSquare,
   Square,
   Save,
+  Video,
 } from "lucide-react";
+import { LiveKitDealRoomModal } from "@/features/communications/LiveKitDealRoomModal";
+import { GranolaCopilotCard } from "@/features/deals/components/GranolaCopilotCard";
 import { AppRouter } from "./router";
 import { LoginPage } from "@/features/auth/LoginPage";
 
@@ -171,6 +174,7 @@ export function App() {
   const [tasks, setTasks] = React.useState<TaskItem[]>([]);
   const [newTaskTitle, setNewTaskTitle] = React.useState<string>("");
   const [savingDrawer, setSavingDrawer] = React.useState<boolean>(false);
+  const [showDealVideoModal, setShowDealVideoModal] = React.useState<boolean>(false);
 
   // Sincronização bidirecional de rota com window.location.hash (HOMOLOG-01)
   React.useEffect(() => {
@@ -954,6 +958,34 @@ export function App() {
                         Aprovar Limite de Crédito para Consignação
                       </Button>
                     </div>
+
+                    {/* Sala de Vídeo LiveKit + Copiloto Granola */}
+                    <div className="p-3 rounded-lg border border-border space-y-3">
+                      <span className="font-semibold uppercase text-text-secondary block">
+                        Teleconsulta e Copiloto de Reunião
+                      </span>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => setShowDealVideoModal(true)}
+                        className="w-full gap-1.5"
+                      >
+                        <Video className="h-4 w-4 text-brand-primary" />
+                        Abrir Sala de Vídeo (LiveKit)
+                      </Button>
+                      <GranolaCopilotCard
+                        dealId={String(selectedDeal.id)}
+                        onApplySuccess={() => dealsQuery.refetch()}
+                      />
+                    </div>
+                    <LiveKitDealRoomModal
+                      isOpen={showDealVideoModal}
+                      onClose={() => setShowDealVideoModal(false)}
+                      dealId={String(selectedDeal.id)}
+                      dealTitle={selectedDeal.title}
+                      contactName={selectedDeal.contact_name}
+                    />
 
                     {/* Edição Inline (PUT /api/v1/deals/{deal_id}) */}
                     <div className="p-3 rounded-lg border border-border space-y-3">

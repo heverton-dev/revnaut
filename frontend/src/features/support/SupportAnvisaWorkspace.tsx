@@ -19,6 +19,7 @@ import { Select } from "@/components/ui/Select";
 import { Tabs } from "@/components/ui/Tabs";
 import { DataTable, Column } from "@/components/ui/DataTable";
 import { R2DirectUploader } from "@/components/shared/R2DirectUploader";
+import { LiveKitDealRoomModal } from "@/features/communications/LiveKitDealRoomModal";
 
 interface RmaClaimItem {
   id: string;
@@ -29,6 +30,7 @@ interface RmaClaimItem {
   product_name: string;
   batch_number: string;
   fdi_tooth_region: string;
+  radiograph_r2_key?: string;
   insertion_torque_ncm: number;
   failure_reason: string;
   status: string;
@@ -78,6 +80,53 @@ interface PostOpScheduleItem {
     feedback_received?: string | null;
   }>;
 }
+
+const FDI_UPPER = ["18", "17", "16", "15", "14", "13", "12", "11", "21", "22", "23", "24", "25", "26", "27", "28"];
+const FDI_LOWER = ["48", "47", "46", "45", "44", "43", "42", "41", "31", "32", "33", "34", "35", "36", "37", "38"];
+
+interface FdiOdontogramProps {
+  selected: string;
+  onSelect: (tooth: string) => void;
+}
+
+const FdiOdontogram: React.FC<FdiOdontogramProps> = ({ selected, onSelect }) => {
+  const renderArch = (teeth: string[], label: string) => (
+    <div className="space-y-1">
+      <span className="text-[10px] uppercase font-semibold text-text-secondary">{label}</span>
+      <div className="grid grid-cols-16 gap-0.5" style={{ gridTemplateColumns: "repeat(16, minmax(0, 1fr))" }}>
+        {teeth.map((t, i) => (
+          <button
+            key={t}
+            type="button"
+            aria-label={`Dente FDI ${t}`}
+            aria-pressed={selected === t}
+            onClick={() => onSelect(t)}
+            className={`py-1.5 text-[9px] font-mono border transition ${
+              i === 7 ? "mr-1" : ""
+            } ${
+              selected === t
+                ? "bg-brand-primary text-text-inverse border-brand-primary font-bold"
+                : "bg-surface-card text-text-secondary border-border hover:border-brand-primary"
+            } ${i < 8 ? "rounded-l-full rounded-r-md" : "rounded-r-full rounded-l-md"}`}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="p-2 rounded-lg border border-border bg-surface-bg space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-text-main">Odontograma FDI (32 dentes)</span>
+        <Badge variant="navy">Selecionado: {selected || "-"}</Badge>
+      </div>
+      {renderArch(FDI_UPPER, "Arcada Superior")}
+      {renderArch(FDI_LOWER, "Arcada Inferior")}
+    </div>
+  );
+};
 
 export const SupportAnvisaWorkspace: React.FC = () => {
   const [activeTab, setActiveTab] = React.useState<string>("anvisa_rma");
@@ -550,6 +599,7 @@ export const SupportAnvisaWorkspace: React.FC = () => {
                     onChange={(e) => setRmaProductName(e.target.value)}
                     placeholder="Descrição do Implante *"
                   />
+                  <FdiOdontogram selected={rmaFdiTooth} onSelect={setRmaFdiTooth} />
                   <div className="grid grid-cols-2 gap-2">
                     <Input
                       required
@@ -673,6 +723,17 @@ export const SupportAnvisaWorkspace: React.FC = () => {
                     Chave Radiográfica R2: <code className="font-mono">{selectedClaim.id}</code> • Taxa de falha acumulada do lote:{" "}
                     <strong>{selectedClaim.batch_failure_rate_percent}%</strong>
                   </p>
+                  {selectedClaim.radiograph_r2_key && (
+                    <a
+                      href={`/api/v1/storage/files/${selectedClaim.radiograph_r2_key}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 text-brand-primary underline font-medium"
+                    >
+                      <FileWarning className="h-3.5 w-3.5" />
+                      Abrir radiografia da ocorrência
+                    </a>
+                  )}
                 </Card>
               )}
             </div>
@@ -781,6 +842,15 @@ export const SupportAnvisaWorkspace: React.FC = () => {
                         Pedido DENTGO Vinculado: #{activeSosTicket.dentgo_order_id}
                       </Badge>
                     )}
+                  </div>
+
+                  <div className="rounded-lg border border-border overflow-hidden">
+                    <LiveKitDealRoomModal
+                      inline
+                      dealId={String(activeSosTicket.id)}
+                      dealTitle={activeSosTicket.title}
+                      contactName={activeSosTicket.customer_name}
+                    />
                   </div>
 
                   <div className="space-y-2">

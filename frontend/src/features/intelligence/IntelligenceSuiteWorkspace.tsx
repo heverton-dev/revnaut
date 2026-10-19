@@ -15,6 +15,8 @@ import {
   ShieldCheck,
   ChevronRight,
   Package,
+  Mic,
+  Square,
 } from "lucide-react";
 import { Tabs } from "@/components/ui/Tabs";
 import { Button } from "@/components/ui/Button";
@@ -149,6 +151,13 @@ export const IntelligenceSuiteWorkspace: React.FC = () => {
     "Dr. Marcelo confirmou que precisa de 12 implantes Cone Morse 3.75x11 e 4 cicatrizadores para cirurgia de sexta-feira."
   );
   const [pttDuration, setPttDuration] = useState<number>(45.5);
+  const [pttRecording, setPttRecording] = useState<boolean>(false);
+  const [pttRecordError, setPttRecordError] = useState<string | null>(null);
+  const [recordedAudios, setRecordedAudios] = useState<Record<string, string>>({});
+  const pttRecorderRef = React.useRef<MediaRecorder | null>(null);
+  const pttChunksRef = React.useRef<Blob[]>([]);
+  const pttRecognitionRef = React.useRef<any>(null);
+  const pttStartedAtRef = React.useRef<number>(0);
   const [pttProcessing, setPttProcessing] = useState<boolean>(false);
   const [pttFeedback, setPttFeedback] = useState<string | null>(null);
 
@@ -274,6 +283,63 @@ export const IntelligenceSuiteWorkspace: React.FC = () => {
       fetchDealTranscriptions(selectedDealId);
     }
   }, [selectedDealId, fetchDealTranscriptions]);
+
+  // Gravação de voz no microfone (PTT): MediaRecorder + SpeechRecognition (pt-BR)
+  const handleTogglePttRecording = async () => {
+    setPttRecordError(null);
+    if (pttRecording) {
+      pttRecognitionRef.current?.stop?.();
+      pttRecorderRef.current?.stop();
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      pttChunksRef.current = [];
+      pttStartedAtRef.current = Date.now();
+      const callKey = pttCallId;
+      recorder.ondataavailable = (ev) => {
+        if (ev.data.size > 0) pttChunksRef.current.push(ev.data);
+      };
+      recorder.onstop = () => {
+        stream.getTracks().forEach((t) => t.stop());
+        setPttRecording(false);
+        const blob = new Blob(pttChunksRef.current, { type: recorder.mimeType || "audio/webm" });
+        const url = URL.createObjectURL(blob);
+        setRecordedAudios((prev) => ({ ...prev, [callKey]: url }));
+        setPttDuration(Math.max(1, Math.round((Date.now() - pttStartedAtRef.current) / 100) / 10));
+      };
+      pttRecorderRef.current = recorder;
+
+      const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SR) {
+        const rec = new SR();
+        rec.lang = "pt-BR";
+        rec.continuous = true;
+        rec.interimResults = false;
+        rec.onresult = (ev: any) => {
+          let text = "";
+          for (let i = ev.resultIndex; i < ev.results.length; i++) {
+            if (ev.results[i].isFinal) text += `${ev.results[i][0].transcript} `;
+          }
+          if (text.trim()) setPttDialogue((prev) => `${prev ? `${prev}\n` : ""}${text.trim()}`);
+        };
+        rec.onerror = () => {
+          setPttRecordError("Reconhecimento de fala indisponível; digite a transcrição manualmente.");
+        };
+        pttRecognitionRef.current = rec;
+        setPttDialogue("");
+        rec.start();
+      } else {
+        setPttRecordError("SpeechRecognition não suportado neste navegador; o áudio será gravado sem transcrição automática.");
+      }
+
+      recorder.start();
+      setPttRecording(true);
+    } catch {
+      setPttRecordError("Microfone indisponível ou permissão negada.");
+    }
+  };
 
   // Handle Process Transcription
   const handleProcessPtt = async () => {
@@ -680,6 +746,27 @@ export const IntelligenceSuiteWorkspace: React.FC = () => {
                     />
                   </div>
 
+                  <div className="space-y-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={pttRecording ? "default" : "outline"}
+                      onClick={handleTogglePttRecording}
+                      className="gap-1.5"
+                    >
+                      {pttRecording ? (
+                        <Square className="w-3.5 h-3.5 text-status-danger" />
+                      ) : (
+                        <Mic className="w-3.5 h-3.5 text-brand-primary" />
+                      )}
+                      {pttRecording ? "Parar Gravação" : "Gravar Voz no Microfone (PTT)"}
+                    </Button>
+                    {pttRecordError && <p className="text-[11px] text-status-warning">{pttRecordError}</p>}
+                    {recordedAudios[pttCallId] && (
+                      <audio controls src={recordedAudios[pttCallId]} className="w-full h-8" />
+                    )}
+                  </div>
+
                   <div className="flex items-center justify-between pt-1">
                     {pttFeedback ? (
                       <span className="text-xs text-status-success font-medium">{pttFeedback}</span>
@@ -732,6 +819,14 @@ export const IntelligenceSuiteWorkspace: React.FC = () => {
                           <span className="text-[10px] text-text-muted font-mono">{t.created_at}</span>
                         </div>
                         <p className="text-xs text-text-secondary line-clamp-2">{t.full_text}</p>
+                        {recordedAudios[t.call_id] && (
+                          <audio
+                            controls
+                            src={recordedAudios[t.call_id]}
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-full h-8 mt-2"
+                          />
+                        )}
                         <div className="flex items-center gap-3 mt-2 text-[10px] text-text-muted font-mono">
                           <span>Oradores: {t.speakers_detected}</span>
                           <span>Duração: {t.duration_seconds}s</span>

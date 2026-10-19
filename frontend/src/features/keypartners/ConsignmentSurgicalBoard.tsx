@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Tabs } from "@/components/ui/Tabs";
+import { R2DirectUploader } from "@/components/shared/R2DirectUploader";
 
 export interface SurgicalOrder {
   id: string;
@@ -137,6 +138,14 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
   // Custody Summary
   const [selectedCustodyAgreementId, setSelectedCustodyAgreementId] = useState<string>("");
   const [custodySummary, setCustodySummary] = useState<any | null>(null);
+  const [showDispatchCustodyModal, setShowDispatchCustodyModal] = useState<boolean>(false);
+  const [dispatchProductId, setDispatchProductId] = useState<string>("IMP-CM-4311");
+  const [dispatchBatch, setDispatchBatch] = useState<string>("LOTE-2026-X1");
+  const [dispatchQty, setDispatchQty] = useState<number>(10);
+  const [dispatchSealCode, setDispatchSealCode] = useState<string>("LACRE-CUSTODIA-001");
+  const [dispatchLots, setDispatchLots] = useState<Array<{ product_id: string; batch_number: string; quantity: number }>>([]);
+  const [dispatchingCustody, setDispatchingCustody] = useState<boolean>(false);
+  const [dispatchCustodyFeedback, setDispatchCustodyFeedback] = useState<string | null>(null);
   const [loadingCustody, setLoadingCustody] = useState<boolean>(false);
 
   // Register Kit
@@ -548,6 +557,48 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
     }
   };
 
+  const handleAddDispatchLot = () => {
+    if (!dispatchProductId.trim() || !dispatchBatch.trim() || dispatchQty < 1) return;
+    setDispatchLots((prev) => [
+      ...prev,
+      { product_id: dispatchProductId.trim(), batch_number: dispatchBatch.trim(), quantity: Number(dispatchQty) },
+    ]);
+  };
+
+  const handleDispatchCustody = async () => {
+    if (!selectedCustodyAgreementId) return;
+    const lots =
+      dispatchLots.length > 0
+        ? dispatchLots
+        : [{ product_id: dispatchProductId.trim(), batch_number: dispatchBatch.trim(), quantity: Number(dispatchQty) }];
+    setDispatchingCustody(true);
+    setDispatchCustodyFeedback(null);
+    try {
+      const res = await fetch(
+        `/api/v1/keypartners/agreements/${encodeURIComponent(selectedCustodyAgreementId)}/dispatch-custody`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ lots, seal_code: dispatchSealCode, account_id: "0f14ffff" }),
+        },
+      );
+      if (res.ok) {
+        setShowDispatchCustodyModal(false);
+        setDispatchLots([]);
+        fetchCustodySummary(selectedCustodyAgreementId);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setDispatchCustodyFeedback(
+          typeof err.detail === "string" ? err.detail : `Falha na remessa para custódia (HTTP ${res.status}).`,
+        );
+      }
+    } catch {
+      setDispatchCustodyFeedback("Falha de rede ao remeter lotes para custódia.");
+    } finally {
+      setDispatchingCustody(false);
+    }
+  };
+
   const handleSubmitEvidence = async () => {
     if (!evidenceContractId) return;
     setSubmittingEvidence(true);
@@ -901,9 +952,15 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
                   </p>
                 </div>
                 {selectedCustodyAgreementId && (
-                  <span className="font-mono text-xs text-brand-primary font-semibold">
-                    {selectedCustodyAgreementId}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-xs text-brand-primary font-semibold">
+                      {selectedCustodyAgreementId}
+                    </span>
+                    <Button size="sm" variant="outline" onClick={() => setShowDispatchCustodyModal(true)} className="gap-1.5">
+                      <Truck className="w-3.5 h-3.5" />
+                      Remeter Lotes para Custódia
+                    </Button>
+                  </div>
                 )}
               </div>
 
@@ -1718,6 +1775,87 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
         </div>
       )}
 
+      {/* MODAL: Remeter Lotes para Custódia */}
+      {showDispatchCustodyModal && (
+        <div className="fixed inset-0 bg-text-main/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-surface-card border border-border rounded-xl max-w-md w-full p-5 shadow-modal space-y-4">
+            <h3 className="text-sm font-bold text-text-main">Remeter Lotes para Custódia ({selectedCustodyAgreementId})</h3>
+            <div className="space-y-3 text-xs">
+              <div className="grid grid-cols-3 gap-2">
+                <div className="col-span-2">
+                  <label className="text-text-secondary block mb-1">Produto:</label>
+                  <input
+                    type="text"
+                    value={dispatchProductId}
+                    onChange={(e) => setDispatchProductId(e.target.value)}
+                    className="w-full rounded-lg border border-border bg-surface-bg p-2 text-text-main font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="text-text-secondary block mb-1">Qtd:</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={dispatchQty}
+                    onChange={(e) => setDispatchQty(Number(e.target.value))}
+                    className="w-full rounded-lg border border-border bg-surface-bg p-2 text-text-main font-mono"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-text-secondary block mb-1">Lote:</label>
+                <input
+                  type="text"
+                  value={dispatchBatch}
+                  onChange={(e) => setDispatchBatch(e.target.value)}
+                  className="w-full rounded-lg border border-border bg-surface-bg p-2 text-text-main font-mono"
+                />
+              </div>
+              <Button type="button" size="sm" variant="outline" onClick={handleAddDispatchLot} className="w-full gap-1.5">
+                <Plus className="w-3.5 h-3.5" />
+                Adicionar Lote à Remessa
+              </Button>
+              {dispatchLots.length > 0 && (
+                <ul className="rounded-lg border border-border divide-y divide-border">
+                  {dispatchLots.map((l, i) => (
+                    <li key={`${l.batch_number}-${i}`} className="flex items-center justify-between p-2 font-mono">
+                      <span>
+                        {l.product_id} / {l.batch_number} x {l.quantity}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setDispatchLots((prev) => prev.filter((_, idx) => idx !== i))}
+                        className="text-status-danger"
+                      >
+                        Remover
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <div>
+                <label className="text-text-secondary block mb-1">Lacre da Maleta:</label>
+                <input
+                  type="text"
+                  value={dispatchSealCode}
+                  onChange={(e) => setDispatchSealCode(e.target.value)}
+                  className="w-full rounded-lg border border-border bg-surface-bg p-2 text-text-main font-mono"
+                />
+              </div>
+              {dispatchCustodyFeedback && <p className="text-status-danger">{dispatchCustodyFeedback}</p>}
+            </div>
+            <div className="flex justify-end gap-2 pt-2 border-t border-border">
+              <Button variant="outline" size="sm" onClick={() => setShowDispatchCustodyModal(false)}>
+                Cancelar
+              </Button>
+              <Button size="sm" onClick={handleDispatchCustody} disabled={dispatchingCustody}>
+                {dispatchingCustody ? "Remetendo..." : "Confirmar Remessa"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* MODAL: Submeter Evidência R2 */}
       {evidenceContractId && (
         <div className="fixed inset-0 bg-text-main/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
@@ -1741,6 +1879,13 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
                   onChange={(e) => setEvidenceR2Key(e.target.value)}
                   className="w-full rounded-lg border border-border bg-surface-bg p-2 text-text-main font-mono"
                 />
+                <div className="mt-2">
+                  <R2DirectUploader
+                    module="consignments"
+                    accept=".pdf,.png,.jpg,.mp4"
+                    onUploadComplete={(r) => setEvidenceR2Key(r.key)}
+                  />
+                </div>
               </div>
             </div>
             <div className="flex justify-end gap-2 pt-2 border-t border-border">
