@@ -368,8 +368,23 @@ export const CalcomReactivationWorkspace: React.FC = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => {
-              setFeedbackMsg("Bloqueio de agenda ativado por falta de material. Slots afetados marcados como BLOQUEADO_MATERIAL.");
+            onClick={async () => {
+              try {
+                const res = await fetch("/api/v1/automations/calcom/webhook", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    triggerEvent: "SCHEDULE_BLOCKED_MATERIAL",
+                    payload: { status: "BLOQUEADO_MATERIAL" },
+                  }),
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.detail || "Falha ao bloquear agenda por falta de material.");
+                setFeedbackMsg(`Bloqueio de agenda ativado: ${data.affected_slots ?? 0} slots marcados como BLOQUEADO_MATERIAL.`);
+                await loadCalcomData();
+              } catch (err: any) {
+                setErrorMsg(err.message || "Erro ao bloquear agenda.");
+              }
             }}
             className="gap-1.5"
           >

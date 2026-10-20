@@ -120,6 +120,25 @@ def list_anvisa_rma(
 
 
 @router.get(
+    "/anvisa-rma/quarantines",
+    response_model=List[AnvisaBatchQuarantineOut],
+    summary="Listar todos os lotes em quarentena sanitária ANVISA"
+)
+def list_batch_quarantines(account_id: str = "0f14ffff"):
+    from src.core.database import get_connection
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT * FROM anvisa_batch_quarantines WHERE account_id = ? OR account_id = '0f14ffff' ORDER BY created_at DESC",
+            (account_id,)
+        )
+        return [dict(r) for r in cur.fetchall()]
+    finally:
+        conn.close()
+
+
+@router.get(
     "/anvisa-rma/quarantine/{batch_number}",
     response_model=Optional[AnvisaBatchQuarantineOut],
     summary="Verificar status sanitário e quarentena de lote fabril"

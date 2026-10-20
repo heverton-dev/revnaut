@@ -706,6 +706,7 @@ def seed_multinational_enterprise(db_path: Path | str | None = None, clean_reset
             ))
 
     hub_inv_data.extend([
+        ("dhi-sp-moema-3511", "hub-sp-moema", ACCOUNT_ID, "IMP-CM-3511", "Kit Implante Cone Morse Emerge", "ANVISA-1034567001", "LOT-EXP-2026-3511", 50, 289.9, "2028-10-19", now_iso, "AVAILABLE"),
         ("dhi-sp-moema-37511", "hub-sp-moema", ACCOUNT_ID, "IMP-CM-37511", "Implante Cone Morse Helix 3.75x11.5mm", "ANVISA-1034567001", "LOT-EXP-2026-37511", 50, 420.0, "2028-10-19", now_iso, "AVAILABLE"),
         ("dhi-sp-moema-4311", "hub-sp-moema", ACCOUNT_ID, "IMP-CM-4311", "Implante Cone Morse Helix 4.3x11.5mm", "ANVISA-1034567001", "LOT-EXP-2026-4311", 50, 450.0, "2028-10-19", now_iso, "AVAILABLE"),
         ("dhi-sp-moema-3513", "hub-sp-moema", ACCOUNT_ID, "IMP-CM-3513", "Implante Cone Morse Helix 3.5x13mm", "ANVISA-1034567001", "LOTE-1122", 50, 430.0, "2028-10-19", now_iso, "AVAILABLE"),

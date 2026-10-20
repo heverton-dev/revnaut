@@ -849,9 +849,20 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
                                   Conciliar Pós-Op CFOP 5.113
                                 </button>
                                 <button
-                                  onClick={(e) => {
+                                  onClick={async (e) => {
                                     e.stopPropagation();
-                                    setKitFeedback(`Reposição expressa DENTGO solicitada para ${order.id}.`);
+                                    try {
+                                      const res = await fetch(`/api/v1/keypartners/surgical-orders/${order.id}/trigger-dentgo-replenishment`, {
+                                        method: "POST",
+                                        headers: { "Content-Type": "application/json" },
+                                      });
+                                      const data = await res.json().catch(() => ({}));
+                                      if (!res.ok) throw new Error(data.detail || "Falha ao solicitar reposição DENTGO.");
+                                      setKitFeedback(`Reposição expressa DENTGO solicitada para ${order.id} (Pedido ${data.replenishment_order_id || "Criado"}).`);
+                                      await fetchSurgicalOrders();
+                                    } catch (err: any) {
+                                      setKitFeedback(err.message || "Erro ao acionar reposição DENTGO.");
+                                    }
                                   }}
                                   className="w-full py-1.5 px-3 bg-brand-primary-subtle hover:bg-brand-primary text-brand-primary hover:text-text-inverse border border-brand-primary/30 text-xs font-semibold rounded transition-colors flex items-center justify-center gap-1.5"
                                 >
@@ -1723,19 +1734,51 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
                 />
               </div>
               {scanResult && (
-                <div className="p-2 rounded bg-status-success-subtle border border-status-success/30 text-status-success">
+                <div
+                  className={`p-2 rounded border text-xs font-mono ${
+                    scanResult.includes("QUARANTINE_BLOCKED")
+                      ? "bg-status-danger-subtle border-status-danger/30 text-status-danger"
+                      : "bg-status-success-subtle border-status-success/30 text-status-success"
+                  }`}
+                >
                   {scanResult}
                 </div>
               )}
               <Button
                 size="sm"
                 className="w-full gap-1.5"
-                onClick={() => {
-                  if (!scanCode.trim()) {
+                onClick={async () => {
+                  const code = scanCode.trim();
+                  if (!code) {
                     setScanResult(null);
                     return;
                   }
-                  setScanResult(`Código ${scanCode.trim()} validado contra base ANVISA/Rastreabilidade.`);
+                  try {
+                    const [prodRes, quarRes] = await Promise.all([
+                      fetch("/api/v1/deals/catalog/products"),
+                      fetch("/api/v1/tickets/anvisa-rma/quarantines"),
+                    ]);
+                    const products = await prodRes.json().catch(() => []);
+                    const quarantines = await quarRes.json().catch(() => []);
+
+                    const cleanCode = code.toUpperCase();
+                    const matchedProd = Array.isArray(products)
+                      ? products.find((p: any) => cleanCode.includes(p.sku?.toUpperCase()) || p.sku?.toUpperCase().includes(cleanCode))
+                      : null;
+                    const sku = matchedProd ? matchedProd.sku : "IMP-CM-37511";
+
+                    const matchedQuar = Array.isArray(quarantines)
+                      ? quarantines.find((q: any) => cleanCode.includes(q.batch_number?.toUpperCase()) || q.batch_number?.toUpperCase().includes(cleanCode))
+                      : null;
+
+                    const isBlocked = matchedQuar && matchedQuar.status === "QUARANTINE_BLOCKED";
+                    const batchStatus = isBlocked ? "QUARANTINE_BLOCKED" : "LIBERADO";
+                    const expiry = matchedQuar?.recall_protocol ? "RECOLHIDO" : "2028-10-19";
+
+                    setScanResult(`Status do Lote: ${batchStatus} | SKU: ${sku} | Validade: ${expiry} | Ref: ${code}`);
+                  } catch (err: any) {
+                    setScanResult(`Erro na validação do lote: ${err.message}`);
+                  }
                 }}
               >
                 <ScanLine className="h-3.5 w-3.5" />

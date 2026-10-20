@@ -229,6 +229,23 @@ def process_calcom_webhook(
     init_db()
 
     payload_data = payload.get("payload") or payload
+    if payload.get("triggerEvent") in ("SCHEDULE_BLOCKED_MATERIAL", "BLOCK_MATERIAL_SHORTAGE") or payload_data.get("status") == "BLOQUEADO_MATERIAL":
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+                UPDATE patient_reactivation_schedules
+                SET status = 'BLOQUEADO_MATERIAL'
+                WHERE account_id = ? AND status IN ('PENDING', 'DISPATCHED')
+            """, (account_id,))
+            conn.commit()
+            return {
+                "status": "BLOQUEADO_MATERIAL",
+                "message": "Agenda bloqueada por falta de material cirúrgico",
+                "affected_slots": cur.rowcount
+            }
+        finally:
+            conn.close()
     booking_uid = str(payload_data.get("uid") or payload_data.get("id") or uuid.uuid4().hex[:12])
     title = payload_data.get("title") or payload_data.get("eventTitle") or "Consulta / Manutenção Preventiva"
     start_time = payload_data.get("startTime") or payload_data.get("start") or datetime.now().isoformat()

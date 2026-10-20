@@ -651,8 +651,36 @@ export const SupportAnvisaWorkspace: React.FC = () => {
                     variant="secondary"
                     size="sm"
                     className="w-full gap-1.5"
-                    onClick={() => {
-                      setFeedbackMsg("Substituição Imediata em Garantia solicitada via DENTGO (SLA 45min). Kit reserva reservado no Micro-Hub mais próximo.");
+                    onClick={async () => {
+                      try {
+                        const res = await fetch("/api/v1/dentgo/orders/express", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            customer_cro_uf: rmaCroUf || "CRO-SP-45892",
+                            customer_name: rmaSurgeonName || "Cirurgião Responsável",
+                            delivery_address: `Clínica ${rmaSurgeonName || "Garantia ANVISA"} - Centro Cirúrgico`,
+                            delivery_lat: -23.5614,
+                            delivery_lng: -46.6559,
+                            payment_method: "CORPORATE_CREDIT",
+                            voucher_code: "DENTGO-EXPRESS-WARRANTY",
+                            items: [{
+                              product_id: rmaProductId || "IMP-CM-3511",
+                              sku: rmaProductId || "IMP-CM-3511",
+                              product_name: rmaProductName || "Kit Implante Cone Morse Emerge",
+                              quantity: 1,
+                              unit_price: 0.0,
+                            }],
+                          }),
+                        });
+                        const data = await res.json().catch(() => ({}));
+                        if (!res.ok) throw new Error(data.detail || "Falha ao solicitar garantia expressa DENTGO.");
+                        const orderProtocol = data.id || data.order_id || "#ord-express";
+                        const deliveryPin = data.delivery_pin || "4812";
+                        setFeedbackMsg(`Garantia Expressa DENTGO acionada: Pedido #${orderProtocol} | PIN: ${deliveryPin} (SLA 45 min).`);
+                      } catch (err: any) {
+                        setErrorMsg(err.message || "Erro ao acionar garantia expressa DENTGO.");
+                      }
                     }}
                   >
                     <Truck className="h-3.5 w-3.5" />

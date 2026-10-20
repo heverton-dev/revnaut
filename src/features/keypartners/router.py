@@ -21,7 +21,10 @@ from src.features.keypartners.schemas import (
     LoyaltyRedemptionRequest, LoyaltyRedemptionResponse,
     LoyaltyWalletResponse, LoyaltyRewardItem
 )
-from src.features.dentgo.schemas import TriggerDentgoPickupRequest, TriggerDentgoPickupResponse
+from src.features.dentgo.schemas import (
+    TriggerDentgoPickupRequest, TriggerDentgoPickupResponse,
+    ReplenishmentOrderResponse
+)
 from src.features.dentgo import keypartners_synergy
 from src.features.keypartners import service
 from src.features.keypartners import surgical_cycle
@@ -144,6 +147,31 @@ def get_surgical_order(order_id: str, account_id: str = "0f14ffff"):
         return surgical_cycle.get_surgical_order(order_id=order_id, account_id=account_id)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.post(
+    "/surgical-orders/{order_id}/trigger-dentgo-replenishment",
+    response_model=ReplenishmentOrderResponse,
+    summary="Acionar reposição rápida via DENTGO para ordem cirúrgica"
+)
+def trigger_dentgo_replenishment(order_id: str, account_id: str = "0f14ffff"):
+    try:
+        order = surgical_cycle.get_surgical_order(order_id=order_id, account_id=account_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+    res = keypartners_synergy.trigger_automatic_replenishment_on_postop(
+        postop_event={
+            "order_id": order_id,
+            "agreement_id": order.get("agreement_id"),
+            "consumed_units": 1
+        },
+        delivery_lat=-23.5614,
+        delivery_lng=-46.6559,
+        delivery_address="Clínica Cirúrgica - Bloco Cirúrgico",
+        account_id=account_id
+    )
+    return res
 
 
 @router.post("/kol-contracts", response_model=KolContractOut, status_code=status.HTTP_201_CREATED, summary="Cadastrar novo contrato de KOL e ativo em comodato")

@@ -1120,11 +1120,35 @@ export const ContactsCrmWorkspace: React.FC = () => {
                 variant="outline"
                 size="sm"
                 className="gap-1.5 text-xs"
-                onClick={() => {
-                  if (selectedContact.cro) {
-                    setFeedbackMsg(`CRO ${selectedContact.cro}/${selectedContact.cro_uf || "BR"} validado em lote contra base CFO.`);
-                  } else {
-                    setErrorMsg("CRO não informado para este contato.");
+                onClick={async () => {
+                  const targets = filteredContacts.filter((c) => c.cro && c.cro.trim());
+                  if (targets.length === 0) {
+                    setErrorMsg("Nenhum cirurgião visível possui CRO cadastrado.");
+                    return;
+                  }
+                  setLoadingContacts(true);
+                  try {
+                    let validCount = 0;
+                    await Promise.all(
+                      targets.map(async (c) => {
+                        const res = await fetch("/api/v1/contacts/validate-cro", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            cro: c.cro,
+                            uf: c.cro_uf || "SP",
+                            category: "CD",
+                          }),
+                        });
+                        if (res.ok) validCount++;
+                      })
+                    );
+                    setFeedbackMsg(`Validação em Lote: ${validCount}/${targets.length} cirurgiões validados com sucesso no CFO.`);
+                    await loadContacts(searchQuery);
+                  } catch (err: any) {
+                    setErrorMsg(err.message || "Falha na validação em lote de CROs.");
+                  } finally {
+                    setLoadingContacts(false);
                   }
                 }}
               >

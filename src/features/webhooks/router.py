@@ -199,6 +199,11 @@ def reset_webhook_circuit_breaker(
 
 
 @router.post(
+    "/api/v1/webhooks/outbound/dispatch-test",
+    response_model=WebhookTestDispatchResponse,
+    summary="Testar disparo de evento com cálculo de assinatura HMAC-SHA256 (alias outbound)"
+)
+@router.post(
     "/api/v1/webhooks/test-dispatch",
     response_model=WebhookTestDispatchResponse,
     summary="Testar disparo de evento com cálculo de assinatura HMAC-SHA256"

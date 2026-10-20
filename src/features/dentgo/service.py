@@ -7,6 +7,7 @@ Geolocalização Haversine, cálculo de ETA cirúrgico e validação estrita de 
 from __future__ import annotations
 import json
 import math
+import random
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
@@ -232,7 +233,7 @@ def create_express_order(
         raise ValueError("O pedido deve conter ao menos um item cirúrgico")
 
     primary_item = items[0]
-    p_id = primary_item["product_id"]
+    p_id = primary_item.get("product_id") or primary_item.get("sku")
     p_qty = int(primary_item.get("quantity", 1))
 
     # 2. Localização do Hub ótimo com estoque
@@ -260,7 +261,7 @@ def create_express_order(
 
         subtotal = 0.0
         for item in items:
-            item_prod_id = item["product_id"]
+            item_prod_id = item.get("product_id") or item.get("sku")
             item_qty = int(item.get("quantity", 1))
             cur.execute("""
                 SELECT id, unit_price, quantity_available, batch_number, COALESCE(status, 'AVAILABLE') AS status
@@ -298,17 +299,18 @@ def create_express_order(
         total_amount = round(subtotal + urgency_fee, 2)
 
         items_json = json.dumps(items, ensure_ascii=False)
+        delivery_pin = f"{random.randint(1000, 9999)}"
         cur.execute("""
             INSERT INTO dentgo_orders (
                 id, account_id, hub_id, customer_cro_uf, cro_verified,
                 delivery_address, delivery_lat, delivery_lng, distance_km,
                 estimated_eta_minutes, items_json, subtotal, urgency_fee,
-                total_amount, status
-            ) VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'ORDER_PLACED')
+                total_amount, status, delivery_pin
+            ) VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'ORDER_PLACED', ?)
         """, (
             order_id, account_id, hub_id, customer_cro_uf,
             delivery_address, delivery_lat, delivery_lng, distance_km,
-            eta, items_json, subtotal, urgency_fee, total_amount
+            eta, items_json, subtotal, urgency_fee, total_amount, delivery_pin
         ))
         conn.commit()
 

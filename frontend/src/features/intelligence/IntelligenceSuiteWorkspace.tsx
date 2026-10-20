@@ -136,6 +136,38 @@ interface HscResponse {
   recommendation: string;
 }
 
+function buildKolPdfBinary(lines: string[]): Uint8Array {
+  const ops: string[] = [];
+  let y = 750;
+  lines.forEach((l, idx) => {
+    const asciiLine = l
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .replace(/\\/g, "\\\\")
+      .replace(/\(/g, "\\(")
+      .replace(/\)/g, "\\)");
+    const fontSize = idx === 0 ? 12 : 9;
+    ops.push(`BT /F1 ${fontSize} Tf 40 ${y} Td (${asciiLine}) Tj ET`);
+    y -= 18;
+  });
+
+  const streamContent = ops.join("\n");
+  const streamBytes = new TextEncoder().encode(streamContent);
+  const streamLength = streamBytes.length;
+
+  const header = `%PDF-1.4\n1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >> endobj\n4 0 obj << /Length ${streamLength} >>\nstream\n`;
+  const footer = `\nendstream\nendobj\n5 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj\nxref\n0 6\n0000000000 65535 f\ntrailer << /Root 1 0 R /Size 6 >>\n%%EOF\n`;
+
+  const headerBytes = new TextEncoder().encode(header);
+  const footerBytes = new TextEncoder().encode(footer);
+
+  const fullPdf = new Uint8Array(headerBytes.length + streamBytes.length + footerBytes.length);
+  fullPdf.set(headerBytes, 0);
+  fullPdf.set(streamBytes, headerBytes.length);
+  fullPdf.set(footerBytes, headerBytes.length + streamBytes.length);
+  return fullPdf;
+}
+
 export const IntelligenceSuiteWorkspace: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("copilot");
 
@@ -658,13 +690,19 @@ export const IntelligenceSuiteWorkspace: React.FC = () => {
                       `- ${s.name} | CRO ${s.cro || "-"} | Tier ${s.tier || "-"} | Clinicas: ${(s.affiliated_clinics || []).join(", ") || "-"}`
                   )),
                 ];
-                const blob = new Blob([lines.join("\n")], { type: "application/pdf" });
-                const url = URL.createObjectURL(blob);
+                const pdfBytes = buildKolPdfBinary(lines);
+                await fetch("/api/v1/storage/upload-direct/reports/relatorio_kol_revnault.pdf", {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/pdf" },
+                  body: new Blob([pdfBytes as any], { type: 'application/pdf' }),
+                });
                 const a = document.createElement("a");
-                a.href = url;
+                a.href = "/api/v1/storage/files/reports/relatorio_kol_revnault.pdf";
                 a.download = "relatorio_kol_revnault.pdf";
+                a.target = "_blank";
+                document.body.appendChild(a);
                 a.click();
-                URL.revokeObjectURL(url);
+                document.body.removeChild(a);
               } finally {
                 setExportingKolReport(false);
               }

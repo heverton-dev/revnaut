@@ -530,8 +530,25 @@ export function CredentialsVaultPage() {
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] text-text-muted font-mono">{c.id}</span>
                     <button
-                      onClick={() => {
-                        setFeedbackMsg(`Chave do servico ${c.service_name} rotacionada automaticamente (AES-256-GCM).`);
+                      onClick={async () => {
+                        try {
+                          const newRotatedSecret = `sk_live_${Math.random().toString(36).substring(2)}${Math.random().toString(36).substring(2)}`;
+                          const res = await fetch("/api/v1/auth/credentials", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              service_name: c.service_name,
+                              credential_type: c.credential_type,
+                              secret_payload: newRotatedSecret,
+                              metadata: { rotated_at: new Date().toISOString() },
+                            }),
+                          });
+                          if (!res.ok) throw new Error("Falha ao rotacionar credencial no cofre.");
+                          await fetchCredentials();
+                          setFeedbackMsg(`Chave do serviço ${c.service_name} rotacionada e persistida no cofre (AES-256-GCM).`);
+                        } catch (err: any) {
+                          alert(err.message || "Erro na rotação da credencial.");
+                        }
                       }}
                       className="p-1 rounded text-brand-primary hover:bg-brand-primary-subtle"
                       title="Rotacionar Chave Automaticamente"
@@ -856,8 +873,22 @@ export function CredentialsVaultPage() {
                     <div className="flex items-center gap-1.5">
                       {!(log.status === "DELIVERED" || log.http_status_code === 200) && (
                         <button
-                          onClick={() => {
-                            setTestDispatchFeedback({ replayed_log_id: log.id, event_name: log.event_name, status: "REPLAY_QUEUED" });
+                          onClick={async () => {
+                            try {
+                              const res = await fetch("/api/v1/webhooks/outbound/dispatch-test", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                  subscription_id: log.subscription_id,
+                                  event_name: log.event_name || "dentgo.order_delivered",
+                                }),
+                              });
+                              const data = await res.json().catch(() => ({}));
+                              setTestDispatchFeedback(data);
+                              await fetchWebhooksData();
+                            } catch (err: any) {
+                              setTestDispatchFeedback({ replayed_log_id: log.id, error: err.message });
+                            }
                           }}
                           className="px-2 py-0.5 rounded bg-brand-primary-subtle text-brand-primary border border-brand-primary/30 hover:bg-brand-primary hover:text-text-inverse text-[10px] font-semibold"
                           title="Re-tentativa Manual (Replay)"

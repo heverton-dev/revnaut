@@ -4,8 +4,8 @@ Schemas tipados para autenticação e gestão de sessão de usuários.
 """
 
 from __future__ import annotations
-from typing import Optional
-from pydantic import BaseModel
+from typing import Optional, Any
+from pydantic import BaseModel, model_validator
 
 
 class LoginRequest(BaseModel):
@@ -106,8 +106,21 @@ class ResetPasswordWithTokenResponse(BaseModel):
 class TenantCredentialCreate(BaseModel):
     service_name: str
     credential_type: str
-    secret_payload: str
+    secret_payload: Optional[str] = None
+    secret_value: Optional[str] = None
     metadata: Optional[dict] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _fill_payload(cls, values: Any) -> Any:
+        if isinstance(values, dict):
+            p = values.get("secret_payload")
+            v = values.get("secret_value")
+            if not p and v:
+                values["secret_payload"] = v
+            elif not v and p:
+                values["secret_value"] = p
+        return values
 
 
 class TenantCredentialResponse(BaseModel):

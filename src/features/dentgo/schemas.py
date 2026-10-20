@@ -5,7 +5,7 @@ Pydantic Schemas para o Motor DENTGO (Marketplace B2B & Logística Express)
 
 from __future__ import annotations
 from typing import List, Optional, Dict, Any
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class HubCreate(BaseModel):
@@ -82,15 +82,35 @@ class EmergencySearchResultOut(BaseModel):
 
 
 class OrderItemIn(BaseModel):
-    product_id: str = Field(..., description="ID do produto")
+    product_id: Optional[str] = Field(default=None, description="ID do produto")
+    sku: Optional[str] = Field(default=None, description="SKU do produto")
+    product_name: Optional[str] = Field(default=None, description="Descrição do produto")
     quantity: int = Field(default=1, ge=1, description="Quantidade")
+    unit_price: Optional[float] = Field(default=None, description="Preço unitário em R$")
+
+    @model_validator(mode="before")
+    @classmethod
+    def _fill_product_id_or_sku(cls, values: Any) -> Any:
+        if isinstance(values, dict):
+            pid = values.get("product_id")
+            sku = values.get("sku")
+            if not pid and sku:
+                values["product_id"] = sku
+            elif not sku and pid:
+                values["sku"] = pid
+        return values
+
+
+OrderItemRequest = OrderItemIn
 
 
 class OrderCheckoutRequest(BaseModel):
     customer_cro_uf: str = Field(..., description="CRO/UF do cirurgião solicitante")
+    customer_name: Optional[str] = Field(default=None, description="Nome do cliente/cirurgião solicitante")
     delivery_address: str = Field(..., description="Endereço completo da clínica/hospital")
     delivery_lat: float = Field(..., description="Latitude da entrega")
     delivery_lng: float = Field(..., description="Longitude da entrega")
+    payment_method: Optional[str] = Field(default="CORPORATE_CREDIT", description="Método de pagamento corporativo ou PIX")
     items: List[OrderItemIn] = Field(..., min_length=1, description="Lista de itens do pedido express")
     voucher_code: Optional[str] = Field(default=None, description="Código de voucher para isenção da taxa de urgência")
     account_id: Optional[str] = Field(default="0f14ffff", description="ID da conta tenant")

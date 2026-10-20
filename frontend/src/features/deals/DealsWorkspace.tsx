@@ -293,16 +293,36 @@ export const DealsWorkspace: React.FC<DealsWorkspaceProps> = ({ currentUserId })
     setDispatching(true);
     setDealActionError(null);
     try {
+      const selectedCatalogSku = selectedSku || (cartLines.length > 0 ? cartLines[0].sku : "");
+      const catalogQty = Number(itemQty) || (cartLines.length > 0 ? cartLines[0].qty : 2);
+
+      const itemsPayload = cartLines.length > 0
+        ? cartLines.map((l) => ({
+            product_id: l.sku,
+            sku: l.sku,
+            product_name: l.name,
+            quantity: l.qty,
+            unit_price: l.unitPrice,
+          }))
+        : [{
+            product_id: selectedCatalogSku || "IMP-CM-3511",
+            sku: selectedCatalogSku || "IMP-CM-3511",
+            product_name: "Kit Implante Cone Morse Emerge",
+            quantity: catalogQty || 2,
+            unit_price: 289.9,
+          }];
+
       const res = await fetch("/api/v1/dentgo/orders/express", {
         method: "POST",
         headers: { "Content-Type": "application/json", "X-User-Id": userId },
         body: JSON.stringify({
-          deal_id: String(selectedDeal.id),
-          items: cartLines.length
-            ? cartLines.map((l) => ({ sku: l.sku, quantity: l.qty }))
-            : [{ sku: "KIT-CIRURGICO-STD", quantity: 1 }],
-          urgency_minutes: 45,
-          destination: selectedDeal.company_name || selectedDeal.title,
+          customer_cro_uf: "CRO-SP-45892",
+          customer_name: selectedDeal.contact_name || selectedDeal.title,
+          delivery_address: `Clinica ${selectedDeal.contact_name || selectedDeal.title} - Centro Cirurgico`,
+          delivery_lat: -23.5614,
+          delivery_lng: -46.6559,
+          payment_method: "CORPORATE_CREDIT",
+          items: itemsPayload,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -313,7 +333,7 @@ export const DealsWorkspace: React.FC<DealsWorkspaceProps> = ({ currentUserId })
     } finally {
       setDispatching(false);
     }
-  }, [selectedDeal, cartLines, userId]);
+  }, [selectedDeal, cartLines, selectedSku, itemQty, userId]);
 
   // Gerar Proposta Comercial PDF via Documenso
   const [generatingPdf, setGeneratingPdf] = React.useState<boolean>(false);
