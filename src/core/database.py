@@ -646,6 +646,15 @@ CREATE TABLE IF NOT EXISTS campaign_recipient_locks (
 );
 CREATE INDEX IF NOT EXISTS idx_camp_locks_contact ON campaign_recipient_locks(account_id, contact_id, sent_at);
 CREATE INDEX IF NOT EXISTS idx_camp_locks_campaign ON campaign_recipient_locks(campaign_id);
+
+-- Agendador do lote noturno: um tick por (slot horário, tenant), mesmo com várias réplicas do worker
+CREATE TABLE IF NOT EXISTS market_intel_batch_ticks (
+    slot_key TEXT NOT NULL,
+    account_id TEXT NOT NULL,
+    published_at TEXT NOT NULL,
+    stream_message_id TEXT,
+    PRIMARY KEY (slot_key, account_id)
+);
 """
 
 

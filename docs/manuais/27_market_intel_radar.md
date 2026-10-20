@@ -79,12 +79,12 @@ Todas as rotas exigem o token de sessão emitido no login (`Authorization: Beare
 * `src/features/market_intel/opportunity_matcher.py`: indexa produtos e sinais no `VectorStoreService` (`compute_semantic_embedding`), define BU e tipo de oportunidade e recomenda SKUs reais por similaridade de cosseno, filtrados pela categoria da BU.
 * `src/features/market_intel/campaign_dispatcher.py`: aplica a matriz RBAC, valida a minuta com `cro_validator.validate_cfo_marketing_compliance` e aplica a trava de 15 dias em `campaign_recipient_locks`. Envia por `omnichannel_messages` (WhatsApp) ou `ListmonkClient.send_transactional` (e-mail).
 * Worker: o stream `stream:market_intel` (`handle_market_intel_stream` em `src/workers/runner.py`) processa `market_intel.batch.tick`, `competitor.snapshot.ingested` e `market_signal.ingested`.
+* Agendador do lote noturno (`src/workers/market_intel_scheduler.py`): o processo do worker publica `market_intel.batch.tick` uma vez por slot horário da janela 01:00-05:00 UTC (01h, 02h, 03h e 04h) para cada tenant com concorrente ativo. A tabela `market_intel_batch_ticks` (chave slot + tenant) impede tick duplicado entre réplicas e reinícios. Pode ser desligado com `MARKET_INTEL_SCHEDULER_ENABLED=0`.
 * Persistência: tabelas `market_signals`, `competitors`, `competitor_snapshots`, `market_opportunities`, `targeted_campaigns` e `campaign_recipient_locks`, criadas em `init_db()` e na migração Alembic `0002_add_market_intel_and_competitor_radar`.
 
 ---
 
 ## 9. O Que Falta Implementar & Plano de Micro-Tickets
-* `MKTINTEL-NEXT-01`: agendamento cron do evento `market_intel.batch.tick` no orquestrador da VPS. Hoje o lote roda quando o evento é publicado no stream.
-* `MKTINTEL-NEXT-02`: ingestão automática de feeds RSS (CFO, revistas e portais de eventos) para `market_signals`. Hoje os sinais vêm do seed ou da publicação do evento `market_signal.ingested`.
-* `MKTINTEL-NEXT-03`: edição da minuta na própria tela antes da aprovação, com revalidação CFO. Hoje a minuta é gerada pelo backend e exibida somente para leitura.
-* `MKTINTEL-NEXT-04`: ação de descartar oportunidade (`DISMISSED`) pela interface.
+* `MKTINTEL-NEXT-01`: ingestão automática de feeds RSS (CFO, revistas e portais de eventos) para `market_signals`. Hoje os sinais vêm do seed ou da publicação do evento `market_signal.ingested`.
+* `MKTINTEL-NEXT-02`: edição da minuta na própria tela antes da aprovação, com revalidação CFO. Hoje a minuta é gerada pelo backend e exibida somente para leitura.
+* `MKTINTEL-NEXT-03`: ação de descartar oportunidade (`DISMISSED`) pela interface.

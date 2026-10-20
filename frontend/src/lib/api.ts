@@ -45,7 +45,9 @@ export function setupGlobalFetchInterceptor(): void {
     }
 
     const activeUserId = getActiveUserId();
-    const token = localStorage.getItem("auth_token") || localStorage.getItem("revnaut_token");
+    // LoginPage grava o token em "revnaut_auth_token"; chaves antigas mantidas por compatibilidade
+    const token =
+      localStorage.getItem("revnaut_auth_token") || localStorage.getItem("auth_token") || localStorage.getItem("revnaut_token");
 
     const modifiedInit: RequestInit = { ...(init || {}) };
     const headers = new Headers(modifiedInit.headers || (input instanceof Request ? input.headers : {}));
@@ -74,6 +76,14 @@ export function setupGlobalFetchInterceptor(): void {
 
     try {
       const response = await originalFetch(input, modifiedInit);
+
+      // Token de sessão rejeitado (expirado ou inválido): encerra a sessão local e volta ao login
+      if (response.status === 401 && token && !urlString.includes("/api/v1/auth/login")) {
+        localStorage.removeItem("revnaut_auth_token");
+        localStorage.removeItem("auth_token");
+        localStorage.removeItem("revnaut_token");
+        window.dispatchEvent(new CustomEvent("revnaut:session_expired"));
+      }
 
       // Dispara toast para métodos de mutação (POST, PUT, PATCH, DELETE)
       if (["POST", "PUT", "PATCH", "DELETE"].includes(method)) {

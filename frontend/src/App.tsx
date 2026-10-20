@@ -63,6 +63,15 @@ export function App() {
     }
   }, []);
 
+  React.useEffect(() => {
+    const onSessionExpired = () => {
+      localStorage.removeItem("revnaut_user");
+      setAuthToken(null);
+    };
+    window.addEventListener("revnaut:session_expired", onSessionExpired);
+    return () => window.removeEventListener("revnaut:session_expired", onSessionExpired);
+  }, []);
+
   const handleLoginSuccess = React.useCallback((token: string, user: any) => {
     setAuthToken(token);
     if (user?.id) {

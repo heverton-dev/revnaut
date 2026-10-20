@@ -9,7 +9,7 @@ import hmac
 import time
 from typing import Optional, Dict, Any
 from fastapi import HTTPException
-from src.core.config import SECRET_KEY
+from src.core.config import SECRET_KEY, SESSION_TTL_SECONDS
 from src.core.database import get_connection
 
 
@@ -26,8 +26,11 @@ def create_session_token(user_id: str) -> str:
     return f"{user_id}.{timestamp}.{signature}"
 
 
-def verify_session_token(token: str) -> Optional[str]:
-    """Valida assinatura do token de sessão e retorna user_id se legítimo."""
+SESSION_CLOCK_SKEW_SECONDS = 300
+
+
+def verify_session_token(token: str, now: Optional[float] = None) -> Optional[str]:
+    """Valida assinatura e validade (SESSION_TTL_SECONDS) do token de sessão; retorna user_id se legítimo."""
     if not token or "." not in token:
         return None
     parts = token.split(".")
@@ -36,9 +39,16 @@ def verify_session_token(token: str) -> Optional[str]:
     user_id, timestamp, signature = parts
     payload = f"{user_id}:{timestamp}".encode("utf-8")
     expected_sig = hmac.new(SECRET_KEY.encode("utf-8"), payload, hashlib.sha256).hexdigest()
-    if hmac.compare_digest(signature, expected_sig):
-        return user_id
-    return None
+    if not hmac.compare_digest(signature, expected_sig):
+        return None
+    try:
+        issued_at = int(timestamp)
+    except ValueError:
+        return None
+    current = time.time() if now is None else now
+    if issued_at > current + SESSION_CLOCK_SKEW_SECONDS or current - issued_at > SESSION_TTL_SECONDS:
+        return None
+    return user_id
 
 
 _failed_login_attempts: Dict[str, list[float]] = {}

@@ -20,6 +20,7 @@ from src.core.events import (
     event_consumer,
     get_registered_consumers,
 )
+from src.workers.market_intel_scheduler import MarketIntelBatchScheduler, scheduler_enabled
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("worker_runner")
@@ -242,14 +243,26 @@ def build_registered_worker_consumers(bus: Optional[EventBus] = None) -> List[ t
     return pairs
 
 
-async def run_workers(bus: Optional[EventBus] = None, max_iterations: Optional[int] = None) -> int:
+async def run_workers(
+    bus: Optional[EventBus] = None,
+    max_iterations: Optional[int] = None,
+    scheduler: Optional[MarketIntelBatchScheduler] = None,
+) -> int:
     target_bus = bus or default_event_bus
     worker_pairs = build_registered_worker_consumers(target_bus)
     logger.info("Iniciando pool de %d workers determinísticos nos canais Redis Streams...", len(worker_pairs))
+    # Processo de produção (sem bus injetado) agenda o lote noturno; testes injetam bus/scheduler explícitos.
+    if scheduler is None and bus is None and scheduler_enabled():
+        scheduler = MarketIntelBatchScheduler(bus=target_bus)
 
     processed_total = 0
     iterations = 0
     while _running:
+        if scheduler is not None:
+            try:
+                await asyncio.to_thread(scheduler.maybe_tick)
+            except Exception as e:
+                logger.error("Erro no agendador do lote noturno do radar de concorrentes: %s", e)
         for consumer, handler in worker_pairs:
             try:
                 ok = await consumer.process_next(handler=handler)

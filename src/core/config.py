@@ -24,6 +24,8 @@ PORT = int(os.getenv("PORT", 8000))
 HOST = os.getenv("HOST", "0.0.0.0")
 APP_ENV = os.getenv("APP_ENV", "production")
 SECRET_KEY = os.getenv("SECRET_KEY", "revnaut-secret-key-2026-superadmin-god")
+# Validade do token de sessão emitido no login (padrão: 12 horas)
+SESSION_TTL_SECONDS = int(os.getenv("SESSION_TTL_SECONDS", "43200"))
 
 # Cloudflare R2 Object Storage Config (S3 API v4 compatible)
 R2_ACCOUNT_ID = os.getenv("R2_ACCOUNT_ID", "mock-r2-account-id")
