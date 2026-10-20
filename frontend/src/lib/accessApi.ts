@@ -64,3 +64,51 @@ export function accessMeToRoleConfig(access: AccessMeResponse): RoleWorkspaceCon
     allowSubmenus,
   };
 }
+
+export interface FacilityCheck {
+  /** Rota existe nos grants do banco */
+  routeAllowed: boolean;
+  /** Facility aceita (normalizada) ou undefined se a rota não usa facility */
+  facility?: string;
+  /** false = deep-link inválido (rota ou facility fora do grant) */
+  ok: boolean;
+}
+
+/**
+ * Valida rota + facility contra o payload de /access/me (fonte da verdade).
+ * Quando access é null, devolve ok=true e deixa o guard de seed cuidar da rota.
+ */
+export function checkAccess(
+  access: AccessMeResponse | null,
+  routeId: string,
+  facility?: string
+): FacilityCheck {
+  if (!access || !Array.isArray(access.routes) || access.routes.length === 0) {
+    return { routeAllowed: true, facility, ok: true };
+  }
+
+  const route = access.routes.find((r) => r.route_id === routeId);
+  if (!route) {
+    return { routeAllowed: false, facility, ok: false };
+  }
+
+  const granted = route.facilities.map((f) => f.facility_id);
+  if (granted.length === 0) {
+    // Rota sem facilities no banco: deep-link com ?f= é ignorado
+    if (facility) {
+      return { routeAllowed: true, facility: undefined, ok: false };
+    }
+    return { routeAllowed: true, facility: undefined, ok: true };
+  }
+
+  if (facility && granted.includes(facility)) {
+    return { routeAllowed: true, facility, ok: true };
+  }
+
+  if (!facility) {
+    return { routeAllowed: true, facility: granted[0], ok: true };
+  }
+
+  // facility fora do grant → primeira liberada
+  return { routeAllowed: true, facility: granted[0], ok: false };
+}

@@ -901,6 +901,7 @@ export interface TacticalInsightsResponse {
 // =============================================================================
 
 export const API_V1_ROUTES = [
+  '/api/v1/access/me',
   '/api/v1/auth/credentials',
   '/api/v1/auth/credentials/audit-logs',
   '/api/v1/auth/credentials/{credential_id}',

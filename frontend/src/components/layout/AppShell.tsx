@@ -27,7 +27,12 @@ import {
   type RoleWorkspaceConfig,
 } from "@/components/layout/navConfig";
 import { setNavHash } from "@/lib/navHash";
-import { accessMeToRoleConfig, fetchAccessMe, type AccessMeResponse } from "@/lib/accessApi";
+import {
+  accessMeToRoleConfig,
+  checkAccess,
+  fetchAccessMe,
+  type AccessMeResponse,
+} from "@/lib/accessApi";
 
 export type { NavItem, RoleWorkspaceConfig };
 export { ROLE_WORKSPACES, resolveRoleConfig };
@@ -218,29 +223,69 @@ export function AppShell({
   }, [canSeeAllModules, showAllModules]);
 
   /**
-   * Route guard: deep-link / hash / profile-switch outside the role workspace
-   * is redirected to the role landing. Menu hide alone is not enough.
+   * Route + facility guard.
+   * Source of truth: GET /access/me (banco). Fallback: navConfig seed.
    */
   React.useEffect(() => {
     if (!activeNav) return;
-    const allowed = new Set(currentRoleConfig.visibleRoutes);
-    if (allowed.has(activeNav)) return;
 
-    const landing = currentRoleConfig.defaultLandingRoute;
-    const facility = currentRoleConfig.defaultFacility;
-    const nextHash = facility ? `#!/${landing}?f=${facility}` : `#!/${landing}`;
-    if (typeof window !== "undefined" && window.location.hash !== nextHash) {
-      window.location.hash = nextHash;
+    const dbCheck = checkAccess(accessMe, activeNav, activeFacility);
+    const seedAllowed = new Set(currentRoleConfig.visibleRoutes).has(activeNav);
+    const routeOk = accessMe ? dbCheck.routeAllowed : seedAllowed;
+
+    if (!routeOk) {
+      // Rota fora do grant do banco/seed → landing
+      const landing = accessMe?.landing_route || currentRoleConfig.defaultLandingRoute;
+      const landingFacility =
+        accessMe?.landing_facility ?? currentRoleConfig.defaultFacility;
+      const nextHash = landingFacility
+        ? `#!/${landing}?f=${landingFacility}`
+        : `#!/${landing}`;
+      if (typeof window !== "undefined" && window.location.hash !== nextHash) {
+        window.location.hash = nextHash;
+      }
+      if (onNavigate) onNavigate(landing, landingFacility);
+      dispatchToast({
+        type: "warning",
+        title: "Acesso restrito",
+        message: `Este endereço não está liberado para ${currentRoleConfig.displayName}.`,
+      });
+      return;
     }
-    if (onNavigate) {
-      onNavigate(landing, facility);
+
+    // Rota ok: se a facility do hash não está no grant, troca pela primeira liberada
+    if (accessMe && !dbCheck.ok) {
+      const fixed = dbCheck.facility;
+      const nextHash = fixed ? `#!/${activeNav}?f=${fixed}` : `#!/${activeNav}`;
+      if (typeof window !== "undefined" && window.location.hash !== nextHash) {
+        window.location.hash = nextHash;
+      }
+      if (onNavigate) onNavigate(activeNav, fixed);
+      dispatchToast({
+        type: "warning",
+        title: "Aba não liberada",
+        message: "Abrimos a primeira opção disponível deste módulo.",
+      });
+      return;
     }
-    dispatchToast({
-      type: "warning",
-      title: "Acesso restrito",
-      message: `Este módulo não está liberado para ${currentRoleConfig.displayName}.`,
-    });
-  }, [activeNav, currentRoleConfig, onNavigate]);
+
+    // Rota ok e facility ok/ausente: normaliza ?f= quando o grant tem facilities
+    if (accessMe && dbCheck.facility !== activeFacility) {
+      const nextHash = dbCheck.facility
+        ? `#!/${activeNav}?f=${dbCheck.facility}`
+        : `#!/${activeNav}`;
+      if (typeof window !== "undefined" && window.location.hash !== nextHash) {
+        window.location.hash = nextHash;
+      }
+      if (onNavigate) onNavigate(activeNav, dbCheck.facility);
+    }
+  }, [
+    activeNav,
+    activeFacility,
+    accessMe,
+    currentRoleConfig,
+    onNavigate,
+  ]);
 
   const navSections = React.useMemo(() => {
     // Non-admin: never honor showAllModules — hard RBAC filter only
@@ -336,8 +381,12 @@ export function AppShell({
       if (onLogout) onLogout();
       return;
     }
-    // Client-side guard even if command palette / cross-link tries a blocked route
-    if (!currentRoleConfig.visibleRoutes.includes(routeId)) {
+
+    const check = checkAccess(accessMe, routeId, facility);
+    const seedOk = currentRoleConfig.visibleRoutes.includes(routeId);
+    const routeOk = accessMe ? check.routeAllowed : seedOk;
+
+    if (!routeOk) {
       dispatchToast({
         type: "warning",
         title: "Acesso restrito",
@@ -345,9 +394,13 @@ export function AppShell({
       });
       return;
     }
-    setNavHash(routeId, facility);
+
+    // Facility corrigida pelo grant do banco (1ª liberada quando inválida)
+    const nextFacility = accessMe ? check.facility : facility;
+
+    setNavHash(routeId, nextFacility);
     if (onNavigate) {
-      onNavigate(routeId, facility);
+      onNavigate(routeId, nextFacility);
     }
     setIsMobileDrawerOpen(false);
     setIsCommandOpen(false);
