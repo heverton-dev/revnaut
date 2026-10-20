@@ -2191,7 +2191,9 @@ def init_db() -> None:
             ("custom_data_scope", "TEXT"),
             ("password_hash", "TEXT"),
             ("is_active", "INTEGER DEFAULT 1"),
-            ("is_superadmin", "INTEGER DEFAULT 0")
+            ("is_superadmin", "INTEGER DEFAULT 0"),
+            # Praça territorial do usuário para o RBAC da Inteligência de Mercado (TICKET-MKTINTEL-06)
+            ("region_code", "TEXT NOT NULL DEFAULT 'BR-SP'")
         ]:
             if col not in user_cols:
                 cur.execute(f"ALTER TABLE users ADD COLUMN {col} {col_t};")

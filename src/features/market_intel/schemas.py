@@ -16,6 +16,19 @@ DispatchStatus = Literal["DRAFT", "SCHEDULED", "EXECUTED"]
 PageType = Literal["pricing_table", "catalog", "blog_post", "social_ad"]
 
 
+class MarketIntelPrincipalOut(BaseModel):
+    user_id: str
+    account_id: str
+    actual_role: str
+    effective_role: str
+    region: str
+    visible_scopes: List[str]
+    can_simulate: bool
+    can_manage_competitors: bool
+    can_generate_draft: bool
+    can_dispatch: bool
+
+
 class StructuredPayload(BaseModel):
     topics: List[str] = Field(default_factory=list)
     detected_trends: List[str] = Field(default_factory=list)

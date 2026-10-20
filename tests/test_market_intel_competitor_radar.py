@@ -16,6 +16,7 @@ from fastapi.testclient import TestClient
 
 from src.core.database import get_connection, init_db
 from src.core.events import StreamName, default_event_bus
+from src.features.auth.service import create_session_token
 from src.features.market_intel import llm_classifier
 from src.features.market_intel.campaign_dispatcher import COOLDOWN_DAYS
 from src.features.market_intel.crawler_engine import (
@@ -34,11 +35,36 @@ from src.features.market_intel.opportunity_matcher import match_and_create_oppor
 from src.main import app
 
 ACC = "0f14ffff"
-DIRECTOR = {"X-User-Role": "director", "X-User-Id": "usr-superadmin-god"}
-MANAGER_SP = {"X-User-Role": "regional_manager", "X-User-Id": "usr-manager-roberto", "X-User-Region": "BR-SP"}
-MANAGER_PR = {"X-User-Role": "regional_manager", "X-User-Id": "usr-manager-pr", "X-User-Region": "BR-PR"}
-INSIDE_SP = {"X-User-Role": "inside_sales", "X-User-Id": "usr-inside-camila", "X-User-Region": "BR-SP"}
-FIELD_SP = {"X-User-Role": "field_sales", "X-User-Id": "usr-field-ricardo", "X-User-Region": "BR-SP"}
+
+
+def _ensure_user(user_id: str, role: str, region: str, is_active: int = 1) -> None:
+    """Usuário real na tabela users (a matriz RBAC lê papel e praça do cadastro, não de headers)."""
+    init_db()
+    conn = get_connection()
+    try:
+        conn.execute(
+            "INSERT OR IGNORE INTO users (id, account_id, name, email, role, is_superadmin, is_active) VALUES (?, ?, ?, ?, ?, 0, ?)",
+            (user_id, ACC, f"Usuário {user_id}", f"{user_id}@teste.revnault.com", role, is_active),
+        )
+        conn.execute("UPDATE users SET role = ?, region_code = ?, is_active = ? WHERE id = ?", (role, region, is_active, user_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def _auth(user_id: str, **extra: str) -> dict:
+    return {"Authorization": f"Bearer {create_session_token(user_id)}", **extra}
+
+
+_ensure_user("usr-manager-pr", "Gerente Regional", "BR-PR")
+_ensure_user("usr-inactive-mi", "Gerente Regional", "BR-SP", is_active=0)
+
+# Usuários canônicos do seed: superadmin (Diretoria), Gerente Comercial, Consultor Interno e Externo (praça padrão BR-SP)
+DIRECTOR = _auth("usr-superadmin-god")
+MANAGER_SP = _auth("usr-manager-roberto")
+MANAGER_PR = _auth("usr-manager-pr")
+INSIDE_SP = _auth("usr-inside-camila")
+FIELD_SP = _auth("usr-field-ricardo")
 
 SEED_SKUS = {"IMP-CM-3511", "IMP-HE-4013", "BIO-OSSO-05G", "KIT-CIRURGICO-FULL"}
 
@@ -580,3 +606,99 @@ def test_worker_handles_snapshot_event_into_opportunity():
         assert tuple(row) == ("Prótese Digital", "PRICE_COUNTER_ATTACK")
     finally:
         conn.close()
+
+
+# ---------------------------------------------------------------------------------------------
+# 6. Autenticação: RBAC derivado do usuário autenticado, nunca de headers livres
+# ---------------------------------------------------------------------------------------------
+
+PROTECTED_CALLS = [
+    ("GET", "/api/v1/market-intel/me", None),
+    ("GET", "/api/v1/market-intel/signals", None),
+    ("GET", "/api/v1/market-intel/opportunities", None),
+    ("POST", "/api/v1/market-intel/opportunities/match", {"signal_id": "msig-anvisa-udi-cm"}),
+    ("POST", "/api/v1/market-intel/campaigns/generate-draft", {"opportunity_id": "opp-seed-udi-cm", "channel": "WHATSAPP"}),
+    ("GET", "/api/v1/market-intel/campaigns", None),
+    ("POST", "/api/v1/market-intel/campaigns/tcmp-x/dispatch", None),
+    ("POST", "/api/v1/campaigns/tcmp-x/dispatch", None),
+    ("GET", "/api/v1/competitors", None),
+    ("POST", "/api/v1/competitors", {"name": "Sem Auth", "domain": "sem-auth.com.br"}),
+    ("GET", "/api/v1/competitors/tactical-insights", None),
+    ("GET", "/api/v1/competitors/comp-zirconcad/snapshots", None),
+]
+
+
+@pytest.mark.parametrize("method,path,body", PROTECTED_CALLS)
+@pytest.mark.parametrize(
+    "headers",
+    [
+        {},
+        {"X-User-Role": "director", "X-User-Id": "usr-superadmin-god", "X-User-Region": "GLOBAL"},
+        {"Authorization": "Bearer usr-superadmin-god.1700000000.assinatura-forjada"},
+        {"Authorization": "usr-superadmin-god"},
+    ],
+    ids=["sem-credencial", "headers-livres", "token-forjado", "sem-esquema-bearer"],
+)
+def test_all_market_intel_routes_require_valid_session_token(client, method, path, body, headers):
+    res = client.request(method, path, json=body, headers=headers)
+    assert res.status_code == 401, (path, res.status_code, res.text)
+
+
+def test_inactive_user_token_is_rejected(client):
+    assert client.get("/api/v1/market-intel/me", headers=_auth("usr-inactive-mi")).status_code == 401
+
+
+def test_role_header_cannot_escalate_privileges(client):
+    escalate = {"X-User-Role": "director", "X-User-Region": "GLOBAL"}
+
+    me = client.get("/api/v1/market-intel/me", headers={**FIELD_SP, **escalate}).json()
+    assert me["actual_role"] == "field_sales" and me["effective_role"] == "field_sales"
+    assert me["region"] == "BR-SP" and me["can_simulate"] is False
+
+    payload = {"name": "Escalada", "domain": f"escalada-{uuid.uuid4().hex[:6]}.com"}
+    assert client.post("/api/v1/competitors", json=payload, headers={**FIELD_SP, **escalate}).status_code == 403
+    assert client.post(
+        "/api/v1/market-intel/campaigns/generate-draft",
+        json={"opportunity_id": "opp-seed-udi-cm", "channel": "WHATSAPP"},
+        headers={**FIELD_SP, **escalate},
+    ).status_code == 403
+    # Praça falsificada não amplia o escopo territorial
+    assert client.get("/api/v1/market-intel/signals?scope=BR-PE", headers={**INSIDE_SP, **escalate}).status_code == 403
+
+    draft = client.post(
+        "/api/v1/market-intel/campaigns/generate-draft",
+        json={"opportunity_id": "opp-seed-udi-cm", "channel": "EMAIL"},
+        headers={**INSIDE_SP, **escalate},
+    )
+    assert draft.status_code == 201
+    assert client.post(f"/api/v1/campaigns/{draft.json()['id']}/dispatch", headers={**INSIDE_SP, **escalate}).status_code == 403
+
+    # Gerente do Paraná não vira gerente de São Paulo trocando X-User-Region
+    me_pr = client.get("/api/v1/market-intel/me", headers={**MANAGER_PR, "X-User-Region": "BR-SP"}).json()
+    assert me_pr["effective_role"] == "regional_manager" and me_pr["region"] == "BR-PR"
+    assert client.post(
+        f"/api/v1/campaigns/{draft.json()['id']}/dispatch", headers={**MANAGER_PR, "X-User-Region": "BR-SP"}
+    ).status_code == 403
+
+
+def test_director_can_simulate_lower_profiles(client):
+    me = client.get("/api/v1/market-intel/me", headers=DIRECTOR).json()
+    assert me["actual_role"] == "director" and me["can_simulate"] is True and me["visible_scopes"] == ["*"]
+
+    sim = {**DIRECTOR, "X-User-Role": "field_sales", "X-User-Region": "BR-PE"}
+    me_sim = client.get("/api/v1/market-intel/me", headers=sim).json()
+    assert me_sim["effective_role"] == "field_sales" and me_sim["region"] == "BR-PE"
+    assert me_sim["visible_scopes"] == ["BR-PE", "GLOBAL"]
+    assert client.post(
+        "/api/v1/market-intel/campaigns/generate-draft",
+        json={"opportunity_id": "opp-seed-udi-cm", "channel": "WHATSAPP"},
+        headers=sim,
+    ).status_code == 403
+    assert client.get("/api/v1/market-intel/me", headers={**DIRECTOR, "X-User-Role": "papel-inexistente"}).status_code == 400
+
+
+def test_tenant_comes_from_user_not_from_account_header(client):
+    me = client.get("/api/v1/market-intel/me", headers={**DIRECTOR, "X-Account-ID": "tenant-alheio"}).json()
+    assert me["account_id"] == ACC
+    signals = client.get("/api/v1/market-intel/signals", headers={**DIRECTOR, "X-Account-ID": "tenant-alheio"}).json()
+    assert signals["total"] >= 6

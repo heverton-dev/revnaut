@@ -7,6 +7,9 @@ Matriz RBAC Territorial da Inteligência de Mercado (Seção 5 da SPEC MARKET IN
 | regional_manager    | Regional + Global   | Somente leitura          | Sim (sua praça)    | Sim (sua praça)   |
 | inside_sales        | Carteira + Global   | Somente leitura          | Sim (Draft)        | Não               |
 | field_sales         | Carteira + Global   | Somente leitura (cards)  | Não                | Não               |
+
+Autenticação: o principal é derivado do token Bearer de sessão (HMAC) e do cadastro do usuário
+(users.role, users.is_superadmin, users.region_code, users.account_id).
 """
 
 from __future__ import annotations
@@ -18,6 +21,7 @@ from typing import FrozenSet, Optional
 from fastapi import Header, HTTPException, status
 
 from src.core.database import get_connection
+from src.features.auth.service import verify_session_token
 
 DIRECTOR = "director"
 REGIONAL_MANAGER = "regional_manager"
@@ -26,7 +30,6 @@ FIELD_SALES = "field_sales"
 
 CANONICAL_ROLES: FrozenSet[str] = frozenset({DIRECTOR, REGIONAL_MANAGER, INSIDE_SALES, FIELD_SALES})
 
-DEFAULT_ACCOUNT_ID = "0f14ffff"
 DEFAULT_REGION = "BR-SP"
 GLOBAL_SCOPE = "GLOBAL"
 
@@ -65,6 +68,11 @@ class MarketIntelPrincipal:
     user_id: Optional[str]
     region: str
     account_id: str
+    actual_role: str = FIELD_SALES
+
+    @property
+    def can_simulate(self) -> bool:
+        return self.actual_role == DIRECTOR
 
     @property
     def visible_scopes(self) -> Optional[FrozenSet[str]]:
@@ -116,58 +124,79 @@ def normalize_role(raw_role: Optional[str]) -> Optional[str]:
     return None
 
 
-def _role_from_user_id(user_id: str, account_id: str) -> Optional[str]:
+_ROLE_RANK = {FIELD_SALES: 0, INSIDE_SALES: 1, REGIONAL_MANAGER: 2, DIRECTOR: 3}
+
+
+def _unauthorized(detail: str) -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail=detail,
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+
+def _load_active_user(user_id: str) -> Optional[dict]:
     conn = get_connection()
     try:
         row = conn.execute(
-            "SELECT role, is_superadmin FROM users WHERE id = ? AND account_id = ?",
-            (user_id, account_id),
+            """
+            SELECT id, account_id, role, COALESCE(is_superadmin, 0) AS is_superadmin,
+                   COALESCE(is_active, 1) AS is_active, region_code
+            FROM users WHERE id = ?
+            """,
+            (user_id,),
         ).fetchone()
-    except Exception:
-        row = None
     finally:
         conn.close()
-    if not row:
-        return None
-    if row["is_superadmin"]:
-        return DIRECTOR
-    return normalize_role(row["role"])
+    return dict(row) if row else None
 
 
-def resolve_principal(
-    role: Optional[str] = None,
-    user_id: Optional[str] = None,
-    region: Optional[str] = None,
-    account_id: Optional[str] = None,
+def resolve_authenticated_principal(
+    authorization: Optional[str],
+    simulated_role: Optional[str] = None,
+    simulated_region: Optional[str] = None,
 ) -> MarketIntelPrincipal:
     """
-    Resolve o principal da requisição. Ordem: papel explícito -> papel do usuário cadastrado.
-    Sem identificação válida aplica privilégio mínimo (field_sales).
+    Papel, praça e tenant vêm do usuário autenticado pelo token Bearer assinado (HMAC),
+    nunca de headers livres. O header X-User-Role só rebaixa o papel (simulação de perfis
+    menores); X-User-Region só é aceito quando o usuário real é Diretoria.
     """
-    acc = (account_id or DEFAULT_ACCOUNT_ID).strip()
-    canonical = normalize_role(role)
-    if role and canonical is None:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Papel desconhecido: '{role}'.")
-    if canonical is None and user_id:
-        canonical = _role_from_user_id(user_id, acc)
-    if canonical is None:
-        canonical = FIELD_SALES
+    if not authorization or not authorization.startswith("Bearer "):
+        raise _unauthorized("Não autenticado. Envie Authorization: Bearer <token de sessão>.")
+    user_id = verify_session_token(authorization.split("Bearer ", 1)[1].strip())
+    if not user_id:
+        raise _unauthorized("Token de sessão inválido.")
+    user = _load_active_user(user_id)
+    if not user or not user["is_active"]:
+        raise _unauthorized("Sessão inválida ou usuário inativo.")
 
-    eff_region = (region or "").strip().upper() or (GLOBAL_SCOPE if canonical == DIRECTOR else DEFAULT_REGION)
-    if eff_region not in VALID_REGIONS:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Região inválida: '{eff_region}'.")
-    return MarketIntelPrincipal(role=canonical, user_id=user_id, region=eff_region, account_id=acc)
+    actual_role = DIRECTOR if user["is_superadmin"] else (normalize_role(user["role"]) or FIELD_SALES)
+    actual_region = GLOBAL_SCOPE if actual_role == DIRECTOR else (str(user["region_code"] or DEFAULT_REGION).upper())
+
+    role = actual_role
+    if simulated_role:
+        sim = normalize_role(simulated_role)
+        if sim is None:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Papel desconhecido: '{simulated_role}'.")
+        if _ROLE_RANK[sim] <= _ROLE_RANK[actual_role]:
+            role = sim
+
+    region = actual_region
+    if actual_role == DIRECTOR:
+        requested = (simulated_region or "").strip().upper()
+        if requested:
+            region = requested
+        elif role != DIRECTOR:
+            region = DEFAULT_REGION
+    if region not in VALID_REGIONS:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Região inválida: '{region}'.")
+    return MarketIntelPrincipal(role=role, user_id=user_id, region=region, account_id=user["account_id"], actual_role=actual_role)
 
 
 def get_market_intel_principal(
+    authorization: Optional[str] = Header(None),
     x_user_role: Optional[str] = Header(None, alias="X-User-Role"),
-    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     x_user_region: Optional[str] = Header(None, alias="X-User-Region"),
-    x_account_id: Optional[str] = Header(None, alias="X-Account-ID"),
 ) -> MarketIntelPrincipal:
     """Dependência FastAPI compartilhada pelos routers market_intel, competitors e campaigns."""
-    return resolve_principal(role=x_user_role, user_id=x_user_id, region=x_user_region, account_id=x_account_id)
-
-
-def forbidden(detail: str) -> HTTPException:
-    return HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=detail)
+    return resolve_authenticated_principal(authorization, x_user_role, x_user_region)

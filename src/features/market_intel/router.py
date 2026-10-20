@@ -20,6 +20,7 @@ from src.features.market_intel.schemas import (
     BuTarget,
     CampaignDispatchResult,
     CampaignDraftRequest,
+    MarketIntelPrincipalOut,
     MarketOpportunityOut,
     MarketSignalPage,
     OpportunityMatchRequest,
@@ -48,6 +49,23 @@ def raise_http_for(exc: Exception) -> NoReturn:
     if isinstance(exc, ValueError):
         raise HTTPException(status_code=422, detail=str(exc))
     raise exc
+
+
+@router.get("/me", response_model=MarketIntelPrincipalOut, summary="Perfil territorial efetivo do usuário autenticado")
+def get_me(principal: MarketIntelPrincipal = Depends(get_market_intel_principal)):
+    scopes = principal.visible_scopes
+    return {
+        "user_id": principal.user_id,
+        "account_id": principal.account_id,
+        "actual_role": principal.actual_role,
+        "effective_role": principal.role,
+        "region": principal.region,
+        "visible_scopes": ["*"] if scopes is None else sorted(scopes),
+        "can_simulate": principal.can_simulate,
+        "can_manage_competitors": principal.can_manage_competitors,
+        "can_generate_draft": principal.can_generate_draft,
+        "can_dispatch": principal.can_dispatch,
+    }
 
 
 @router.get("/signals", response_model=MarketSignalPage, summary="Listar sinais de mercado no escopo territorial do perfil")

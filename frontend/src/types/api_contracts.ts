@@ -701,6 +701,19 @@ export type TargetedCampaignChannel = 'WHATSAPP' | 'EMAIL';
 export type TargetedCampaignStatus = 'DRAFT' | 'SCHEDULED' | 'EXECUTED';
 export type CompetitorPageType = 'pricing_table' | 'catalog' | 'blog_post' | 'social_ad';
 
+export interface MarketIntelPrincipal {
+  user_id: string;
+  account_id: string;
+  actual_role: MarketIntelRole;
+  effective_role: MarketIntelRole;
+  region: string;
+  visible_scopes: string[];
+  can_simulate: boolean;
+  can_manage_competitors: boolean;
+  can_generate_draft: boolean;
+  can_dispatch: boolean;
+}
+
 export interface MarketSignalStructuredPayload {
   topics: string[];
   detected_trends: string[];
@@ -1056,6 +1069,7 @@ export const API_V1_ROUTES = [
   '/api/v1/market-intel/campaigns',
   '/api/v1/market-intel/campaigns/generate-draft',
   '/api/v1/market-intel/campaigns/{campaign_id}/dispatch',
+  '/api/v1/market-intel/me',
   '/api/v1/market-intel/opportunities',
   '/api/v1/market-intel/opportunities/match',
   '/api/v1/market-intel/signals',

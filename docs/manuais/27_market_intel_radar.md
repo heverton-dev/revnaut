@@ -24,11 +24,12 @@ Concentrar em uma única tela (`/#market_intel`, componente `MarketIntelRadarWor
 | Consultor Interno SDR/Inside (`inside_sales`) | Sua carteira/praça + `GLOBAL` | Somente leitura de insights | Sim (rascunho) | Não (HTTP 403) |
 | Consultor Externo de Campo (`field_sales`) | Alertas da praça + `GLOBAL` (visão mobile) | Cards de contra-ataque | Não (HTTP 403) | Não (HTTP 403) |
 
-O perfil é resolvido pelo cabeçalho `X-User-Role` ou pelo cargo do usuário em `X-User-Id`. A praça vem de `X-User-Region`. Sem identificação válida, aplica-se o menor privilégio (`field_sales`).
+Todas as rotas exigem o token de sessão emitido no login (`Authorization: Bearer <token>`); sem token válido ou com usuário inativo a resposta é HTTP 401. Perfil, praça e tenant vêm do cadastro do usuário (`users.role`, `users.is_superadmin`, `users.region_code`, `users.account_id`), nunca de headers livres. O cabeçalho `X-User-Role` só rebaixa o perfil (simulação de perfis menores) e `X-User-Region` só é aceito quando o usuário real é Diretoria. O perfil efetivo pode ser consultado em `GET /api/v1/market-intel/me`.
 
 ---
 
 ## 4. Quais Ações Podem Ser Realizadas
+* `WHOAMI`: `GET /api/v1/market-intel/me` (perfil efetivo, praça e permissões do usuário autenticado).
 * `LIST_SIGNALS`: `GET /api/v1/market-intel/signals` com `scope`, `specialty`, `source_type`, `limit` e `offset`.
 * `LIST_OPPORTUNITIES`: `GET /api/v1/market-intel/opportunities` com `region_code`, `bu_target` e `status`.
 * `MATCH_OPPORTUNITY`: `POST /api/v1/market-intel/opportunities/match` (sinal ou snapshot contra o catálogo).
@@ -43,7 +44,7 @@ O perfil é resolvido pelo cabeçalho `X-User-Role` ou pelo cargo do usuário em
 
 ## 5. Como o Usuário Realiza as Ações (Passo a Passo)
 1. No menu lateral, abra **Radar de Mercado e Concorrência** (atalho `N`) ou use o botão **Radar de Mercado** na tela Assistente Comercial.
-2. No cartão de perfil, escolha o perfil simulado e a praça. Os selos mostram o que o perfil pode fazer.
+2. O cartão de perfil mostra o seu perfil e a sua praça, lidos do cadastro. Somente a Diretoria pode simular perfis menores e outras praças. Os selos mostram o que o perfil efetivo pode fazer.
 3. Na aba **Sinais de Mercado**, combine escopo, especialidade e tipo de fonte. Cada cartão mostra tópicos, tendências e o link da fonte.
 4. Na aba **Concorrentes**, selecione um concorrente para ver a timeline de capturas. O Diretor pode usar **Registrar Concorrente** para incluir um domínio na fila noturna.
 5. Na aba **Oportunidades x BUs**, filtre por BU, praça e status, escolha o canal (WhatsApp ou e-mail) e clique em **Gerar Minuta de Campanha Tatica**.
@@ -55,8 +56,8 @@ O perfil é resolvido pelo cabeçalho `X-User-Role` ou pelo cargo do usuário em
 
 | Botão / Controle | Localização | Ação | Regra |
 |---|---|---|---|
-| Perfil simulado (select) | Cartão de perfil | Define `X-User-Role` das chamadas | Recarrega a aba ativa |
-| Praça do perfil (select) | Cartão de perfil | Define `X-User-Region` | Bloqueado para Diretor (Global) |
+| Perfil (select) | Cartão de perfil | Define `X-User-Role` das chamadas (somente rebaixa o perfil) | Habilitado só para Diretoria |
+| Praça do perfil (select) | Cartão de perfil | Define `X-User-Region` | Habilitado só para Diretoria simulando perfil regional |
 | Atualizar | Cabeçalho da rota | Recarrega a aba ativa | Todos os perfis |
 | Registrar Concorrente | Banner da fila passiva | Abre o modal de cadastro | Habilitado só para Diretor |
 | Item de concorrente | Lista lateral da aba Concorrentes | Carrega a timeline de snapshots | Todos os perfis |

@@ -47,6 +47,7 @@ import type {
   CompetitorSnapshot,
   TacticalInsightsResponse,
   MarketIntelRole,
+  MarketIntelPrincipal,
 } from "@/types/api_contracts";
 
 type TabId = "signals" | "competitors" | "opportunities" | "campaigns";
@@ -108,20 +109,29 @@ export interface MarketIntelRadarWorkspaceProps {
 
 export const MarketIntelRadarWorkspace: React.FC<MarketIntelRadarWorkspaceProps> = ({ initialTab = "signals" }) => {
   const [activeTab, setActiveTab] = React.useState<TabId>(initialTab);
-  const [role, setRole] = React.useState<MarketIntelRole>("director");
-  const [region, setRegion] = React.useState<string>("GLOBAL");
+  // Perfil real vem do backend (token de sessão); simulação só é permitida para Diretoria.
+  const [me, setMe] = React.useState<MarketIntelPrincipal | null>(null);
+  const [role, setRole] = React.useState<MarketIntelRole>("field_sales");
+  const [region, setRegion] = React.useState<string>("BR-SP");
   const [feedback, setFeedback] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
-  const canManageCompetitors = role === "director";
-  const canGenerateDraft = role !== "field_sales";
-  const canDispatch = role === "director" || role === "regional_manager";
-  const isFieldView = role === "field_sales";
+  const canSimulate = me?.can_simulate === true;
+  const canManageCompetitors = me?.can_manage_competitors === true;
+  const canGenerateDraft = me?.can_generate_draft === true;
+  const canDispatch = me?.can_dispatch === true;
+  const isFieldView = (me?.effective_role || role) === "field_sales";
 
-  const rbacHeaders = React.useMemo(
-    () => ({ "X-User-Role": role, "X-User-Region": region, "Content-Type": "application/json" }),
-    [role, region]
-  );
+  const rbacHeaders = React.useMemo(() => {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    const token = typeof window !== "undefined" ? localStorage.getItem("revnaut_auth_token") : null;
+    if (token) headers.Authorization = `Bearer ${token}`;
+    if (canSimulate) {
+      headers["X-User-Role"] = role;
+      headers["X-User-Region"] = region;
+    }
+    return headers;
+  }, [canSimulate, role, region]);
 
   const api = React.useCallback(
     async <T,>(path: string, init?: RequestInit): Promise<T> => {
@@ -237,7 +247,31 @@ export const MarketIntelRadarWorkspace: React.FC<MarketIntelRadarWorkspaceProps>
     }
   }, [api, selectedCampaignId]);
 
+  const loadMe = React.useCallback(async (): Promise<MarketIntelPrincipal | null> => {
+    try {
+      const data = await api<MarketIntelPrincipal>("/api/v1/market-intel/me");
+      setMe(data);
+      return data;
+    } catch (e: any) {
+      setMe(null);
+      notify(null, e.message);
+      return null;
+    }
+  }, [api]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Perfil real do usuário autenticado define o estado inicial do seletor.
   React.useEffect(() => {
+    void (async () => {
+      const data = await loadMe();
+      if (data) {
+        setRole(data.effective_role);
+        setRegion(data.region);
+      }
+    })();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  React.useEffect(() => {
+    if (canSimulate) void loadMe();
     if (activeTab === "signals") void loadSignals();
     if (activeTab === "competitors") void loadCompetitors();
     if (activeTab === "opportunities") void loadOpportunities();
@@ -258,6 +292,7 @@ export const MarketIntelRadarWorkspace: React.FC<MarketIntelRadarWorkspaceProps>
   }, [selectedCompetitorId, activeTab, loadSnapshots]);
 
   const handleRoleChange = (value: string) => {
+    if (!canSimulate) return;
     const opt = ROLE_OPTIONS.find((o) => o.role === value) || ROLE_OPTIONS[0];
     setRole(opt.role);
     setRegion(opt.region);
@@ -336,7 +371,7 @@ export const MarketIntelRadarWorkspace: React.FC<MarketIntelRadarWorkspaceProps>
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6 max-w-7xl mx-auto">
       <RouteHeader
         title="Inteligência de Mercado & Radar Tático"
         description="Sinais setoriais, monitoramento passivo de concorrentes e campanhas determinísticas por praça."
@@ -360,17 +395,21 @@ export const MarketIntelRadarWorkspace: React.FC<MarketIntelRadarWorkspaceProps>
       <Card className="p-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
           <Select
-            label="Perfil simulado (Matriz RBAC Seção 5)"
+            label={canSimulate ? "Perfil simulado (Matriz RBAC Seção 5)" : "Seu perfil (Matriz RBAC Seção 5)"}
             value={role}
+            disabled={!canSimulate}
+            aria-label={canSimulate ? "Perfil simulado" : "Seu perfil (somente a Diretoria simula outros perfis)"}
             onChange={(e) => handleRoleChange(e.target.value)}
             options={ROLE_OPTIONS.map((o) => ({ value: o.role, label: o.label }))}
           />
           <Select
             label="Praça do perfil"
             value={region}
-            disabled={role === "director"}
+            disabled={!canSimulate || role === "director"}
             onChange={(e) => setRegion(e.target.value)}
-            options={REGION_OPTIONS.filter((r) => role === "director" || r !== "GLOBAL").map((r) => ({ value: r, label: r }))}
+            options={Array.from(new Set([...REGION_OPTIONS, region]))
+              .filter((r) => role === "director" || r !== "GLOBAL")
+              .map((r) => ({ value: r, label: r }))}
           />
           <div className="flex flex-wrap gap-1.5 text-xs">
             <Badge variant={canManageCompetitors ? "success" : "secondary"}>
