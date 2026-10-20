@@ -5,6 +5,7 @@ TDD Tests for TICKET-10: Motor Preditivo de Lead Scoring Odontológico, ICP Fit 
 
 import pytest
 from fastapi.testclient import TestClient
+from tests.auth_helpers import bearer_headers
 from src.main import app
 from src.core.database import get_connection
 from src.features.scoring.service import calculate_contact_score_and_handoff
@@ -12,7 +13,7 @@ from src.features.scoring.service import calculate_contact_score_and_handoff
 
 @pytest.fixture
 def client():
-    return TestClient(app)
+    return TestClient(app, headers=bearer_headers())
 
 
 def test_lead_scoring_icp_calculation_and_vector_persistence():

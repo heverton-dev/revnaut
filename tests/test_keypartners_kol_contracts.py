@@ -5,6 +5,7 @@ TDD Tests for TICKET-18: Gestão de Key Opinion Leaders (KOLs), Embaixadores e M
 
 import pytest
 from fastapi.testclient import TestClient
+from tests.auth_helpers import bearer_headers
 from src.main import app
 from src.core.database import init_db
 from src.features.keypartners import kol_management
@@ -12,7 +13,7 @@ from src.features.keypartners import kol_management
 
 @pytest.fixture
 def client():
-    return TestClient(app)
+    return TestClient(app, headers=bearer_headers())
 
 
 def test_kol_contract_compliant_consumption():

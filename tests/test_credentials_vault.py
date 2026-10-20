@@ -10,12 +10,13 @@ Validates:
 
 import pytest
 from fastapi.testclient import TestClient
+from tests.auth_helpers import bearer_headers
 from src.core.database import get_connection, init_db
 from src.core.security import encrypt_secret, decrypt_secret
 from src.features.auth.service import store_tenant_credential, get_decrypted_credential, list_tenant_credentials
 from src.main import app
 
-client = TestClient(app)
+client = TestClient(app, headers=bearer_headers())
 
 
 def setup_module():

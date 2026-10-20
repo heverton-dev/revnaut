@@ -6,6 +6,7 @@ TDD Tests for TICKET-12: Pipeline STT de Alta Performance com faster-whisper e D
 import json
 import pytest
 from fastapi.testclient import TestClient
+from tests.auth_helpers import bearer_headers
 from src.main import app
 from src.core.database import get_connection
 from src.features.intelligence.transcription_worker import process_call_audio
@@ -13,7 +14,7 @@ from src.features.intelligence.transcription_worker import process_call_audio
 
 @pytest.fixture
 def client():
-    return TestClient(app)
+    return TestClient(app, headers=bearer_headers())
 
 
 def test_transcription_worker_diarizes_commercial_dialogue():

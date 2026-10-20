@@ -7,6 +7,7 @@ import json
 import jwt
 import pytest
 from fastapi.testclient import TestClient
+from tests.auth_helpers import bearer_headers
 from src.main import app
 from src.core.database import get_connection
 from src.features.communications import livekit_service
@@ -14,7 +15,7 @@ from src.features.communications import livekit_service
 
 @pytest.fixture
 def client():
-    return TestClient(app)
+    return TestClient(app, headers=bearer_headers())
 
 
 def test_livekit_generate_room_token():

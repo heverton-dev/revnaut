@@ -6,6 +6,7 @@ Proteção 100% determinística contra mutações, SQL Injection e injeção de 
 
 import pytest
 from fastapi.testclient import TestClient
+from tests.auth_helpers import bearer_headers
 from src.main import app
 from src.core.database import get_connection, init_db
 from src.features.intelligence import text_to_sql_agent
@@ -13,7 +14,7 @@ from src.features.intelligence import text_to_sql_agent
 
 @pytest.fixture
 def client():
-    return TestClient(app)
+    return TestClient(app, headers=bearer_headers())
 
 
 @pytest.fixture(autouse=True)

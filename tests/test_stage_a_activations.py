@@ -9,13 +9,14 @@ Tests for Stage A Activations:
 
 import pytest
 from fastapi.testclient import TestClient
+from tests.auth_helpers import bearer_headers
 from src.main import app
 from src.core.database import init_db, get_connection
 from src.features.campaigns.schemas import LandingPageCreate
 from src.features.campaigns.landing_pages import create_landing_page, publish_landing_page
 from src.features.campaigns.referral_mgm import generate_referral_link
 
-client = TestClient(app)
+client = TestClient(app, headers=bearer_headers())
 
 
 def test_storage_direct_upload_and_serving():

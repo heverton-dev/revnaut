@@ -5,6 +5,7 @@ TDD Tests for TICKET-15: Fechamento de Propostas e Contratos com Documenso Headl
 
 import pytest
 from fastapi.testclient import TestClient
+from tests.auth_helpers import bearer_headers
 from src.main import app
 from src.core.database import get_connection
 from src.features.deals import documenso_service
@@ -12,7 +13,7 @@ from src.features.deals import documenso_service
 
 @pytest.fixture
 def client():
-    return TestClient(app)
+    return TestClient(app, headers=bearer_headers())
 
 
 def test_documenso_generate_contract_and_pending_status():

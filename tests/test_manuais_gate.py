@@ -6,10 +6,11 @@ e da exposição dinâmica dos manuais em /docs/guia e /api/v1/quarteto/manuais.
 
 from pathlib import Path
 from fastapi.testclient import TestClient
+from tests.auth_helpers import bearer_headers
 from src.main import app
 from gates.G_MANUAIS_ROTAS import scan
 
-client = TestClient(app)
+client = TestClient(app, headers=bearer_headers())
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 

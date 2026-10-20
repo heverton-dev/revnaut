@@ -5,6 +5,7 @@ TDD Tests for TICKET-27: Módulo de Cosmovigilância, Tecnovigilância ANVISA e 
 
 import pytest
 from fastapi.testclient import TestClient
+from tests.auth_helpers import bearer_headers
 from src.main import app
 from src.core.database import get_connection, init_db
 from src.features.tickets import anvisa_technovigilance
@@ -12,7 +13,7 @@ from src.features.tickets import anvisa_technovigilance
 
 @pytest.fixture
 def client():
-    return TestClient(app)
+    return TestClient(app, headers=bearer_headers())
 
 
 @pytest.fixture(autouse=True)

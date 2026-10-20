@@ -6,6 +6,7 @@ Valida cálculo matemático ponderado do HSC, disparos de resgate (HSC < 40) e p
 
 import pytest
 from fastapi.testclient import TestClient
+from tests.auth_helpers import bearer_headers
 
 from src.main import app
 from src.core.database import get_connection, init_db
@@ -13,7 +14,7 @@ from src.features.intelligence import health_score_hsc
 from src.features.intelligence.schemas import HealthScoreCalculateRequest
 
 
-client = TestClient(app)
+client = TestClient(app, headers=bearer_headers())
 
 
 @pytest.fixture(autouse=True)

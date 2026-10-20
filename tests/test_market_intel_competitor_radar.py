@@ -698,7 +698,8 @@ def test_director_can_simulate_lower_profiles(client):
 
 
 def test_tenant_comes_from_user_not_from_account_header(client):
-    me = client.get("/api/v1/market-intel/me", headers={**DIRECTOR, "X-Account-ID": "tenant-alheio"}).json()
-    assert me["account_id"] == ACC
-    signals = client.get("/api/v1/market-intel/signals", headers={**DIRECTOR, "X-Account-ID": "tenant-alheio"}).json()
-    assert signals["total"] >= 6
+    assert client.get("/api/v1/market-intel/me", headers=DIRECTOR).json()["account_id"] == ACC
+    # Tenant de outra conta em header ou query é recusado pelo middleware de autenticação
+    assert client.get("/api/v1/market-intel/me", headers={**DIRECTOR, "X-Account-ID": "tenant-alheio"}).status_code == 403
+    assert client.get("/api/v1/market-intel/signals?account_id=tenant-alheio", headers=DIRECTOR).status_code == 403
+    assert client.get("/api/v1/market-intel/signals", headers={**DIRECTOR, "X-Account-ID": ACC}).json()["total"] >= 6

@@ -7,6 +7,7 @@ Criptográfica HMAC-SHA256, Proteção Estrita contra SSRF e Circuit Breaker.
 import json
 import pytest
 from fastapi.testclient import TestClient
+from tests.auth_helpers import bearer_headers
 from fastapi import HTTPException
 
 from src.main import app
@@ -175,7 +176,7 @@ def test_circuit_breaker_trips_after_15_failures():
 
 def test_api_endpoints_outbound_webhooks():
     """Valida endpoints HTTP FastAPI para gestão e teste do portal de desenvolvedores."""
-    test_client = TestClient(app)
+    test_client = TestClient(app, headers=bearer_headers())
     account_id = "0f14ffff"
 
     # 1. Tentativa de cadastro com URL interna (deve ser bloqueada com 400 por SSRF)

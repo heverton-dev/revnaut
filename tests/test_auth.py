@@ -5,16 +5,34 @@ Testes automatizados da fatia de Autenticação e Sessão de Usuários (FastAPI 
 
 import pytest
 from fastapi.testclient import TestClient
+from tests.auth_helpers import bearer_headers
+from src.core.database import get_connection
+from src.features.auth.service import set_user_password
 from src.main import app
 
-client = TestClient(app)
+client = TestClient(app, headers=bearer_headers())
+
+# Senha exclusiva dos testes (a senha semeada do Super Admin é considerada vazada)
+SUPERADMIN_TEST_PASSWORD = "Teste-Superadmin-Revnault-2026!"
+
+
+@pytest.fixture(autouse=True)
+def _superadmin_test_password():
+    conn = get_connection()
+    try:
+        uid = conn.execute("SELECT id FROM users WHERE email = 'hevertoneduardoperes@gmail.com'").fetchone()[0]
+    finally:
+        conn.close()
+    set_user_password(uid, SUPERADMIN_TEST_PASSWORD)
+    yield
+
 
 
 def test_login_superadmin_success():
     """Valida login do Super Admin único (User God) Heverton Eduardo Peres com sucesso."""
     payload = {
         "email": "hevertoneduardoperes@gmail.com",
-        "password": "@#Khen741963@#"
+        "password": SUPERADMIN_TEST_PASSWORD
     }
     res = client.post("/api/v1/auth/login", json=payload)
     assert res.status_code == 200
@@ -54,7 +72,7 @@ def test_auth_me_with_valid_bearer_token():
     # 1. Faz login para obter token
     login_res = client.post("/api/v1/auth/login", json={
         "email": "hevertoneduardoperes@gmail.com",
-        "password": "@#Khen741963@#"
+        "password": SUPERADMIN_TEST_PASSWORD
     })
     assert login_res.status_code == 200
     token = login_res.json()["access_token"]
@@ -109,7 +127,7 @@ def test_users_management_crud_and_security_invariants():
     # 1. Login do Super Admin
     login_res = client.post("/api/v1/auth/login", json={
         "email": "hevertoneduardoperes@gmail.com",
-        "password": "@#Khen741963@#"
+        "password": SUPERADMIN_TEST_PASSWORD
     })
     token = login_res.json()["access_token"]
     headers = {"Authorization": f"Bearer {token}"}
@@ -214,18 +232,24 @@ def test_login_rate_limiting_brute_force():
 
 
 def test_forgot_password_and_reset_token_flow():
-    """Testa fluxo de recuperação de senha com token temporário."""
-    # 1. Solicita link/token de recuperação
-    req_res = client.post("/api/v1/auth/forgot-password", json={
-        "email": "hevertoneduardoperes@gmail.com"
-    })
-    assert req_res.status_code == 200
-    data = req_res.json()
-    assert data["success"] is True
-    assert data["reset_token"] is not None
-    token = data["reset_token"]
+    """Recuperação de senha: resposta genérica sem token, token de uso único entregue por e-mail."""
+    from src.features.auth.service import create_password_reset_token
 
-    # 2. Reseta senha usando o token
+    # 1. Resposta idêntica para e-mail existente e inexistente, sem expor o token
+    req_res = client.post("/api/v1/auth/forgot-password", json={"email": "hevertoneduardoperes@gmail.com"})
+    unknown_res = client.post("/api/v1/auth/forgot-password", json={"email": "ninguem@inexistente.com.br"})
+    assert req_res.status_code == 200 and unknown_res.status_code == 200
+    assert req_res.json() == unknown_res.json()
+    assert req_res.json()["reset_token"] is None
+
+    # 2. Token como o enviado por e-mail (assinado com o hash atual da senha)
+    conn = get_connection()
+    try:
+        row = conn.execute("SELECT id, password_hash FROM users WHERE email = 'hevertoneduardoperes@gmail.com'").fetchone()
+    finally:
+        conn.close()
+    token = create_password_reset_token(row["id"], row["password_hash"])
+
     reset_res = client.post("/api/v1/auth/reset-password-with-token", json={
         "token": token,
         "new_password": "NovaSenhaSeguraHeverton2026!"
@@ -233,19 +257,32 @@ def test_forgot_password_and_reset_token_flow():
     assert reset_res.status_code == 200
     assert reset_res.json()["success"] is True
 
-    # 3. Loga com a nova senha
+    # 3. Uso único: o mesmo token não vale depois da troca
+    reuse_res = client.post("/api/v1/auth/reset-password-with-token", json={
+        "token": token,
+        "new_password": "OutraSenhaSegura2026!!"
+    })
+    assert reuse_res.status_code == 400
+
+    # 4. Senha curta ou vazada é recusada
+    conn = get_connection()
+    try:
+        current_hash = conn.execute("SELECT password_hash FROM users WHERE id = ?", (row["id"],)).fetchone()[0]
+    finally:
+        conn.close()
+    weak_res = client.post("/api/v1/auth/reset-password-with-token", json={
+        "token": create_password_reset_token(row["id"], current_hash),
+        "new_password": "admin123"
+    })
+    assert weak_res.status_code == 400
+
+    # 5. Login com a nova senha e restauração da senha de teste
     login_res = client.post("/api/v1/auth/login", json={
         "email": "hevertoneduardoperes@gmail.com",
         "password": "NovaSenhaSeguraHeverton2026!"
     })
     assert login_res.status_code == 200
     assert "access_token" in login_res.json()
-
-    # 4. Restaura senha de teste original para não quebrar outros testes
-    restore_res = client.post("/api/v1/auth/reset-password-with-token", json={
-        "token": client.post("/api/v1/auth/forgot-password", json={"email": "hevertoneduardoperes@gmail.com"}).json()["reset_token"],
-        "new_password": "superadmin_dental_2026"
-    })
-    assert restore_res.status_code == 200
+    set_user_password(row["id"], SUPERADMIN_TEST_PASSWORD)
 
 

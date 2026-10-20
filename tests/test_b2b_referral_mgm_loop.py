@@ -6,6 +6,7 @@ Valida links rastreáveis, bloqueio de auto-indicação, aceleração de lead (+
 
 import pytest
 from fastapi.testclient import TestClient
+from tests.auth_helpers import bearer_headers
 
 from src.main import app
 from src.core.database import get_connection, init_db
@@ -13,7 +14,7 @@ from src.features.campaigns import referral_mgm
 from src.features.keypartners import loyalty_engine
 
 
-client = TestClient(app)
+client = TestClient(app, headers=bearer_headers())
 
 
 @pytest.fixture(autouse=True)

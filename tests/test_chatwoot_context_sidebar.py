@@ -5,12 +5,13 @@ TDD Tests for TICKET-24: Chatwoot Omnichannel Bridge & Context 360 Sidebar
 
 from pathlib import Path
 from fastapi.testclient import TestClient
+from tests.auth_helpers import bearer_headers
 from src.main import app
 from src.features.keypartners import service as kp_service
 from src.features.dentgo import service as dentgo_service
 
 
-client = TestClient(app)
+client = TestClient(app, headers=bearer_headers())
 
 
 def test_chatwoot_context_panel_query_endpoint_and_sidebar_module():

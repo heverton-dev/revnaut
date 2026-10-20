@@ -9,6 +9,7 @@ import json
 import httpx
 import pytest
 from fastapi.testclient import TestClient
+from tests.auth_helpers import bearer_headers
 from src.main import app
 from src.core.database import get_connection
 from src.features.campaigns.listmonk_adapter import ListmonkClient, process_listmonk_webhook_event
@@ -16,7 +17,7 @@ from src.features.campaigns.listmonk_adapter import ListmonkClient, process_list
 
 @pytest.fixture
 def client():
-    return TestClient(app)
+    return TestClient(app, headers=bearer_headers())
 
 
 def test_listmonk_subscriber_and_campaign_payloads():

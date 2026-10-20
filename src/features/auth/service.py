@@ -4,25 +4,92 @@ Motor de Autenticação e Emissão de Tokens de Sessão.
 """
 
 from __future__ import annotations
+import base64
 import hashlib
 import hmac
+import os
+import secrets
 import time
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Tuple
 from fastapi import HTTPException
-from src.core.config import SECRET_KEY, SESSION_TTL_SECONDS
+from src.core.config import SESSION_SECRET_KEY, SESSION_TTL_SECONDS
 from src.core.database import get_connection
+
+PBKDF2_ALGORITHM = "pbkdf2_sha256"
+PBKDF2_ITERATIONS = int(os.getenv("PASSWORD_PBKDF2_ITERATIONS", "600000"))
+MIN_PASSWORD_LENGTH = 12
+
+# Senhas padrão e vazadas (seed de homologação e LoginPage publicado): nunca aceitas em produção
+_COMPROMISED_PASSWORDS = ("admin", "admin123", "revnaut", "revnaut123", "123456")
+COMPROMISED_LEGACY_HASHES = frozenset(
+    {hashlib.sha256(p.encode("utf-8")).hexdigest() for p in _COMPROMISED_PASSWORDS}
+    | {"579ac58e034634060983ac3b0100617b0e10fa05438675d44bb19b1533cdb0a6"}  # hash semeado do Super Admin
+)
+
+
+def _legacy_sha256(password: str) -> str:
+    return hashlib.sha256(password.encode("utf-8")).hexdigest()
 
 
 def hash_password(password: str) -> str:
-    """Gera hash determinístico SHA-256 para senha."""
-    return hashlib.sha256(password.encode("utf-8")).hexdigest()
+    """Hash PBKDF2-SHA256 com sal aleatório: pbkdf2_sha256$iteracoes$sal_b64$hash_b64."""
+    salt = secrets.token_bytes(16)
+    digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, PBKDF2_ITERATIONS)
+    return f"{PBKDF2_ALGORITHM}${PBKDF2_ITERATIONS}${base64.b64encode(salt).decode()}${base64.b64encode(digest).decode()}"
+
+
+def verify_password(password: str, stored_hash: Optional[str]) -> Tuple[bool, bool]:
+    """Retorna (senha_confere, precisa_regravar_hash). Aceita PBKDF2 e o SHA-256 legado sem sal."""
+    if not stored_hash:
+        return False, False
+    if stored_hash.startswith(f"{PBKDF2_ALGORITHM}$"):
+        try:
+            _, iterations, salt_b64, hash_b64 = stored_hash.split("$")
+            digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), base64.b64decode(salt_b64), int(iterations))
+        except (ValueError, TypeError):
+            return False, False
+        ok = hmac.compare_digest(base64.b64encode(digest).decode(), hash_b64)
+        return ok, ok and int(iterations) < PBKDF2_ITERATIONS
+    ok = hmac.compare_digest(stored_hash, _legacy_sha256(password))
+    return ok, ok
+
+
+def is_compromised_password(password: str) -> bool:
+    return _legacy_sha256(password) in COMPROMISED_LEGACY_HASHES
+
+
+def is_compromised_hash(stored_hash: Optional[str]) -> bool:
+    return bool(stored_hash) and stored_hash in COMPROMISED_LEGACY_HASHES
+
+
+def production_mode() -> bool:
+    return os.getenv("REVNAUT_ENV", "").lower() == "production"
+
+
+def validate_new_password(password: str) -> None:
+    if not password or len(password) < MIN_PASSWORD_LENGTH:
+        raise HTTPException(status_code=400, detail=f"A nova senha deve ter no mínimo {MIN_PASSWORD_LENGTH} caracteres.")
+    if is_compromised_password(password):
+        raise HTTPException(status_code=400, detail="Senha padrão ou vazada não é permitida. Escolha outra senha.")
+
+
+def set_user_password(user_id: str, new_password: str) -> None:
+    validate_new_password(new_password)
+    conn = get_connection()
+    try:
+        cur = conn.execute("UPDATE users SET password_hash = ? WHERE id = ?", (hash_password(new_password), user_id))
+        conn.commit()
+        if cur.rowcount != 1:
+            raise HTTPException(status_code=404, detail="Usuário não encontrado.")
+    finally:
+        conn.close()
 
 
 def create_session_token(user_id: str) -> str:
     """Gera token de sessão assinado com HMAC-SHA256."""
     timestamp = str(int(time.time()))
     payload = f"{user_id}:{timestamp}".encode("utf-8")
-    signature = hmac.new(SECRET_KEY.encode("utf-8"), payload, hashlib.sha256).hexdigest()
+    signature = hmac.new(SESSION_SECRET_KEY.encode("utf-8"), payload, hashlib.sha256).hexdigest()
     return f"{user_id}.{timestamp}.{signature}"
 
 
@@ -38,7 +105,7 @@ def verify_session_token(token: str, now: Optional[float] = None) -> Optional[st
         return None
     user_id, timestamp, signature = parts
     payload = f"{user_id}:{timestamp}".encode("utf-8")
-    expected_sig = hmac.new(SECRET_KEY.encode("utf-8"), payload, hashlib.sha256).hexdigest()
+    expected_sig = hmac.new(SESSION_SECRET_KEY.encode("utf-8"), payload, hashlib.sha256).hexdigest()
     if not hmac.compare_digest(signature, expected_sig):
         return None
     try:
@@ -86,8 +153,6 @@ def authenticate_user(email: str, password: str) -> Dict[str, Any]:
     email_clean = email.strip().lower()
     _check_rate_limit(email_clean)
 
-    pwd_hash = hash_password(password)
-
     conn = get_connection()
     cur = conn.cursor()
     cur.execute(
@@ -102,30 +167,36 @@ def authenticate_user(email: str, password: str) -> Dict[str, Any]:
         _record_failed_attempt(email_clean)
         raise HTTPException(status_code=401, detail="E-mail ou senha incorretos")
 
-    if user["is_active"] == 0:
-        raise HTTPException(status_code=403, detail="Usuário inativo. Contate o administrador.")
-
-    # Se usuário possui hash cadastrado, validação estrita com suporte a senhas de homologação para Super Admin
     stored_hash = user["password_hash"]
-    SUPERADMIN_DEV_PASSWORDS = {"@#Khen741963@#", "admin", "admin123", "revnaut123", "revnaut", "123456"}
-
-    is_valid = False
-    if stored_hash and hmac.compare_digest(stored_hash, pwd_hash):
-        is_valid = True
-    elif bool(user["is_superadmin"]) and password in SUPERADMIN_DEV_PASSWORDS:
-        is_valid = True
-    elif not stored_hash:
-        default_demo_hash = hash_password("revnaut123")
-        if hmac.compare_digest(default_demo_hash, pwd_hash) or password in SUPERADMIN_DEV_PASSWORDS:
-            is_valid = True
-
+    is_valid, needs_rehash = verify_password(password, stored_hash)
     if not is_valid:
         _record_failed_attempt(email_clean)
         raise HTTPException(status_code=401, detail="E-mail ou senha incorretos")
 
-    # Sucesso: limpa tentativas falhas
+    if user["is_active"] == 0:
+        raise HTTPException(status_code=403, detail="Usuário inativo. Contate o administrador.")
+
+    if production_mode() and (is_compromised_hash(stored_hash) or is_compromised_password(password)):
+        raise HTTPException(
+            status_code=403,
+            detail=(
+                "Senha padrão ou vazada bloqueada. Redefina a senha: o Super Admin pela tela de usuários "
+                "ou, para o próprio Super Admin, com python -m src.features.auth.set_password_cli <e-mail> no servidor."
+            ),
+        )
+
+    if needs_rehash:
+        conn = get_connection()
+        try:
+            conn.execute("UPDATE users SET password_hash = ? WHERE id = ?", (hash_password(password), user["id"]))
+            conn.commit()
+        finally:
+            conn.close()
+
     _clear_failed_attempts(email_clean)
-    return dict(user)
+    result = dict(user)
+    result.pop("password_hash", None)
+    return result
 
 
 def get_user_profile(user_id: str) -> Optional[Dict[str, Any]]:
@@ -192,6 +263,7 @@ def create_collaborator(
         raise HTTPException(status_code=400, detail="E-mail já cadastrado no sistema.")
 
     import uuid
+    validate_new_password(data.password)
     new_user_id = f"usr_{uuid.uuid4().hex[:10]}"
     pwd_hash = hash_password(data.password)
 
@@ -255,95 +327,96 @@ def reset_user_password(target_user_id: str, new_password: str, current_user: Di
     if not current_user.get("is_superadmin"):
         raise HTTPException(status_code=403, detail="Apenas o Super Admin pode resetar senhas de colaboradores.")
 
-    if not new_password or len(new_password) < 6:
-        raise HTTPException(status_code=400, detail="A nova senha deve ter no mínimo 6 caracteres.")
-
-    new_hash = hash_password(new_password)
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT id FROM users WHERE id = ?", (target_user_id,))
-    if not cur.fetchone():
-        conn.close()
-        raise HTTPException(status_code=404, detail="Usuário não encontrado.")
-
-    cur.execute("UPDATE users SET password_hash = ? WHERE id = ?", (new_hash, target_user_id))
-    conn.commit()
-    conn.close()
+    set_user_password(target_user_id, new_password)
     return {"id": target_user_id, "success": True, "message": "Senha redefinida com sucesso."}
 
 
+PASSWORD_RESET_TTL_SECONDS = 3600
+GENERIC_RESET_MESSAGE = "Se o e-mail estiver cadastrado e ativo, enviamos o link de recuperação (válido por 60 minutos)."
+
+
+def _reset_fingerprint(password_hash: Optional[str]) -> str:
+    """Amarra o token ao hash atual: após a troca de senha o token deixa de valer (uso único)."""
+    return hashlib.sha256((password_hash or "").encode("utf-8")).hexdigest()[:16]
+
+
+def _reset_signature(user_id: str, issued_at: int, password_hash: Optional[str]) -> str:
+    payload = f"reset:{user_id}:{issued_at}:{_reset_fingerprint(password_hash)}".encode("utf-8")
+    return hmac.new(SESSION_SECRET_KEY.encode("utf-8"), payload, hashlib.sha256).hexdigest()
+
+
+def create_password_reset_token(user_id: str, password_hash: Optional[str], issued_at: Optional[int] = None) -> str:
+    ts = int(time.time()) if issued_at is None else issued_at
+    return f"rst.{user_id}.{ts}.{_reset_signature(user_id, ts, password_hash)}"
+
+
+def _send_password_reset_email(email: str, name: str, token: str) -> None:
+    from src.features.campaigns.listmonk_adapter import ListmonkClient
+
+    base_url = os.getenv("APP_PUBLIC_URL", "https://revnault.vpsconexao.org").rstrip("/")
+    ListmonkClient().send_transactional(
+        subscriber_email=email,
+        template_id=int(os.getenv("LISTMONK_PASSWORD_RESET_TEMPLATE_ID", "1")),
+        data={
+            "name": name,
+            "reset_url": f"{base_url}/#!/reset-password?token={token}",
+            "expires_minutes": PASSWORD_RESET_TTL_SECONDS // 60,
+        },
+    )
+
+
 def request_password_reset(email: str) -> Dict[str, Any]:
-    """Gera token de recuperação temporário (1 hora) para auto-recuperação de senha."""
+    """
+    Envia o link de recuperação por e-mail. A resposta é sempre a mesma (não revela se o e-mail
+    existe nem devolve o token) para impedir enumeração de contas e sequestro de senha.
+    """
     email_clean = email.strip().lower()
     conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT id, name, is_active FROM users WHERE lower(email) = ?", (email_clean,))
-    user = cur.fetchone()
-    conn.close()
+    try:
+        user = conn.execute(
+            "SELECT id, name, email, is_active, password_hash FROM users WHERE lower(email) = ?", (email_clean,)
+        ).fetchone()
+    finally:
+        conn.close()
 
-    if not user:
-        # Por segurança corporativa, não revela se o e-mail existe ou não
-        return {
-            "success": True,
-            "message": "Se o e-mail estiver cadastrado, o link de recuperação foi gerado.",
-            "reset_token": None
-        }
-
-    if user["is_active"] == 0:
-        raise HTTPException(status_code=403, detail="Conta inativa. Contate o administrador.")
-
-    # Gera token de reset temporário com validade de 1 hora
-    now = int(time.time())
-    payload = f"reset:{user['id']}:{now}".encode("utf-8")
-    sig = hmac.new(SECRET_KEY.encode("utf-8"), payload, hashlib.sha256).hexdigest()
-    reset_token = f"rst.{user['id']}.{now}.{sig}"
-
-    return {
-        "success": True,
-        "message": "Link de recuperação gerado com sucesso. Válido por 60 minutos.",
-        "reset_token": reset_token
-    }
+    if user and user["is_active"]:
+        token = create_password_reset_token(user["id"], user["password_hash"])
+        try:
+            _send_password_reset_email(user["email"], user["name"], token)
+        except Exception:
+            # Falha de entrega não altera a resposta pública
+            pass
+    return {"success": True, "message": GENERIC_RESET_MESSAGE, "reset_token": None}
 
 
-def reset_password_with_token(token: str, new_password: str) -> Dict[str, Any]:
-    """Consome token temporário e atualiza senha do usuário."""
+def reset_password_with_token(token: str, new_password: str, now: Optional[float] = None) -> Dict[str, Any]:
+    """Consome token de uso único (1 hora) e grava a nova senha com PBKDF2."""
+    invalid = HTTPException(status_code=400, detail="Link de recuperação inválido ou expirado. Solicite um novo.")
     if not token or not token.startswith("rst."):
-        raise HTTPException(status_code=400, detail="Token de recuperação inválido.")
-
+        raise invalid
     parts = token.split(".")
     if len(parts) != 4:
-        raise HTTPException(status_code=400, detail="Formato de token inválido.")
-
+        raise invalid
     _, user_id, timestamp_str, sig = parts
     try:
         ts = int(timestamp_str)
     except ValueError:
-        raise HTTPException(status_code=400, detail="Timestamp do token corrompido.")
+        raise invalid
+    current = time.time() if now is None else now
+    if current - ts > PASSWORD_RESET_TTL_SECONDS or ts > current + SESSION_CLOCK_SKEW_SECONDS:
+        raise invalid
 
-    # Validade de 3600 segundos (1 hora)
-    if time.time() - ts > 3600:
-        raise HTTPException(status_code=400, detail="O link de recuperação expirou. Solicite um novo.")
-
-    payload = f"reset:{user_id}:{ts}".encode("utf-8")
-    expected_sig = hmac.new(SECRET_KEY.encode("utf-8"), payload, hashlib.sha256).hexdigest()
-    if not hmac.compare_digest(sig, expected_sig):
-        raise HTTPException(status_code=400, detail="Assinatura criptográfica do token inválida.")
-
-    if not new_password or len(new_password) < 6:
-        raise HTTPException(status_code=400, detail="A nova senha deve ter no mínimo 6 caracteres.")
-
-    new_hash = hash_password(new_password)
     conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT id FROM users WHERE id = ?", (user_id,))
-    if not cur.fetchone():
+    try:
+        user = conn.execute("SELECT id, is_active, password_hash FROM users WHERE id = ?", (user_id,)).fetchone()
+    finally:
         conn.close()
-        raise HTTPException(status_code=404, detail="Usuário do token não encontrado.")
+    if not user or not user["is_active"]:
+        raise invalid
+    if not hmac.compare_digest(sig, _reset_signature(user_id, ts, user["password_hash"])):
+        raise invalid
 
-    cur.execute("UPDATE users SET password_hash = ? WHERE id = ?", (new_hash, user_id))
-    conn.commit()
-    conn.close()
-
+    set_user_password(user_id, new_password)
     return {"success": True, "message": "Senha alterada com sucesso! Você já pode realizar o login."}
 
 

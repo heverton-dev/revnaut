@@ -5,6 +5,7 @@ TDD Tests for TICKET-14: Motor Dinâmico de Catálogo Odontológico, Multi-Tabel
 
 import pytest
 from fastapi.testclient import TestClient
+from tests.auth_helpers import bearer_headers
 from src.main import app
 from src.core.database import get_connection
 from src.features.deals.catalog_pricing import (
@@ -17,7 +18,7 @@ from src.features.deals.catalog_pricing import (
 
 @pytest.fixture
 def client():
-    return TestClient(app)
+    return TestClient(app, headers=bearer_headers())
 
 
 def test_catalog_and_price_tables_listing():

@@ -6,6 +6,7 @@ e Visualizador 3D de Tomografias / STL no Cloudflare R2 com Anonimização LGPD.
 
 import pytest
 from fastapi.testclient import TestClient
+from tests.auth_helpers import bearer_headers
 from fastapi import HTTPException
 
 from src.main import app
@@ -169,8 +170,8 @@ def test_multitenant_isolation_and_security():
 
 def test_api_endpoints_orthanc_imaging():
     """Valida endpoints HTTP do FastAPI para Imagiologia Médica Orthanc e aliases."""
-    test_client = TestClient(app)
-    account_id = "tenant-odonto-master"
+    test_client = TestClient(app, headers=bearer_headers())
+    account_id = "0f14ffff"  # a API vincula o tenant ao usuário autenticado
 
     # 1. POST /api/v1/imaging/studies/upload-presign
     upload_payload = {

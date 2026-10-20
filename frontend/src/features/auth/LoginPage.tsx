@@ -1,17 +1,16 @@
 import * as React from "react";
-import { ShieldCheck, Lock, Mail, ArrowRight, AlertCircle, KeyRound, CheckCircle2 } from "lucide-react";
+import { ShieldCheck, Lock, Mail, ArrowRight, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
 
 interface LoginPageProps {
   onLoginSuccess: (token: string, user: any) => void;
 }
 
 export function LoginPage({ onLoginSuccess }: LoginPageProps) {
-  const [email, setEmail] = React.useState("hevertoneduardoperes@gmail.com");
-  const [password, setPassword] = React.useState("@#Khen741963@#");
+  const [email, setEmail] = React.useState("");
+  const [password, setPassword] = React.useState("");
   const [isLoading, setIsLoading] = React.useState(false);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
 
@@ -44,12 +43,6 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const fillSuperadminCredentials = () => {
-    setEmail("hevertoneduardoperes@gmail.com");
-    setPassword("@#Khen741963@#");
-    setErrorMessage(null);
   };
 
   return (
@@ -150,34 +143,6 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
             </CardFooter>
           </form>
         </Card>
-
-        {/* Atalho de Demonstração para Super Admin (God User) */}
-        <div className="p-3.5 rounded-lg border border-border bg-surface-card/60 space-y-2 text-xs">
-          <div className="flex items-center justify-between">
-            <span className="font-semibold text-text-main flex items-center gap-1.5">
-              <KeyRound className="h-3.5 w-3.5 text-brand-primary" />
-              Credenciais de Demonstração
-            </span>
-            <Badge variant="navy" className="text-[10px]">
-              Super Admin God
-            </Badge>
-          </div>
-          <p className="text-[11px] text-text-secondary leading-relaxed">
-            Usuário Heverton Eduardo Peres com perfil irrestrito de Governança, Totvs ERP, LiveKit SOS e RBAC.
-          </p>
-          <div className="flex items-center justify-between pt-1 border-t border-border/50">
-            <div className="font-mono text-[10px] text-text-muted truncate max-w-[240px]">
-              hevertoneduardoperes@gmail.com
-            </div>
-            <button
-              type="button"
-              onClick={fillSuperadminCredentials}
-              className="text-[11px] font-medium text-brand-primary hover:text-brand-primary-hover underline underline-offset-2 cursor-pointer"
-            >
-              Preencher dados
-            </button>
-          </div>
-        </div>
 
         {/* Rodapé de Governança e Segurança */}
         <div className="text-center text-[11px] text-text-muted space-y-1">

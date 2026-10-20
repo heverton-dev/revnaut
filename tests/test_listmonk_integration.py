@@ -6,13 +6,14 @@ Valida cliente Listmonk v2, serialização de atributos odontológicos e endpoin
 
 import pytest
 from fastapi.testclient import TestClient
+from tests.auth_helpers import bearer_headers
 from src.main import app
 from src.features.campaigns.listmonk_adapter import ListmonkClient
 
 
 @pytest.fixture
 def client():
-    return TestClient(app)
+    return TestClient(app, headers=bearer_headers())
 
 
 def test_listmonk_subscriber_payload_serialization():

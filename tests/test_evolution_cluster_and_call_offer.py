@@ -5,6 +5,7 @@ TDD Tests for TICKET-23: Orquestrador de Sharding da Evolution API v2 e Espelham
 
 import pytest
 from fastapi.testclient import TestClient
+from tests.auth_helpers import bearer_headers
 from src.main import app
 from src.core.database import get_connection, init_db
 from src.features.integrations.omnichannel import evolution_cluster
@@ -13,7 +14,7 @@ from src.features.integrations.omnichannel import evolution_webhook_router
 
 @pytest.fixture
 def client():
-    return TestClient(app)
+    return TestClient(app, headers=bearer_headers())
 
 
 @pytest.fixture(autouse=True)

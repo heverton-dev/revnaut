@@ -12,23 +12,31 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives import hashes
 from fastapi import Header, HTTPException
-from src.core.config import SECRET_KEY
+from src.core.config import SECRET_KEY, VAULT_SECRET_KEY
 from src.core.database import get_connection
 from src.features.hierarchy.schemas import DataScopeEnum, UserContext
 
 
+_VAULT_SALT = b"revnaut-vault-salt-2026"
+
+
+def _derive_aes_key(secret: str) -> bytes:
+    kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=_VAULT_SALT, iterations=100000)
+    return kdf.derive(secret.encode())
+
+
 def _get_aes_key() -> bytes:
-    kdf = PBKDF2HMAC(
-        algorithm=hashes.SHA256(),
-        length=32,
-        salt=b"revnaut-vault-salt-2026",
-        iterations=100000,
-    )
-    return kdf.derive(SECRET_KEY.encode())
+    return _derive_aes_key(VAULT_SECRET_KEY)
+
+
+def _decrypt_with(key: bytes, ciphertext: str) -> str:
+    raw = base64.b64decode(ciphertext.encode("utf-8"))
+    nonce, ct = raw[:12], raw[12:]
+    return AESGCM(key).decrypt(nonce, ct, None).decode("utf-8")
 
 
 def encrypt_secret(plaintext: str) -> str:
-    """Criptografa segredo com AES-256-GCM e retorna string codificada em base64."""
+    """Criptografa segredo com AES-256-GCM (chave derivada de VAULT_SECRET_KEY) e retorna base64."""
     key = _get_aes_key()
     aesgcm = AESGCM(key)
     nonce = os.urandom(12)
@@ -37,13 +45,56 @@ def encrypt_secret(plaintext: str) -> str:
 
 
 def decrypt_secret(ciphertext: str) -> str:
-    """Descriptografa string base64 criptografada com AES-256-GCM."""
-    key = _get_aes_key()
-    aesgcm = AESGCM(key)
-    raw = base64.b64decode(ciphertext.encode("utf-8"))
-    nonce, ct = raw[:12], raw[12:]
-    return aesgcm.decrypt(nonce, ct, None).decode("utf-8")
+    """Descriptografa com a chave atual do cofre; aceita a chave legada (SECRET_KEY) até a rotação."""
+    try:
+        return _decrypt_with(_get_aes_key(), ciphertext)
+    except Exception:
+        if VAULT_SECRET_KEY == SECRET_KEY:
+            raise
+        return _decrypt_with(_derive_aes_key(SECRET_KEY), ciphertext)
 
+
+# (tabela, coluna cifrada) com dados do cofre em repouso
+VAULT_ENCRYPTED_COLUMNS = (
+    ("tenant_credentials", "encrypted_payload"),
+    ("webhook_subscriptions", "signing_secret_encrypted"),
+)
+
+
+def rotate_vault_encryption(conn) -> Dict[str, int]:
+    """
+    Re-cifra (idempotente) valores gravados com a chave legada usando VAULT_SECRET_KEY.
+    Valores que já abrem com a chave atual não são tocados; valores ilegíveis são preservados.
+    """
+    stats = {"rotated": 0, "current": 0, "unreadable": 0}
+    if VAULT_SECRET_KEY == SECRET_KEY:
+        return stats
+    current_key = _get_aes_key()
+    legacy_key = _derive_aes_key(SECRET_KEY)
+    existing_tables = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+    for table, column in VAULT_ENCRYPTED_COLUMNS:
+        if table not in existing_tables:
+            continue
+        cols = {r[1] for r in conn.execute(f"PRAGMA table_info({table})")}
+        if column not in cols:
+            continue
+        rows = conn.execute(f"SELECT rowid, {column} FROM {table} WHERE {column} IS NOT NULL AND {column} != ''").fetchall()
+        for rowid, value in rows:
+            try:
+                _decrypt_with(current_key, value)
+                stats["current"] += 1
+                continue
+            except Exception:
+                pass
+            try:
+                plaintext = _decrypt_with(legacy_key, value)
+            except Exception:
+                stats["unreadable"] += 1
+                continue
+            conn.execute(f"UPDATE {table} SET {column} = ? WHERE rowid = ?", (encrypt_secret(plaintext), rowid))
+            stats["rotated"] += 1
+    conn.commit()
+    return stats
 
 
 def get_user_context(conn, user_id: str, account_id: str = "0f14ffff") -> Optional[UserContext]:

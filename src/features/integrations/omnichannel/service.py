@@ -8,17 +8,19 @@ from __future__ import annotations
 import hmac
 import hashlib
 import json
+import os
 import re
 from typing import Optional, Dict, Any, Tuple
 from src.core.database import get_connection
 
-DEFAULT_HMAC_SECRET = "revnaut_omni_secret_2026"
 
 
-def verify_hmac_signature(raw_body: bytes, signature_header: Optional[str], secret: str = DEFAULT_HMAC_SECRET) -> bool:
-    """Valida assinatura HMAC SHA-256 do payload para garantir autenticidade da origem."""
-    if not signature_header:
-        # Se não foi fornecido cabeçalho de assinatura, rejeita
+def verify_hmac_signature(raw_body: bytes, signature_header: Optional[str], secret: Optional[str] = None) -> bool:
+    """Valida assinatura HMAC SHA-256 do payload (segredo em OMNICHANNEL_WEBHOOK_SECRET; sem segredo, rejeita)."""
+    if secret is None:
+        from src.core import config
+        secret = os.getenv("OMNICHANNEL_WEBHOOK_SECRET", config.OMNICHANNEL_WEBHOOK_SECRET)
+    if not signature_header or not secret:
         return False
 
     clean_sig = signature_header.strip()

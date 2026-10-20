@@ -13,7 +13,7 @@ import time
 import pytest
 from fastapi.testclient import TestClient
 
-from src.core.config import SECRET_KEY, SESSION_TTL_SECONDS
+from src.core.config import SESSION_SECRET_KEY as SECRET_KEY, SESSION_TTL_SECONDS
 from src.core.database import get_connection, init_db
 from src.features.auth.service import create_session_token
 from src.main import app

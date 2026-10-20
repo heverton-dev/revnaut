@@ -2276,9 +2276,10 @@ def init_db() -> None:
             cur.execute("SELECT id FROM users WHERE id = ? OR email = ?", (uid, uemail))
             found_u = cur.fetchone()
             if found_u:
+                # Senha e status pertencem ao usuário: o seed só os define na criação (nunca regrava a cada boot)
                 cur.execute(
-                    "UPDATE users SET name = ?, email = ?, role = ?, is_superadmin = ?, password_hash = ?, phone = ?, is_active = 1 WHERE id = ?",
-                    (uname, uemail, urole, is_god, pwd_h, uphone, found_u[0])
+                    "UPDATE users SET name = ?, email = ?, role = ?, is_superadmin = ?, phone = ? WHERE id = ?",
+                    (uname, uemail, urole, is_god, uphone, found_u[0])
                 )
             else:
                 cur.execute(

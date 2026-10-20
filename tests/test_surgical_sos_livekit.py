@@ -6,6 +6,7 @@ TDD Tests for TICKET-25: Vídeo Suporte Cirúrgico Crítico em 1 Clique ("SOS Me
 from datetime import datetime, timedelta, timezone
 import pytest
 from fastapi.testclient import TestClient
+from tests.auth_helpers import bearer_headers
 from src.main import app
 from src.core.database import get_connection, init_db
 from src.features.tickets import surgical_sos
@@ -14,7 +15,7 @@ from src.features.dentgo import service as dentgo_service
 
 @pytest.fixture
 def client():
-    return TestClient(app)
+    return TestClient(app, headers=bearer_headers())
 
 
 @pytest.fixture(autouse=True)

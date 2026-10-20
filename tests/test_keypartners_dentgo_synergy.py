@@ -6,6 +6,7 @@ TDD Tests for TICKET-21: Sinergia Automática KeyPartners <-> DENTGO (Reposiçã
 from datetime import datetime, timedelta, timezone
 import pytest
 from fastapi.testclient import TestClient
+from tests.auth_helpers import bearer_headers
 from src.main import app
 from src.core.database import get_connection, init_db
 from src.features.keypartners import service as kp_service
@@ -16,7 +17,7 @@ from src.features.dentgo import keypartners_synergy
 
 @pytest.fixture
 def client():
-    return TestClient(app)
+    return TestClient(app, headers=bearer_headers())
 
 
 @pytest.fixture(autouse=True)

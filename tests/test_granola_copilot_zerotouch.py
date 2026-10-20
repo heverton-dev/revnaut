@@ -5,6 +5,7 @@ TDD Tests for TICKET-13: Copiloto Comercial "Granola-like" via LiteLLM e Auto-Pr
 
 import pytest
 from fastapi.testclient import TestClient
+from tests.auth_helpers import bearer_headers
 from src.main import app
 from src.core.database import get_connection
 from src.features.intelligence.granola_copilot import (
@@ -15,7 +16,7 @@ from src.features.intelligence.granola_copilot import (
 
 @pytest.fixture
 def client():
-    return TestClient(app)
+    return TestClient(app, headers=bearer_headers())
 
 
 def test_granola_copilot_extraction_and_zero_touch_deal_update():

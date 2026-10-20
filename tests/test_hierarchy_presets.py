@@ -5,9 +5,10 @@ Valida a geração idempotente de organogramas e bloqueio de loops na árvore.
 """
 
 from fastapi.testclient import TestClient
+from tests.auth_helpers import bearer_headers
 from src.main import app
 
-client = TestClient(app)
+client = TestClient(app, headers=bearer_headers())
 
 
 def test_apply_multinacional_enterprise_preset():

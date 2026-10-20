@@ -5,12 +5,13 @@ TDD Tests for TICKET-23: Cluster Sharding Evolution API v2 & Espelhamento Bidire
 
 import base64
 from fastapi.testclient import TestClient
+from tests.auth_helpers import bearer_headers
 from src.main import app
 from src.core.database import get_connection
 from src.features.integrations.omnichannel import evolution_cluster, evolution_webhook_router
 
 
-client = TestClient(app)
+client = TestClient(app, headers=bearer_headers())
 
 
 def test_evolution_cluster_sharding_load_balancing():

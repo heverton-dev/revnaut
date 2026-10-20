@@ -3,11 +3,13 @@
 TDD Tests for TICKET-08: Arquitetura Híbrida Mautic Visual + Despachante Determinístico
 """
 
+import os
 import hmac
 import hashlib
 import json
 import pytest
 from fastapi.testclient import TestClient
+from tests.auth_helpers import bearer_headers
 from src.main import app
 from src.core.database import get_connection
 from src.features.campaigns.mautic_bridge import (
@@ -16,7 +18,7 @@ from src.features.campaigns.mautic_bridge import (
     process_mautic_campaign_action,
 )
 
-TEST_SIGNING_KEY = "revnaut_omni_secret_2026"
+TEST_SIGNING_KEY = os.environ["OMNICHANNEL_WEBHOOK_SECRET"]
 
 
 def _generate_hmac(payload_dict: dict, signing_key: str = TEST_SIGNING_KEY) -> str:
@@ -26,7 +28,7 @@ def _generate_hmac(payload_dict: dict, signing_key: str = TEST_SIGNING_KEY) -> s
 
 @pytest.fixture
 def client():
-    return TestClient(app)
+    return TestClient(app, headers=bearer_headers())
 
 
 def test_resolve_consultant_routing():

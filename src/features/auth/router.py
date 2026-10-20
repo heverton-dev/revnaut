@@ -5,7 +5,9 @@ Rotas da API para Autenticação e Sessão de Usuários.
 
 from __future__ import annotations
 from typing import Optional
-from fastapi import APIRouter, HTTPException, Header, Depends
+from fastapi import APIRouter, HTTPException, Header, Depends, Response
+from src.core.auth_middleware import session_cookie_header
+from src.core.config import SESSION_COOKIE_NAME
 from src.features.auth.schemas import (
     LoginRequest,
     LoginResponse,
@@ -91,9 +93,11 @@ def get_current_user(
 
 
 @router.post("/login", response_model=LoginResponse, summary="Autenticar usuário e emitir token de sessão")
-def login(payload: LoginRequest):
+def login(payload: LoginRequest, response: Response):
     user_dict = authenticate_user(payload.email, payload.password)
     token = create_session_token(user_dict["id"])
+    # Cookie HttpOnly só para GET/HEAD de arquivos (img/audio/download); mutações exigem o header Bearer
+    response.headers.append(*[h.decode("latin-1") for h in session_cookie_header(token)])
 
     user_out = UserProfileOut(
         id=user_dict["id"],
@@ -115,7 +119,8 @@ def me(current_user: UserProfileOut = Depends(get_current_user)):
 
 
 @router.post("/logout", response_model=LogoutResponse, summary="Encerrar sessão ativa")
-def logout():
+def logout(response: Response):
+    response.delete_cookie(SESSION_COOKIE_NAME, path="/api/v1")
     return LogoutResponse(success=True, message="Sessão encerrada com sucesso")
 
 

@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
 """CALL_OFFER recebido pelo webhook assinado /api/v1/webhooks/evolution abre sala SOS LiveKit."""
 
+import os
 import hashlib
 import hmac
 import json
 from fastapi.testclient import TestClient
+from tests.auth_helpers import bearer_headers
 from src.main import app
 
-client = TestClient(app)
-SIGNING_KEY = "revnaut_omni_secret_2026"
+client = TestClient(app, headers=bearer_headers())
+SIGNING_KEY = os.environ["OMNICHANNEL_WEBHOOK_SECRET"]
 
 CALL_PAYLOAD = {
     "event": "CALL_OFFER",

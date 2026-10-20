@@ -20,9 +20,39 @@ VPS_PORT = int(os.environ.get("VPS_PORT", 22))
 VPS_USER = os.environ.get("VPS_USER", "root")
 VPS_PASS = os.environ.get("VPS_PASSWORD", "")
 REMOTE_DIR = "/opt/rvops"
+REMOTE_SECRETS_FILE = f"{REMOTE_DIR}/.env.secrets"
+
+# Segredos de runtime enviados à VPS (lidos do .env local, nunca versionado nem impresso)
+RUNTIME_SECRET_NAMES = (
+    "SESSION_SECRET_KEY",
+    "VAULT_SECRET_KEY",
+    "OMNICHANNEL_WEBHOOK_SECRET",
+    "DOCUMENSO_WEBHOOK_SECRET",
+    "CALCOM_WEBHOOK_SECRET",
+    "LISTMONK_WEBHOOK_SECRET",
+)
+
+_DB_SUFFIXES = (".db", ".db-wal", ".db-shm", ".db-journal")
 
 
-def make_tarball(source_dir: Path, output_filename: str):
+def _data_filter(include_databases: bool):
+    """O banco de produção vive no volume da VPS: bancos locais só seguem com --seed-database."""
+    def _filter(ti):
+        if not include_databases and ti.name.endswith(_DB_SUFFIXES):
+            return None
+        return ti
+    return _filter
+
+
+def build_secrets_file() -> str:
+    missing = [n for n in RUNTIME_SECRET_NAMES if len(os.environ.get(n, "")) < 32]
+    if missing:
+        raise RuntimeError(f"Segredos ausentes ou curtos no .env local (mínimo 32 caracteres): {', '.join(missing)}")
+    lines = [f"{n}={os.environ[n]}" for n in RUNTIME_SECRET_NAMES]
+    return "\n".join(lines) + "\n"
+
+
+def make_tarball(source_dir: Path, output_filename: str, include_databases: bool = False):
     with tarfile.open(output_filename, "w:gz") as tar:
         for file in [
             "Dockerfile",
@@ -38,7 +68,7 @@ def make_tarball(source_dir: Path, output_filename: str):
 
         tar.add(str(source_dir / "src"), arcname="src")
         tar.add(str(source_dir / "backend"), arcname="backend")
-        tar.add(str(source_dir / "data"), arcname="data")
+        tar.add(str(source_dir / "data"), arcname="data", filter=_data_filter(include_databases))
         
         migrations_src = source_dir / "migrations"
         if migrations_src.exists():
@@ -73,7 +103,7 @@ def make_tarball(source_dir: Path, output_filename: str):
             tar.add(str(scripts_src), arcname="scripts")
 
 
-def deploy():
+def deploy(include_databases: bool = False):
     print("=================================================================")
     print(" [DEPLOY] INICIANDO DEPLOY DE PRODUCAO NA VPS:", VPS_HOST)
     print("=================================================================")
@@ -83,8 +113,17 @@ def deploy():
     tar_path = str(source_dir / "deploy_package.tar.gz")
 
     try:
+        secrets_content = build_secrets_file()
+    except RuntimeError as e:
+        print("[ERRO]", e)
+        return False
+    ssh = None
+
+    try:
         print("[1/5] Compactando artefatos de producao...")
-        make_tarball(source_dir, tar_path)
+        if include_databases:
+            print("[ATENCAO] --seed-database: o banco local SUBSTITUIRA o banco de producao na VPS.")
+        make_tarball(source_dir, tar_path, include_databases=include_databases)
 
         print("[2/5] Conectando via SSH e SFTP...")
         ssh = paramiko.SSHClient()
@@ -100,6 +139,9 @@ def deploy():
         remote_tar = f"{REMOTE_DIR}/deploy.tar.gz"
         print(f"[3/5] Enviando pacote para {remote_tar}...")
         sftp.put(tar_path, remote_tar)
+        with sftp.open(REMOTE_SECRETS_FILE, "w") as fh:
+            fh.write(secrets_content)
+        sftp.chmod(REMOTE_SECRETS_FILE, 0o600)
         sftp.close()
 
         print("[4/5] Descompactando e compilando imagem Docker na VPS...")
@@ -118,7 +160,7 @@ def deploy():
             return False
 
         print("[5/5] Disparando Docker Stack Deploy com Traefik SSL...")
-        cmd_deploy = f"cd {REMOTE_DIR} && sed -i 's|image: rvops_app:.*|image: {version_tag}|' docker-stack.yml && docker stack deploy -c docker-stack.yml rvops && docker service update --image {version_tag} --force rvops_app && docker service update --image {version_tag} --force rvops_worker"
+        cmd_deploy = f"cd {REMOTE_DIR} && sed -i 's|image: rvops_app:.*|image: {version_tag}|' docker-stack.yml && set -a && . {REMOTE_SECRETS_FILE} && set +a && docker stack deploy -c docker-stack.yml rvops && docker service update --image {version_tag} --force rvops_app && docker service update --image {version_tag} --force rvops_worker"
         stdin, stdout, stderr = ssh.exec_command(cmd_deploy)
         deploy_exit_status = stdout.channel.recv_exit_status()
         out_deploy = stdout.read().decode('utf-8')
@@ -146,8 +188,11 @@ def deploy():
     finally:
         if os.path.exists(tar_path):
             os.remove(tar_path)
-        ssh.close()
+        if ssh is not None:
+            ssh.close()
 
 
 if __name__ == "__main__":
-    deploy()
+    import sys
+
+    sys.exit(0 if deploy(include_databases="--seed-database" in sys.argv[1:]) else 1)

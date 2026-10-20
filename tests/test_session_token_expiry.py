@@ -9,7 +9,7 @@ import time
 
 from fastapi.testclient import TestClient
 
-from src.core.config import SECRET_KEY, SESSION_TTL_SECONDS
+from src.core.config import SESSION_SECRET_KEY as SECRET_KEY, SESSION_TTL_SECONDS
 from src.features.auth.service import SESSION_CLOCK_SKEW_SECONDS, create_session_token, verify_session_token
 from src.main import app
 

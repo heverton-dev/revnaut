@@ -52,6 +52,13 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - DATABASE_URL=postgresql+asyncpg://revnaut_admin:${PG_PASSWORD:-revnaut_pg_pass}@postgres:5432/revnaut
       - READ_DATABASE_URL=postgresql+asyncpg://revnaut_admin:${PG_PASSWORD:-revnaut_pg_pass}@postgres-replica:5432/revnaut
+      - REVNAUT_ENV=production
+      - SESSION_SECRET_KEY=${SESSION_SECRET_KEY}
+      - VAULT_SECRET_KEY=${VAULT_SECRET_KEY}
+      - OMNICHANNEL_WEBHOOK_SECRET=${OMNICHANNEL_WEBHOOK_SECRET}
+      - DOCUMENSO_WEBHOOK_SECRET=${DOCUMENSO_WEBHOOK_SECRET}
+      - CALCOM_WEBHOOK_SECRET=${CALCOM_WEBHOOK_SECRET}
+      - LISTMONK_WEBHOOK_SECRET=${LISTMONK_WEBHOOK_SECRET}
     networks:
       - network_conexao
       - revnault_edge
@@ -101,6 +108,13 @@ services:
     environment:
       - REDIS_URL=redis://redis:6379/0
       - DATABASE_URL=postgresql+asyncpg://revnaut_admin:${PG_PASSWORD:-revnaut_pg_pass}@postgres:5432/revnaut
+      - REVNAUT_ENV=production
+      - SESSION_SECRET_KEY=${SESSION_SECRET_KEY}
+      - VAULT_SECRET_KEY=${VAULT_SECRET_KEY}
+      - OMNICHANNEL_WEBHOOK_SECRET=${OMNICHANNEL_WEBHOOK_SECRET}
+      - DOCUMENSO_WEBHOOK_SECRET=${DOCUMENSO_WEBHOOK_SECRET}
+      - CALCOM_WEBHOOK_SECRET=${CALCOM_WEBHOOK_SECRET}
+      - LISTMONK_WEBHOOK_SECRET=${LISTMONK_WEBHOOK_SECRET}
     networks:
       - revnault_app
       - revnault_data

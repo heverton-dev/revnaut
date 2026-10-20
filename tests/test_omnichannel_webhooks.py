@@ -4,15 +4,17 @@ Testes TDD - TICKET-07: Gateway Unificado Omnichannel (Evolution API + Chatwoot 
 Simula payloads reais com validação de assinatura HMAC SHA-256 e atualização de score/timeline.
 """
 
+import os
 import hmac
 import hashlib
 import json
 from fastapi.testclient import TestClient
+from tests.auth_helpers import bearer_headers
 from src.main import app
 from src.core.database import get_connection
 
-client = TestClient(app)
-TEST_SIGNING_KEY = "revnaut_omni_secret_2026"
+client = TestClient(app, headers=bearer_headers())
+TEST_SIGNING_KEY = os.environ["OMNICHANNEL_WEBHOOK_SECRET"]
 
 
 def _generate_hmac(payload_dict: dict, signing_key: str = TEST_SIGNING_KEY) -> str:

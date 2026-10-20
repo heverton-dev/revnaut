@@ -20,6 +20,18 @@ except Exception:
 
 _test_db_path = str((_tmp_dir / "test_revnaut.db").resolve())
 os.environ["REVNAUT_DB_PATH"] = _test_db_path
+
+# Segredos exclusivos do ambiente de teste (webhooks são fail-closed sem segredo configurado)
+TEST_WEBHOOK_SECRETS = {
+    "OMNICHANNEL_WEBHOOK_SECRET": "test-omnichannel-webhook-secret-0001",
+    "DOCUMENSO_WEBHOOK_SECRET": "test-documenso-webhook-secret-0001",
+    "CALCOM_WEBHOOK_SECRET": "test-calcom-webhook-secret-0001",
+    "LISTMONK_WEBHOOK_SECRET": "test-listmonk-webhook-secret-0001",
+}
+for _name, _value in TEST_WEBHOOK_SECRETS.items():
+    os.environ[_name] = _value
+# PBKDF2 mais leve apenas nos testes (produção usa 600000 iterações)
+os.environ.setdefault("PASSWORD_PBKDF2_ITERATIONS", "1000")
 os.environ["RVOPS_DB_PATH"] = _test_db_path
 
 import src.core.config

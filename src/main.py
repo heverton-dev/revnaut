@@ -13,7 +13,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 
+from src.core.auth_middleware import ApiAuthMiddleware
+from src.core.config import CORS_ALLOWED_ORIGINS, assert_production_secrets
 from src.core.database import get_connection, init_db
+from src.core.security import rotate_vault_encryption
 from src.features.deals.router import router as deals_router
 from src.features.contacts.router import router as contacts_router
 from src.features.communications.router import router as comms_router
@@ -41,7 +44,15 @@ from src.features.competitors.router import router as competitors_router
 
 
 
+assert_production_secrets()
 init_db()
+
+# Re-cifra dados do cofre gravados com a chave legada (idempotente)
+_vault_conn = get_connection()
+try:
+    rotate_vault_encryption(_vault_conn)
+finally:
+    _vault_conn.close()
 
 app = FastAPI(
     title="Revnaut Enterprise API & Engine",
@@ -52,13 +63,36 @@ app = FastAPI(
     openapi_url="/openapi.json"
 )
 
+# Autenticação obrigatória em /api/v1 (registrado antes do CORS para o CORS envolver também as respostas 401/403)
+app.add_middleware(ApiAuthMiddleware)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=CORS_ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+def _openapi_with_bearer():
+    """Swagger Studio: botão Authorize com o token de sessão (Bearer) aplicado a todas as rotas."""
+    if app.openapi_schema:
+        return app.openapi_schema
+    from fastapi.openapi.utils import get_openapi
+
+    schema = get_openapi(title=app.title, version=app.version, description=app.description, routes=app.routes)
+    schema.setdefault("components", {}).setdefault("securitySchemes", {})["SessionBearer"] = {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Token de sessão retornado por POST /api/v1/auth/login",
+    }
+    schema["security"] = [{"SessionBearer": []}]
+    app.openapi_schema = schema
+    return schema
+
+
+app.openapi = _openapi_with_bearer
 
 from pydantic import BaseModel
 
