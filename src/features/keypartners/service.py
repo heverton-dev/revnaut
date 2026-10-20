@@ -61,6 +61,30 @@ def list_partner_agreements(account_id: str = "0f14ffff") -> List[Dict[str, Any]
         conn.close()
 
 
+def renew_partner_agreement(agreement_id: str, days_extension: int = 30, account_id: str = "0f14ffff") -> Dict[str, Any]:
+    """TICKET-KEY-02: Renova e prorroga termo de consignação por +30 dias."""
+    init_db()
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM kp_partner_agreements WHERE id = ? AND account_id = ?", (agreement_id, account_id))
+        row = cur.fetchone()
+        if not row:
+            raise ValueError(f"Acordo {agreement_id} não encontrado.")
+        current_days = row["max_turnover_days"] or 60
+        new_days = current_days + days_extension
+        cur.execute("""
+            UPDATE kp_partner_agreements
+            SET max_turnover_days = ?
+            WHERE id = ? AND account_id = ?
+        """, (new_days, agreement_id, account_id))
+        conn.commit()
+        cur.execute("SELECT * FROM kp_partner_agreements WHERE id = ?", (agreement_id,))
+        return dict(cur.fetchone())
+    finally:
+        conn.close()
+
+
 def register_consignment_kit(
     serial_number: str,
     name: str,

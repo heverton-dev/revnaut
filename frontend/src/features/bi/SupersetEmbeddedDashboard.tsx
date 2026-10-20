@@ -23,6 +23,13 @@ import {
   Star,
   MessageCircle,
   Maximize2,
+  Building2,
+  GraduationCap,
+  Cpu,
+  Stethoscope,
+  ChevronLeft,
+  ChevronRight,
+  ExternalLink,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -31,6 +38,7 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Tabs } from "@/components/ui/Tabs";
 import { Dialog } from "@/components/ui/Dialog";
+import { Sheet } from "@/components/ui/Sheet";
 
 export type DashboardTypeOption =
   | "industry_consignment"
@@ -111,7 +119,7 @@ interface ClinicalGraphSummary {
   total_nodes: number;
   total_edges: number;
   kol_speakers_count: number;
-  nodes: Array<{ id: string; label: string; node_type: string }>;
+  nodes: Array<{ id: string; label: string; node_type: string; metadata?: Record<string, any> }>;
   edges: Array<{ source: string; target: string; relationship: string; is_kol: boolean; label: string }>;
 }
 
@@ -203,8 +211,18 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
   // TICKET-DASH-03: filtro temporal do Radar Anti-Churn
   const [churnDaysThreshold, setChurnDaysThreshold] = useState<string>("all");
 
-  // TICKET-DASH-07: modal de topologia expandida do grafo clínico
+  // TICKET-DASH-07: modal de topologia expandida do grafo clínico com abas e paginação (Feedbacks 4, 5, 6)
   const [showTopologyModal, setShowTopologyModal] = useState<boolean>(false);
+  const [topologyTab, setTopologyTab] = useState<"nodes" | "edges">("nodes");
+  const [nodesPage, setNodesPage] = useState<number>(1);
+  const [edgesPage, setEdgesPage] = useState<number>(1);
+  const TOPOLOGY_ITEMS_PER_PAGE = 7;
+
+  // Drawer Lateral Dossiê 360° do Cliente / Cirurgião no Radar Anti-Churn (Feedback 8)
+  const [selectedContactForDrawer, setSelectedContactForDrawer] = useState<ChurnRiskItem | null>(null);
+  const [contactDrawerProfile, setContactDrawerProfile] = useState<any>(null);
+  const [contactDrawerTimeline, setContactDrawerTimeline] = useState<any[]>([]);
+  const [loadingDrawerData, setLoadingDrawerData] = useState<boolean>(false);
 
   // TICKET-ANA-01/02: favoritos de perguntas e compartilhamento role-scoped
   const [favoriteQueries, setFavoriteQueries] = useState<string[]>(() => {
@@ -371,6 +389,31 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
     window.open(waUrl, "_blank", "noopener,noreferrer");
   }, []);
 
+  // Abrir Dossiê 360° do Cliente/Cirurgião no Drawer Lateral (Feedback 8)
+  const handleOpenChurnDrawer = useCallback(async (item: ChurnRiskItem) => {
+    setSelectedContactForDrawer(item);
+    setContactDrawerProfile(null);
+    setContactDrawerTimeline([]);
+    setLoadingDrawerData(true);
+    try {
+      const [profRes, timeRes] = await Promise.all([
+        fetch(`/api/v1/contacts/${item.contact_id}/profile`),
+        fetch(`/api/v1/contacts/${item.contact_id}/timeline`),
+      ]);
+      if (profRes.ok) {
+        setContactDrawerProfile(await profRes.json());
+      }
+      if (timeRes.ok) {
+        const tData = await timeRes.json();
+        setContactDrawerTimeline(Array.isArray(tData.timeline) ? tData.timeline : []);
+      }
+    } catch {
+      // silencioso
+    } finally {
+      setLoadingDrawerData(false);
+    }
+  }, []);
+
   // TICKET-DASH-06: clicar na barra do funil navega para deals filtrando o estágio
   const handleStageBarClick = useCallback(
     (stageLabel: string) => {
@@ -460,14 +503,16 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
       ];
     }
 
-    // Default: Revenue by Stage from real dealsData
+    // Default: Revenue by Stage from real dealsData (Feedback 10: agrupar por d.stage_id e sem corte no nome)
     if (dealsData?.stages && dealsData.stages.length > 0) {
+      const allDeals = Array.isArray(dealsData.deals) ? dealsData.deals : [];
       return dealsData.stages.map((st: any, i: number) => {
-        const stageDeals = st.deals || [];
+        const stageDeals = allDeals.filter((d: any) => Number(d.stage_id) === Number(st.id));
         const stageTotal = stageDeals.reduce((acc: number, d: any) => acc + (Number(d.value) || 0), 0);
         const fillClasses = ["fill-brand-primary", "fill-brand-navy", "fill-brand-primary", "fill-status-success", "fill-brand-navy"];
         return {
-          label: st.name?.length > 14 ? st.name.slice(0, 12) + "..." : st.name || `Estágio ${i + 1}`,
+          id: st.id,
+          label: st.name || `Estágio ${i + 1}`,
           value: stageTotal,
           count: stageDeals.length,
           fillClass: fillClasses[i % fillClasses.length],
@@ -489,9 +534,66 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
   // VISÃO 1: COCKPIT EXECUTIVO REVOPS (rota `dashboard`)
   // ============================================================================
   if (mode === "executive_cockpit") {
-    const radarItems = churnData?.radar || [];
+    const rawRadarItems = churnData?.radar || [];
+    const radarItems = rawRadarItems.filter((item) => {
+      if (!churnDaysThreshold || churnDaysThreshold === "all") return true;
+      const threshold = Number(churnDaysThreshold);
+      return (item.days_since_last_order || 0) >= threshold;
+    });
     const graphNodes = clinicalGraph?.nodes || [];
+    const clinicalEdges = clinicalGraph?.edges || [];
     const maxChurnScore = Math.max(100, ...radarItems.map((r) => r.churn_risk_score || 0));
+
+    // Mapa de nós para resolução de rótulos comerciais de vínculos (Feedback 7)
+    const nodeMap = new Map(graphNodes.map((n) => [n.id, n]));
+
+    const getCommercialEdgeDetails = (edge: any) => {
+      const sourceNode = nodeMap.get(edge.source);
+      const targetNode = nodeMap.get(edge.target);
+
+      const sourceName =
+        sourceNode?.label ||
+        (edge.source.startsWith("surgeon_")
+          ? `Dr(a). Cirurgião Especialista #${edge.source.replace("surgeon_", "")}`
+          : edge.source);
+
+      const targetName =
+        targetNode?.label ||
+        (edge.target.startsWith("inst-")
+          ? `Polo Credenciado #${edge.target.replace("inst-", "")}`
+          : edge.target);
+
+      const targetCity = targetNode?.metadata?.city
+        ? `${targetNode.metadata.city}${targetNode.metadata.state ? ` - ${targetNode.metadata.state}` : ""}`
+        : "";
+
+      let commercialRole = "Corpo Clínico Credenciado";
+      let roleBadgeVariant: "navy" | "default" | "success" | "warning" | "secondary" = "navy";
+
+      const rel = (edge.relationship || edge.label || "").toLowerCase();
+      if (rel.includes("kol") || edge.is_kol) {
+        commercialRole = "Key Opinion Leader (Speaker)";
+        roleBadgeVariant = "success";
+      } else if (rel.includes("teaches") || rel.includes("docente") || rel.includes("universidade")) {
+        commercialRole = "Docência & Ensino Clínico";
+        roleBadgeVariant = "default";
+      } else if (rel.includes("cadcam") || rel.includes("laborat") || rel.includes("partner")) {
+        commercialRole = "Parceiro de Prótese CAD/CAM";
+        roleBadgeVariant = "warning";
+      } else if (rel.includes("operates") || rel.includes("clinica") || rel.includes("corpo_clinico")) {
+        commercialRole = "Corpo Clínico & Cirurgias";
+        roleBadgeVariant = "navy";
+      }
+
+      return {
+        sourceName,
+        targetName,
+        targetCity,
+        commercialRole,
+        roleBadgeVariant,
+        isKol: Boolean(edge.is_kol),
+      };
+    };
 
     return (
       <div className="space-y-6 max-w-7xl mx-auto">
@@ -513,10 +615,11 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
                 fetchGuestToken();
               }}
               disabled={loadingExecutive}
-              className="gap-1.5"
+              className="h-8 w-8 p-0 flex items-center justify-center shrink-0"
+              title="Atualizar Cockpit"
+              aria-label="Atualizar Cockpit"
             >
-              <RefreshCw className="h-3.5 w-3.5" />
-              Atualizar Cockpit
+              <RefreshCw className={`h-3.5 w-3.5 ${loadingExecutive ? "animate-spin" : ""}`} />
             </Button>
             <div className="flex items-center gap-1.5">
               <label className="text-[11px] font-semibold uppercase text-text-secondary" htmlFor="snapshot-format">
@@ -538,10 +641,11 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
               size="sm"
               onClick={() => handleExportDataset(exportFormat)}
               disabled={exporting}
-              className="gap-1.5"
+              className="h-8 w-8 p-0 flex items-center justify-center shrink-0"
+              title={exporting ? "Exportando Snapshot R2..." : "Exportar Snapshot R2"}
+              aria-label={exporting ? "Exportando Snapshot R2..." : "Exportar Snapshot R2"}
             >
-              <Download className="h-3.5 w-3.5" />
-              {exporting ? "Exportando..." : "Exportar Snapshot R2"}
+              <Download className={`h-3.5 w-3.5 ${exporting ? "animate-bounce" : ""}`} />
             </Button>
           </div>
         </div>
@@ -608,7 +712,7 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
               <Network className="h-4 w-4 text-status-warning" />
             </div>
             <p className="text-xl font-bold text-text-main mt-2">
-              {clinicalGraph?.total_nodes ?? 0} Nós / {clinicalGraph?.kol_speakers_count ?? 0} KOLs
+              {clinicalGraph?.total_nodes ?? 0} Instituições / {clinicalGraph?.kol_speakers_count ?? 0} KOLs
             </p>
             <p className="text-xs text-status-danger mt-1">
               {churnData?.summary?.critical_count ?? 0} clínicas em risco crítico de churn
@@ -629,31 +733,31 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
                     </CardDescription>
                   </div>
                   <Badge variant="danger">
-                    {churnData?.summary?.critical_count ?? 0} Críticos
+                    {radarItems.filter((r) => r.churn_risk_level === "critico").length || churnData?.summary?.critical_count || 0} Críticos ({radarItems.length} em monitoramento)
                   </Badge>
                 </div>
                 <div className="flex items-center gap-2">
-                  <label className="text-[11px] font-semibold uppercase text-text-secondary" htmlFor="churn-days">
-                    Janela temporal
+                  <label className="text-[11px] font-semibold uppercase text-text-secondary shrink-0" htmlFor="churn-days">
+                    Janela sem Pedido
                   </label>
                   <select
                     id="churn-days"
                     value={churnDaysThreshold}
                     onChange={(e) => setChurnDaysThreshold(e.target.value)}
-                    className="h-8 rounded-md border border-border bg-surface-card px-2 text-xs text-text-main"
-                    aria-label="Filtro temporal de churn"
+                    className="h-8 rounded-md border border-border bg-surface-card px-2.5 text-xs text-text-main font-medium cursor-pointer shadow-xs focus:ring-1 focus:ring-brand-primary"
+                    aria-label="Filtro temporal de monitoramento de churn"
                   >
-                    <option value="all">Todos</option>
-                    <option value="30">{"&gt; 30 dias"}</option>
-                    <option value="45">{"&gt; 45 dias"}</option>
-                    <option value="60">{"&gt; 60 dias"}</option>
-                    <option value="90">{"&gt; 90 dias"}</option>
+                    <option value="all">Todas as Janelas (Histórico Completo)</option>
+                    <option value="30">Alerta Inicial (Acima de 30 dias sem pedido)</option>
+                    <option value="45">Risco Moderado (Acima de 45 dias sem pedido)</option>
+                    <option value="60">Risco Elevado (Acima de 60 dias sem pedido)</option>
+                    <option value="90">Atraso Crítico (Acima de 90 dias sem pedido)</option>
                   </select>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Gráfico SVG de Barras Horizontais de Risco */}
+              {/* Gráfico SVG de Barras Horizontais de Risco com Dossiê 360° ao Clicar (Feedback 8) */}
               {radarItems.length === 0 ? (
                 <p className="text-xs text-text-muted py-4">
                   Nenhum alerta de churn detectado na carteira atual.
@@ -663,9 +767,21 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
                   {radarItems.slice(0, 6).map((item) => {
                     const widthPct = Math.min(100, Math.max(8, Math.round((item.churn_risk_score / maxChurnScore) * 100)));
                     return (
-                      <div key={item.contact_id} className="space-y-1">
+                      <div
+                        key={item.contact_id}
+                        onClick={() => handleOpenChurnDrawer(item)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            handleOpenChurnDrawer(item);
+                          }
+                        }}
+                        className="space-y-1 p-2.5 rounded-lg border border-transparent hover:border-border-subtle hover:bg-surface-bg/70 transition-all cursor-pointer group"
+                      >
                         <div className="flex items-center justify-between text-xs">
-                          <span className="font-medium text-text-main truncate">
+                          <span className="font-semibold text-text-main group-hover:text-brand-primary transition-colors truncate">
                             {item.name} ({item.cro || item.uf || "BR"})
                           </span>
                           <span className="flex items-center gap-2 shrink-0">
@@ -676,7 +792,11 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
                               variant="outline"
                               size="sm"
                               className="h-6 px-2 gap-1 text-[10px]"
-                              onClick={() => handleReactivateWhatsApp(item)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleReactivateWhatsApp(item);
+                              }}
+                              title="Disparar mensagem de reativação via WhatsApp"
                             >
                               <MessageCircle className="h-3 w-3" />
                               Reativar via WhatsApp
@@ -715,17 +835,20 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
                   </CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
+                  {/* Feedback 2: Manter o texto e remover a palavra 'Ativos' */}
                   <Badge variant="navy">
-                    {clinicalGraph?.total_edges ?? 0} Vínculos Ativos
+                    {clinicalGraph?.total_edges ?? 0} Vínculos
                   </Badge>
+                  {/* Feedback 3: Deixar apenas o ícone sem texto */}
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-7 px-2 gap-1 text-[11px]"
+                    className="h-7 w-7 p-0 flex items-center justify-center shrink-0"
                     onClick={() => setShowTopologyModal(true)}
+                    title="Expandir Topologia do Grafo"
+                    aria-label="Expandir Topologia do Grafo"
                   >
-                    <Maximize2 className="h-3 w-3" />
-                    Expandir Topologia do Grafo
+                    <Maximize2 className="h-3.5 w-3.5" />
                   </Button>
                 </div>
               </div>
@@ -733,128 +856,560 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
             <CardContent className="space-y-3">
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div className="p-2.5 rounded-lg bg-surface-bg border border-border-subtle">
-                  <span className="text-[11px] text-text-secondary block">Nós Mapeados</span>
+                  <span className="text-[11px] text-text-secondary block">Instituições Mapeadas</span>
                   <span className="text-base font-bold text-text-main">{clinicalGraph?.total_nodes ?? 0}</span>
                 </div>
                 <div className="p-2.5 rounded-lg bg-surface-bg border border-border-subtle">
-                  <span className="text-[11px] text-text-secondary block">Conexões N:N</span>
+                  <span className="text-[11px] text-text-secondary block">Parcerias & Vínculos</span>
                   <span className="text-base font-bold text-brand-primary">{clinicalGraph?.total_edges ?? 0}</span>
                 </div>
                 <div className="p-2.5 rounded-lg bg-surface-bg border border-border-subtle">
-                  <span className="text-[11px] text-text-secondary block">Speakers KOL</span>
+                  <span className="text-[11px] text-text-secondary block">Líderes de Opinião (KOL)</span>
                   <span className="text-base font-bold text-status-success">{clinicalGraph?.kol_speakers_count ?? 0}</span>
                 </div>
               </div>
 
-              <div className="divide-y divide-border-subtle max-h-56 overflow-y-auto">
-                {graphNodes.slice(0, 8).map((node) => (
-                  <div key={node.id} className="py-2 flex items-center justify-between text-xs gap-2">
-                    <span className="font-medium text-text-main truncate">{node.label}</span>
-                    <Badge variant="secondary" className="text-[10px] uppercase shrink-0">
-                      {node.node_type}
-                    </Badge>
-                  </div>
-                ))}
+              {/* Feedback 9: Apresentar mais detalhes por registro (ícone, localidade, conexões e badge) */}
+              <div className="divide-y divide-border-subtle max-h-72 overflow-y-auto pr-1">
+                {graphNodes.slice(0, 8).map((node) => {
+                  const edgeCount = (clinicalGraph?.edges || []).filter(
+                    (e) => e.source === node.id || e.target === node.id
+                  ).length;
+                  const isUniv = node.node_type === "university";
+                  const isLab = node.node_type === "cadcam_lab";
+                  const isClinic = node.node_type === "clinic";
+
+                  const IconComp = isUniv
+                    ? GraduationCap
+                    : isLab
+                    ? Cpu
+                    : isClinic
+                    ? Building2
+                    : Stethoscope;
+
+                  const typeLabel = isUniv
+                    ? "Universidade / Pós"
+                    : isLab
+                    ? "Lab CAD/CAM"
+                    : isClinic
+                    ? "Clínica & Hospital"
+                    : "Cirurgião Especialista";
+
+                  const badgeVariant = isUniv ? "default" : isLab ? "warning" : isClinic ? "navy" : "secondary";
+
+                  const locationText =
+                    node.metadata?.city && node.metadata?.state
+                      ? `${node.metadata.city}, ${node.metadata.state}`
+                      : node.metadata?.uf
+                      ? `UF: ${node.metadata.uf}`
+                      : "Polo Nacional";
+
+                  return (
+                    <div
+                      key={node.id}
+                      className="py-2.5 px-2 hover:bg-surface-bg rounded-md transition-colors flex items-center justify-between text-xs gap-3"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="p-1.5 rounded-md bg-surface-bg border border-border-subtle text-brand-primary shrink-0">
+                          <IconComp className="h-3.5 w-3.5" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-text-main text-xs truncate">{node.label}</p>
+                          <div className="flex items-center gap-1.5 text-[11px] text-text-secondary">
+                            <span className="truncate">{locationText}</span>
+                            <span className="text-text-muted">•</span>
+                            <span className="text-brand-primary shrink-0">{edgeCount} vínculos</span>
+                          </div>
+                        </div>
+                      </div>
+                      <Badge variant={badgeVariant} className="text-[10px] shrink-0 font-medium">
+                        {typeLabel}
+                      </Badge>
+                    </div>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* TICKET-DASH-06: Funil por Estágio com navegação para `#!/deals` */}
+        {/* Feedback 10 e 11: Funil Comercial por Estágio com botões, filtros e textos/dados sem corte */}
         <Card className="border-border">
           <CardHeader>
-            <CardTitle>Funil Comercial por Estágio</CardTitle>
-            <CardDescription>
-              Clique em qualquer barra para abrir o workspace de Deals já filtrado pelo estágio correspondente.
-            </CardDescription>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <CardTitle>Funil Comercial por Estágio</CardTitle>
+                <CardDescription>
+                  Clique em qualquer barra para abrir o workspace de Deals já filtrado pelo estágio correspondente.
+                </CardDescription>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Botões seletores de visão analítica */}
+                <div className="inline-flex rounded-lg border border-border bg-surface-bg p-0.5 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setChartViewMode("stage")}
+                    className={`px-2.5 py-1 rounded-md font-medium transition-colors ${
+                      chartViewMode === "stage"
+                        ? "bg-surface-card text-brand-primary shadow-xs font-semibold"
+                        : "text-text-secondary hover:text-text-main"
+                    }`}
+                  >
+                    Estágios do Funil
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setChartViewMode("trend")}
+                    className={`px-2.5 py-1 rounded-md font-medium transition-colors ${
+                      chartViewMode === "trend"
+                        ? "bg-surface-card text-brand-primary shadow-xs font-semibold"
+                        : "text-text-secondary hover:text-text-main"
+                    }`}
+                  >
+                    Tendência Mensal
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setChartViewMode("consignment")}
+                    className={`px-2.5 py-1 rounded-md font-medium transition-colors ${
+                      chartViewMode === "consignment"
+                        ? "bg-surface-card text-brand-primary shadow-xs font-semibold"
+                        : "text-text-secondary hover:text-text-main"
+                    }`}
+                  >
+                    Giro Consignado
+                  </button>
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if (onNavigate) {
+                      onNavigate("deals");
+                    } else {
+                      window.location.hash = "#!/deals";
+                    }
+                  }}
+                  className="gap-1.5 h-7 px-2.5 text-xs"
+                  title="Abrir Gestão Completa de Oportunidades no Pipeline Kanban"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  Abrir Kanban
+                </Button>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              {computedChartBars.map((bar: { label: string; value: number; count: number; fillClass: string }) => (
-                <button
-                  key={bar.label}
-                  type="button"
-                  onClick={() => handleStageBarClick(bar.label)}
-                  className="w-full text-left group focus-visible:outline-none"
-                  aria-label={`Filtrar deals pelo estágio ${bar.label}`}
-                >
-                  <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="font-medium text-text-main group-hover:text-brand-primary transition-colors">
-                      {bar.label}
-                    </span>
-                    <span className="text-text-secondary">
-                      {formatBrl(bar.value)} • {bar.count} itens
-                    </span>
-                  </div>
-                  <svg className="w-full h-3.5 rounded overflow-hidden bg-surface-bg" viewBox="0 0 100 10" preserveAspectRatio="none">
-                    <rect
-                      x="0"
-                      y="0"
-                      width={Math.min(100, Math.max(6, Math.round((bar.value / Math.max(1, pipelineMetrics?.total_value || 1)) * 100)))}
-                      height="10"
-                      className={`${bar.fillClass} group-hover:opacity-80 transition-opacity`}
-                    />
-                  </svg>
-                </button>
-              ))}
+            <div className="space-y-3">
+              {computedChartBars.map((bar: { label: string; value: number; count: number; fillClass: string }) => {
+                const totalVal = Math.max(1, computedChartBars.reduce((acc: number, b: any) => acc + (b.value || 0), 0));
+                const widthPct = Math.min(100, Math.max(6, Math.round((bar.value / totalVal) * 100)));
+                return (
+                  <button
+                    key={bar.label}
+                    type="button"
+                    onClick={() => handleStageBarClick(bar.label)}
+                    className="w-full text-left group focus-visible:outline-none p-2 rounded-lg hover:bg-surface-bg/80 transition-colors"
+                    aria-label={`Filtrar deals pelo estágio ${bar.label}`}
+                  >
+                    <div className="flex items-center justify-between text-xs mb-1.5">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="font-semibold text-text-main group-hover:text-brand-primary transition-colors truncate">
+                          {bar.label}
+                        </span>
+                        <Badge variant="secondary" className="text-[10px] shrink-0 font-normal">
+                          {bar.count} {bar.count === 1 ? "oportunidade" : "oportunidades"}
+                        </Badge>
+                      </div>
+                      <span className="font-bold text-text-main shrink-0 text-xs">
+                        {formatBrl(bar.value)}
+                      </span>
+                    </div>
+                    <svg className="w-full h-3.5 rounded-full overflow-hidden bg-surface-bg" viewBox="0 0 100 10" preserveAspectRatio="none">
+                      <rect
+                        x="0"
+                        y="0"
+                        width={widthPct}
+                        height="10"
+                        className={`${bar.fillClass} group-hover:opacity-80 transition-opacity`}
+                      />
+                    </svg>
+                  </button>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
 
-        {/* TICKET-DASH-07: Modal de Topologia Expandida */}
+        {/* Feedback 4, 5, 6, 7: Modal de Topologia com 2 Abas, Paginação de 7 registros e texto comercial descritivo */}
         <Dialog
           isOpen={showTopologyModal}
           onClose={() => setShowTopologyModal(false)}
           title="Topologia Expandida do Grafo Clínico KOL"
-          description="Nós e vínculos N:N do ecossistema odontológico (Cirurgiões, Clínicas, Labs CAD/CAM, Universidades)."
+          description="Nós e vínculos comerciais do ecossistema odontológico (Cirurgiões, Clínicas, Labs CAD/CAM, Universidades)."
           className="max-w-3xl"
         >
-          <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+          <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-1">
             <div className="grid grid-cols-3 gap-2 text-center">
               <div className="p-2.5 rounded-lg bg-surface-bg border border-border-subtle">
-                <span className="text-[11px] text-text-secondary block">Nós</span>
+                <span className="text-[11px] text-text-secondary block">Instituições Mapeadas</span>
                 <span className="text-base font-bold text-text-main">{clinicalGraph?.total_nodes ?? 0}</span>
               </div>
               <div className="p-2.5 rounded-lg bg-surface-bg border border-border-subtle">
-                <span className="text-[11px] text-text-secondary block">Arestas</span>
+                <span className="text-[11px] text-text-secondary block">Contratos & Vínculos</span>
                 <span className="text-base font-bold text-brand-primary">{clinicalGraph?.total_edges ?? 0}</span>
               </div>
               <div className="p-2.5 rounded-lg bg-surface-bg border border-border-subtle">
-                <span className="text-[11px] text-text-secondary block">KOLs</span>
+                <span className="text-[11px] text-text-secondary block">Líderes KOL Ativos</span>
                 <span className="text-base font-bold text-status-success">{clinicalGraph?.kol_speakers_count ?? 0}</span>
               </div>
             </div>
 
-            <div>
-              <h4 className="text-xs font-semibold uppercase text-text-secondary mb-2">Nós do Ecossistema</h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {graphNodes.map((node) => (
-                  <div key={node.id} className="p-2 rounded-md border border-border-subtle bg-surface-bg flex items-center justify-between gap-2">
-                    <span className="text-xs font-medium text-text-main truncate">{node.label}</span>
-                    <Badge variant="secondary" className="text-[10px] uppercase shrink-0">{node.node_type}</Badge>
-                  </div>
-                ))}
-              </div>
+            {/* Feedback 6: 2 Abas para visualização separada dos Nós e dos Vínculos */}
+            <div className="flex items-center gap-2 border-b border-border-subtle pb-2">
+              <button
+                type="button"
+                onClick={() => setTopologyTab("nodes")}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                  topologyTab === "nodes"
+                    ? "bg-brand-primary text-text-inverse"
+                    : "text-text-secondary hover:text-text-main hover:bg-surface-bg"
+                }`}
+              >
+                Instituições & Polos ({graphNodes.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setTopologyTab("edges")}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                  topologyTab === "edges"
+                    ? "bg-brand-primary text-text-inverse"
+                    : "text-text-secondary hover:text-text-main hover:bg-surface-bg"
+                }`}
+              >
+                Vínculos Comerciais N:N ({clinicalEdges.length})
+              </button>
             </div>
 
-            <div>
-              <h4 className="text-xs font-semibold uppercase text-text-secondary mb-2">Vínculos N:N</h4>
-              <div className="space-y-1.5">
-                {(clinicalGraph?.edges || []).map((edge, idx) => (
-                  <div key={`${edge.source}-${edge.target}-${idx}`} className="p-2 rounded-md border border-border-subtle text-xs text-text-main flex items-center justify-between gap-2">
-                    <span className="truncate">
-                      {edge.label || edge.relationship}: {edge.source} → {edge.target}
+            {/* Aba 1: Nós do Ecossistema com Paginação de 7 por página (Feedback 4) */}
+            {topologyTab === "nodes" && (
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {graphNodes
+                    .slice((nodesPage - 1) * TOPOLOGY_ITEMS_PER_PAGE, nodesPage * TOPOLOGY_ITEMS_PER_PAGE)
+                    .map((node) => {
+                      const isUniv = node.node_type === "university";
+                      const isLab = node.node_type === "cadcam_lab";
+                      const isClinic = node.node_type === "clinic";
+
+                      const IconComp = isUniv
+                        ? GraduationCap
+                        : isLab
+                        ? Cpu
+                        : isClinic
+                        ? Building2
+                        : Stethoscope;
+
+                      const typeLabel = isUniv
+                        ? "Universidade"
+                        : isLab
+                        ? "Lab CAD/CAM"
+                        : isClinic
+                        ? "Clínica"
+                        : "Cirurgião";
+
+                      const badgeVariant = isUniv ? "default" : isLab ? "warning" : isClinic ? "navy" : "secondary";
+
+                      return (
+                        <div
+                          key={node.id}
+                          className="p-2.5 rounded-md border border-border-subtle bg-surface-bg flex items-center justify-between gap-2"
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <IconComp className="h-3.5 w-3.5 text-brand-primary shrink-0" />
+                            <span className="text-xs font-medium text-text-main truncate">{node.label}</span>
+                          </div>
+                          <Badge variant={badgeVariant} className="text-[10px] uppercase shrink-0 font-medium">
+                            {typeLabel}
+                          </Badge>
+                        </div>
+                      );
+                    })}
+                </div>
+
+                {/* Controles de Paginação (7 registros por página) */}
+                {graphNodes.length > TOPOLOGY_ITEMS_PER_PAGE && (
+                  <div className="flex items-center justify-between pt-2 border-t border-border-subtle text-xs text-text-secondary">
+                    <span>
+                      Mostrando {Math.min((nodesPage - 1) * TOPOLOGY_ITEMS_PER_PAGE + 1, graphNodes.length)}–
+                      {Math.min(nodesPage * TOPOLOGY_ITEMS_PER_PAGE, graphNodes.length)} de {graphNodes.length} nós
                     </span>
-                    {edge.is_kol && <Badge variant="success" className="text-[10px] shrink-0">KOL</Badge>}
+                    <div className="flex items-center gap-1.5">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 px-2 text-xs"
+                        disabled={nodesPage <= 1}
+                        onClick={() => setNodesPage((p) => Math.max(1, p - 1))}
+                      >
+                        <ChevronLeft className="h-3.5 w-3.5 mr-0.5" />
+                        Anterior
+                      </Button>
+                      <span className="text-xs px-2 font-medium">
+                        {nodesPage} / {Math.max(1, Math.ceil(graphNodes.length / TOPOLOGY_ITEMS_PER_PAGE))}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 px-2 text-xs"
+                        disabled={nodesPage >= Math.ceil(graphNodes.length / TOPOLOGY_ITEMS_PER_PAGE)}
+                        onClick={() =>
+                          setNodesPage((p) =>
+                            Math.min(Math.ceil(graphNodes.length / TOPOLOGY_ITEMS_PER_PAGE), p + 1)
+                          )
+                        }
+                      >
+                        Próxima
+                        <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
+                      </Button>
+                    </div>
                   </div>
-                ))}
-                {(!clinicalGraph?.edges || clinicalGraph.edges.length === 0) && (
-                  <p className="text-xs text-text-muted">Nenhum vínculo carregado no snapshot atual.</p>
+                )}
+              </div>
+            )}
+
+            {/* Aba 2: Vínculos Comerciais N:N com Paginação de 7 por página (Feedback 5 e 7) */}
+            {topologyTab === "edges" && (
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  {clinicalEdges
+                    .slice((edgesPage - 1) * TOPOLOGY_ITEMS_PER_PAGE, edgesPage * TOPOLOGY_ITEMS_PER_PAGE)
+                    .map((edge, idx) => {
+                      const details = getCommercialEdgeDetails(edge);
+                      return (
+                        <div
+                          key={`${edge.source}-${edge.target}-${idx}`}
+                          className="p-3 rounded-lg border border-border-subtle bg-surface-bg hover:border-brand-primary/40 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-text-main"
+                        >
+                          <div className="space-y-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-text-main truncate">
+                                {details.sourceName}
+                              </span>
+                              <Badge variant={details.roleBadgeVariant} className="text-[10px] shrink-0">
+                                {details.commercialRole}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center gap-1.5 text-[11px] text-text-secondary truncate">
+                              <Building2 className="h-3 w-3 shrink-0 text-text-muted" />
+                              <span className="truncate">{details.targetName}</span>
+                              {details.targetCity && (
+                                <span className="shrink-0 text-text-muted">• {details.targetCity}</span>
+                              )}
+                            </div>
+                          </div>
+                          {details.isKol && (
+                            <Badge variant="success" className="text-[10px] shrink-0 self-start sm:self-center">
+                              Speaker KOL
+                            </Badge>
+                          )}
+                        </div>
+                      );
+                    })}
+                  {clinicalEdges.length === 0 && (
+                    <p className="text-xs text-text-muted py-4">Nenhum vínculo carregado no snapshot atual.</p>
+                  )}
+                </div>
+
+                {/* Controles de Paginação de Vínculos (7 registros por página) */}
+                {clinicalEdges.length > TOPOLOGY_ITEMS_PER_PAGE && (
+                  <div className="flex items-center justify-between pt-2 border-t border-border-subtle text-xs text-text-secondary">
+                    <span>
+                      Mostrando {Math.min((edgesPage - 1) * TOPOLOGY_ITEMS_PER_PAGE + 1, clinicalEdges.length)}–
+                      {Math.min(edgesPage * TOPOLOGY_ITEMS_PER_PAGE, clinicalEdges.length)} de {clinicalEdges.length} vínculos
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 px-2 text-xs"
+                        disabled={edgesPage <= 1}
+                        onClick={() => setEdgesPage((p) => Math.max(1, p - 1))}
+                      >
+                        <ChevronLeft className="h-3.5 w-3.5 mr-0.5" />
+                        Anterior
+                      </Button>
+                      <span className="text-xs px-2 font-medium">
+                        {edgesPage} / {Math.max(1, Math.ceil(clinicalEdges.length / TOPOLOGY_ITEMS_PER_PAGE))}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 px-2 text-xs"
+                        disabled={edgesPage >= Math.ceil(clinicalEdges.length / TOPOLOGY_ITEMS_PER_PAGE)}
+                        onClick={() =>
+                          setEdgesPage((p) =>
+                            Math.min(Math.ceil(clinicalEdges.length / TOPOLOGY_ITEMS_PER_PAGE), p + 1)
+                          )
+                        }
+                      >
+                        Próxima
+                        <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </Dialog>
+
+        {/* Feedback 8: Drawer Lateral (Sheet) Dossiê 360° do Cliente / Cirurgião (estilo Kanban) */}
+        <Sheet
+          isOpen={Boolean(selectedContactForDrawer)}
+          onClose={() => setSelectedContactForDrawer(null)}
+          title={selectedContactForDrawer ? `Dossiê do Cliente • ${selectedContactForDrawer.name}` : "Dossiê"}
+          description={
+            selectedContactForDrawer
+              ? `CRO: ${selectedContactForDrawer.cro || "BR"} • ${selectedContactForDrawer.uf || "Brasil"} • ${selectedContactForDrawer.clinic_name || "Clínica Odontológica"}`
+              : ""
+          }
+          className="sm:max-w-lg"
+        >
+          {selectedContactForDrawer && (
+            <div className="space-y-5">
+              {/* Card de Score e Status */}
+              <div className="p-4 rounded-xl border border-border bg-surface-bg space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold uppercase text-text-secondary">
+                    Risco de Churn RFM
+                  </span>
+                  <Badge
+                    variant={
+                      selectedContactForDrawer.churn_risk_level === "critico" ||
+                      selectedContactForDrawer.churn_risk_level === "alto"
+                        ? "danger"
+                        : "warning"
+                    }
+                  >
+                    Score {selectedContactForDrawer.churn_risk_score} • {selectedContactForDrawer.churn_risk_level.toUpperCase()}
+                  </Badge>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="p-2 rounded-md bg-surface-card border border-border-subtle">
+                    <span className="text-[11px] text-text-secondary block">Dias sem Pedido</span>
+                    <span className="text-sm font-bold text-text-main">
+                      {selectedContactForDrawer.days_since_last_order} dias
+                    </span>
+                  </div>
+                  <div className="p-2 rounded-md bg-surface-card border border-border-subtle">
+                    <span className="text-[11px] text-text-secondary block">Volume Mensal</span>
+                    <span className="text-sm font-bold text-brand-primary">
+                      {selectedContactForDrawer.monthly_implant_volume} un / mês
+                    </span>
+                  </div>
+                </div>
+                <div className="p-2.5 rounded-md bg-surface-card border border-border-subtle space-y-1">
+                  <span className="text-[11px] font-semibold text-text-secondary uppercase block">
+                    Ação Preventiva Recomendada
+                  </span>
+                  <p className="text-xs text-text-main font-medium">
+                    {selectedContactForDrawer.recommended_action}
+                  </p>
+                </div>
+              </div>
+
+              {/* Botões de Ação Rápida */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => handleReactivateWhatsApp(selectedContactForDrawer)}
+                  className="gap-1.5 w-full justify-center"
+                >
+                  <MessageCircle className="h-3.5 w-3.5" />
+                  Reativar via WhatsApp
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSelectedContactForDrawer(null);
+                    if (onNavigate) {
+                      onNavigate("deals");
+                    } else {
+                      window.location.hash = "#!/deals";
+                    }
+                  }}
+                  className="gap-1.5 w-full justify-center"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  Ver Oportunidades
+                </Button>
+              </div>
+
+              {/* Dados Cadastrais e Perfil */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-semibold uppercase text-text-secondary">
+                  Informações Comerciais & Cadastrais
+                </h4>
+                <div className="space-y-2 text-xs">
+                  <div className="flex justify-between py-1.5 border-b border-border-subtle">
+                    <span className="text-text-secondary">Especialidade</span>
+                    <span className="font-medium text-text-main">
+                      {contactDrawerProfile?.specialty || "Implantodontia & Prótese"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between py-1.5 border-b border-border-subtle">
+                    <span className="text-text-secondary">Tier da Conta</span>
+                    <span className="font-medium text-text-main">
+                      {selectedContactForDrawer.tier || contactDrawerProfile?.tier || "Tier Gold"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between py-1.5 border-b border-border-subtle">
+                    <span className="text-text-secondary">Clínica Credenciada</span>
+                    <span className="font-medium text-text-main truncate max-w-[200px]">
+                      {selectedContactForDrawer.clinic_name || contactDrawerProfile?.clinic_name || "Clínica Principal"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between py-1.5 border-b border-border-subtle">
+                    <span className="text-text-secondary">Atraso Estimado</span>
+                    <span className="font-medium text-status-danger">
+                      {selectedContactForDrawer.days_overdue} dias além da média
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Timeline de Atividades */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-semibold uppercase text-text-secondary">
+                  Histórico de Interações
+                </h4>
+                {loadingDrawerData ? (
+                  <p className="text-xs text-text-muted py-2">Carregando histórico do cliente...</p>
+                ) : contactDrawerTimeline.length > 0 ? (
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {contactDrawerTimeline.map((item: any, i: number) => (
+                      <div key={i} className="p-2 rounded-md bg-surface-bg border border-border-subtle text-xs">
+                        <div className="flex justify-between text-[11px] text-text-muted mb-1">
+                          <span>{item.author || "Sistema"}</span>
+                          <span>{item.created_at || "Recente"}</span>
+                        </div>
+                        <p className="text-text-main">{item.description || item.comment || item.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-3 rounded-lg bg-surface-bg text-center text-xs text-text-muted">
+                    Nenhum registro de interação recente para este contato.
+                  </div>
                 )}
               </div>
             </div>
-          </div>
-        </Dialog>
+          )}
+        </Sheet>
       </div>
     );
   }

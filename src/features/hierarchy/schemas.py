@@ -9,6 +9,19 @@ from typing import Optional, List, Dict, Any
 from pydantic import BaseModel, Field
 
 
+class HierarchyAuditLogOut(BaseModel):
+    id: str
+    user_name: str
+    previous_role: str
+    new_role: str
+    previous_region: str
+    new_region: str
+    effective_date: str
+    promoted_by: str
+    justification: str
+    audit_hash: str
+
+
 class DataScopeEnum(str, Enum):
     SELF = "self"                     # Vê apenas registros de sua autoria (owner_id == user.id)
     TEAM = "team"                     # Vê registros do time direto

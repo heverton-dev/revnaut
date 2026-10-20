@@ -11,6 +11,7 @@ import {
   FileWarning,
   Video,
   Eye,
+  Cpu,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -150,6 +151,8 @@ export const SupportAnvisaWorkspace: React.FC = () => {
     "0f14ffff/dicom/raiox_periapical_16.png"
   );
   const [submittingRma, setSubmittingRma] = React.useState<boolean>(false);
+  // TICKET-SUP-02: Notificação Direta para Engenharia de Produto
+  const [escalatingClaimId, setEscalatingClaimId] = React.useState<string | null>(null);
 
   // Inspetor de Quarentena de Lote
   const [quarantineBatchInput, setQuarantineBatchInput] = React.useState<string>("LOTE-9988");
@@ -286,6 +289,35 @@ export const SupportAnvisaWorkspace: React.FC = () => {
       }
     } catch {
       // Silencioso
+    }
+  };
+
+  // TICKET-SUP-02: Escalação direta de queixa RMA para Engenharia de Produto
+  const handleEscalateToEngineering = async (claim: RmaClaimItem) => {
+    setEscalatingClaimId(claim.id);
+    setErrorMsg(null);
+    setFeedbackMsg(null);
+    try {
+      const res = await fetch("/api/v1/tickets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: `[Engenharia de Produto] Investigação Técnica de Lote ${claim.batch_number} - RMA #${claim.id}`,
+          customer_name: claim.surgeon_name || "Cirurgião Responsável",
+          priority: "alta",
+          category: "Engenharia de Produto",
+          status: "aberto",
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || "Falha ao escalar ticket para Engenharia de Produto.");
+      setFeedbackMsg(
+        `Chamado P1 de Engenharia protocolado com sucesso (Ticket #${data.id || data.ticket_id || "OK"}) para auditoria técnica do lote ${claim.batch_number}!`
+      );
+    } catch (err: any) {
+      setErrorMsg(err.message || "Erro ao notificar Engenharia de Produto.");
+    } finally {
+      setEscalatingClaimId(null);
     }
   };
 
@@ -487,6 +519,25 @@ export const SupportAnvisaWorkspace: React.FC = () => {
             {r.quarantine_triggered ? "LOTE BLOQUEADO" : r.status}
           </Badge>
         </div>
+      ),
+    },
+    {
+      key: "actions",
+      header: "Ações Técnicas",
+      render: (r) => (
+        <Button
+          size="sm"
+          variant="outline"
+          className="text-xs gap-1 h-7 border-brand-primary/40 text-brand-primary hover:bg-brand-primary-subtle"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleEscalateToEngineering(r);
+          }}
+          disabled={escalatingClaimId === r.id}
+        >
+          <Cpu className="h-3 w-3" />
+          {escalatingClaimId === r.id ? "Notificando..." : "Notificar Engenharia"}
+        </Button>
       ),
     },
   ];
@@ -768,6 +819,16 @@ export const SupportAnvisaWorkspace: React.FC = () => {
                         onClick={() => handleUpdateTicketStatus(selectedClaim.ticket_id, "resolvido")}
                       >
                         Concluir Laudo Ticket
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-1 border-status-warning/40 text-status-warning hover:bg-status-warning-subtle"
+                        onClick={() => handleEscalateToEngineering(selectedClaim)}
+                        disabled={escalatingClaimId === selectedClaim.id}
+                      >
+                        <Cpu className="h-3.5 w-3.5" />
+                        {escalatingClaimId === selectedClaim.id ? "Notificando..." : "Notificar Engenharia de Produto"}
                       </Button>
                     </div>
                   </div>

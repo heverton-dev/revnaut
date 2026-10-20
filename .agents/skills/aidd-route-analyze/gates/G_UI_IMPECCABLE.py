@@ -6,6 +6,7 @@ Gate G_UI_IMPECCABLE:
 2. Valida presenca de secoes obrigatorias de UI/UX.
 Retorna exit 0 se aprovado, exit 1 se violado.
 """
+import os
 import sys
 import re
 from pathlib import Path
@@ -25,7 +26,8 @@ REAL_EMOJI_REGEX = re.compile(
 )
 
 def check_ui_impeccable(slug: str):
-    target_dir = Path("docs/auditorias_rotas") / slug
+    base_dir = os.environ.get("AUDIT_BASE_DIR", "docs/auditorias_rotas")
+    target_dir = Path(base_dir) / slug
     if not target_dir.exists():
         print(f"[FAIL] G_UI_IMPECCABLE: Diretorio {target_dir} inexistente.")
         sys.exit(1)

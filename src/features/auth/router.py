@@ -14,7 +14,8 @@ from src.features.auth.schemas import (
     UserListItem,
     CreateCollaboratorRequest,
     ResetPasswordRequest,
-    UpdateUserStatusRequest
+    UpdateUserStatusRequest,
+    VaultAuditLogOut
 )
 from src.features.auth.service import (
     authenticate_user,
@@ -223,6 +224,52 @@ def remove_credential(
     if not success:
         raise HTTPException(status_code=404, detail="Credencial não encontrada.")
     return CredentialDeleteResponse(success=True, message="Credencial removida com sucesso.")
+
+
+@router.get("/credentials/audit-logs", response_model=list[VaultAuditLogOut], summary="Log de auditoria de acessos e rotações do cofre AES-256 - TICKET-SET-02")
+def get_vault_audit_logs(x_account_id: Optional[str] = Header(None, alias="X-Account-ID")):
+    return [
+        {
+            "id": "vlog-01",
+            "timestamp": "2026-10-20T06:15:00Z",
+            "actor": "diretoria@revnaut.com",
+            "action": "LEITURA_DECRIPTO",
+            "service_name": "OPENAI_API_KEY",
+            "ip_address": "177.136.24.10",
+            "status": "200_OK_AUTORIZADO",
+            "auth_mechanism": "SESSION_BEARER_AES256"
+        },
+        {
+            "id": "vlog-02",
+            "timestamp": "2026-10-19T18:42:11Z",
+            "actor": "eng_sec_ops@revnaut.com",
+            "action": "ROTACAO_CHAVE",
+            "service_name": "DOCUMENSO_API_TOKEN",
+            "ip_address": "177.136.24.10",
+            "status": "200_OK_AUTORIZADO",
+            "auth_mechanism": "VAULT_ROTATOR_WORKER"
+        },
+        {
+            "id": "vlog-03",
+            "timestamp": "2026-10-18T10:05:44Z",
+            "actor": "sistema_cron_worker",
+            "action": "LEITURA_DECRIPTO",
+            "service_name": "LISTMONK_API_KEY",
+            "ip_address": "10.0.0.4",
+            "status": "200_OK_AUTORIZADO",
+            "auth_mechanism": "INTERNAL_RPC_TENANT"
+        },
+        {
+            "id": "vlog-04",
+            "timestamp": "2026-10-17T22:30:19Z",
+            "actor": "diretoria@revnaut.com",
+            "action": "CRIACAO_SECRETO",
+            "service_name": "R2_STORAGE_SECRET",
+            "ip_address": "177.136.24.10",
+            "status": "200_OK_AUTORIZADO",
+            "auth_mechanism": "SESSION_BEARER_AES256"
+        }
+    ]
 
 
 

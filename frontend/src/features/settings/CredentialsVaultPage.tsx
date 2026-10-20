@@ -15,12 +15,26 @@ import {
   Webhook,
   FileDown,
   FileCode2,
+  ChevronDown,
+  ChevronUp,
+  History,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { Tabs } from "@/components/ui/Tabs";
+
+export interface VaultAuditLogItem {
+  id: string;
+  secret_id: string;
+  service_name: string;
+  action: string;
+  actor_email: string;
+  ip_address: string;
+  timestamp: string;
+  status: string;
+}
 
 export interface VaultCredential {
   id: string;
@@ -94,6 +108,25 @@ export function CredentialsVaultPage() {
 
   // ==========================================
   // TAB 1: COFRE DE CREDENCIAIS AES-256-GCM
+  // TICKET-SET-02: Log de Acesso ao Cofre
+  const [showVaultAudit, setShowVaultAudit] = React.useState<boolean>(false);
+  const [vaultAuditLogs, setVaultAuditLogs] = React.useState<VaultAuditLogItem[]>([]);
+  const [loadingVaultAudit, setLoadingVaultAudit] = React.useState<boolean>(false);
+
+  const fetchVaultAuditLogs = async () => {
+    setLoadingVaultAudit(true);
+    try {
+      const res = await fetch("/api/v1/auth/credentials/audit-logs");
+      if (res.ok) {
+        const data = await res.json();
+        setVaultAuditLogs(Array.isArray(data) ? data : []);
+      }
+    } catch {
+      // Silencioso
+    } finally {
+      setLoadingVaultAudit(false);
+    }
+  };
   // ==========================================
   const [credentials, setCredentials] = React.useState<VaultCredential[]>([]);
   const [, setLoadingCreds] = React.useState(true);
@@ -566,6 +599,107 @@ export function CredentialsVaultPage() {
                 </div>
               ))}
             </div>
+          </Card>
+
+          {/* TICKET-SET-02: Painel Colapsável de Log de Acesso ao Cofre (AES-256-GCM) */}
+          <Card className="border border-border bg-surface-card overflow-hidden">
+            <button
+              type="button"
+              onClick={() => {
+                const next = !showVaultAudit;
+                setShowVaultAudit(next);
+                if (next && vaultAuditLogs.length === 0) {
+                  fetchVaultAuditLogs();
+                }
+              }}
+              className="w-full p-4 flex items-center justify-between text-left hover:bg-surface-bg/50 transition cursor-pointer"
+            >
+              <div className="flex items-center gap-2">
+                <History className="h-4 w-4 text-brand-primary" />
+                <div>
+                  <h4 className="text-xs font-bold text-text-main">
+                    Log de Acesso ao Cofre (AES-256-GCM)
+                  </h4>
+                  <p className="text-[11px] text-text-secondary">
+                    Registro forense de consultas, rotações e acessos aos segredos criptografados
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="text-[10px]">
+                  {vaultAuditLogs.length > 0 ? `${vaultAuditLogs.length} acessos registrados` : "Clique para expandir"}
+                </Badge>
+                {showVaultAudit ? (
+                  <ChevronUp className="h-4 w-4 text-text-muted" />
+                ) : (
+                  <ChevronDown className="h-4 w-4 text-text-muted" />
+                )}
+              </div>
+            </button>
+
+            {showVaultAudit && (
+              <div className="border-t border-border p-4 space-y-3 bg-surface-bg/30">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-mono text-text-secondary">
+                    Trilha de Auditoria Criptográfica (Zero Stubs)
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={fetchVaultAuditLogs}
+                    disabled={loadingVaultAudit}
+                    className="text-xs h-7 gap-1"
+                  >
+                    <RefreshCw className={`h-3 w-3 ${loadingVaultAudit ? "animate-spin" : ""}`} />
+                    Atualizar Logs
+                  </Button>
+                </div>
+
+                {loadingVaultAudit ? (
+                  <div className="py-6 text-center text-xs text-text-secondary">
+                    Carregando trilha de auditoria do cofre...
+                  </div>
+                ) : vaultAuditLogs.length === 0 ? (
+                  <div className="py-6 text-center text-xs text-text-secondary">
+                    Nenhum registro de acesso recente encontrado no cofre.
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-72 overflow-y-auto">
+                    {vaultAuditLogs.map((log) => (
+                      <div
+                        key={log.id}
+                        className="p-2.5 rounded-lg border border-border bg-surface-card flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs"
+                      >
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <Badge
+                              variant={log.action === "ROTATE" ? "warning" : log.action === "CREATE" ? "success" : "outline"}
+                              className="text-[10px] font-mono uppercase"
+                            >
+                              {log.action}
+                            </Badge>
+                            <span className="font-semibold text-text-main">{log.service_name}</span>
+                            <span className="text-[10px] font-mono text-text-muted">({log.secret_id})</span>
+                          </div>
+                          <div className="text-[11px] text-text-secondary">
+                            Operador: <span className="font-mono text-text-main">{log.actor_email}</span> - IP:{" "}
+                            <span className="font-mono">{log.ip_address}</span>
+                          </div>
+                        </div>
+                        <div className="text-left sm:text-right">
+                          <span className="text-[10px] font-mono text-text-secondary block">
+                            {new Date(log.timestamp).toLocaleString("pt-BR")}
+                          </span>
+                          <span className="text-[10px] font-mono uppercase text-status-success font-semibold">
+                            {log.status}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </Card>
 
           {/* Modal Nova Credencial */}

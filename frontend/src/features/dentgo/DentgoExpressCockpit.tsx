@@ -12,6 +12,7 @@ import {
   Tag,
   Zap,
   Barcode,
+  MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -199,6 +200,9 @@ export const DentgoExpressCockpit: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("orders");
 
   // Tab 1: Orders
+  // TICKET-DENTGO-02: Notificar Cirurgião por SMS
+  const [notifyingOrderId, setNotifyingOrderId] = useState<string | null>(null);
+  const [notificationFeedback, setNotificationFeedback] = useState<string | null>(null);
   const [orders, setOrders] = useState<DentgoExpressOrder[]>([]);
   const [loadingOrders, setLoadingOrders] = useState<boolean>(true);
   const [ordersError, setOrdersError] = useState<string | null>(null);
@@ -303,6 +307,30 @@ export const DentgoExpressCockpit: React.FC = () => {
       setSplitFeedback(e.message || "Erro ao consultar split");
     } finally {
       setFetchingOrderSplit(false);
+    }
+  };
+
+  // TICKET-DENTGO-02: Notificar Cirurgião por SMS
+  const handleNotifySurgeonSms = async (order: DentgoExpressOrder, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setNotifyingOrderId(order.id);
+    try {
+      const text = "[DENTGO Express] Prezado(a) Dr(a). (CRO: " + ((order as any).doctor_cro || "Cirurgião") + "), seu pedido #" + order.id + " está no status " + order.status + ". Previsão estimada de entrega (ETA): ~" + (order.estimated_eta_minutes || 35) + " minutos. Endereço: " + order.delivery_address + ". Acompanhe em tempo real.";
+      const res = await fetch("/api/v1/chat/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          conversation_id: "conv-01",
+          text,
+        }),
+      });
+      if (!res.ok) throw new Error("Falha ao enviar notificação SMS/WhatsApp.");
+      setNotificationFeedback("Notificação SMS/WhatsApp enviada com sucesso para o cirurgião do pedido #" + order.id + "!");
+      setTimeout(() => setNotificationFeedback(null), 5000);
+    } catch (err: any) {
+      setOrdersError(err.message || "Erro ao notificar cirurgião.");
+    } finally {
+      setNotifyingOrderId(null);
     }
   };
 
@@ -715,6 +743,12 @@ export const DentgoExpressCockpit: React.FC = () => {
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Orders List */}
+              {notificationFeedback && (
+                <div className="p-2.5 rounded-lg bg-status-success-subtle border border-status-success/30 text-xs text-status-success flex items-center gap-1.5 mb-2">
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  <span>{notificationFeedback}</span>
+                </div>
+              )}
               <div className="lg:col-span-2 space-y-3">
                 {orders.map((order) => (
                   <div
@@ -762,6 +796,18 @@ export const DentgoExpressCockpit: React.FC = () => {
                         R$ {order.total_amount.toFixed(2)}
                       </span>
                     </div>
+                    <div className="mt-2 pt-1.5 flex justify-end">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={notifyingOrderId === order.id}
+                        onClick={(e) => handleNotifySurgeonSms(order, e)}
+                        className="h-6 text-[10px] px-2 gap-1 text-brand-primary border-brand-primary/30 hover:bg-brand-primary-subtle"
+                      >
+                        <MessageSquare className="w-3 h-3 text-brand-primary" />
+                        {notifyingOrderId === order.id ? "Enviando..." : "Notificar Cirurgião (SMS/WhatsApp)"}
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -780,6 +826,16 @@ export const DentgoExpressCockpit: React.FC = () => {
                         {selectedOrder.status}
                       </span>
                     </div>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      disabled={notifyingOrderId === selectedOrder.id}
+                      onClick={() => handleNotifySurgeonSms(selectedOrder)}
+                      className="w-full gap-1.5 text-xs"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5 text-brand-primary" />
+                      {notifyingOrderId === selectedOrder.id ? "Enviando SMS..." : "Notificar Cirurgião por SMS / WhatsApp"}
+                    </Button>
 
                     {/* Stage 1 -> 2: Picking */}
                     {selectedOrder.status === "ORDER_PLACED" && (

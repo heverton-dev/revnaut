@@ -8,6 +8,17 @@ from typing import Optional, Any
 from pydantic import BaseModel, model_validator
 
 
+class VaultAuditLogOut(BaseModel):
+    id: str
+    timestamp: str
+    actor: str
+    action: str
+    service_name: str
+    ip_address: str
+    status: str
+    auth_mechanism: str
+
+
 class LoginRequest(BaseModel):
     email: str
     password: str

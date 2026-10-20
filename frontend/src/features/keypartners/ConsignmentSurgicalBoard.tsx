@@ -10,6 +10,7 @@ import {
   FileText,
   Zap,
   ScanLine,
+  Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -137,7 +138,10 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
   const [creatingAgreement, setCreatingAgreement] = useState<boolean>(false);
 
   // Custody Summary
-  const [selectedCustodyAgreementId, setSelectedCustodyAgreementId] = useState<string>("");
+    const [selectedCustodyAgreementId, setSelectedCustodyAgreementId] = useState<string>("");
+  // TICKET-KEY-02: Renovacao Automatica de Termo +30d
+  const [renewingAgreementId, setRenewingAgreementId] = useState<string | null>(null);
+  const [agreementFeedback, setAgreementFeedback] = useState<string | null>(null);
   const [custodySummary, setCustodySummary] = useState<any | null>(null);
   const [showDispatchCustodyModal, setShowDispatchCustodyModal] = useState<boolean>(false);
   const [dispatchProductId, setDispatchProductId] = useState<string>("IMP-CM-4311");
@@ -438,6 +442,29 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
       // erro
     } finally {
       setSubmittingPostop(false);
+    }
+  };
+
+  // TICKET-KEY-02: Renovacao Automatica de Termo +30d
+  const handleRenewAgreement = async (agreementId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setRenewingAgreementId(agreementId);
+    try {
+      const res = await fetch(`/api/v1/keypartners/agreements/${agreementId}/renew`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!res.ok) throw new Error("Falha ao prorrogar termo de consignação.");
+      const updated = await res.json();
+      setAgreements((prev) =>
+        prev.map((ag) => (ag.id === agreementId ? { ...ag, max_turnover_days: updated.max_turnover_days } : ag))
+      );
+      setAgreementFeedback(`Termo do acordo ${agreementId} prorrogado em +30 dias com sucesso (${updated.max_turnover_days} dias)!`);
+      setTimeout(() => setAgreementFeedback(null), 5000);
+    } catch (err: any) {
+      setAgreementFeedback(`Erro na renovação: ${err.message}`);
+    } finally {
+      setRenewingAgreementId(null);
     }
   };
 
@@ -945,6 +972,12 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Agreements List */}
+              {agreementFeedback && (
+                <div className="p-2.5 rounded-lg bg-status-success-subtle border border-status-success/30 text-xs text-status-success flex items-center gap-1.5 mb-2">
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  <span>{agreementFeedback}</span>
+                </div>
+              )}
             <div className="lg:col-span-1 bg-surface-card border border-border rounded-xl p-4 shadow-card space-y-3">
               <div className="flex items-center justify-between border-b border-border pb-2">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-text-main">
@@ -984,7 +1017,19 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
                       <h4 className="text-xs font-medium text-text-main">{ag.partner_name}</h4>
                       <div className="flex justify-between items-center text-[11px] text-text-secondary mt-2 pt-1 border-t border-border">
                         <span>Limite: R$ {ag.credit_limit.toFixed(2)}</span>
-                        <span>Usado: R$ {ag.used_credit.toFixed(2)}</span>
+                        <span>Giro: {ag.max_turnover_days || 60}d</span>
+                      </div>
+                      <div className="mt-2 pt-1.5 flex justify-end">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={renewingAgreementId === ag.id}
+                          onClick={(e) => handleRenewAgreement(ag.id, e)}
+                          className="h-6 text-[10px] px-2 gap-1"
+                        >
+                          <Clock className="w-3 h-3 text-brand-primary" />
+                          {renewingAgreementId === ag.id ? "Renovando..." : "Renovação de Termo +30d"}
+                        </Button>
                       </div>
                     </div>
                   ))}

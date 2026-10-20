@@ -3,6 +3,7 @@
 Gate G_DOSSIER_COMPLETE:
 Valida se os 8 arquivos obrigatorios do dossie da rota foram gerados e possuem conteudo minimo.
 """
+import os
 import sys
 from pathlib import Path
 
@@ -19,7 +20,8 @@ REQUIRED_FILES = [
 ]
 
 def check_dossier(slug: str):
-    target_dir = Path("docs/auditorias_rotas") / slug
+    base_dir = os.environ.get("AUDIT_BASE_DIR", "docs/auditorias_rotas")
+    target_dir = Path(base_dir) / slug
     if not target_dir.exists():
         print(f"[FAIL] G_DOSSIER_COMPLETE: Diretorio {target_dir} inexistente.")
         sys.exit(1)

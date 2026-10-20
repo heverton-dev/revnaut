@@ -61,6 +61,12 @@ def get_conversation_messages(chat_id: str) -> List[Dict[str, Any]]:
 def send_message(conversation_id: str, text: str) -> Dict[str, Any]:
     conn = get_connection()
     cur = conn.cursor()
+    cur.execute("SELECT id FROM conversations WHERE id = ?", (conversation_id,))
+    if not cur.fetchone():
+        cur.execute("""
+            INSERT OR IGNORE INTO conversations (id, account_id, contact_name, company, channel)
+            VALUES (?, '0f14ffff', 'Contato Notificado', 'Clínica Odontológica', 'whatsapp')
+        """, (conversation_id,))
     cur.execute("""
         INSERT INTO messages (conversation_id, sender, text)
         VALUES (?, 'user', ?)

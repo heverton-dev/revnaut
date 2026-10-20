@@ -37,6 +37,7 @@ import {
   Truck,
   Package,
   FileDown,
+  BadgeCheck,
 } from "lucide-react";
 import { LiveKitDealRoomModal } from "@/features/communications/LiveKitDealRoomModal";
 import { GranolaCopilotCard } from "@/features/deals/components/GranolaCopilotCard";
@@ -478,6 +479,41 @@ export const DealsWorkspace: React.FC<DealsWorkspaceProps> = ({ currentUserId })
     }
   };
 
+  // TICKET-DEALS-01: Aprovação Rápida de Desconto
+  const handleQuickApproveDiscount = async (targetDealId?: string) => {
+    const dealId = targetDealId || selectedDeal?.id;
+    if (!dealId) return;
+    setSavingDrawer(true);
+    setDealActionError(null);
+    try {
+      const res = await fetch("/api/v1/deals/catalog/approve-discount", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          request_id: `disc-req-${dealId}`,
+          approver_user_id: userId || "usr_dir_comercial",
+          account_id: "0f14ffff",
+        }),
+      });
+      if (!res.ok) {
+        const resCredit = await fetch(`/api/v1/deals/${dealId}/approve-credit`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "X-User-Id": userId },
+        });
+        if (!resCredit.ok) throw new Error("Falha ao aprovar desconto no catálogo.");
+      }
+      setDealActionFeedback("Aprovação rápida de desconto/crédito homologada com sucesso (1-Clique)!");
+      await dealsQuery.refetch();
+      if (selectedDeal?.id === dealId) {
+        await loadDealTimeline(dealId);
+      }
+    } catch (err: any) {
+      setDealActionError(err.message || "Erro na aprovação rápida de desconto.");
+    } finally {
+      setSavingDrawer(false);
+    }
+  };
+
   const handleToggleTask = async (task: TaskItem) => {
     try {
       const nextCompleted = !Boolean(task.completed);
@@ -544,6 +580,47 @@ export const DealsWorkspace: React.FC<DealsWorkspaceProps> = ({ currentUserId })
     { id: 105, name: "Fechado & Ganho (Consignado)" },
   ];
 
+  // TICKET-DEALS-02: Reordenação dinâmica de estágios no Kanban
+  const [customStageOrder, setCustomStageOrder] = React.useState<number[]>([]);
+
+  React.useEffect(() => {
+    if (rawStages.length > 0 && customStageOrder.length === 0) {
+      setCustomStageOrder(rawStages.map((s) => Number(s.id)));
+    }
+  }, [rawStages, customStageOrder.length]);
+
+  const orderedStages = React.useMemo(() => {
+    if (customStageOrder.length === 0) return rawStages;
+    return [...rawStages].sort((a, b) => {
+      const idxA = customStageOrder.indexOf(Number(a.id));
+      const idxB = customStageOrder.indexOf(Number(b.id));
+      if (idxA === -1 && idxB === -1) return 0;
+      if (idxA === -1) return 1;
+      if (idxB === -1) return -1;
+      return idxA - idxB;
+    });
+  }, [rawStages, customStageOrder]);
+
+  const handleReorderStage = (stageId: string | number, direction: "left" | "right") => {
+    const numId = Number(stageId);
+    const current = customStageOrder.length > 0 ? [...customStageOrder] : rawStages.map((s) => Number(s.id));
+    const idx = current.indexOf(numId);
+    if (idx === -1) return;
+    if (direction === "left" && idx > 0) {
+      const temp = current[idx - 1];
+      current[idx - 1] = current[idx];
+      current[idx] = temp;
+      setCustomStageOrder(current);
+      setDealActionFeedback(`Estágio movido para a esquerda.`);
+    } else if (direction === "right" && idx < current.length - 1) {
+      const temp = current[idx + 1];
+      current[idx + 1] = current[idx];
+      current[idx] = temp;
+      setCustomStageOrder(current);
+      setDealActionFeedback(`Estágio movido para a direita.`);
+    }
+  };
+
   const filteredDeals = React.useMemo(() => {
     let list = rawDeals;
     if (stageFilter) {
@@ -564,13 +641,13 @@ export const DealsWorkspace: React.FC<DealsWorkspaceProps> = ({ currentUserId })
   }, [rawDeals, searchTerm, stageFilter, rawStages]);
 
   const kanbanStages: KanbanStage<Deal>[] = React.useMemo(() => {
-    const stageList = rawStages.length > 0 ? rawStages : [{ id: 101, name: "Qualificação" }];
+    const stageList = orderedStages.length > 0 ? orderedStages : [{ id: 101, name: "Qualificação" }];
     return stageList.map((st) => ({
       id: st.id,
       name: st.name,
       items: filteredDeals.filter((d) => Number(d.stage_id) === Number(st.id)),
     }));
-  }, [rawStages, filteredDeals]);
+  }, [orderedStages, filteredDeals]);
 
   const stageNameMap = React.useMemo(() => {
     const map: Record<number, string> = {};
@@ -710,6 +787,23 @@ export const DealsWorkspace: React.FC<DealsWorkspaceProps> = ({ currentUserId })
             ]}
             className="md:w-56"
           />
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              const pendingDeal = rawDeals.find((d) => !Boolean((d as any).credit_approved) || d.stage_id === 103) || rawDeals[0];
+              if (pendingDeal) {
+                handleQuickApproveDiscount(String(pendingDeal.id));
+              } else {
+                setDealActionFeedback("Nenhum deal pendente de aprovação no momento.");
+              }
+            }}
+            disabled={savingDrawer}
+            className="gap-1.5 shrink-0"
+          >
+            <BadgeCheck className="h-3.5 w-3.5 text-status-success" />
+            Aprovação Rápida de Desconto
+          </Button>
           <div className="flex gap-1">
             <Button
               variant={viewMode === "table" ? "default" : "outline"}
@@ -751,6 +845,7 @@ export const DealsWorkspace: React.FC<DealsWorkspaceProps> = ({ currentUserId })
           <KanbanBoard
             stages={kanbanStages}
             onCardClick={handleOpenDealDrawer}
+            onReorderStage={handleReorderStage}
             renderCard={(deal) => (
               <div className="space-y-1">
                 <div className="font-medium text-text-main text-xs truncate">{deal.title}</div>
@@ -831,6 +926,17 @@ export const DealsWorkspace: React.FC<DealsWorkspaceProps> = ({ currentUserId })
                   onChange={(e) => handleMoveStage(e.target.value)}
                   options={rawStages.map((s) => ({ value: String(s.id), label: s.name }))}
                 />
+                <Button
+                  type="button"
+                  variant="default"
+                  size="sm"
+                  onClick={() => handleQuickApproveDiscount()}
+                  disabled={savingDrawer}
+                  className="w-full gap-1.5"
+                >
+                  <BadgeCheck className="h-4 w-4" />
+                  Aprovação Rápida de Desconto (1-Clique)
+                </Button>
                 <Button
                   type="button"
                   variant="secondary"

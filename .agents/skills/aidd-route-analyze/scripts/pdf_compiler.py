@@ -4,6 +4,7 @@ Compilador Corporativo de PDF para aidd-route-analyze.
 Unifica os 8 artefatos Markdown do dossie em um documento diagramado em PDF via Playwright Chromium.
 Garante conformidade com Lei #14 (Zero Emojis), tipografia refinada e layout editorial A4.
 """
+import os
 import sys
 import json
 from pathlib import Path
@@ -210,7 +211,8 @@ hr {
 """
 
 def compile_pdf(slug: str) -> Path:
-    target_dir = Path("docs/auditorias_rotas") / slug
+    base_dir = os.environ.get("AUDIT_BASE_DIR", "docs/auditorias_rotas")
+    target_dir = Path(base_dir) / slug
     if not target_dir.exists():
         print(f"[FAIL] Diretorio do dossie {target_dir} inexistente.")
         sys.exit(1)

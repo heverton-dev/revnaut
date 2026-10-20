@@ -4,11 +4,13 @@ Gate G_PDF_GENERATED:
 Valida se o relatorio PDF corporativo foi compilado e possui tamanho compativel (> 50KB).
 Retorna exit 0 se aprovado, exit 1 se ausente ou corrompido.
 """
+import os
 import sys
 from pathlib import Path
 
 def check_pdf(slug: str):
-    target_dir = Path("docs/auditorias_rotas") / slug
+    base_dir = os.environ.get("AUDIT_BASE_DIR", "docs/auditorias_rotas")
+    target_dir = Path(base_dir) / slug
     pdf_path = target_dir / f"RELATORIO_AUDITORIA_{slug}.pdf"
 
     if not pdf_path.exists():

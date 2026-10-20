@@ -52,6 +52,14 @@ def list_agreements(account_id: str = "0f14ffff"):
     return service.list_partner_agreements(account_id=account_id)
 
 
+@router.post("/agreements/{agreement_id}/renew", response_model=PartnerAgreementOut, summary="Renovação Automática de Termo de Consignação (+30 dias) - TICKET-KEY-02")
+def renew_agreement(agreement_id: str, account_id: str = "0f14ffff"):
+    try:
+        return service.renew_partner_agreement(agreement_id=agreement_id, days_extension=30, account_id=account_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
 @router.post("/kits", response_model=ConsignmentKitOut, status_code=status.HTTP_201_CREATED, summary="Cadastrar novo kit cirúrgico/protético seriadocom QR Code")
 def register_kit(payload: ConsignmentKitCreate):
     return service.register_consignment_kit(

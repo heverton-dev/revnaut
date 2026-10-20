@@ -1,7 +1,32 @@
-# Tasks — Catálogo Completo de Rotas, Sub-rotas e Abas para Auditoria
+# Tasks — Catálogo Completo de Rotas, Sub-rotas e Abas para Auditoria (V1)
 
 > **Padrão de Execução:** Orquestrador Filarmônico `aidd-route-analyze`  
-> **Status:** `[X]` Concluído | `[ ]` Pendente
+> **Framework:** AIDD Canary v4.0 (Zero Stubs / Zero Emojis / Lei #14)  
+> **Status:** `[X]` Concluído (17 de 17 rotas auditadas com Quality Gates verdes)
+
+---
+
+## Matriz Geral de Rastreabilidade
+
+| Código | Rota Hashbang | Título Visual | Fatias Backend | Componente React | Status |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **TASK-ROUTE-01** | `#!/dashboard` | Visão do Dia (Cockpit Executivo) | `metrics`, `intelligence` | `ExecutiveCockpitView.tsx` | `[X] APROVADO` |
+| **TASK-ROUTE-02** | `#!/deals` | Negociações & Funil Comercial | `deals`, `pipelines` | `DealsWorkspace.tsx` | `[X] APROVADO` |
+| **TASK-ROUTE-03** | `#!/contacts` | Dentistas e Clínicas (CRM Cirúrgico) | `contacts`, `institutions` | `ContactsCrmWorkspace.tsx` | `[X] APROVADO` |
+| **TASK-ROUTE-04** | `#!/scoring` | Qualificação de Clientes (ICP Scoring) | `scoring`, `intelligence` | `IcpScoringDashboard.tsx` | `[X] APROVADO` |
+| **TASK-ROUTE-05** | `#!/marketing` | Campanhas e Indicações (Growth) | `campaigns`, `omnichannel` | `LandingPageBuilder.tsx` | `[X] APROVADO` |
+| **TASK-ROUTE-06** | `#!/omnichannel` | Atendimento Clínico WhatsApp | `omnichannel`, `communications`| `OmnichannelWorkspace.tsx` | `[X] APROVADO` |
+| **TASK-ROUTE-07** | `#!/keypartners` | Malas em Consignação (Giro CFOP) | `keypartners`, `inventory` | `ConsignmentSurgicalBoard.tsx` | `[X] APROVADO` |
+| **TASK-ROUTE-08** | `#!/dentgo` | Entregas Expressas (Same-Day) | `dentgo`, `dispatch` | `DentgoExpressCockpit.tsx` | `[X] APROVADO` |
+| **TASK-ROUTE-09** | `#!/video_sos` | Chamadas e Vídeo SOS Mesa Cirúrgica | `communications`, `livekit` | `LiveKitDealRoomModal.tsx` | `[X] APROVADO` |
+| **TASK-ROUTE-10** | `#!/contracts` | Propostas e Contratos Documenso | `contracts`, `documenso` | `ContractsDocumensoWorkspace.tsx`| `[X] APROVADO` |
+| **TASK-ROUTE-11** | `#!/imaging` | Exames 3D e Tomografias DICOM/STL | `imaging`, `orthanc` | `DicomStl3DViewer.tsx` | `[X] APROVADO` |
+| **TASK-ROUTE-12** | `#!/support` | Suporte Clínico, RMA & Tecnovigilância| `support`, `anvisa` | `SupportAnvisaWorkspace.tsx` | `[X] APROVADO` |
+| **TASK-ROUTE-13** | `#!/intelligence`| Assistente Comercial & RAG Clínico | `intelligence`, `rag` | `IntelligenceSuiteWorkspace.tsx` | `[X] APROVADO` |
+| **TASK-ROUTE-14** | `#!/analytics` | Relatórios BI & Text-to-SQL AST | `analytics`, `bi` | `SupersetEmbeddedDashboard.tsx` | `[X] APROVADO` |
+| **TASK-ROUTE-15** | `#!/scheduling` | Reativação de Pacientes Cal.com | `scheduling`, `calcom` | `CalcomReactivationWorkspace.tsx`| `[X] APROVADO` |
+| **TASK-ROUTE-16** | `#!/rbac` | Equipes, Metas & Comissionamento | `rbac`, `hierarchy` | `RbacHierarchyTree.tsx` | `[X] APROVADO` |
+| **TASK-ROUTE-17** | `#!/settings` | Configurações, Vault & Conexão TOTVS| `settings`, `integrations` | `CredentialsVaultPage.tsx` | `[X] APROVADO` |
 
 ---
 

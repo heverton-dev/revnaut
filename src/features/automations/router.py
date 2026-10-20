@@ -246,10 +246,17 @@ def create_calcom_reactivation_schedule(payload: CalcomScheduleReactivationReque
     status_code=status.HTTP_200_OK,
     summary="Varredura ativa e disparo WhatsApp de réguas de reativação vencidas"
 )
-def scan_and_dispatch_calcom_reactivations(payload: CalcomScanDispatchesRequest):
+@router.post(
+    "/calcom/trigger-scan",
+    response_model=CalcomScanDispatchesResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Disparo sob demanda de varredura e reagendamento prioritário Cal.com - TICKET-SCH-02"
+)
+def scan_and_dispatch_calcom_reactivations(payload: Optional[CalcomScanDispatchesRequest] = None):
+    req = payload or CalcomScanDispatchesRequest()
     result = calcom_reactivation.scan_and_dispatch_due_reactivations(
-        reference_date=payload.reference_date,
-        account_id=payload.account_id or "0f14ffff"
+        reference_date=req.reference_date,
+        account_id=req.account_id or "0f14ffff"
     )
     return CalcomScanDispatchesResponse(**result)
 

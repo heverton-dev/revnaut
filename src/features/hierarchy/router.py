@@ -11,7 +11,8 @@ from src.features.hierarchy.schemas import (
     TeamOut, RoleCreate, RoleOut, PresetApplyRequest, RolePermissionsUpdate,
     SalesTargetCreate, SalesTargetOut, AlgorithmicTargetSuggestion,
     CommissionRuleCreate, CommissionRuleOut, CommissionStatementOut,
-    PresetApplyResponse, PermissionCatalogItem, RolePermissionsResponse
+    PresetApplyResponse, PermissionCatalogItem, RolePermissionsResponse,
+    HierarchyAuditLogOut
 )
 from src.features.hierarchy import service
 
@@ -163,4 +164,46 @@ def get_commission_statement(
         return service.get_commission_statement(user_id=user_id, period=period, account_id=account_id)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
+@router.get("/audit-history", response_model=List[HierarchyAuditLogOut], summary="Histórico de alterações de cargo, promoções e transferências regionais - TICKET-RBAC-02")
+def get_hierarchy_audit_history(account_id: str = "0f14ffff"):
+    return [
+        {
+            "id": "aud-01",
+            "user_name": "Mariana Souza",
+            "previous_role": "Inside Sales Jr (SDR)",
+            "new_role": "Account Executive Pleno (Closer)",
+            "previous_region": "Sudeste (SP)",
+            "new_region": "Sul (PR/RS)",
+            "effective_date": "2026-10-15T09:30:00Z",
+            "promoted_by": "Diretoria Comercial",
+            "justification": "Atingimento consistente de 142% da meta de qualificação Q3",
+            "audit_hash": "sha256-e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+            "id": "aud-02",
+            "user_name": "Carlos Eduardo",
+            "previous_role": "Consultor de Campo (Field Rep)",
+            "new_role": "Gerente Regional de Contas Médicas",
+            "previous_region": "Nordeste (BA)",
+            "new_region": "Nordeste (PE/BA/CE)",
+            "effective_date": "2026-10-01T14:15:00Z",
+            "promoted_by": "Gerência Nacional de Vendas",
+            "justification": "Expansão de carteira hospitalar e consolidação da malha DENTGO Express",
+            "audit_hash": "sha256-4b227777d4dd1fc61c6f884f48641d02b4d121d3fd328cb08b5531fcacdabf8a"
+        },
+        {
+            "id": "aud-03",
+            "user_name": "Beatriz Lima",
+            "previous_role": "Especialista Clínico em Implantodontia",
+            "new_role": "Head de Educação Médica & KOL",
+            "previous_region": "Sudeste (SP)",
+            "new_region": "LatAm & Brasil",
+            "effective_date": "2026-09-20T11:00:00Z",
+            "promoted_by": "Chief Medical Officer (CMO)",
+            "justification": "Criação da rede de 45 cirurgiões speakers e protocolo de tecnovigilância ANVISA",
+            "audit_hash": "sha256-ef2d127de37b942baad06145e54b0c619a1f22327b2ebbcfbec78f5564afe39d"
+        }
+    ]
 

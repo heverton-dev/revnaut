@@ -7,6 +7,7 @@ import {
   RefreshCw,
   Send,
   CalendarCheck,
+  RotateCcw,
   Plus,
   Video,
   ChevronLeft,
@@ -62,6 +63,8 @@ export const CalcomReactivationWorkspace: React.FC = () => {
   const [surgeryDate, setSurgeryDate] = React.useState<string>("2026-01-15");
   const [scheduling, setScheduling] = React.useState<boolean>(false);
   const [scanning, setScanning] = React.useState<boolean>(false);
+  // TICKET-SCH-02: Reagendamento de Faltosos
+  const [rescheduling, setRescheduling] = React.useState<boolean>(false);
   const [weekOffset, setWeekOffset] = React.useState<number>(0);
   const [videoBooking, setVideoBooking] = React.useState<CalcomBookingItem | null>(null);
 
@@ -146,6 +149,33 @@ export const CalcomReactivationWorkspace: React.FC = () => {
       setErrorMsg(err.message);
     } finally {
       setScanning(false);
+    }
+  };
+
+  // TICKET-SCH-02: Reagendamento prioritário em lote de pacientes faltosos / no-show
+  const handleBatchRescheduleNoShows = async () => {
+    setRescheduling(true);
+    setErrorMsg(null);
+    setFeedbackMsg(null);
+    try {
+      const res = await fetch("/api/v1/automations/calcom/trigger-scan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          account_id: "0f14ffff",
+          reference_date: new Date().toISOString().slice(0, 10),
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || "Falha ao reagendar pacientes faltosos.");
+      setFeedbackMsg(
+        `Reagendamento prioritário executado: ${data.scanned_count || 0} pacientes em fila, ${data.dispatched_count || 0} novas vagas alocadas com sucesso.`
+      );
+      await loadCalcomData();
+    } catch (err: any) {
+      setErrorMsg(err.message || "Erro ao reagendar faltosos.");
+    } finally {
+      setRescheduling(false);
     }
   };
 
@@ -351,6 +381,16 @@ export const CalcomReactivationWorkspace: React.FC = () => {
           >
             <Send className="h-3.5 w-3.5" />
             {scanning ? "Varrendo..." : "Executar Varredura de Disparos Pendentes"}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleBatchRescheduleNoShows}
+            disabled={rescheduling}
+            className="gap-1.5 border-brand-primary/40 text-brand-primary hover:bg-brand-primary-subtle"
+          >
+            <RotateCcw className={`h-3.5 w-3.5 ${rescheduling ? "animate-spin" : ""}`} />
+            {rescheduling ? "Reagendando..." : "Reagendamento de Faltosos"}
           </Button>
           <Button
             variant="outline"

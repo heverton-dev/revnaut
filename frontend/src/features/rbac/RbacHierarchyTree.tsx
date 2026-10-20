@@ -12,6 +12,7 @@ import {
   Sliders,
   Download,
   Lock,
+  History,
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
@@ -34,6 +35,19 @@ export interface Team {
   name: string;
   leader_id?: string | null;
   created_at?: string;
+}
+
+export interface HierarchyAuditLogItem {
+  id: string;
+  action: string;
+  entity_type: string;
+  entity_name: string;
+  actor_id: string;
+  actor_name: string;
+  old_value?: string | null;
+  new_value?: string | null;
+  details?: string | null;
+  timestamp: string;
 }
 
 export interface RoleItem {
@@ -138,6 +152,25 @@ export function RbacHierarchyTree({
   const [newRoleDesc, setNewRoleDesc] = React.useState<string>("");
   const [newRoleScope, setNewRoleScope] = React.useState<string>("self");
   const [showRoleModal, setShowRoleModal] = React.useState<boolean>(false);
+  // TICKET-RBAC-02: Histórico de Alterações de Cargo
+  const [showAuditModal, setShowAuditModal] = React.useState<boolean>(false);
+  const [auditLogs, setAuditLogs] = React.useState<HierarchyAuditLogItem[]>([]);
+  const [loadingAudit, setLoadingAudit] = React.useState<boolean>(false);
+
+  const fetchAuditHistory = async () => {
+    setLoadingAudit(true);
+    try {
+      const res = await fetch("/api/v1/hierarchy/audit-history");
+      if (res.ok) {
+        const data = await res.json();
+        setAuditLogs(Array.isArray(data) ? data : []);
+      }
+    } catch {
+      // Silencioso
+    } finally {
+      setLoadingAudit(false);
+    }
+  };
 
   // ==========================================
   // TAB 3: METAS COMERCIAIS & SUGESTÃO PREDITIVA
@@ -495,6 +528,20 @@ export function RbacHierarchyTree({
             Estrutura de equipes e unidades de negócio, metas de vendas e comissionamento.
           </p>
         </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setShowAuditModal(true);
+              fetchAuditHistory();
+            }}
+            className="gap-1.5 text-xs border-brand-primary/40 text-brand-primary hover:bg-brand-primary-subtle"
+          >
+            <History className="h-3.5 w-3.5" />
+            Histórico de Alterações de Cargo
+          </Button>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -822,6 +869,87 @@ export function RbacHierarchyTree({
               </div>
             </Card>
           </div>
+
+          {/* TICKET-RBAC-02: Modal Histórico de Alterações de Cargo */}
+          {showAuditModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+              <div className="bg-surface-card border border-border rounded-xl p-5 max-w-2xl w-full space-y-4 shadow-2xl max-h-[85vh] flex flex-col">
+                <div className="flex items-center justify-between border-b border-border pb-3">
+                  <div className="flex items-center gap-2">
+                    <History className="h-4 w-4 text-brand-primary" />
+                    <div>
+                      <h3 className="text-sm font-bold text-text-main">
+                        Histórico de Alterações de Cargo e Transferências Regionais
+                      </h3>
+                      <p className="text-[11px] text-text-secondary">
+                        Trilha auditável imutável de promoções, reclassificações de alçada e movimentações de equipes
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowAuditModal(false)}
+                    className="h-7 w-7 p-0 text-text-muted hover:text-text-main"
+                  >
+                    X
+                  </Button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+                  {loadingAudit ? (
+                    <div className="py-8 text-center text-xs text-text-secondary">
+                      Carregando histórico de auditoria...
+                    </div>
+                  ) : auditLogs.length === 0 ? (
+                    <div className="py-8 text-center text-xs text-text-secondary">
+                      Nenhum evento de alteração de cargo ou transferência registrado no histórico.
+                    </div>
+                  ) : (
+                    auditLogs.map((log) => (
+                      <div key={log.id} className="p-3 rounded-lg border border-border bg-surface-bg space-y-1.5 text-xs">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Badge
+                              variant={log.action === "PROMOTION" ? "success" : log.action === "REGIONAL_TRANSFER" ? "warning" : "outline"}
+                              className="text-[10px] font-mono uppercase"
+                            >
+                              {log.action}
+                            </Badge>
+                            <span className="font-semibold text-text-main">{log.entity_name}</span>
+                            <span className="text-[10px] font-mono text-text-muted">({log.entity_type})</span>
+                          </div>
+                          <span className="text-[10px] font-mono text-text-secondary">
+                            {new Date(log.timestamp).toLocaleString("pt-BR")}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-[11px] font-mono">
+                          <span className="text-text-muted">{log.old_value || "(vazio)"}</span>
+                          <span className="text-brand-primary font-bold">-&gt;</span>
+                          <span className="text-text-main font-semibold">{log.new_value || "(vazio)"}</span>
+                        </div>
+                        {log.details && (
+                          <p className="text-[11px] text-text-secondary">{log.details}</p>
+                        )}
+                        <div className="text-[10px] text-text-muted pt-1 border-t border-border/50">
+                          Operado por: <span className="font-medium text-text-main">{log.actor_name}</span> ({log.actor_id})
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <div className="flex justify-between items-center border-t border-border pt-3">
+                  <Button variant="outline" size="sm" onClick={fetchAuditHistory} disabled={loadingAudit} className="text-xs">
+                    Atualizar Trilha
+                  </Button>
+                  <Button variant="secondary" size="sm" onClick={() => setShowAuditModal(false)} className="text-xs">
+                    Fechar
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Modal Criar Cargo */}
           {showRoleModal && (

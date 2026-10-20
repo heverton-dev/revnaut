@@ -1,4 +1,5 @@
 import * as React from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "./Skeleton";
 import { EmptyState } from "./EmptyState";
@@ -15,6 +16,7 @@ export interface KanbanBoardProps<T> {
   renderCard: (item: T) => React.ReactNode;
   isLoading?: boolean;
   onCardClick?: (item: T) => void;
+  onReorderStage?: (stageId: string | number, direction: "left" | "right") => void;
   className?: string;
 }
 
@@ -23,6 +25,7 @@ export function KanbanBoard<T extends { id: string | number }>({
   renderCard,
   isLoading = false,
   onCardClick,
+  onReorderStage,
   className,
 }: KanbanBoardProps<T>) {
   if (isLoading) {
@@ -60,9 +63,39 @@ export function KanbanBoard<T extends { id: string | number }>({
                 {stage.name}
               </span>
             </div>
-            <span className="text-xs font-medium text-text-muted bg-surface-card border border-border px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap">
-              {stage.items.length}
-            </span>
+            <div className="flex items-center gap-1">
+              {onReorderStage && (
+                <div className="flex items-center gap-0.5">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onReorderStage(stage.id, "left");
+                    }}
+                    aria-label={`Mover ${stage.name} para a esquerda`}
+                    title="Mover para esquerda"
+                    className="p-1 rounded text-text-muted hover:text-text-main hover:bg-surface-card transition-colors"
+                  >
+                    <ChevronLeft className="h-3 w-3" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onReorderStage(stage.id, "right");
+                    }}
+                    aria-label={`Mover ${stage.name} para a direita`}
+                    title="Mover para direita"
+                    className="p-1 rounded text-text-muted hover:text-text-main hover:bg-surface-card transition-colors"
+                  >
+                    <ChevronRight className="h-3 w-3" />
+                  </button>
+                </div>
+              )}
+              <span className="text-xs font-medium text-text-muted bg-surface-card border border-border px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap">
+                {stage.items.length}
+              </span>
+            </div>
           </div>
 
           <div className="flex flex-col gap-2.5 overflow-y-auto flex-1 pr-1">

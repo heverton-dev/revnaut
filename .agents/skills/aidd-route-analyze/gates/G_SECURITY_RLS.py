@@ -4,11 +4,13 @@ Gate G_SECURITY_RLS:
 Valida se a auditoria de seguranca da rota atesta conformidade com isolamento de tenant
 ou gerou micro-tickets bloqueantes explicitos sem deixar pontas soltas.
 """
+import os
 import sys
 from pathlib import Path
 
 def check_security(slug: str):
-    sec_file = Path("docs/auditorias_rotas") / slug / "04_cyber_seguranca_e_rls.md"
+    base_dir = os.environ.get("AUDIT_BASE_DIR", "docs/auditorias_rotas")
+    sec_file = Path(base_dir) / slug / "04_cyber_seguranca_e_rls.md"
     if not sec_file.exists():
         print(f"[FAIL] G_SECURITY_RLS: Arquivo {sec_file} inexistente.")
         sys.exit(1)

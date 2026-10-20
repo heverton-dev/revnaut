@@ -694,6 +694,7 @@ export interface WebhookDeliveryLog {
 
 export const API_V1_ROUTES = [
   '/api/v1/auth/credentials',
+  '/api/v1/auth/credentials/audit-logs',
   '/api/v1/auth/credentials/{credential_id}',
   '/api/v1/auth/forgot-password',
   '/api/v1/auth/login',
@@ -705,6 +706,7 @@ export const API_V1_ROUTES = [
   '/api/v1/auth/users/{user_id}/status',
   '/api/v1/automations/calcom/bookings',
   '/api/v1/automations/calcom/scan-dispatches',
+  '/api/v1/automations/calcom/trigger-scan',
   '/api/v1/automations/calcom/schedule-reactivation',
   '/api/v1/automations/calcom/schedules',
   '/api/v1/automations/calcom/webhook',
@@ -778,6 +780,7 @@ export const API_V1_ROUTES = [
   '/api/v1/dentgo/orders/{order_id}/verify-delivery',
   '/api/v1/dentgo/splits',
   '/api/v1/health',
+  '/api/v1/hierarchy/audit-history',
   '/api/v1/hierarchy/business-units',
   '/api/v1/hierarchy/catalog',
   '/api/v1/hierarchy/commissions/rules',
@@ -832,6 +835,7 @@ export const API_V1_ROUTES = [
   '/api/v1/keypartners/agreements/{agreement_id}/custody-summary',
   '/api/v1/keypartners/agreements/{agreement_id}/dispatch',
   '/api/v1/keypartners/agreements/{agreement_id}/dispatch-custody',
+  '/api/v1/keypartners/agreements/{agreement_id}/renew',
   '/api/v1/keypartners/consignments/{kit_serial}/trigger-dentgo-pickup',
   '/api/v1/keypartners/kits',
   '/api/v1/keypartners/kol-contracts',
