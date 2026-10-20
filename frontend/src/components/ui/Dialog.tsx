@@ -25,9 +25,9 @@ export function Dialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
+      {/* Backdrop com desfoque e esmaecimento estritos (Regra Global de Foco & UX) */}
       <div
-        className="fixed inset-0 bg-text-main/50 backdrop-blur-xs transition-opacity"
+        className="fixed inset-0 bg-text-main/60 backdrop-blur-sm transition-all duration-200"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -58,7 +58,7 @@ export function Dialog({
         <div className="py-4 text-sm text-text-main">{children}</div>
 
         {footer && (
-          <div className="flex items-center justify-end gap-3 pt-3 border-t border-border-subtle">
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-border-subtle">
             {footer}
           </div>
         )}

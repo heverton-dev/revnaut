@@ -22,6 +22,8 @@ const badgeVariants = cva(
   }
 );
 
+export type BadgeVariant = VariantProps<typeof badgeVariants>["variant"];
+
 export interface BadgeProps
   extends React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof badgeVariants> {}
@@ -29,4 +31,3 @@ export interface BadgeProps
 export function Badge({ className, variant, ...props }: BadgeProps) {
   return <div data-badge="true" className={cn(badgeVariants({ variant }), className)} {...props} />;
 }
-

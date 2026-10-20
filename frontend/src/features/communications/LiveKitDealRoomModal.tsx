@@ -546,7 +546,18 @@ export const LiveKitDealRoomModal: React.FC<LiveKitDealRoomModalProps> = ({
     setAudioLevel(0);
   };
 
-  // Modo Tela Cheia
+  // Sincronização e Modo Tela Cheia
+  useEffect(() => {
+    const handleFsChange = () => {
+      const isDocFs = Boolean(document.fullscreenElement);
+      setIsFullscreen(isDocFs);
+    };
+    document.addEventListener("fullscreenchange", handleFsChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFsChange);
+    };
+  }, []);
+
   const toggleFullscreen = () => {
     if (!isFullscreen) {
       if (modalContainerRef.current?.requestFullscreen) {
@@ -891,16 +902,18 @@ export const LiveKitDealRoomModal: React.FC<LiveKitDealRoomModalProps> = ({
     <div
       ref={modalContainerRef}
       className={
-        inline
+        isFullscreen
+          ? "fixed inset-0 w-screen h-screen z-50 bg-surface-card flex flex-col p-3 sm:p-5 text-text-main overflow-y-auto"
+          : inline
           ? "w-full rounded-2xl bg-surface-card border border-border p-5 text-text-main"
-          : isFullscreen
-          ? "fixed inset-0 w-screen h-screen z-50 bg-surface-card flex flex-col p-4 text-text-main"
           : "fixed inset-0 z-50 flex items-center justify-center bg-text-main/70 backdrop-blur-sm p-4 overflow-y-auto"
       }
     >
       <div
         className={
-          inline || isFullscreen
+          isFullscreen
+            ? "flex-1 flex flex-col w-full h-full min-h-0"
+            : inline
             ? "flex-1 flex flex-col w-full h-full"
             : "w-full max-w-5xl rounded-2xl bg-surface-card border border-border p-5 shadow-card text-text-main flex flex-col max-h-[95vh]"
         }
@@ -929,18 +942,22 @@ export const LiveKitDealRoomModal: React.FC<LiveKitDealRoomModalProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0 min-w-0">
             {(Array.isArray(deals) ? deals : []).length > 0 && (
               <select
                 value={selectedDealId}
                 onChange={(e) => setSelectedDealId(e.target.value)}
-                className="px-2.5 py-1.5 rounded-lg border border-border bg-surface-bg text-xs font-mono text-text-main"
+                className="px-2.5 py-1.5 rounded-lg border border-border bg-surface-bg text-xs font-mono text-text-main w-full max-w-[200px] sm:max-w-[280px] md:max-w-[340px] truncate"
+                aria-label="Selecionar negociação cirúrgica"
               >
-                {(Array.isArray(deals) ? deals : []).map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.id} - {d.title} ({d.contact_name || "Cirurgiao"})
-                  </option>
-                ))}
+                {(Array.isArray(deals) ? deals : []).map((d) => {
+                  const shortTitle = d.title && d.title.length > 30 ? `${d.title.slice(0, 28)}...` : d.title || "Negociação";
+                  return (
+                    <option key={d.id} value={d.id} title={`${d.id} - ${d.title} (${d.contact_name || "Cirurgião"})`}>
+                      {d.id} • {shortTitle}
+                    </option>
+                  );
+                })}
               </select>
             )}
 
@@ -1201,9 +1218,9 @@ export const LiveKitDealRoomModal: React.FC<LiveKitDealRoomModalProps> = ({
                   )}
                 </div>
 
-                {/* Barra Inferior de Controles WebRTC */}
+                {/* Barra Inferior de Controles WebRTC (Sempre visível no modo tela cheia) */}
                 {isConnected && (
-                  <div className="mt-2.5 flex items-center justify-between bg-surface-bg p-2 rounded-xl border border-border">
+                  <div className="mt-2.5 flex flex-wrap items-center justify-between bg-surface-bg p-2 rounded-xl border border-border gap-2 shrink-0 z-30">
                     <div className="flex items-center gap-1.5">
                       <button
                         onClick={toggleMic}

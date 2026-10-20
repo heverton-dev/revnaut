@@ -67,8 +67,14 @@
   --color-scrollbar-track: transparent;
 }
 
-body {
+html,
+body,
+#root {
+  height: 100%;
+  max-height: 100vh;
   margin: 0;
+  padding: 0;
+  overflow: hidden;
   font-family: var(--font-family-sans);
   background-color: var(--color-surface-bg);
   color: var(--color-text-main);

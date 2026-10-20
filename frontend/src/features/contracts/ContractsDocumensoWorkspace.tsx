@@ -10,7 +10,6 @@ import {
   Package,
   RefreshCw,
   Eye,
-  PenLine,
   Plus,
   Trash2,
   X,
@@ -23,6 +22,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Tabs } from "@/components/ui/Tabs";
+import { RouteHeader } from "@/components/ui/RouteHeader";
 import { DataTable, Column } from "@/components/ui/DataTable";
 import { R2DirectUploader } from "@/components/shared/R2DirectUploader";
 
@@ -688,28 +688,23 @@ export const ContractsDocumensoWorkspace: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-text-main">
-            Propostas e Contratos com Assinatura Digital
-          </h1>
-          <p className="text-xs sm:text-sm text-text-secondary mt-1">
-            Emissão de propostas comerciais e contratos com assinatura digital, catálogo de produtos e custódia segura de arquivos.
-          </p>
-        </div>
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => {
-            loadInitialData();
-            loadDealContracts(selectedDealId);
-          }}
-          className="gap-1.5 self-start sm:self-auto"
-        >
-          <RefreshCw className="h-3.5 w-3.5" />
-          Sincronizar Central
-        </Button>
-      </div>
+      <RouteHeader
+        title="Propostas e Contratos com Assinatura Digital"
+        description="Emissão de propostas comerciais e contratos com assinatura digital, catálogo de produtos e custódia segura de arquivos."
+        actions={[
+          {
+            id: "sync",
+            label: "Sincronizar",
+            variant: "outline",
+            icon: <RefreshCw className="h-3.5 w-3.5" />,
+            onClick: () => {
+              loadInitialData();
+              loadDealContracts(selectedDealId);
+            },
+            title: "Sincronizar Central de Contratos",
+          },
+        ]}
+      />
 
       {feedbackMsg && (
         <div className="p-3 rounded-lg bg-status-success-subtle border border-status-success/30 text-xs text-status-success flex items-center justify-between">
@@ -847,38 +842,44 @@ export const ContractsDocumensoWorkspace: React.FC = () => {
                     return (
                       <div
                         key={c.id}
-                        className="p-4 rounded-lg border border-border bg-surface-bg/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                        className="p-3.5 rounded-xl border border-border bg-surface-card hover:border-brand-primary/30 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs"
                       >
-                        <div className="space-y-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold text-sm text-text-main truncate">
+                        <div className="space-y-1 min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-semibold text-xs sm:text-sm text-text-main truncate max-w-sm sm:max-w-md" title={c.title}>
                               {c.title}
                             </span>
-                            <Badge variant={isSigned ? "success" : "warning"}>
-                              {isSigned ? "ASSINADO DIGITALMENTE" : c.status}
+                            <Badge variant={isSigned ? "success" : "warning"} className="text-[10px]">
+                              {isSigned ? "Assinado" : c.status}
                             </Badge>
                           </div>
-                          <p className="text-xs text-text-secondary">
-                            Signatário: {c.signer_name || signerName} • Código:{" "}
-                            <code className="font-mono">{c.documenso_document_id || c.id}</code>
-                          </p>
+                          <div className="flex items-center gap-2 text-xs text-text-secondary flex-wrap">
+                            <span>Signatário: <strong className="text-text-main font-medium">{c.signer_name || signerName}</strong></span>
+                            <span>•</span>
+                            <span className="font-mono text-[11px] text-text-muted">Doc: {c.documenso_document_id || c.id}</span>
+                          </div>
                           {c.sha256_hash && (
-                            <p className="text-[11px] font-mono text-status-success break-all">
-                              Validação Digital: {c.sha256_hash.slice(0, 24)}...
+                            <p className="text-[11px] font-mono text-status-success truncate max-w-sm" title={c.sha256_hash}>
+                              SHA256: {c.sha256_hash.slice(0, 24)}...
                             </p>
                           )}
                         </div>
 
-                        <div className="flex flex-wrap gap-2 shrink-0">
+                        {/* Ações Padronizadas e Compactas do Contrato (Zero Transbordo) */}
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {/* Visualizar Minuta */}
                           <Button
                             size="sm"
-                            variant="secondary"
+                            variant="outline"
                             onClick={() => setPreviewContract(c)}
-                            className="gap-1.5"
+                            className="h-8 px-2.5 text-xs gap-1.5"
+                            title="Visualizar Minuta PDF"
                           >
                             <Eye className="h-3.5 w-3.5 text-brand-primary" />
-                            Visualizar Minuta PDF
+                            <span>Visualizar</span>
                           </Button>
+
+                          {/* Ação Primária de Destaque Laranja - Estritamente 1 Palavra */}
                           {!isSigned && (
                             <Button
                               size="sm"
@@ -887,58 +888,52 @@ export const ContractsDocumensoWorkspace: React.FC = () => {
                                 setInitialSignMode("icp_brasil");
                                 setSigningContract(c);
                               }}
-                              className="gap-1.5"
+                              className="h-8 px-3 text-xs font-semibold gap-1.5 shadow-sm"
+                              title="Assinar Contrato Digitalmente (ICP-Brasil ou Assinatura em Tela)"
                             >
                               <Award className="h-3.5 w-3.5" />
-                              Assinar com Certificado ICP-Brasil
+                              <span>Assinar</span>
                             </Button>
                           )}
-                          {!isSigned && (
-                            <Button
-                              size="sm"
-                              variant="secondary"
-                              onClick={() => {
-                                setInitialSignMode("canvas");
-                                setSigningContract(c);
-                              }}
-                              className="gap-1.5"
-                            >
-                              <PenLine className="h-3.5 w-3.5 text-brand-primary" />
-                              Assinar na Tela (Signature Pad)
-                            </Button>
-                          )}
+
+                          {/* Ações Complementares Compactas com Tooltip */}
                           {!isSigned && (
                             <Button
                               size="sm"
                               variant="outline"
                               disabled={remindingContractId === c.id}
                               onClick={() => handleSendWhatsAppReminder(c)}
-                              className="gap-1.5"
+                              className="h-8 w-8 p-0 flex items-center justify-center text-text-secondary hover:text-brand-primary shrink-0"
+                              title={remindingContractId === c.id ? "Enviando lembrete..." : "Enviar Lembrete por WhatsApp"}
+                              aria-label="Lembrete WhatsApp"
                             >
-                              <MessageSquare className="h-3.5 w-3.5 text-brand-primary" />
-                              {remindingContractId === c.id ? "Enviando..." : "Lembrete por WhatsApp"}
+                              <MessageSquare className="h-3.5 w-3.5" />
                             </Button>
                           )}
+
                           {!isSigned && (
                             <Button
                               size="sm"
-                              variant="secondary"
+                              variant="outline"
                               onClick={() => handleSimulateDocumensoWebhook(c)}
-                              className="gap-1.5"
+                              className="h-8 w-8 p-0 flex items-center justify-center text-text-secondary hover:text-status-success shrink-0"
+                              title="Simular Webhook de Assinatura Documenso"
+                              aria-label="Simular Webhook"
                             >
-                              <ShieldCheck className="h-3.5 w-3.5 text-status-success" />
-                              Simular Assinatura Digital
+                              <ShieldCheck className="h-3.5 w-3.5" />
                             </Button>
                           )}
+
                           {isSigned && (
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => handleRenewContract(c)}
-                              className="gap-1.5"
+                              className="h-8 px-2.5 text-xs gap-1.5 text-brand-navy"
+                              title="Renovar Vigência por mais 12 meses"
                             >
-                              <RefreshCw className="h-3.5 w-3.5 text-brand-navy" />
-                              Renovar Vigência (+12m)
+                              <RefreshCw className="h-3.5 w-3.5" />
+                              <span>Renovar</span>
                             </Button>
                           )}
                         </div>

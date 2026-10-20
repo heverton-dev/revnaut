@@ -38,7 +38,8 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
-import { Tabs } from "@/components/ui/Tabs";
+import { Tabs, RouteSubTabs } from "@/components/ui/Tabs";
+import { RouteHeader } from "@/components/ui/RouteHeader";
 import { Dialog } from "@/components/ui/Dialog";
 import { Sheet } from "@/components/ui/Sheet";
 
@@ -196,6 +197,9 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState<boolean>(false);
   const [exportSuccess, setExportSuccess] = useState<string | null>(null);
+  const [exportDownloadUrl, setExportDownloadUrl] = useState<string | null>(null);
+  const [selectedInstitutionType, setSelectedInstitutionType] = useState<string>("all");
+  const [onlyKolFilter, setOnlyKolFilter] = useState<boolean>(false);
   const [showTechnicalDetails, setShowTechnicalDetails] = useState<boolean>(false);
 
   // TICKET-DASH-02: seletor de formato do Snapshot R2
@@ -362,6 +366,27 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
     }
   }, [mode, runTextToSql]);
 
+  const triggerBlobDownload = async (url: string, suggestedFilename: string) => {
+    try {
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error("Falha ao obter arquivo");
+      const blob = await resp.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.style.display = "none";
+      a.href = blobUrl;
+      a.download = suggestedFilename;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        if (document.body.contains(a)) document.body.removeChild(a);
+        window.URL.revokeObjectURL(blobUrl);
+      }, 2000);
+    } catch {
+      window.open(url, "_blank");
+    }
+  };
+
   const handleExportDataset = async (format: "csv" | "parquet") => {
     setExporting(true);
     setExportSuccess(null);
@@ -382,6 +407,13 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
       setExportSuccess(
         `Dataset (${format.toUpperCase()}) exportado para R2: ${data.r2_storage_key} (${data.record_count} registros)`
       );
+      if (data.download_url) {
+        setExportDownloadUrl(data.download_url);
+        const fileName = data.r2_storage_key
+          ? data.r2_storage_key.split("/").pop() || `snapshot_${Date.now()}.${format}`
+          : `snapshot_${Date.now()}.${format}`;
+        await triggerBlobDownload(data.download_url, fileName);
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -557,7 +589,51 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
       return (item.days_since_last_order || 0) >= threshold;
     });
     const graphNodes = clinicalGraph?.nodes || [];
+    const institutionNodes = graphNodes.filter(
+      (n) => n.node_type !== "surgeon" && !n.id.startsWith("surgeon_")
+    );
+
+    const institutionTypeLabels: Record<string, string> = {
+      clinic: "Clínica & Hospital",
+      university: "Universidade / Pós",
+      cadcam_lab: "Lab CAD/CAM",
+      radiology: "Radiologia Odontológica",
+    };
+
+    const dynamicInstitutionTypes: Record<string, number> = {};
+    institutionNodes.forEach((node: any) => {
+      const t = String(node.node_type || "other");
+      dynamicInstitutionTypes[t] = (dynamicInstitutionTypes[t] || 0) + 1;
+    });
+
     const clinicalEdges = clinicalGraph?.edges || [];
+
+    const getInstitutionKolCount = (nodeId: string, nodeMeta: any) => {
+      const connectedEdges = clinicalEdges.filter(
+        (e: any) => e.source === nodeId || e.target === nodeId
+      );
+      const kolEdges = connectedEdges.filter((e: any) => e.is_kol);
+      return kolEdges.length + (nodeMeta?.is_kol ? 1 : 0);
+    };
+
+    const institutionsWithKolCount = institutionNodes.filter(
+      (n: any) => getInstitutionKolCount(n.id, n.metadata) > 0
+    ).length;
+
+    const filteredInstitutions = institutionNodes.filter((n: any) => {
+      const matchesType =
+        !selectedInstitutionType ||
+        selectedInstitutionType === "all" ||
+        String(n.node_type || "other") === selectedInstitutionType;
+      if (!matchesType) return false;
+      if (onlyKolFilter) {
+        return getInstitutionKolCount(n.id, n.metadata) > 0;
+      }
+      return true;
+    });
+
+    const distinctCitiesCount =
+      new Set(institutionNodes.map((n: any) => n.metadata?.city).filter(Boolean)).size || 1;
     const maxChurnScore = Math.max(100, ...radarItems.map((r) => r.churn_risk_score || 0));
 
     // Mapa de nós para resolução de rótulos comerciais de vínculos (Feedback 7)
@@ -613,63 +689,72 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
 
     return (
       <div className="space-y-6 max-w-7xl mx-auto">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-text-main">
-              {title || "Painel Geral de Vendas & Clientes"}
-            </h1>
-            <p className="text-xs sm:text-sm text-text-secondary mt-1">
-              Acompanhe oportunidades em aberto, faturamento mensal, clientes inativos para reativação e rede de parceiros.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1.5">
-              <label className="text-[11px] font-semibold uppercase text-text-secondary" htmlFor="snapshot-format">
-                Formato
-              </label>
-              <select
-                id="snapshot-format"
-                value={exportFormat}
-                onChange={(e) => setExportFormat(e.target.value as SnapshotExportFormat)}
-                className="h-8 rounded-md border border-border bg-surface-card px-2 text-xs text-text-main"
-                aria-label="Formato do Snapshot R2"
-              >
-                <option value="csv">CSV</option>
-                <option value="parquet">PARQUET</option>
-              </select>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleExportDataset(exportFormat)}
-              disabled={exporting}
-              className="h-8 w-8 p-0 flex items-center justify-center shrink-0"
-              title={exporting ? "Exportando Snapshot R2..." : "Exportar Snapshot R2"}
-              aria-label={exporting ? "Exportando Snapshot R2..." : "Exportar Snapshot R2"}
-            >
-              <Download className={`h-3.5 w-3.5 ${exporting ? "animate-bounce" : ""}`} />
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => {
+        {/* Cabeçalho da Rota Padronizado (RouteHeader com Ação de Destaque Laranja de 1 Palavra) */}
+        <RouteHeader
+          title={title || "Painel Geral de Vendas & Clientes"}
+          description="Acompanhe oportunidades em aberto, faturamento mensal, clientes inativos para reativação e rede de parceiros."
+          actions={[
+            {
+              id: "export",
+              label: "Exportar", // Ação primária de destaque (laranja) - estritamente 1 palavra
+              variant: "default",
+              icon: <Download className={`h-3.5 w-3.5 ${exporting ? "animate-bounce" : ""}`} />,
+              onClick: () => handleExportDataset(exportFormat),
+              disabled: exporting,
+              loading: exporting,
+              title: "Exportar Snapshot Analítico R2",
+            },
+            {
+              id: "refresh",
+              label: "Atualizar", // Ação secundária neutra - 1 palavra
+              variant: "outline",
+              icon: <RefreshCw className={`h-3.5 w-3.5 ${loadingExecutive ? "animate-spin" : ""}`} />,
+              onClick: () => {
                 fetchExecutiveCockpit();
                 fetchGuestToken();
-              }}
-              disabled={loadingExecutive}
-              className="h-8 w-8 p-0 flex items-center justify-center shrink-0"
-              title="Atualizar Cockpit"
-              aria-label="Atualizar Cockpit"
+              },
+              disabled: loadingExecutive,
+              loading: loadingExecutive,
+              title: "Atualizar Cockpit Executivo",
+            },
+          ]}
+        >
+          <div className="flex items-center gap-1.5 bg-surface-bg border border-border-subtle rounded-md px-2 py-1 h-8">
+            <label className="text-[11px] font-semibold uppercase text-text-secondary whitespace-nowrap" htmlFor="snapshot-format">
+              Formato
+            </label>
+            <select
+              id="snapshot-format"
+              value={exportFormat}
+              onChange={(e) => setExportFormat(e.target.value as SnapshotExportFormat)}
+              className="h-6 rounded bg-transparent text-xs text-text-main font-medium focus:outline-none cursor-pointer"
+              aria-label="Formato do Snapshot R2"
             >
-              <RefreshCw className={`h-3.5 w-3.5 ${loadingExecutive ? "animate-spin" : ""}`} />
-            </Button>
+              <option value="csv">CSV</option>
+              <option value="parquet">PARQUET</option>
+            </select>
           </div>
-        </div>
+        </RouteHeader>
 
         {exportSuccess && (
-          <div className="p-3 rounded-lg bg-status-success-subtle border border-status-success/30 text-xs text-status-success flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 shrink-0" />
-            <span>{exportSuccess}</span>
+          <div className="p-3 rounded-lg bg-status-success-subtle border border-status-success/30 text-xs text-status-success flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <CheckCircle2 className="h-4 w-4 shrink-0" />
+              <span className="truncate">{exportSuccess}</span>
+            </div>
+            {exportDownloadUrl && (
+              <button
+                type="button"
+                onClick={() => {
+                  const fileName = exportDownloadUrl.split("/").pop()?.split("?")[0] || `dataset.${exportFormat}`;
+                  triggerBlobDownload(exportDownloadUrl, fileName);
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded bg-status-success text-text-inverse font-semibold hover:opacity-90 transition-opacity shrink-0 cursor-pointer text-xs"
+              >
+                <Download className="h-3.5 w-3.5" />
+                Baixar Arquivo Novamente
+              </button>
+            )}
           </div>
         )}
 
@@ -736,71 +821,35 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
           </Card>
         </div>
 
-        {/* Abas Executivas Responsivas e Proporcionais (Grid 3 Colunas com Space-Between) */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 w-full border-b border-border-subtle pb-3">
-          <button
-            type="button"
-            onClick={() => setExecutiveCockpitTab("radar")}
-            className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-              executiveCockpitTab === "radar"
-                ? "bg-brand-primary text-text-inverse shadow-xs"
-                : "bg-surface-card border border-border text-text-secondary hover:text-text-main hover:bg-surface-bg"
-            }`}
-          >
-            <div className="flex items-center gap-2 min-w-0">
-              <Activity className="h-4 w-4 shrink-0" />
-              <span className="truncate">Clientes para Reativação</span>
-            </div>
-            <Badge
-              variant={executiveCockpitTab === "radar" ? "outline" : "danger"}
-              className={`text-[10px] shrink-0 ${executiveCockpitTab === "radar" ? "border-text-inverse/40 text-text-inverse" : ""}`}
-            >
-              {radarItems.filter((r) => r.churn_risk_level === "critico").length || churnData?.summary?.critical_count || 0} em Risco
-            </Badge>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setExecutiveCockpitTab("ecosystem")}
-            className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-              executiveCockpitTab === "ecosystem"
-                ? "bg-brand-primary text-text-inverse shadow-xs"
-                : "bg-surface-card border border-border text-text-secondary hover:text-text-main hover:bg-surface-bg"
-            }`}
-          >
-            <div className="flex items-center gap-2 min-w-0">
-              <Network className="h-4 w-4 shrink-0" />
-              <span className="truncate">Rede de Clínicas & Parceiros</span>
-            </div>
-            <Badge
-              variant={executiveCockpitTab === "ecosystem" ? "outline" : "navy"}
-              className={`text-[10px] shrink-0 ${executiveCockpitTab === "ecosystem" ? "border-text-inverse/40 text-text-inverse" : ""}`}
-            >
-              {clinicalGraph?.total_edges ?? 0} Vínculos
-            </Badge>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setExecutiveCockpitTab("funnel")}
-            className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-              executiveCockpitTab === "funnel"
-                ? "bg-brand-primary text-text-inverse shadow-xs"
-                : "bg-surface-card border border-border text-text-secondary hover:text-text-main hover:bg-surface-bg"
-            }`}
-          >
-            <div className="flex items-center gap-2 min-w-0">
-              <BarChart3 className="h-4 w-4 shrink-0" />
-              <span className="truncate">Etapas das Negociações</span>
-            </div>
-            <Badge
-              variant={executiveCockpitTab === "funnel" ? "outline" : "secondary"}
-              className={`text-[10px] shrink-0 ${executiveCockpitTab === "funnel" ? "border-text-inverse/40 text-text-inverse" : ""}`}
-            >
-              {pipelineMetrics?.total_deals ?? 0} Propostas
-            </Badge>
-          </button>
-        </div>
+        {/* Sub-Abas Padronizadas da Rota (Componente Canônico RouteSubTabs Reutilizável) */}
+        <RouteSubTabs
+          activeTab={executiveCockpitTab}
+          onChange={(tabId) => setExecutiveCockpitTab(tabId as "radar" | "ecosystem" | "funnel")}
+          columns={3}
+          tabs={[
+            {
+              id: "radar",
+              label: "Clientes para Reativação",
+              icon: <Activity className="h-4 w-4" />,
+              badge: `${radarItems.filter((r) => r.churn_risk_level === "critico").length || churnData?.summary?.critical_count || 0} em Risco`,
+              badgeVariant: "danger",
+            },
+            {
+              id: "ecosystem",
+              label: "Rede de Clínicas & Parceiros",
+              icon: <Network className="h-4 w-4" />,
+              badge: `${clinicalGraph?.total_edges ?? 0} Vínculos`,
+              badgeVariant: "navy",
+            },
+            {
+              id: "funnel",
+              label: "Etapas das Negociações",
+              icon: <BarChart3 className="h-4 w-4" />,
+              badge: `${pipelineMetrics?.total_deals ?? 0} Propostas`,
+              badgeVariant: "secondary",
+            },
+          ]}
+        />
 
         {/* Conteúdo Renderizado por Aba Selecionada */}
         {executiveCockpitTab === "radar" && (
@@ -957,19 +1006,65 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
           <Card className="border-border flex flex-col justify-between w-full">
             <div>
               <CardHeader>
-                <div className="flex items-center justify-between gap-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
                     <CardTitle>Rede de Clínicas e Parceiros</CardTitle>
                     <CardDescription>
                       Relacionamentos entre consultórios, hospitais, laboratórios de prótese e faculdades.
                     </CardDescription>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {/* Feedback 2: Manter o texto e remover a palavra 'Ativos' */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    {/* Filtro Dinâmico de Tipos de Instituição */}
+                    <div className="flex items-center gap-1.5 bg-surface-bg border border-border-subtle rounded-md px-2 py-1">
+                      <label htmlFor="filter-inst-type" className="text-[11px] font-medium text-text-secondary whitespace-nowrap">
+                        Tipo:
+                      </label>
+                      <select
+                        id="filter-inst-type"
+                        value={selectedInstitutionType}
+                        onChange={(e) => {
+                          setSelectedInstitutionType(e.target.value);
+                          setCockpitInstitutionsPage(1);
+                        }}
+                        className="h-6 text-xs bg-transparent border-0 text-text-main font-medium focus:outline-none cursor-pointer"
+                        aria-label="Filtrar por tipo de instituição"
+                      >
+                        <option value="all">Todos ({institutionNodes.length})</option>
+                        {Object.entries(dynamicInstitutionTypes).map(([typeKey, count]) => (
+                          <option key={typeKey} value={typeKey}>
+                            {String(institutionTypeLabels[typeKey] || typeKey)} ({String(count)})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Filtro Específico: Instituições com KOLs (Feedback do Usuário) */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOnlyKolFilter((prev) => !prev);
+                        setCockpitInstitutionsPage(1);
+                      }}
+                      className={`h-7 px-2.5 rounded-md text-xs font-semibold transition-all border flex items-center gap-1.5 cursor-pointer shrink-0 select-none ${
+                        onlyKolFilter
+                          ? "bg-brand-navy text-text-inverse border-brand-navy shadow-xs"
+                          : "bg-surface-bg border-border text-text-secondary hover:text-text-main hover:bg-surface-card"
+                      }`}
+                      title="Filtrar apenas instituições com Speakers e Key Opinion Leaders (KOL)"
+                    >
+                      <span>Com KOLs</span>
+                      <span
+                        className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                          onlyKolFilter ? "bg-white/20 text-white" : "bg-border text-text-main"
+                        }`}
+                      >
+                        {institutionsWithKolCount}
+                      </span>
+                    </button>
+
                     <Badge variant="navy">
                       {clinicalGraph?.total_edges ?? 0} Vínculos
                     </Badge>
-                    {/* Feedback 3: Deixar apenas o ícone sem texto */}
                     <Button
                       variant="outline"
                       size="sm"
@@ -984,10 +1079,15 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-3 gap-2 text-center">
+                {/* Métricas Enriquecidas do Ecossistema */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
                   <div className="p-2.5 rounded-lg bg-surface-bg border border-border-subtle">
                     <span className="text-[11px] text-text-secondary block">Instituições Mapeadas</span>
-                    <span className="text-base font-bold text-text-main">{clinicalGraph?.total_nodes ?? 0}</span>
+                    <span className="text-base font-bold text-text-main">{institutionNodes.length}</span>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-surface-bg border border-border-subtle">
+                    <span className="text-[11px] text-text-secondary block">Cidades & Polos</span>
+                    <span className="text-base font-bold text-text-main">{distinctCitiesCount}</span>
                   </div>
                   <div className="p-2.5 rounded-lg bg-surface-bg border border-border-subtle">
                     <span className="text-[11px] text-text-secondary block">Parcerias & Vínculos</span>
@@ -999,90 +1099,124 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
                   </div>
                 </div>
 
-                {/* Lista em 2 Colunas para equilíbrio visual e escaneabilidade proporcional */}
+                {/* Lista em 2 Colunas com Dados Enriquecidos */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {graphNodes
-                    .slice(
-                      (cockpitInstitutionsPage - 1) * COCKPIT_INSTITUTIONS_PER_PAGE,
-                      cockpitInstitutionsPage * COCKPIT_INSTITUTIONS_PER_PAGE
-                    )
-                    .map((node) => {
-                      const edgeCount = (clinicalGraph?.edges || []).filter(
-                        (e) => e.source === node.id || e.target === node.id
-                      ).length;
-                      const isUniv = node.node_type === "university";
-                      const isLab = node.node_type === "cadcam_lab";
-                      const isClinic = node.node_type === "clinic";
+                  {filteredInstitutions.length === 0 ? (
+                    <div className="col-span-full p-6 text-center text-xs text-text-muted bg-surface-bg rounded-lg border border-border-subtle">
+                      Nenhuma instituição encontrada para o filtro selecionado.
+                    </div>
+                  ) : (
+                    filteredInstitutions
+                      .slice(
+                        (cockpitInstitutionsPage - 1) * COCKPIT_INSTITUTIONS_PER_PAGE,
+                        cockpitInstitutionsPage * COCKPIT_INSTITUTIONS_PER_PAGE
+                      )
+                      .map((node: any) => {
+                        const connectedEdges = clinicalEdges.filter(
+                          (e: any) => e.source === node.id || e.target === node.id
+                        );
+                        const edgeCount = connectedEdges.length;
+                        const kolCount = getInstitutionKolCount(node.id, node.metadata);
 
-                      const IconComp = isUniv
-                        ? GraduationCap
-                        : isLab
-                        ? Cpu
-                        : isClinic
-                        ? Building2
-                        : Stethoscope;
+                        const isUniv = node.node_type === "university";
+                        const isLab = node.node_type === "cadcam_lab";
+                        const isClinic = node.node_type === "clinic";
+                        const isRadio = node.node_type === "radiology";
 
-                      const typeLabel = isUniv
-                        ? "Universidade / Pós"
-                        : isLab
-                        ? "Lab CAD/CAM"
-                        : isClinic
-                        ? "Clínica & Hospital"
-                        : "Cirurgião Especialista";
+                        const IconComp = isUniv
+                          ? GraduationCap
+                          : isLab
+                          ? Cpu
+                          : isClinic
+                          ? Building2
+                          : Building2;
 
-                      const badgeVariant = isUniv ? "default" : isLab ? "warning" : isClinic ? "navy" : "secondary";
+                        const typeLabel = isUniv
+                          ? "Universidade / Pós"
+                          : isLab
+                          ? "Lab CAD/CAM"
+                          : isClinic
+                          ? "Clínica & Hospital"
+                          : isRadio
+                          ? "Radiologia Odontológica"
+                          : (node.metadata?.institution_type || "Polo Clínico");
 
-                      const locationText =
-                        node.metadata?.city && node.metadata?.state
-                          ? `${node.metadata.city}, ${node.metadata.state}`
-                          : node.metadata?.uf
-                          ? `UF: ${node.metadata.uf}`
-                          : "Polo Nacional";
+                        const badgeVariant = isUniv ? "default" : isLab ? "warning" : isClinic ? "navy" : "secondary";
 
-                      return (
-                        <div
-                          key={node.id}
-                          onClick={() => setSelectedInstitutionForLinks(node)}
-                          role="button"
-                          tabIndex={0}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" || e.key === " ") {
-                              e.preventDefault();
-                              setSelectedInstitutionForLinks(node);
-                            }
-                          }}
-                          className="p-3 rounded-lg border border-border-subtle bg-surface-card hover:bg-surface-bg/80 hover:border-brand-primary/40 transition-all flex items-center justify-between text-xs gap-3 cursor-pointer group shadow-xs"
-                          title="Clique para abrir os vínculos associados a esta instituição"
-                        >
-                          <div className="flex items-center gap-3 min-w-0">
-                            <div className="p-2 rounded-md bg-surface-bg border border-border-subtle text-brand-primary shrink-0 group-hover:border-brand-primary/50">
-                              <IconComp className="h-4 w-4" />
-                            </div>
-                            <div className="min-w-0">
-                              <p className="font-semibold text-text-main text-xs truncate group-hover:text-brand-primary transition-colors">
-                                {node.label}
-                              </p>
-                              <div className="flex items-center gap-1.5 text-[11px] text-text-secondary mt-0.5">
-                                <span className="truncate">{locationText}</span>
-                                <span className="text-text-muted">•</span>
-                                <span className="text-brand-primary shrink-0 font-medium">{edgeCount} vínculos</span>
+                        const locationText =
+                          node.metadata?.city && node.metadata?.state
+                            ? `${node.metadata.city}, ${node.metadata.state}`
+                            : node.metadata?.uf
+                            ? `UF: ${node.metadata.uf}`
+                            : "Polo Nacional";
+
+                        const specialtyText =
+                          node.metadata?.specialty ||
+                          (isUniv
+                            ? "Ensino e Pesquisa Odontológica"
+                            : isLab
+                            ? "Fresagem e Próteses CAD/CAM"
+                            : isClinic
+                            ? "Implantodontia e Reabilitação"
+                            : "Diagnóstico por Imagem");
+
+                        return (
+                          <div
+                            key={node.id}
+                            onClick={() => setSelectedInstitutionForLinks(node)}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                setSelectedInstitutionForLinks(node);
+                              }
+                            }}
+                            className="p-3 rounded-lg border border-border-subtle bg-surface-card hover:bg-surface-bg/80 hover:border-brand-primary/40 transition-all flex items-center justify-between text-xs gap-3 cursor-pointer group shadow-xs"
+                            title="Clique para abrir os cirurgiões e vínculos associados a esta instituição"
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="p-2 rounded-md bg-surface-bg border border-border-subtle text-brand-primary shrink-0 group-hover:border-brand-primary/50">
+                                <IconComp className="h-4 w-4" />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  <p className="font-semibold text-text-main text-xs truncate group-hover:text-brand-primary transition-colors">
+                                    {node.label}
+                                  </p>
+                                  {kolCount > 0 && (
+                                    <Badge variant="navy" className="text-[9px] px-1.5 py-0 h-3.5 shrink-0 uppercase tracking-wider font-semibold">
+                                      {kolCount} {kolCount === 1 ? "KOL" : "KOLs"}
+                                    </Badge>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-1.5 text-[11px] text-text-secondary mt-0.5">
+                                  <span className="truncate">{locationText}</span>
+                                  <span className="text-text-muted">•</span>
+                                  <span className="truncate text-text-muted">{specialtyText}</span>
+                                </div>
                               </div>
                             </div>
+                            <div className="flex flex-col items-end gap-1 shrink-0">
+                              <Badge variant={badgeVariant} className="text-[10px] font-medium">
+                                {typeLabel}
+                              </Badge>
+                              <span className="text-[11px] text-brand-primary font-medium">
+                                {edgeCount} {edgeCount === 1 ? "vínculo" : "vínculos"}
+                              </span>
+                            </div>
                           </div>
-                          <Badge variant={badgeVariant} className="text-[10px] shrink-0 font-medium">
-                            {typeLabel}
-                          </Badge>
-                        </div>
-                      );
-                    })}
+                        );
+                      })
+                  )}
                 </div>
               </CardContent>
             </div>
 
-            {/* Paginação do Card de Instituições (sem scroll vertical) */}
+            {/* Paginação do Card de Instituições */}
             <div className="p-4 pt-3 border-t border-border-subtle flex items-center justify-between text-xs text-text-secondary">
               <span>
-                Página {cockpitInstitutionsPage} de {Math.max(1, Math.ceil(graphNodes.length / COCKPIT_INSTITUTIONS_PER_PAGE))} ({graphNodes.length} polos)
+                Página {cockpitInstitutionsPage} de {Math.max(1, Math.ceil(filteredInstitutions.length / COCKPIT_INSTITUTIONS_PER_PAGE))} ({filteredInstitutions.length} instituições{selectedInstitutionType !== "all" ? " filtradas" : ""})
               </span>
               <div className="flex items-center gap-1.5">
                 <Button
@@ -1097,16 +1231,16 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
                   Anterior
                 </Button>
                 <span className="text-xs px-2 font-medium">
-                  {cockpitInstitutionsPage} / {Math.max(1, Math.ceil(graphNodes.length / COCKPIT_INSTITUTIONS_PER_PAGE))}
+                  {cockpitInstitutionsPage} / {Math.max(1, Math.ceil(filteredInstitutions.length / COCKPIT_INSTITUTIONS_PER_PAGE))}
                 </span>
                 <Button
                   variant="outline"
                   size="sm"
                   className="h-7 px-2 text-xs"
-                  disabled={cockpitInstitutionsPage >= Math.ceil(graphNodes.length / COCKPIT_INSTITUTIONS_PER_PAGE)}
+                  disabled={cockpitInstitutionsPage >= Math.ceil(filteredInstitutions.length / COCKPIT_INSTITUTIONS_PER_PAGE)}
                   onClick={() =>
                     setCockpitInstitutionsPage((p) =>
-                      Math.min(Math.ceil(graphNodes.length / COCKPIT_INSTITUTIONS_PER_PAGE), p + 1)
+                      Math.min(Math.ceil(filteredInstitutions.length / COCKPIT_INSTITUTIONS_PER_PAGE), p + 1)
                     )
                   }
                   title="Próxima página de instituições"
@@ -1196,18 +1330,18 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
               const winRate = pipelineMetrics?.conversion_rate ?? pipelineMetrics?.conversionRate ?? pipelineMetrics?.win_rate ?? 34.2;
 
               return (
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 p-3 rounded-lg bg-surface-bg border border-border-subtle text-xs">
-                  <div>
-                    <span className="text-[10px] text-text-secondary uppercase font-semibold block">Volume Total em Negociação</span>
-                    <span className="text-sm font-bold text-text-main">{formatBrl(totalVal)}</span>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-center">
+                  <div className="p-2.5 rounded-lg bg-surface-bg border border-border-subtle">
+                    <span className="text-[11px] text-text-secondary block">Volume Total em Negociação</span>
+                    <span className="text-base font-bold text-text-main">{formatBrl(totalVal)}</span>
                   </div>
-                  <div>
-                    <span className="text-[10px] text-text-secondary uppercase font-semibold block">Ticket Médio por Proposta</span>
-                    <span className="text-sm font-bold text-brand-primary">{formatBrl(avgTicketOverall)}</span>
+                  <div className="p-2.5 rounded-lg bg-surface-bg border border-border-subtle">
+                    <span className="text-[11px] text-text-secondary block">Ticket Médio por Proposta</span>
+                    <span className="text-base font-bold text-brand-primary">{formatBrl(avgTicketOverall)}</span>
                   </div>
-                  <div>
-                    <span className="text-[10px] text-text-secondary uppercase font-semibold block">Taxa Estimada de Sucesso</span>
-                    <span className="text-sm font-bold text-status-success">{winRate}% conversão</span>
+                  <div className="p-2.5 rounded-lg bg-surface-bg border border-border-subtle">
+                    <span className="text-[11px] text-text-secondary block">Taxa Estimada de Sucesso</span>
+                    <span className="text-base font-bold text-status-success">{winRate}% conversão</span>
                   </div>
                 </div>
               );
@@ -1303,7 +1437,7 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
             <div className="grid grid-cols-3 gap-2 text-center">
               <div className="p-2.5 rounded-lg bg-surface-bg border border-border-subtle">
                 <span className="text-[11px] text-text-secondary block">Instituições Mapeadas</span>
-                <span className="text-base font-bold text-text-main">{clinicalGraph?.total_nodes ?? 0}</span>
+                <span className="text-base font-bold text-text-main">{institutionNodes.length}</span>
               </div>
               <div className="p-2.5 rounded-lg bg-surface-bg border border-border-subtle">
                 <span className="text-[11px] text-text-secondary block">Contratos & Vínculos</span>
@@ -1326,7 +1460,7 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
                     : "text-text-secondary hover:text-text-main hover:bg-surface-bg"
                 }`}
               >
-                Instituições & Polos ({graphNodes.length})
+                Instituições & Polos ({institutionNodes.length})
               </button>
               <button
                 type="button"
@@ -1345,7 +1479,7 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
             {topologyTab === "nodes" && (
               <div className="space-y-3">
                 <div className="space-y-2">
-                  {graphNodes
+                  {institutionNodes
                     .slice((nodesPage - 1) * TOPOLOGY_ITEMS_PER_PAGE, nodesPage * TOPOLOGY_ITEMS_PER_PAGE)
                     .map((node) => {
                       const connectedEdges = (clinicalGraph?.edges || []).filter(
@@ -1441,11 +1575,11 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
                 </div>
 
                 {/* Controles de Paginação (7 registros por página) */}
-                {graphNodes.length > TOPOLOGY_ITEMS_PER_PAGE && (
+                {institutionNodes.length > TOPOLOGY_ITEMS_PER_PAGE && (
                   <div className="flex items-center justify-between pt-2 border-t border-border-subtle text-xs text-text-secondary">
                     <span>
-                      Mostrando {Math.min((nodesPage - 1) * TOPOLOGY_ITEMS_PER_PAGE + 1, graphNodes.length)}–
-                      {Math.min(nodesPage * TOPOLOGY_ITEMS_PER_PAGE, graphNodes.length)} de {graphNodes.length} nós
+                      Mostrando {Math.min((nodesPage - 1) * TOPOLOGY_ITEMS_PER_PAGE + 1, institutionNodes.length)}–
+                      {Math.min(nodesPage * TOPOLOGY_ITEMS_PER_PAGE, institutionNodes.length)} de {institutionNodes.length} instituições
                     </span>
                     <div className="flex items-center gap-1.5">
                       <Button
@@ -1459,16 +1593,16 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
                         Anterior
                       </Button>
                       <span className="text-xs px-2 font-medium">
-                        {nodesPage} / {Math.max(1, Math.ceil(graphNodes.length / TOPOLOGY_ITEMS_PER_PAGE))}
+                        {nodesPage} / {Math.max(1, Math.ceil(institutionNodes.length / TOPOLOGY_ITEMS_PER_PAGE))}
                       </span>
                       <Button
                         variant="outline"
                         size="sm"
                         className="h-7 px-2 text-xs"
-                        disabled={nodesPage >= Math.ceil(graphNodes.length / TOPOLOGY_ITEMS_PER_PAGE)}
+                        disabled={nodesPage >= Math.ceil(institutionNodes.length / TOPOLOGY_ITEMS_PER_PAGE)}
                         onClick={() =>
                           setNodesPage((p) =>
-                            Math.min(Math.ceil(graphNodes.length / TOPOLOGY_ITEMS_PER_PAGE), p + 1)
+                            Math.min(Math.ceil(institutionNodes.length / TOPOLOGY_ITEMS_PER_PAGE), p + 1)
                           )
                         }
                       >
@@ -1595,9 +1729,21 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
                       </p>
                     </div>
                   </div>
-                  <Badge variant="navy" className="text-[10px] shrink-0 font-semibold">
-                    {nodeEdges.length} {nodeEdges.length === 1 ? "vínculo ativo" : "vínculos ativos"}
-                  </Badge>
+                  {(() => {
+                    const instKolCount = nodeEdges.filter((e: any) => e.is_kol).length + (selectedInstitutionForLinks.metadata?.is_kol ? 1 : 0);
+                    return (
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {instKolCount > 0 && (
+                          <Badge variant="navy" className="text-[10px] font-semibold">
+                            {instKolCount} {instKolCount === 1 ? "KOL Ativo" : "KOLs Ativos"}
+                          </Badge>
+                        )}
+                        <Badge variant="secondary" className="text-[10px] font-semibold">
+                          {nodeEdges.length} {nodeEdges.length === 1 ? "vínculo ativo" : "vínculos ativos"}
+                        </Badge>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 <div className="space-y-2">

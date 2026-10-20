@@ -99,7 +99,7 @@ async def upload_direct_by_key(
 
 
 @router.get("/files/{file_key:path}", summary="Servir arquivo armazenado localmente ou no R2")
-def get_stored_file(file_key: str):
+def get_stored_file(file_key: str, download: Optional[bool] = Query(False)):
     file_path = LOCAL_STORAGE_ROOT / file_key
     if not file_path.exists() or not file_path.is_file():
         try:
@@ -144,10 +144,12 @@ def get_stored_file(file_key: str):
             mime_type, _ = mimetypes.guess_type(str(file_path))
         mime_type = mime_type or "application/octet-stream"
 
+        is_attachment = download or ext in [".csv", ".parquet", ".zip", ".tar", ".gz", ".xlsx"]
+        disp_type = "attachment" if is_attachment else "inline"
         return FileResponse(
             path=str(file_path),
             media_type=mime_type,
-            headers={"Content-Disposition": f'inline; filename="{Path(file_key).name}"'}
+            headers={"Content-Disposition": f'{disp_type}; filename="{Path(file_key).name}"'}
         )
 
     return Response(

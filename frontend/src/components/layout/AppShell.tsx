@@ -374,10 +374,10 @@ export function AppShell({
         />
       )}
 
-      {/* Sidebar Lateral RBAC Dual */}
+      {/* Sidebar Lateral RBAC Dual (Fixa e Imóvel ao Scroll da Tela) */}
       <aside
         className={cn(
-          "bg-surface-sidebar text-text-inverse flex flex-col justify-between transition-all duration-200 z-50 shrink-0",
+          "bg-surface-sidebar text-text-inverse flex flex-col justify-between transition-all duration-200 z-40 shrink-0 h-screen max-h-screen sticky top-0 self-start overflow-hidden",
           isMobileDrawerOpen
             ? "max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:w-64 max-lg:border-r max-lg:border-border max-lg:shadow-modal"
             : "max-lg:fixed max-lg:left-0 max-lg:top-0 max-lg:w-0 max-lg:h-0 max-lg:overflow-hidden max-lg:border-0",
@@ -386,9 +386,9 @@ export function AppShell({
       >
         <div className={cn("flex flex-col h-full justify-between", isCompactSidebar ? "w-64 lg:w-16" : "w-64")}>
           <div className="min-h-0 flex-1 flex flex-col">
-            {/* Logo Brand Header */}
-            <div className="h-16 flex items-center justify-between px-4 border-b border-white/10 gap-2 shrink-0">
-              <div className="flex items-center gap-2.5 min-w-0">
+            {/* Logo Brand Header - Livre de Sobreposições */}
+            <div className={cn("h-16 flex items-center border-b border-white/10 shrink-0", isCompactSidebar ? "justify-center px-0" : "justify-between px-4 gap-2")}>
+              <div className={cn("flex items-center min-w-0", isCompactSidebar ? "justify-center" : "gap-2.5")}>
                 <div className="h-8 w-8 rounded-md bg-brand-primary flex items-center justify-center font-bold text-sm text-text-inverse shadow-sm shrink-0">
                   RN
                 </div>
@@ -401,20 +401,6 @@ export function AppShell({
                   </div>
                 )}
               </div>
-
-              <button
-                type="button"
-                onClick={() => setIsCompactSidebar((prev) => !prev)}
-                className="hidden lg:inline-flex p-1.5 rounded-md text-white/60 hover:text-white hover:bg-white/10 transition-colors"
-                aria-label={isCompactSidebar ? "Expandir menu lateral" : "Recolher menu lateral"}
-                title={isCompactSidebar ? "Expandir menu" : "Modo compacto"}
-              >
-                {isCompactSidebar ? (
-                  <PanelLeftOpen className="h-4 w-4" />
-                ) : (
-                  <PanelLeftClose className="h-4 w-4" />
-                )}
-              </button>
 
               <button
                 type="button"
@@ -441,15 +427,17 @@ export function AppShell({
             )}
 
             {/* Navegação Vertical pelas Rotas com RBAC Cognitivo */}
-            <nav className="px-2.5 py-2 space-y-4 overflow-y-auto flex-1">
+            <nav className={cn("py-2 space-y-4 overflow-y-auto flex-1", isCompactSidebar ? "px-2" : "px-2.5")}>
               {navSections.map((sec) => (
                 <div key={sec.title}>
-                  {!isCompactSidebar && (
+                  {!isCompactSidebar ? (
                     <div className="px-2.5 mb-1 text-[10px] font-semibold uppercase tracking-wider text-white/40">
                       {sec.title}
                     </div>
+                  ) : (
+                    <div className="my-2 border-t border-white/10 mx-1" />
                   )}
-                  <div className="space-y-0.5">
+                  <div className="space-y-1">
                     {sec.items.map((item) => {
                       const Icon = item.icon;
                       const isActive = activeNav === item.id;
@@ -460,17 +448,22 @@ export function AppShell({
                           title={item.label}
                           onClick={() => handleSelectNav(item.id)}
                           className={cn(
-                            "w-full flex items-center justify-between px-2.5 py-2 rounded-md text-xs font-medium transition-colors text-left",
+                            "rounded-md text-xs font-medium transition-colors flex items-center",
+                            isCompactSidebar
+                              ? "w-10 h-10 mx-auto justify-center p-0"
+                              : "w-full justify-between px-2.5 py-2 text-left",
                             isActive
                               ? "bg-brand-primary text-white shadow-sm"
                               : "text-white/70 hover:text-white hover:bg-surface-sidebar-hover"
                           )}
                         >
-                          <div className="flex items-center gap-2.5 min-w-0">
+                          <div className={cn("flex items-center min-w-0", isCompactSidebar ? "justify-center" : "gap-2.5")}>
                             <Icon className="h-4 w-4 shrink-0 stroke-[1.8]" />
-                            <span className={cn("truncate", isCompactSidebar && "lg:hidden")}>
-                              {item.label}
-                            </span>
+                            {!isCompactSidebar && (
+                              <span className="truncate">
+                                {item.label}
+                              </span>
+                            )}
                           </div>
                           {!isCompactSidebar && item.badge && (
                             <span
@@ -494,9 +487,29 @@ export function AppShell({
           </div>
 
           {/* Footer do Usuário e Seletor de Perfil na Sidebar */}
-          <div className="p-2.5 border-t border-white/10 shrink-0 space-y-2">
-            <div className="flex items-center justify-between gap-1.5 px-2 py-1.5 rounded-md bg-white/5">
-              <div className="flex items-center gap-2 min-w-0 flex-1">
+          <div className={cn("border-t border-white/10 shrink-0 space-y-2", isCompactSidebar ? "p-2" : "p-2.5")}>
+            {/* Botão de Toggle da Sidebar no Rodapé (sem sobrepor logo ou dados) */}
+            <button
+              type="button"
+              onClick={() => setIsCompactSidebar((prev) => !prev)}
+              className={cn(
+                "hidden lg:flex items-center rounded-md text-white/60 hover:text-white hover:bg-white/10 transition-colors text-xs font-medium cursor-pointer",
+                isCompactSidebar ? "w-10 h-10 mx-auto justify-center p-0" : "w-full justify-between px-2.5 py-1.5"
+              )}
+              title={isCompactSidebar ? "Expandir menu lateral" : "Recolher menu lateral"}
+              aria-label={isCompactSidebar ? "Expandir menu lateral" : "Recolher menu lateral"}
+            >
+              <div className={cn("flex items-center min-w-0", isCompactSidebar ? "justify-center" : "gap-2")}>
+                {isCompactSidebar ? (
+                  <PanelLeftOpen className="h-4 w-4 shrink-0 text-white/70" />
+                ) : (
+                  <PanelLeftClose className="h-4 w-4 shrink-0 text-white/70" />
+                )}
+                {!isCompactSidebar && <span className="truncate">Recolher menu lateral</span>}
+              </div>
+            </button>
+            <div className={cn("flex items-center rounded-md bg-white/5", isCompactSidebar ? "w-10 h-10 mx-auto justify-center p-0" : "justify-between gap-1.5 px-2 py-1.5")}>
+              <div className={cn("flex items-center min-w-0", isCompactSidebar ? "justify-center" : "gap-2 flex-1")}>
                 <Avatar
                   fallback={displayUserName}
                   size="sm"
@@ -568,6 +581,21 @@ export function AppShell({
               aria-label="Abrir menu de navegação"
             >
               <Menu className="h-4 w-4" />
+            </button>
+
+            {/* Botão Desktop na Topbar para Recolher/Expandir Menu Lateral */}
+            <button
+              type="button"
+              onClick={() => setIsCompactSidebar((prev) => !prev)}
+              className="hidden lg:inline-flex items-center justify-center p-2 rounded-md border border-border bg-surface-bg text-text-secondary hover:text-text-main hover:bg-surface-card transition-colors shrink-0"
+              title={isCompactSidebar ? "Expandir menu lateral" : "Recolher menu lateral"}
+              aria-label={isCompactSidebar ? "Expandir menu lateral" : "Recolher menu lateral"}
+            >
+              {isCompactSidebar ? (
+                <PanelLeftOpen className="h-4 w-4" />
+              ) : (
+                <PanelLeftClose className="h-4 w-4" />
+              )}
             </button>
 
             {/* Campo de Busca & Command Palette Trigger */}
