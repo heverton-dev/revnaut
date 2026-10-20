@@ -117,7 +117,7 @@ def export_deals_csv(
     return Response(
         content=csv_content,
         media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=pipeline_revnaut_dental.csv"}
+        headers={"Content-Disposition": "attachment; filename=pipeline_revnault_dental.csv"}
     )
 
 
@@ -134,12 +134,12 @@ def export_deals(
         return Response(
             content=data_bytes,
             media_type="application/vnd.apache.parquet",
-            headers={"Content-Disposition": "attachment; filename=pipeline_revnaut_dental.parquet"}
+            headers={"Content-Disposition": "attachment; filename=pipeline_revnault_dental.parquet"}
         )
     return Response(
         content=data_bytes,
         media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=pipeline_revnaut_dental.csv"}
+        headers={"Content-Disposition": "attachment; filename=pipeline_revnault_dental.csv"}
     )
 
 

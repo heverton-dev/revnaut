@@ -59,8 +59,8 @@ services:
     environment:
       - PORT=8000
       - REDIS_URL=redis://redis:6379/0
-      - DATABASE_URL=postgresql+asyncpg://revnaut_admin:${PG_PASSWORD:-revnaut_pg_pass}@postgres:5432/revnaut
-      - READ_DATABASE_URL=postgresql+asyncpg://revnaut_admin:${PG_PASSWORD:-revnaut_pg_pass}@postgres-replica:5432/revnaut
+      - DATABASE_URL=postgresql+asyncpg://revnault_admin:${PG_PASSWORD:-revnault_pg_pass}@postgres:5432/revnault
+      - READ_DATABASE_URL=postgresql+asyncpg://revnault_admin:${PG_PASSWORD:-revnault_pg_pass}@postgres-replica:5432/revnault
       - REVNAULT_ENV=production
       - SESSION_SECRET_KEY=${SESSION_SECRET_KEY}
       - VAULT_SECRET_KEY=${VAULT_SECRET_KEY}
@@ -116,7 +116,7 @@ services:
     command: python -m src.workers.runner
     environment:
       - REDIS_URL=redis://redis:6379/0
-      - DATABASE_URL=postgresql+asyncpg://revnaut_admin:${PG_PASSWORD:-revnaut_pg_pass}@postgres:5432/revnaut
+      - DATABASE_URL=postgresql+asyncpg://revnault_admin:${PG_PASSWORD:-revnault_pg_pass}@postgres:5432/revnault
       - REVNAULT_ENV=production
       - SESSION_SECRET_KEY=${SESSION_SECRET_KEY}
       - VAULT_SECRET_KEY=${VAULT_SECRET_KEY}
@@ -141,9 +141,9 @@ services:
   postgres:
     image: pgvector/pgvector:pg16
     environment:
-      - POSTGRES_DB=revnaut
-      - POSTGRES_USER=revnaut_admin
-      - POSTGRES_PASSWORD=${PG_PASSWORD:-revnaut_pg_pass}
+      - POSTGRES_DB=revnault
+      - POSTGRES_USER=revnault_admin
+      - POSTGRES_PASSWORD=${PG_PASSWORD:-revnault_pg_pass}
     networks:
       - revnault_data
     volumes:
@@ -160,7 +160,7 @@ services:
       restart_policy:
         condition: on-failure
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U revnaut_admin -d revnaut"]
+      test: ["CMD-SHELL", "pg_isready -U revnault_admin -d revnault"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -168,9 +168,9 @@ services:
   postgres-replica:
     image: pgvector/pgvector:pg16
     environment:
-      - POSTGRES_DB=revnaut
-      - POSTGRES_USER=revnaut_admin
-      - POSTGRES_PASSWORD=${PG_PASSWORD:-revnaut_pg_pass}
+      - POSTGRES_DB=revnault
+      - POSTGRES_USER=revnault_admin
+      - POSTGRES_PASSWORD=${PG_PASSWORD:-revnault_pg_pass}
     networks:
       - revnault_data
     volumes:
@@ -184,7 +184,7 @@ services:
       restart_policy:
         condition: on-failure
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U revnaut_admin -d revnaut"]
+      test: ["CMD-SHELL", "pg_isready -U revnault_admin -d revnault"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -218,7 +218,7 @@ services:
       - CACHE_REDIS_URI=redis://redis:6379/1
       - DATABASE_ENABLED=true
       - DATABASE_PROVIDER=postgresql
-      - DATABASE_CONNECTION_URI=postgresql://revnaut_admin:${PG_PASSWORD:-revnaut_pg_pass}@postgres:5432/revnaut
+      - DATABASE_CONNECTION_URI=postgresql://revnault_admin:${PG_PASSWORD:-revnault_pg_pass}@postgres:5432/revnault
     networks:
       - revnault_edge
       - revnault_app
@@ -240,9 +240,9 @@ services:
       - RAILS_ENV=production
       - REDIS_URL=redis://redis:6379/2
       - POSTGRES_HOST=postgres
-      - POSTGRES_USERNAME=revnaut_admin
-      - POSTGRES_PASSWORD=${PG_PASSWORD:-revnaut_pg_pass}
-      - POSTGRES_DATABASE=revnaut
+      - POSTGRES_USERNAME=revnault_admin
+      - POSTGRES_PASSWORD=${PG_PASSWORD:-revnault_pg_pass}
+      - POSTGRES_DATABASE=revnault
     networks:
       - revnault_edge
       - revnault_app
@@ -262,9 +262,9 @@ services:
     image: mautic/mautic:5-apache
     environment:
       - MAUTIC_DB_HOST=postgres
-      - MAUTIC_DB_USER=revnaut_admin
-      - MAUTIC_DB_PASSWORD=${PG_PASSWORD:-revnaut_pg_pass}
-      - MAUTIC_DB_NAME=revnaut
+      - MAUTIC_DB_USER=revnault_admin
+      - MAUTIC_DB_PASSWORD=${PG_PASSWORD:-revnault_pg_pass}
+      - MAUTIC_DB_NAME=revnault
     networks:
       - revnault_app
       - revnault_data
@@ -348,9 +348,9 @@ services:
   documenso:
     image: documenso/documenso:latest
     environment:
-      - NEXTAUTH_URL=http://documenso.revnaut.internal:3000
-      - DATABASE_URL=postgresql://revnaut_admin:${PG_PASSWORD:-revnaut_pg_pass}@postgres:5432/revnaut
-      - NEXT_PUBLIC_WEBAPP_URL=http://documenso.revnaut.internal:3000
+      - NEXTAUTH_URL=http://documenso.revnault.internal:3000
+      - DATABASE_URL=postgresql://revnault_admin:${PG_PASSWORD:-revnault_pg_pass}@postgres:5432/revnault
+      - NEXT_PUBLIC_WEBAPP_URL=http://documenso.revnault.internal:3000
     networks:
       - revnault_app
       - revnault_data
@@ -366,8 +366,8 @@ services:
   calcom:
     image: calcom/cal.com:latest
     environment:
-      - DATABASE_URL=postgresql://revnaut_admin:${PG_PASSWORD:-revnaut_pg_pass}@postgres:5432/revnaut
-      - NEXT_PUBLIC_WEBAPP_URL=http://calcom.revnaut.internal:3000
+      - DATABASE_URL=postgresql://revnault_admin:${PG_PASSWORD:-revnault_pg_pass}@postgres:5432/revnault
+      - NEXT_PUBLIC_WEBAPP_URL=http://calcom.revnault.internal:3000
     networks:
       - revnault_app
       - revnault_data
@@ -385,11 +385,11 @@ services:
     command: ["/app/docker/docker-bootstrap.sh", "app-gunicorn"]
     environment:
       - SUPERSET_SECRET_KEY=${SUPERSET_SECRET_KEY:-revnault_superset_secret_key_default}
-      - DATABASE_DB=revnaut
+      - DATABASE_DB=revnault
       - DATABASE_HOST=postgres-replica
       - DATABASE_PORT=5432
-      - DATABASE_USER=revnaut_admin
-      - DATABASE_PASSWORD=${PG_PASSWORD:-revnaut_pg_pass}
+      - DATABASE_USER=revnault_admin
+      - DATABASE_PASSWORD=${PG_PASSWORD:-revnault_pg_pass}
       - GUEST_ROLE_NAME=Gamma
       - SUPERSET_FEATURE_EMBEDDED_SUPERSET=true
     networks:
@@ -407,9 +407,9 @@ services:
   windmill:
     image: ghcr.io/windmill-labs/windmill:latest
     environment:
-      - DATABASE_URL=postgresql://revnaut_admin:${PG_PASSWORD:-revnaut_pg_pass}@postgres:5432/revnaut
+      - DATABASE_URL=postgresql://revnault_admin:${PG_PASSWORD:-revnault_pg_pass}@postgres:5432/revnault
       - RUST_LOG=info
-      - BASE_URL=http://windmill.revnaut.internal:8000
+      - BASE_URL=http://windmill.revnault.internal:8000
     networks:
       - revnault_app
       - revnault_data

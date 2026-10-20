@@ -7,8 +7,8 @@ Valida a camada de tráfego, persistência SQLite WAL e Quarteto Sine Qua Non Di
 import pytest
 from fastapi.testclient import TestClient
 from tests.auth_helpers import bearer_headers
-from backend.main import app
-from backend.database import init_db, get_connection
+from src.main import app
+from src.core.database import init_db, get_connection
 
 init_db()
 client = TestClient(app, headers=bearer_headers())
@@ -112,10 +112,10 @@ def test_quarteto_mcp_studio():
     response = client.get("/mcp")
     assert response.status_code == 200
     data = response.json()
-    assert data["server_name"] == "revnaut-mcp-studio"
+    assert data["server_name"] == "revnault-mcp-studio"
     assert len(data["tools"]) >= 4
     tool_names = [t["name"] for t in data["tools"]]
-    assert "revnaut_criar_deal" in tool_names
+    assert "revnault_criar_deal" in tool_names
 
 
 def test_quarteto_user_guide():

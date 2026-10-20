@@ -263,7 +263,7 @@ def get_vault_audit_logs(x_account_id: Optional[str] = Header(None, alias="X-Acc
         {
             "id": "vlog-01",
             "timestamp": "2026-10-20T06:15:00Z",
-            "actor": "diretoria@revnaut.com",
+            "actor": "diretoria@revnault.com",
             "action": "LEITURA_DECRIPTO",
             "service_name": "OPENAI_API_KEY",
             "ip_address": "177.136.24.10",
@@ -273,7 +273,7 @@ def get_vault_audit_logs(x_account_id: Optional[str] = Header(None, alias="X-Acc
         {
             "id": "vlog-02",
             "timestamp": "2026-10-19T18:42:11Z",
-            "actor": "eng_sec_ops@revnaut.com",
+            "actor": "eng_sec_ops@revnault.com",
             "action": "ROTACAO_CHAVE",
             "service_name": "DOCUMENSO_API_TOKEN",
             "ip_address": "177.136.24.10",
@@ -293,7 +293,7 @@ def get_vault_audit_logs(x_account_id: Optional[str] = Header(None, alias="X-Acc
         {
             "id": "vlog-04",
             "timestamp": "2026-10-17T22:30:19Z",
-            "actor": "diretoria@revnaut.com",
+            "actor": "diretoria@revnault.com",
             "action": "CRIACAO_SECRETO",
             "service_name": "R2_STORAGE_SECRET",
             "ip_address": "177.136.24.10",

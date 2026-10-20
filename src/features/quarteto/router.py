@@ -20,21 +20,21 @@ MANUAIS_DIR = Path(__file__).resolve().parent.parent.parent.parent / "docs" / "m
 def mcp_studio():
     return {
         "mcp_version": "1.0.0",
-        "server_name": "revnaut-mcp-studio",
+        "server_name": "revnault-mcp-studio",
         "description": "Ferramentas executáveis nativas para o ecossistema RevNault",
         "tools": [
             {
-                "name": "revnaut_criar_deal",
+                "name": "revnault_criar_deal",
                 "description": "Cria um novo negócio na pipeline",
                 "parameters": DealCreate.model_json_schema()
             },
             {
-                "name": "revnaut_mover_deal",
+                "name": "revnault_mover_deal",
                 "description": "Move o negócio de estágio no funil",
                 "parameters": DealMove.model_json_schema()
             },
             {
-                "name": "revnaut_buscar_contatos",
+                "name": "revnault_buscar_contatos",
                 "description": "Busca contatos e leads por termo chave",
                 "parameters": {
                     "type": "object",
@@ -42,7 +42,7 @@ def mcp_studio():
                 }
             },
             {
-                "name": "revnaut_detalhes_contato",
+                "name": "revnault_detalhes_contato",
                 "description": "Obtém histórico e detalhes clínicos de um cirurgião ou clínica",
                 "parameters": {
                     "type": "object",
@@ -53,7 +53,7 @@ def mcp_studio():
                 }
             },
             {
-                "name": "revnaut_listar_instituicoes",
+                "name": "revnault_listar_instituicoes",
                 "description": "Lista instituições de ensino credenciadas (Mandic, ABO, APCD) e status de kits acadêmicos",
                 "parameters": {"type": "object", "properties": {}}
             }

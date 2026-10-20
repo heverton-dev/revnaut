@@ -22,9 +22,9 @@ from src.core.database import get_connection
 from src.core.events import EventBus, StreamName, default_event_bus
 
 
-LIVEKIT_URL = os.getenv("LIVEKIT_URL", "wss://livekit.revnaut.internal")
+LIVEKIT_URL = os.getenv("LIVEKIT_URL", "wss://livekit.revnault.internal")
 LIVEKIT_API_KEY = os.getenv("LIVEKIT_API_KEY", "devkey")
-LIVEKIT_API_SECRET = os.getenv("LIVEKIT_API_SECRET", "dev_secret_key_revnaut_webrtc_2026")
+LIVEKIT_API_SECRET = os.getenv("LIVEKIT_API_SECRET", "dev_secret_key_revnault_webrtc_2026")
 
 
 def generate_room_token(

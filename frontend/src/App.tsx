@@ -43,7 +43,7 @@ function getInitialFacilityFromHash(): string | undefined {
 export function App() {
   const [authToken, setAuthToken] = React.useState<string | null>(() => {
     if (typeof window === "undefined") return "demo-token";
-    return localStorage.getItem("revnaut_auth_token");
+    return localStorage.getItem("revnault_auth_token");
   });
   const [activeNav, setActiveNav] = React.useState<string>(getInitialRouteFromHash);
   const [activeFacility, setActiveFacility] = React.useState<string | undefined>(
@@ -52,8 +52,8 @@ export function App() {
   const [currentUserId, setCurrentUserId] = React.useState<string>(() => {
     if (typeof window === "undefined") return "usr-director-br";
     return (
-      localStorage.getItem("revnaut_active_user_id") ||
-      localStorage.getItem("revnaut_user_id") ||
+      localStorage.getItem("revnault_active_user_id") ||
+      localStorage.getItem("revnault_user_id") ||
       "usr-director-br"
     );
   });
@@ -64,8 +64,8 @@ export function App() {
     } catch {
       // Ignora falha de rede ao deslogar
     }
-    localStorage.removeItem("revnaut_auth_token");
-    localStorage.removeItem("revnaut_user");
+    localStorage.removeItem("revnault_auth_token");
+    localStorage.removeItem("revnault_user");
     setAuthToken(null);
     if (typeof window !== "undefined") {
       window.location.hash = "";
@@ -74,11 +74,11 @@ export function App() {
 
   React.useEffect(() => {
     const onSessionExpired = () => {
-      localStorage.removeItem("revnaut_user");
+      localStorage.removeItem("revnault_user");
       setAuthToken(null);
     };
-    window.addEventListener("revnaut:session_expired", onSessionExpired);
-    return () => window.removeEventListener("revnaut:session_expired", onSessionExpired);
+    window.addEventListener("revnault:session_expired", onSessionExpired);
+    return () => window.removeEventListener("revnault:session_expired", onSessionExpired);
   }, []);
 
   const handleLoginSuccess = React.useCallback((token: string, user: any) => {

@@ -124,7 +124,7 @@ export const MarketIntelRadarWorkspace: React.FC<MarketIntelRadarWorkspaceProps>
 
   const rbacHeaders = React.useMemo(() => {
     const headers: Record<string, string> = { "Content-Type": "application/json" };
-    const token = typeof window !== "undefined" ? localStorage.getItem("revnaut_auth_token") : null;
+    const token = typeof window !== "undefined" ? localStorage.getItem("revnault_auth_token") : null;
     if (token) headers.Authorization = `Bearer ${token}`;
     if (canSimulate) {
       headers["X-User-Role"] = role;

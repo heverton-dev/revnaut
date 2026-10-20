@@ -11,7 +11,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = BASE_DIR / "data"
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 def get_db_path() -> Path:
-    db_env = os.getenv("REVNAULT_DB_PATH") or os.getenv("REVNAUT_DB_PATH") or os.getenv("RVOPS_DB_PATH")
+    db_env = os.getenv("REVNAULT_DB_PATH") or os.getenv("REVNAULT_DB_PATH") or os.getenv("REVNAULT_DB_PATH")
     if db_env:
         p = Path(db_env)
         p.parent.mkdir(parents=True, exist_ok=True)
@@ -23,7 +23,7 @@ DB_PATH = get_db_path()
 PORT = int(os.getenv("PORT", 8000))
 HOST = os.getenv("HOST", "0.0.0.0")
 APP_ENV = os.getenv("APP_ENV", "production")
-LEGACY_DEFAULT_SECRET_KEY = "revnaut-secret-key-2026-superadmin-god"
+LEGACY_DEFAULT_SECRET_KEY = "revnault-secret-key-2026-superadmin-god"
 # Chave legada: só é usada para decifrar dados do cofre gravados antes da separação de chaves.
 SECRET_KEY = os.getenv("SECRET_KEY", LEGACY_DEFAULT_SECRET_KEY)
 # Assinatura HMAC dos tokens de sessão e de redefinição de senha
@@ -32,7 +32,7 @@ SESSION_SECRET_KEY = os.getenv("SESSION_SECRET_KEY", SECRET_KEY)
 VAULT_SECRET_KEY = os.getenv("VAULT_SECRET_KEY", SECRET_KEY)
 # Validade do token de sessão emitido no login (padrão: 12 horas)
 SESSION_TTL_SECONDS = int(os.getenv("SESSION_TTL_SECONDS", "43200"))
-SESSION_COOKIE_NAME = "revnaut_session"
+SESSION_COOKIE_NAME = "revnault_session"
 SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "1").lower() not in ("0", "false", "no")
 
 # Segredos de webhooks inbound (fail-closed: sem segredo configurado a chamada do provedor é recusada)
@@ -54,8 +54,8 @@ CORS_ALLOWED_ORIGINS = [
 
 
 def assert_production_secrets() -> None:
-    """Em produção (REVNAUT_ENV=production) recusa subir com chaves padrão públicas ou fracas."""
-    if os.getenv("REVNAUT_ENV", "").lower() != "production":
+    """Em produção (REVNAULT_ENV=production) recusa subir com chaves padrão públicas ou fracas."""
+    if os.getenv("REVNAULT_ENV", "").lower() != "production":
         return
     weak = [
         name
@@ -74,7 +74,7 @@ R2_PUBLIC_DOMAIN = os.getenv("R2_PUBLIC_DOMAIN", "https://cdn.revnaut.io")
 R2_ENDPOINT_URL = os.getenv("R2_ENDPOINT_URL", f"https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com")
 
 # Apache Superset Embedded Config
-SUPERSET_SECRET_KEY = os.getenv("SUPERSET_SECRET_KEY", "revnaut_superset_secret_jwt_key_2026")
+SUPERSET_SECRET_KEY = os.getenv("SUPERSET_SECRET_KEY", "revnault_superset_secret_jwt_key_2026")
 SUPERSET_DOMAIN = os.getenv("SUPERSET_DOMAIN", "http://localhost:8088")
 
 

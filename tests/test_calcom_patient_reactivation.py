@@ -126,7 +126,7 @@ def test_calcom_webhook_booking_created_and_deal_creation():
             "location": "integrations:livekit",
             "organizer": {
                 "name": "Dr. Lucas Mendes",
-                "email": "dr.lucas@revnaut.internal"
+                "email": "dr.lucas@revnault.internal"
             },
             "attendees": [
                 {
@@ -150,7 +150,7 @@ def test_calcom_webhook_booking_created_and_deal_creation():
     assert result["booking_uid"] == "cal_book_999888"
     assert result["deal_id"] is not None
     assert result["task_id"] is not None
-    assert "https://meet.revnaut.internal" in result["meeting_url"]
+    assert "https://meet.revnault.internal" in result["meeting_url"]
 
     # Valida no banco se a tarefa foi criada
     conn = get_connection()
@@ -225,7 +225,7 @@ def test_api_endpoints_calcom_reactivation():
             "location": "integrations:livekit",
             "organizer": {
                 "name": "Consultor Comercial DENTGO",
-                "email": "consultor@revnaut.internal"
+                "email": "consultor@revnault.internal"
             },
             "attendees": [
                 {

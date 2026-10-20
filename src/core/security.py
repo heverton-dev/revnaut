@@ -17,7 +17,7 @@ from src.core.database import get_connection
 from src.features.hierarchy.schemas import DataScopeEnum, UserContext
 
 
-_VAULT_SALT = b"revnaut-vault-salt-2026"
+_VAULT_SALT = b"revnault-vault-salt-2026"
 
 
 def _derive_aes_key(secret: str) -> bytes:

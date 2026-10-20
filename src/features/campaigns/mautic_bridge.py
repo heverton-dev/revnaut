@@ -28,8 +28,8 @@ def resolve_consultant_for_contact(contact_id: int) -> Dict[str, Any]:
             return {
                 "id": "u_corp_fallback",
                 "name": "Consultor Especialista Corporativo",
-                "email": "atendimento@revnaut.com",
-                "instance_name": "revnaut_default_corporate",
+                "email": "atendimento@revnault.com",
+                "instance_name": "revnault_default_corporate",
             }
 
         # Prioridade: Field Rep -> Inside Rep -> Owner -> Fallback
@@ -43,8 +43,8 @@ def resolve_consultant_for_contact(contact_id: int) -> Dict[str, Any]:
             return {
                 "id": "u_corp_fallback",
                 "name": "Consultor Especialista Corporativo",
-                "email": "atendimento@revnaut.com",
-                "instance_name": "revnaut_default_corporate",
+                "email": "atendimento@revnault.com",
+                "instance_name": "revnault_default_corporate",
             }
 
         cur.execute("SELECT id, name, email, role FROM users WHERE id = ?", (owner_id,))
@@ -53,7 +53,7 @@ def resolve_consultant_for_contact(contact_id: int) -> Dict[str, Any]:
             return {
                 "id": owner_id,
                 "name": "Consultor Designado",
-                "email": "consultor@revnaut.com",
+                "email": "consultor@revnault.com",
                 "instance_name": f"instance_{owner_id}",
             }
 
@@ -117,8 +117,8 @@ def process_mautic_campaign_action(payload: Dict[str, Any], account_id: str = "0
     consultant = resolve_consultant_for_contact(contact_id) if contact_id else {
         "id": "u_corp_fallback",
         "name": "Consultor Corporativo",
-        "email": "atendimento@revnaut.com",
-        "instance_name": "revnaut_default_corporate",
+        "email": "atendimento@revnault.com",
+        "instance_name": "revnault_default_corporate",
     }
 
     raw_template = payload.get("message_template") or "Olá {{contact.name}}, seu consultor {{consultant.name}} está à disposição."

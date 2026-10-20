@@ -387,7 +387,7 @@ def publish_landing_page(
         custom_uuid=slug,
     )
     r2_upload_res = storage.upload_bytes(r2_key, html_bytes, "text/html")
-    published_r2_url = f"https://r2.revnaut.internal/{r2_key}"
+    published_r2_url = f"https://r2.revnault.internal/{r2_key}"
     published_url = f"/lp/{slug}"
     r2_url = f"/api/v1/storage/files/{r2_key}"
 

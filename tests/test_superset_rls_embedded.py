@@ -29,7 +29,7 @@ def setup_users_and_scopes():
             INSERT OR REPLACE INTO users (
                 id, account_id, name, email, role, custom_data_scope, is_active, is_superadmin
             ) VALUES (
-                'usr-consultant-pr', '0f14ffff', 'Marcos Consultor PR', 'marcos.pr@revnaut.com',
+                'usr-consultant-pr', '0f14ffff', 'Marcos Consultor PR', 'marcos.pr@revnault.com',
                 'Consultor Comercial', 'self', 1, 0
             )
         """)
@@ -39,7 +39,7 @@ def setup_users_and_scopes():
             INSERT OR REPLACE INTO users (
                 id, account_id, name, email, role, custom_data_scope, is_active, is_superadmin
             ) VALUES (
-                'usr-director-br', '0f14ffff', 'Carlos Diretor Nacional', 'carlos.dir@revnaut.com',
+                'usr-director-br', '0f14ffff', 'Carlos Diretor Nacional', 'carlos.dir@revnault.com',
                 'Diretor Geral', 'tenant_global', 1, 0
             )
         """)
@@ -58,7 +58,7 @@ def setup_users_and_scopes():
             INSERT OR REPLACE INTO users (
                 id, account_id, name, email, role, team_id, custom_data_scope, is_active, is_superadmin
             ) VALUES (
-                'usr-manager-pr', '0f14ffff', 'Fernanda Gerente Sul', 'fernanda.mgr@revnaut.com',
+                'usr-manager-pr', '0f14ffff', 'Fernanda Gerente Sul', 'fernanda.mgr@revnault.com',
                 'Gerente Regional', 'team-pr-sul', 'team', 1, 0
             )
         """)

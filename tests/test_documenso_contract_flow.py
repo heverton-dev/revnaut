@@ -41,7 +41,7 @@ def test_documenso_generate_contract_and_pending_status():
     assert contract_res["status"] == "PENDING_SIGNATURE"
     assert contract_res["deal_id"] == "d-1"
     assert "contracts/d-1/proposal_original.pdf" in contract_res["original_pdf_r2_key"]
-    assert "https://documenso.revnaut.internal/sign/" in contract_res["signing_url"]
+    assert "https://documenso.revnault.internal/sign/" in contract_res["signing_url"]
 
     # Valida persistência em deal_contracts
     conn = get_connection()

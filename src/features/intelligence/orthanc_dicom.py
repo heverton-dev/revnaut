@@ -35,7 +35,7 @@ class OrthancDicomClient:
         app_env = os.getenv("APP_ENV", "local")
         self.mock_mode = mock_mode if mock_mode is not None else (app_env in ("local", "test", "development"))
         self.storage = r2_client or R2StorageClient()
-        self.secret_salt = os.getenv("DICOM_ANONYMIZATION_SALT", "revnaut_lgpd_salt_2026")
+        self.secret_salt = os.getenv("DICOM_ANONYMIZATION_SALT", "revnault_lgpd_salt_2026")
 
     def anonymize_patient_identity(self, patient_name: Optional[str], account_id: str) -> str:
         """
@@ -210,7 +210,7 @@ class OrthancDicomClient:
         token_sig = hmac.new(self.secret_salt.encode(), token_payload.encode(), hashlib.sha256).hexdigest()
         viewer_token = f"vt_{token_sig[:24]}_{expires_at}"
 
-        r2_domain = os.getenv("R2_PUBLIC_URL", "https://r2.revnaut.internal")
+        r2_domain = os.getenv("R2_PUBLIC_URL", "https://r2.revnault.internal")
         stream_url = f"{self.orthanc_url}/studies/{row['orthanc_study_id']}/stream"
         r2_url = f"{r2_domain}/{row['r2_storage_key']}?token={viewer_token}"
 

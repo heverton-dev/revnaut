@@ -20,7 +20,7 @@ class OmnichannelWebhookResponse(BaseModel):
 class EvolutionWebhookPayload(BaseModel):
     model_config = {"extra": "allow"}
     event: str = Field(..., description="Tipo do evento Evolution API (ex: 'messages.upsert')")
-    instance: Optional[str] = "revnaut-evolution"
+    instance: Optional[str] = "revnault-evolution"
     data: Optional[Dict[str, Any]] = None
 
 

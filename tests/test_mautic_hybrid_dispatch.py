@@ -39,7 +39,7 @@ def test_resolve_consultant_routing():
             cur = conn.cursor()
             cur.execute("""
                 INSERT OR REPLACE INTO users (id, account_id, name, email, role)
-                VALUES ('u_field_rep_sp1', '0f14ffff', 'Carlos Eduardo Consultor', 'carlos.sp@revnaut.com', 'Consultor')
+                VALUES ('u_field_rep_sp1', '0f14ffff', 'Carlos Eduardo Consultor', 'carlos.sp@revnault.com', 'Consultor')
             """)
             cur.execute("""
                 INSERT OR REPLACE INTO contacts (id, account_id, name, email, phone, cro, field_owner_id, specialty)

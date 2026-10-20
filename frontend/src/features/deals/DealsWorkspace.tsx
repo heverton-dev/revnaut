@@ -84,8 +84,8 @@ export interface DealsWorkspaceProps {
 const normalizeUserId = (): string => {
   if (typeof window === "undefined") return "usr-director-br";
   return (
-    localStorage.getItem("revnaut_active_user_id") ||
-    localStorage.getItem("revnaut_user_id") ||
+    localStorage.getItem("revnault_active_user_id") ||
+    localStorage.getItem("revnault_user_id") ||
     "usr-director-br"
   );
 };

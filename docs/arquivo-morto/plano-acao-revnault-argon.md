@@ -154,7 +154,7 @@ Cada ticket abaixo segue rigorosamente a estrutura de `.agents/skills/aidd-ticke
 ## Resumo da Arquitetura de Execução (Antigravity vs. VPS Swarm)
 
 
-| **Camada**                                                | **Ambiente Dev/Test (Antigravity)**                                   | **Ambiente Produção (revnaut.vpsconexao.org)**              |
+| **Camada**                                                | **Ambiente Dev/Test (Antigravity)**                                   | **Ambiente Produção (revnault.vpsconexao.org)**              |
 | --------------------------------------------------------- | --------------------------------------------------------------------- | ----------------------------------------------------------- |
 | **Runtime Backend**                                       | Python FastAPI (Uvicorn local) — *Boot em 0.4s*                       | Container `revnault-core` no Docker Swarm + Traefik      |
 | **Banco de Dados**                                        | SQLite WAL unificado (`data/revnault.db`) — *0MB RAM extra*       | SQLite WAL com backup contínuo (Litestream) ou Postgres     |

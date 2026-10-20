@@ -87,7 +87,7 @@ def test_listmonk_httpx_real_calls(monkeypatch):
     monkeypatch.setattr(httpx, "Client", DummyHttpxClient)
 
     lm = ListmonkClient(
-        base_url="https://listmonk.revnaut.internal",
+        base_url="https://listmonk.revnault.internal",
         username="admin",
         password="secret",
         mock_mode=False,
@@ -134,7 +134,7 @@ def test_listmonk_webhook_bounce_open_click(client):
             "event": "click",
             "email": "celso.antunes@implantes.br",
             "campaign_name": "Catálogo Cone Morse 2026",
-            "url": "https://cdn.revnaut.app/catalogo.pdf",
+            "url": "https://cdn.revnault.app/catalogo.pdf",
         },
     )
     assert res_click.status_code == 200

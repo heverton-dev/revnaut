@@ -95,7 +95,7 @@ class WindmillERPOrchestrator:
         """Aciona job no servidor Windmill via HTTP quando not self.mock_mode."""
         if not self.mock_mode:
             import httpx
-            url = f"{self.windmill_url.rstrip('/')}/api/w/revnaut/jobs/run/p/{script_path.lstrip('/')}"
+            url = f"{self.windmill_url.rstrip('/')}/api/w/revnault/jobs/run/p/{script_path.lstrip('/')}"
             headers = {"Authorization": f"Bearer {self.token}", "Content-Type": "application/json"}
             resp = httpx.post(url, json=payload, headers=headers, timeout=15.0)
             resp.raise_for_status()
@@ -136,7 +136,7 @@ class WindmillERPOrchestrator:
         xml_upload = self.storage.upload_bytes(xml_key, xml_bytes, "application/xml")
         pdf_upload = self.storage.upload_bytes(pdf_key, pdf_bytes, "application/pdf")
 
-        r2_domain = os.getenv("R2_PUBLIC_URL", "https://r2.revnaut.internal")
+        r2_domain = os.getenv("R2_PUBLIC_URL", "https://r2.revnault.internal")
         xml_url = xml_upload if isinstance(xml_upload, str) else (xml_upload.get("public_url") or f"{r2_domain}/{xml_key}")
         pdf_url = pdf_upload if isinstance(pdf_upload, str) else (pdf_upload.get("public_url") or f"{r2_domain}/{pdf_key}")
         job_id = self._trigger_windmill_job_http("f/erp/emit_remittance_nfe", {"erp_type": erp_type, "invoice": inv})
@@ -316,7 +316,7 @@ class WindmillERPOrchestrator:
             },
         )
 
-        r2_domain = os.getenv("R2_PUBLIC_URL", "https://r2.revnaut.internal")
+        r2_domain = os.getenv("R2_PUBLIC_URL", "https://r2.revnault.internal")
 
         return {
             "success": True,

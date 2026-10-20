@@ -413,7 +413,7 @@ def seed_multinational_enterprise(db_path: Path | str | None = None, clean_reset
             f"{ACCOUNT_ID}/contracts/{d_id}/proposal_signed.pdf" if contract_status == "SIGNED" else None,
             f"https://cdn.revnaut.io/{ACCOUNT_ID}/contracts/{d_id}/proposal_signed.pdf" if contract_status == "SIGNED" else None,
             f"sha256-hash-contract-sample-{d_idx:04d}", contact_name, f"contato{d_idx}@clinica.com.br",
-            "+55 11 98888-7777", f"https://documenso.revnaut.vpsconexao.org/sign/doc-{d_idx:03d}",
+            "+55 11 98888-7777", f"https://documenso.revnault.vpsconexao.org/sign/doc-{d_idx:03d}",
             now_iso, now_iso if contract_status == "SIGNED" else None
         ))
 
@@ -704,7 +704,7 @@ def seed_multinational_enterprise(db_path: Path | str | None = None, clean_reset
             fefo_deals_data.append((
                 fefo_id, ACCOUNT_ID, h_id, h_name, inv_id, prod[0], prod[3], batch, qty, qty - 5,
                 u_price, disc_pct, flash_price, exp_date, 6 + p_idx, 15, "ACTIVE",
-                f"https://revnaut.vpsconexao.org/#/dentgo?flash_deal={fefo_id}", now_iso
+                f"https://revnault.vpsconexao.org/#/dentgo?flash_deal={fefo_id}", now_iso
             ))
 
             fefo_reservations_data.append((
@@ -822,7 +822,7 @@ def seed_multinational_enterprise(db_path: Path | str | None = None, clean_reset
         omni_msg_data.append((
             f"omni-msg-{c_idx:02d}", ACCOUNT_ID, "evolution_sp_moema", f"55119999900{c_idx:02d}@s.whatsapp.net",
             f"+55 11 99999-00{c_idx:02d}", "chat", f"Confirmado pedido cirúrgico para {c_name}", None, 0,
-            f"https://revnaut.vpsconexao.org/#/video_sos?room=sos-deal-01", now_iso
+            f"https://revnault.vpsconexao.org/#/video_sos?room=sos-deal-01", now_iso
         ))
 
     cur.executemany("""
@@ -871,9 +871,9 @@ def seed_multinational_enterprise(db_path: Path | str | None = None, clean_reset
     """, lp_subs_data)
 
     referral_links_data = [
-        ("ref-link-01", ACCOUNT_ID, "agr-01", "Dr. Roberto Martins", "CRO-SP-12001", "MARTINS-VIP", "https://revnaut.vpsconexao.org/r/MARTINS-VIP", now_iso),
-        ("ref-link-02", ACCOUNT_ID, "agr-04", "Dr. Robert Vance", "LIC-FL-12004", "VANCE-FL", "https://revnaut.vpsconexao.org/r/VANCE-FL", now_iso),
-        ("ref-link-03", ACCOUNT_ID, "agr-07", "Prof. Dr. António Simões", "LIC-11-12007", "SIMOES-EU", "https://revnaut.vpsconexao.org/r/SIMOES-EU", now_iso),
+        ("ref-link-01", ACCOUNT_ID, "agr-01", "Dr. Roberto Martins", "CRO-SP-12001", "MARTINS-VIP", "https://revnault.vpsconexao.org/r/MARTINS-VIP", now_iso),
+        ("ref-link-02", ACCOUNT_ID, "agr-04", "Dr. Robert Vance", "LIC-FL-12004", "VANCE-FL", "https://revnault.vpsconexao.org/r/VANCE-FL", now_iso),
+        ("ref-link-03", ACCOUNT_ID, "agr-07", "Prof. Dr. António Simões", "LIC-11-12007", "SIMOES-EU", "https://revnault.vpsconexao.org/r/SIMOES-EU", now_iso),
     ]
     cur.executemany("""
         INSERT OR REPLACE INTO referral_links (id, account_id, referrer_id, referrer_name, referrer_cro_uf, referral_code, referral_url, created_at)
@@ -902,10 +902,10 @@ def seed_multinational_enterprise(db_path: Path | str | None = None, clean_reset
     """, tasks_data)
 
     tickets_data = [
-        ("t-01", ACCOUNT_ID, "Solicitação de Troca Técnica em Garantia (Perda de Estabilidade Primária)", "Dr. Roberto Martins", "alta", "em_atendimento", "GARANTIA_CLINICA", now_iso, "https://revnaut.vpsconexao.org/#/video_sos?room=sos-t-01", "+55 11 98888-0001", "CRO-SP-12001", "ord-dentgo-01", "Implante 3.75x11.5mm apresentou torque inferior a 25 Ncm em osso tipo IV. Cirurgião solicita substituição imediata por Grand Morse 4.3x13mm."),
-        ("t-02", ACCOUNT_ID, "Dúvida Cirúrgica: Sequência de Fresagem para Osso Tipo D1", "Dra. Camila Nogueira", "media", "resolvido", "SUPORTE_CIRURGICO", now_iso, "https://revnaut.vpsconexao.org/#/video_sos?room=sos-t-02", "+55 41 98888-0002", "CRO-PR-12002", "ord-dentgo-02", "Alinhamento com suporte clínico RevNault sobre uso de broca counterbore."),
-        ("t-03", ACCOUNT_ID, "Emergência de Sala: Falta de Componente Protético Ti-Base", "Dr. Fernando Sato", "urgente", "aberto", "EMERGENCIA_SALA", now_iso, "https://revnaut.vpsconexao.org/#/video_sos?room=sos-t-03", "+55 11 99999-0003", "CRO-PE-12003", "ord-dentgo-03", "Acionamento de DENTGO Express 45 min para entrega de Ti-Base."),
-        ("t-04", ACCOUNT_ID, "RMA / Notificação de Tecnovigilância ANVISA", "Prof. Dr. António Simões", "baixa", "aberto", "ANVISA_RMA", now_iso, "https://revnaut.vpsconexao.org/#/video_sos?room=sos-t-04", "+351 912 345 678", "LIC-11-12007", "ord-dentgo-04", "Envio de componente explantado para ensaio de fadiga metalográfica."),
+        ("t-01", ACCOUNT_ID, "Solicitação de Troca Técnica em Garantia (Perda de Estabilidade Primária)", "Dr. Roberto Martins", "alta", "em_atendimento", "GARANTIA_CLINICA", now_iso, "https://revnault.vpsconexao.org/#/video_sos?room=sos-t-01", "+55 11 98888-0001", "CRO-SP-12001", "ord-dentgo-01", "Implante 3.75x11.5mm apresentou torque inferior a 25 Ncm em osso tipo IV. Cirurgião solicita substituição imediata por Grand Morse 4.3x13mm."),
+        ("t-02", ACCOUNT_ID, "Dúvida Cirúrgica: Sequência de Fresagem para Osso Tipo D1", "Dra. Camila Nogueira", "media", "resolvido", "SUPORTE_CIRURGICO", now_iso, "https://revnault.vpsconexao.org/#/video_sos?room=sos-t-02", "+55 41 98888-0002", "CRO-PR-12002", "ord-dentgo-02", "Alinhamento com suporte clínico RevNault sobre uso de broca counterbore."),
+        ("t-03", ACCOUNT_ID, "Emergência de Sala: Falta de Componente Protético Ti-Base", "Dr. Fernando Sato", "urgente", "aberto", "EMERGENCIA_SALA", now_iso, "https://revnault.vpsconexao.org/#/video_sos?room=sos-t-03", "+55 11 99999-0003", "CRO-PE-12003", "ord-dentgo-03", "Acionamento de DENTGO Express 45 min para entrega de Ti-Base."),
+        ("t-04", ACCOUNT_ID, "RMA / Notificação de Tecnovigilância ANVISA", "Prof. Dr. António Simões", "baixa", "aberto", "ANVISA_RMA", now_iso, "https://revnault.vpsconexao.org/#/video_sos?room=sos-t-04", "+351 912 345 678", "LIC-11-12007", "ord-dentgo-04", "Envio de componente explantado para ensaio de fadiga metalográfica."),
     ]
     cur.executemany("""
         INSERT OR REPLACE INTO tickets (id, account_id, title, customer_name, priority, status, category, created_at, livekit_room_url, customer_phone, cro_uf, dentgo_order_id, clinical_notes)
@@ -954,7 +954,7 @@ def seed_multinational_enterprise(db_path: Path | str | None = None, clean_reset
     """, patient_reactivations_data)
 
     calcom_bookings_data = [
-        ("cal-01", ACCOUNT_ID, "cal-uid-1001", "react-01", "Paciente Mariana Fontes", "mariana.fontes@email.com", "+55 11 99111-2222", "Dr. Roberto Martins", "martins@revnault-clients.org", "Consulta de Retorno e Manutenção Implante", now_iso, (now + timedelta(hours=1)).isoformat(), "https://meet.revnaut.io/retorno-1001", 1, "deal-01", "task-01", "ACCEPTED", json.dumps({"source": "calcom"}), now_iso),
+        ("cal-01", ACCOUNT_ID, "cal-uid-1001", "react-01", "Paciente Mariana Fontes", "mariana.fontes@email.com", "+55 11 99111-2222", "Dr. Roberto Martins", "martins@revnault-clients.org", "Consulta de Retorno e Manutenção Implante", now_iso, (now + timedelta(hours=1)).isoformat(), "https://meet.revnault.io/retorno-1001", 1, "deal-01", "task-01", "ACCEPTED", json.dumps({"source": "calcom"}), now_iso),
     ]
     cur.executemany("""
         INSERT OR REPLACE INTO calcom_bookings (id, account_id, calcom_booking_uid, schedule_id, patient_name, patient_email, patient_phone, host_name, host_email, event_type_title, start_time, end_time, meeting_url, is_online, deal_id, task_id, status, raw_payload, created_at)
@@ -1010,11 +1010,11 @@ def seed_multinational_enterprise(db_path: Path | str | None = None, clean_reset
     """, comm_rules_data)
 
     tenant_creds_data = [
-        ("tc-r2", ACCOUNT_ID, "cloudflare_r2", "API_KEYS", json.dumps({"account_id": "r2-prod-revnaut", "bucket": "revnaut-media"}), json.dumps({"active": True}), now_iso, now_iso),
-        ("tc-documenso", ACCOUNT_ID, "documenso", "BEARER_TOKEN", json.dumps({"api_url": "https://documenso.revnaut.vpsconexao.org/api/v1"}), json.dumps({"active": True}), now_iso, now_iso),
-        ("tc-livekit", ACCOUNT_ID, "livekit", "API_KEYS", json.dumps({"url": "wss://livekit.revnaut.vpsconexao.org"}), json.dumps({"active": True}), now_iso, now_iso),
-        ("tc-evolution", ACCOUNT_ID, "evolution_api", "API_KEYS", json.dumps({"url": "https://evolution.revnaut.vpsconexao.org"}), json.dumps({"active": True}), now_iso, now_iso),
-        ("tc-totvs", ACCOUNT_ID, "totvs_protheus", "BASIC_AUTH", json.dumps({"endpoint": "https://protheus.revnaut.internal:8084"}), json.dumps({"active": True}), now_iso, now_iso),
+        ("tc-r2", ACCOUNT_ID, "cloudflare_r2", "API_KEYS", json.dumps({"account_id": "r2-prod-revnault", "bucket": "revnaut-media"}), json.dumps({"active": True}), now_iso, now_iso),
+        ("tc-documenso", ACCOUNT_ID, "documenso", "BEARER_TOKEN", json.dumps({"api_url": "https://documenso.revnault.vpsconexao.org/api/v1"}), json.dumps({"active": True}), now_iso, now_iso),
+        ("tc-livekit", ACCOUNT_ID, "livekit", "API_KEYS", json.dumps({"url": "wss://livekit.revnault.vpsconexao.org"}), json.dumps({"active": True}), now_iso, now_iso),
+        ("tc-evolution", ACCOUNT_ID, "evolution_api", "API_KEYS", json.dumps({"url": "https://evolution.revnault.vpsconexao.org"}), json.dumps({"active": True}), now_iso, now_iso),
+        ("tc-totvs", ACCOUNT_ID, "totvs_protheus", "BASIC_AUTH", json.dumps({"endpoint": "https://protheus.revnault.internal:8084"}), json.dumps({"active": True}), now_iso, now_iso),
     ]
     cur.executemany("""
         INSERT OR REPLACE INTO tenant_credentials (id, account_id, service_name, credential_type, encrypted_payload, metadata_json, created_at, updated_at)
@@ -1023,12 +1023,12 @@ def seed_multinational_enterprise(db_path: Path | str | None = None, clean_reset
 
     # 17. WEBHOOKS & AUTOMATIONS
     webhooks_data = [
-        (1, ACCOUNT_ID, "Notificação de Venda Fechada (Slack/Teams)", "https://hooks.revnaut.internal/deals/won", "deal.won", 1, "whsec_revnaut_super_secret_2026", now_iso),
+        (1, ACCOUNT_ID, "Notificação de Venda Fechada (Slack/Teams)", "https://hooks.revnault.internal/deals/won", "deal.won", 1, "whsec_revnault_super_secret_2026", now_iso),
     ]
     cur.executemany("INSERT OR REPLACE INTO webhooks (id, account_id, name, url, event_type, is_active, secret, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", webhooks_data)
 
     wh_subs_data = [
-        ("sub-01", ACCOUNT_ID, "Webhook de Integração ERP Protheus", "https://erp.revnaut.internal/api/webhook", json.dumps(["deal.won", "order.delivered"]), "secret-hmac-2026", 1, 0, 0, now_iso, "encrypted-secret-key-128"),
+        ("sub-01", ACCOUNT_ID, "Webhook de Integração ERP Protheus", "https://erp.revnault.internal/api/webhook", json.dumps(["deal.won", "order.delivered"]), "secret-hmac-2026", 1, 0, 0, now_iso, "encrypted-secret-key-128"),
     ]
     cur.executemany("""
         INSERT OR REPLACE INTO webhook_subscriptions (id, account_id, name, target_url, subscribed_events_json, signing_secret, is_active, consecutive_failures, circuit_breaker_tripped, created_at, signing_secret_encrypted)
@@ -1042,7 +1042,7 @@ def seed_multinational_enterprise(db_path: Path | str | None = None, clean_reset
 
     cur.execute("""
         INSERT OR REPLACE INTO webhook_delivery_logs (id, subscription_id, account_id, event_name, target_url, payload_json, signature_header, status_code, response_body, latency_ms, attempt, success, created_at)
-        VALUES ('wdl-01', 'sub-01', '0f14ffff', 'order.delivered', 'https://erp.revnaut.internal/api/webhook', '{"order_id": "ord-dentgo-01"}', 'sha256=123', 200, '{"ok": true}', 42, 1, 1, ?)
+        VALUES ('wdl-01', 'sub-01', '0f14ffff', 'order.delivered', 'https://erp.revnault.internal/api/webhook', '{"order_id": "ord-dentgo-01"}', 'sha256=123', 200, '{"ok": true}', 42, 1, 1, ?)
     """, (now_iso,))
 
     automation_flows_data = [

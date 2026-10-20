@@ -262,7 +262,7 @@ def process_calcom_webhook(
 
     organizer = payload_data.get("organizer") or {}
     host_name = organizer.get("name") or "Dr. Lucas Mendes"
-    host_email = organizer.get("email") or "dr.lucas@revnaut.internal"
+    host_email = organizer.get("email") or "dr.lucas@revnault.internal"
 
     is_online = 1 if any(k in location.lower() for k in ["livekit", "online", "video", "meet", "webrtc"]) else 0
     meeting_url: Optional[str] = None
@@ -276,7 +276,7 @@ def process_calcom_webhook(
             account_id=account_id,
             ttl_seconds=7200,
         )
-        meeting_url = f"https://meet.revnaut.internal/{room_name}?token={token}"
+        meeting_url = f"https://meet.revnault.internal/{room_name}?token={token}"
     elif location:
         meeting_url = location
 

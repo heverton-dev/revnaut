@@ -84,7 +84,7 @@ def generate_contract_for_deal(
         contract_id = f"cntr-{uuid.uuid4().hex[:8]}"
         documenso_id = f"doc_documenso_{int(time.time())}_{uuid.uuid4().hex[:4]}"
         original_r2_key = f"{effective_account}/contracts/{deal_id}/proposal_original.pdf"
-        signing_url = f"https://documenso.revnaut.internal/sign/{documenso_id}"
+        signing_url = f"https://documenso.revnault.internal/sign/{documenso_id}"
         contract_title = f"Contrato de Fornecimento Odontológico - {row_dict['title']}"
 
         # 1. Compila PDF real e faz upload para o Cloudflare R2
@@ -107,7 +107,7 @@ def generate_contract_for_deal(
 
         # 2. Integração HTTP real com Documenso Headless quando configurado
         api_key = os.getenv("DOCUMENSO_API_KEY", "").strip()
-        base_url = os.getenv("DOCUMENSO_BASE_URL", "https://documenso.revnaut.internal/api/v1").rstrip("/")
+        base_url = os.getenv("DOCUMENSO_BASE_URL", "https://documenso.revnault.internal/api/v1").rstrip("/")
         is_mock = mock_mode if mock_mode is not None else (not bool(api_key))
         if not is_mock and api_key:
             try:
@@ -125,7 +125,7 @@ def generate_contract_for_deal(
                     resp.raise_for_status()
                     doc_data = resp.json()
                     documenso_id = str(doc_data.get("documentId") or doc_data.get("id") or documenso_id)
-                    signing_url = doc_data.get("signingUrl") or f"https://documenso.revnaut.internal/sign/{documenso_id}"
+                    signing_url = doc_data.get("signingUrl") or f"https://documenso.revnault.internal/sign/{documenso_id}"
             except Exception:
                 pass
 

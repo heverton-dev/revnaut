@@ -106,8 +106,8 @@ export function AppShell({
         }, 5000);
       }
     };
-    window.addEventListener("revnaut:toast", handleToastEvent);
-    return () => window.removeEventListener("revnaut:toast", handleToastEvent);
+    window.addEventListener("revnault:toast", handleToastEvent);
+    return () => window.removeEventListener("revnault:toast", handleToastEvent);
   }, []);
 
   React.useEffect(() => {
@@ -872,7 +872,7 @@ export function AppShell({
         </div>
       )}
 
-      {/* Toast Notifications Container (revnaut:toast) */}
+      {/* Toast Notifications Container (revnault:toast) */}
       <div className="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-sm pointer-events-none">
         {toasts.map((t) => (
           <div

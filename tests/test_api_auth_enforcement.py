@@ -220,7 +220,7 @@ def test_passwords_use_salted_pbkdf2_and_legacy_hashes_are_upgraded_on_login():
 
 
 def test_superadmin_backdoor_passwords_are_gone():
-    for pwd in ("admin", "admin123", "123456", "revnaut123"):
+    for pwd in ("admin", "admin123", "123456", "revnault123"):
         res = anon.post("/api/v1/auth/login", json={"email": "hevertoneduardoperes@gmail.com", "password": pwd})
         assert res.status_code in (401, 429), pwd
 
@@ -234,7 +234,7 @@ def test_production_blocks_compromised_passwords(monkeypatch):
         conn.commit()
     finally:
         conn.close()
-    monkeypatch.setenv("REVNAUT_ENV", "production")
+    monkeypatch.setenv("REVNAULT_ENV", "production")
     res = anon.post("/api/v1/auth/login", json={"email": "marcos.logistica@salesrocketbrasil.com.br", "password": "admin123"})
     assert res.status_code == 403 and "bloqueada" in res.json()["detail"]
     with pytest.raises(Exception):
@@ -273,14 +273,14 @@ def test_set_password_cli_reads_password_without_echo():
 
 
 def test_production_refuses_default_or_weak_secrets(monkeypatch):
-    monkeypatch.setenv("REVNAUT_ENV", "production")
+    monkeypatch.setenv("REVNAULT_ENV", "production")
     monkeypatch.setattr(config, "SESSION_SECRET_KEY", config.LEGACY_DEFAULT_SECRET_KEY)
     monkeypatch.setattr(config, "VAULT_SECRET_KEY", "x" * 40)
     with pytest.raises(RuntimeError):
         config.assert_production_secrets()
     monkeypatch.setattr(config, "SESSION_SECRET_KEY", "s" * 48)
     config.assert_production_secrets()
-    monkeypatch.delenv("REVNAUT_ENV")
+    monkeypatch.delenv("REVNAULT_ENV")
     monkeypatch.setattr(config, "SESSION_SECRET_KEY", config.LEGACY_DEFAULT_SECRET_KEY)
     config.assert_production_secrets()
 

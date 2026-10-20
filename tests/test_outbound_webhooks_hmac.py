@@ -66,7 +66,7 @@ def test_ssrf_protection_blocks_internal_and_loopback_ips():
         validate_target_url_safe("ftp://api.externa.com/upload")
 
     # 4. Destino público válido aceito normalmente
-    validate_target_url_safe("https://api.erp-sankhya.com.br/v1/revnaut/webhooks")
+    validate_target_url_safe("https://api.erp-sankhya.com.br/v1/revnault/webhooks")
 
 
 def test_hmac_sha256_cryptographic_signature_calculation_and_verification():

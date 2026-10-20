@@ -235,7 +235,7 @@ export const CalcomReactivationWorkspace: React.FC = () => {
             location: "integrations:livekit",
             organizer: {
               name: targetSurgeon,
-              email: "cirurgiao@revnaut.internal",
+              email: "cirurgiao@revnault.internal",
             },
             attendees: [
               {

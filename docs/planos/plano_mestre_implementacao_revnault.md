@@ -599,7 +599,7 @@ ightarrow$ `BLACK_KOL` e resgate de voucher abatendo frete no DENTGO.
   2. `WindmillERPOrchestrator` e os métodos `emit_*_nfe` de `TotvsProtheusAdapter`, `SapBusinessOneAdapter` e `SankhyaAdapter` não possuem chamadas HTTP reais (`httpx.post`) quando `self.mock_mode is False`.
 - **Como Implementar / Corrigir (Detalhes Técnicos):**
   1. Gerar o documento XML NFe 4.00 determinístico (`<nfeProc xmlns="http://www.portalfiscal.inf.br/nfe">...`) e o binário PDF do DANFE (`%PDF-1.4...`) e enviá-los ao Cloudflare R2 via `self.storage.upload_bytes(xml_key, xml_bytes, "application/json")` / `"application/pdf"` (adicionando `"application/xml"` e `"text/xml"` em `ALLOWED_MIME_TYPES`).
-  2. Adicionar suporte a chamada HTTP real via `httpx` para o servidor Windmill (`POST {self.windmill_url}/api/w/revnaut/jobs/run/p/f/erp/emit_nfe`) e para os endpoints REST do TOTVS Protheus, SAP B1 Service Layer e Sankhya quando `not self.mock_mode`.
+  2. Adicionar suporte a chamada HTTP real via `httpx` para o servidor Windmill (`POST {self.windmill_url}/api/w/revnault/jobs/run/p/f/erp/emit_nfe`) e para os endpoints REST do TOTVS Protheus, SAP B1 Service Layer e Sankhya quando `not self.mock_mode`.
 - **DoD:** Emissão de NF-e de Remessa (`5917`/`6917`), Retorno Simbólico (`1918`/`2918`) e Venda Consignada (`5113`/`6113`) com upload real do XML e DANFE PDF no Cloudflare R2.
 - **Target Files:** `src/features/integrations/totvs/adapter.py`, `src/features/integrations/totvs/service.py`, `src/features/integrations/totvs/router.py`, `src/features/integrations/erp_hub/windmill_client.py`, `docker-stack.yml`, `tests/test_erp_consignment_cfop_flow.py`
 - **Validation Command:** `python -m pytest tests/test_erp_consignment_cfop_flow.py -q`

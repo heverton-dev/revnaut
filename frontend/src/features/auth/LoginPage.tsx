@@ -33,9 +33,9 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
       }
 
       // Persiste sessão determinística
-      localStorage.setItem("revnaut_auth_token", data.access_token);
-      localStorage.setItem("revnaut_user", JSON.stringify(data.user));
-      localStorage.setItem("revnaut_user_id", data.user.id);
+      localStorage.setItem("revnault_auth_token", data.access_token);
+      localStorage.setItem("revnault_user", JSON.stringify(data.user));
+      localStorage.setItem("revnault_user_id", data.user.id);
 
       onLoginSuccess(data.access_token, data.user);
     } catch (err: any) {

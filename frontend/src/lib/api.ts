@@ -2,7 +2,7 @@
 /**
  * Global API Client & Fetch Interceptor
  * Intercepta chamadas /api/v1/*, injeta credenciais RBAC (X-User-Id, Bearer token),
- * e dispara notificações determinísticas (revnaut:toast) para operações mutantes.
+ * e dispara notificações determinísticas (revnault:toast) para operações mutantes.
  */
 
 export interface ToastPayload {
@@ -14,23 +14,23 @@ export interface ToastPayload {
 
 export function getActiveUserId(): string {
   if (typeof window === "undefined") return "usr-director-br";
-  return localStorage.getItem("revnaut_active_user_id") || "usr-director-br";
+  return localStorage.getItem("revnault_active_user_id") || "usr-director-br";
 }
 
 export function setActiveUserId(userId: string): void {
   if (typeof window === "undefined") return;
-  localStorage.setItem("revnaut_active_user_id", userId);
-  window.dispatchEvent(new CustomEvent("revnaut:user_changed", { detail: { userId } }));
+  localStorage.setItem("revnault_active_user_id", userId);
+  window.dispatchEvent(new CustomEvent("revnault:user_changed", { detail: { userId } }));
 }
 
 export function dispatchToast(toast: ToastPayload): void {
   if (typeof window === "undefined") return;
-  window.dispatchEvent(new CustomEvent("revnaut:toast", { detail: toast }));
+  window.dispatchEvent(new CustomEvent("revnault:toast", { detail: toast }));
 }
 
 // Inicializa interceptor global de fetch
 export function setupGlobalFetchInterceptor(): void {
-  if (typeof window === "undefined" || (window as any).__revnaut_fetch_intercepted) {
+  if (typeof window === "undefined" || (window as any).__revnault_fetch_intercepted) {
     return;
   }
 
@@ -45,9 +45,9 @@ export function setupGlobalFetchInterceptor(): void {
     }
 
     const activeUserId = getActiveUserId();
-    // LoginPage grava o token em "revnaut_auth_token"; chaves antigas mantidas por compatibilidade
+    // LoginPage grava o token em "revnault_auth_token"; chaves antigas mantidas por compatibilidade
     const token =
-      localStorage.getItem("revnaut_auth_token") || localStorage.getItem("auth_token") || localStorage.getItem("revnaut_token");
+      localStorage.getItem("revnault_auth_token") || localStorage.getItem("auth_token") || localStorage.getItem("revnault_token");
 
     const modifiedInit: RequestInit = { ...(init || {}) };
     const headers = new Headers(modifiedInit.headers || (input instanceof Request ? input.headers : {}));
@@ -79,10 +79,10 @@ export function setupGlobalFetchInterceptor(): void {
 
       // Token de sessão rejeitado (expirado ou inválido): encerra a sessão local e volta ao login
       if (response.status === 401 && token && !urlString.includes("/api/v1/auth/login")) {
-        localStorage.removeItem("revnaut_auth_token");
+        localStorage.removeItem("revnault_auth_token");
         localStorage.removeItem("auth_token");
-        localStorage.removeItem("revnaut_token");
-        window.dispatchEvent(new CustomEvent("revnaut:session_expired"));
+        localStorage.removeItem("revnault_token");
+        window.dispatchEvent(new CustomEvent("revnault:session_expired"));
       }
 
       // Dispara toast para métodos de mutação (POST, PUT, PATCH, DELETE)
@@ -135,5 +135,5 @@ export function setupGlobalFetchInterceptor(): void {
     }
   };
 
-  (window as any).__revnaut_fetch_intercepted = true;
+  (window as any).__revnault_fetch_intercepted = true;
 }

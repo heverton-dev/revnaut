@@ -29,7 +29,7 @@ def test_lead_scoring_history_semantic_vector_and_auto_handoff():
             cur.execute("DELETE FROM scoring_history WHERE contact_id = 8801")
             cur.execute("""
                 INSERT OR REPLACE INTO users (id, account_id, name, email, role)
-                VALUES ('u_field_sp_sul', '0f14ffff', 'Consultor Regional SP Sul', 'sp.sul@revnaut.com', 'Consultor')
+                VALUES ('u_field_sp_sul', '0f14ffff', 'Consultor Regional SP Sul', 'sp.sul@revnault.com', 'Consultor')
             """)
             cur.execute("""
                 INSERT OR REPLACE INTO contacts (

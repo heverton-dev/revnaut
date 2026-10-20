@@ -76,7 +76,7 @@ def test_export_deals_csv():
     res = client.get("/api/v1/deals/export/csv")
     assert res.status_code == 200
     assert "text/csv" in res.headers["content-type"]
-    assert "attachment; filename=pipeline_revnaut_dental.csv" in res.headers["content-disposition"]
+    assert "attachment; filename=pipeline_revnault_dental.csv" in res.headers["content-disposition"]
     csv_text = res.text
     assert "ID,Titulo,Empresa,Contato,Valor_R$,Estagio,Prioridade,Previsao_Fechamento" in csv_text
     assert len(csv_text.splitlines()) > 1

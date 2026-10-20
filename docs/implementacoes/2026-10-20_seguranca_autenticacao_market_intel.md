@@ -20,7 +20,7 @@
 Em produção, o login com a senha antiga do Super Admin está bloqueado, porque ela estava publicada no código da tela de login. Rode na VPS:
 
 ```bash
-docker exec -it $(docker ps -q -f name=rvops_app | head -1) python -m src.features.auth.set_password_cli hevertoneduardoperes@gmail.com
+docker exec -it $(docker ps -q -f name=revnault_app | head -1) python -m src.features.auth.set_password_cli hevertoneduardoperes@gmail.com
 ```
 
 - O comando pede a nova senha duas vezes, sem mostrá-la na tela nem gravá-la no histórico do shell.
@@ -76,7 +76,7 @@ A senha antiga continua nos commits anteriores do git. Ela não deve ser reutili
 **Como foi feito.**
 - `src/workers/market_intel_scheduler.py` grava cada slot na tabela `market_intel_batch_ticks` (chave slot + tenant, migração `0004`). Assim, as 2 réplicas do worker e os reinícios não duplicam o disparo. Pode ser desligado com `MARKET_INTEL_SCHEDULER_ENABLED=0`.
 - `verify_session_token` confere a validade do token e recusa tokens com data futura.
-- `frontend/src/lib/api.ts` lia chaves erradas do `localStorage`; agora lê `revnaut_auth_token`. Quando o servidor recusa a sessão, o usuário volta ao login.
+- `frontend/src/lib/api.ts` lia chaves erradas do `localStorage`; agora lê `revnault_auth_token`. Quando o servidor recusa a sessão, o usuário volta ao login.
 
 **Por que.** Sem o agendador, a coleta de concorrentes nunca rodava sozinha. Sem expiração, um token vazado valia para sempre. Por causa do bug do interceptor, o frontend nunca enviava o token.
 
@@ -107,7 +107,7 @@ A senha antiga continua nos commits anteriores do git. Ela não deve ser reutili
 |---|---|
 | Rotas públicas | `GET /api/v1/health`, login, logout, `forgot-password`, `reset-password-with-token`, envio de landing page e cadastro por indicação |
 | Demais rotas | Exigem `Authorization: Bearer <token>`; sem token, a resposta é 401. Rotas novas nascem protegidas. |
-| Cookie `revnaut_session` | HttpOnly, Secure, SameSite=Lax, `Path=/api/v1`. Vale só para GET/HEAD (imagens, áudios e downloads). Métodos que alteram dados exigem o header Bearer. |
+| Cookie `revnault_session` | HttpOnly, Secure, SameSite=Lax, `Path=/api/v1`. Vale só para GET/HEAD (imagens, áudios e downloads). Métodos que alteram dados exigem o header Bearer. |
 | Tenant | `account_id` de outra empresa em query, header `X-Account-ID` ou corpo JSON resulta em 403. Sem `account_id`, o tenant do usuário é injetado. |
 | CORS | Só as origens de `CORS_ALLOWED_ORIGINS`. Antes era `*` com credenciais. |
 | Swagger (`/docs`) | Botão Authorize com o token de sessão (esquema `SessionBearer`). |
@@ -138,7 +138,7 @@ A senha antiga continua nos commits anteriores do git. Ela não deve ser reutili
 - Em produção, o app não sobe com chave padrão ou com menos de 32 caracteres.
 
 **Como foi feito.**
-- `assert_production_secrets()` roda na inicialização quando `REVNAUT_ENV=production`.
+- `assert_production_secrets()` roda na inicialização quando `REVNAULT_ENV=production`.
 - `rotate_vault_encryption()` re-cifra com a chave nova, de forma idempotente, o que estava gravado com a chave antiga: `tenant_credentials.encrypted_payload` e `webhook_subscriptions.signing_secret_encrypted`. Durante a transição, a leitura aceita as duas chaves.
 
 **Por que.** A chave de sessão em produção era a padrão do código, então qualquer pessoa conseguia forjar um token de Super Admin. A mesma chave cifrava o cofre, por isso a separação veio com migração: trocar a chave sem re-cifrar perderia as credenciais gravadas.
@@ -167,11 +167,11 @@ A senha antiga continua nos commits anteriores do git. Ela não deve ser reutili
 - O script passou a sair com erro quando o deploy falha.
 
 **Como foi feito.**
-- `scripts/deploy_vps.py` lê os segredos do `.env` local (ignorado pelo git) e grava `/opt/rvops/.env.secrets` com permissão 600, carregado antes do `docker stack deploy`.
-- `docker-stack.yml` e `docker-compose.prod.yml` recebem `REVNAUT_ENV=production` e os segredos nos serviços `app` e `worker`.
+- `scripts/deploy_vps.py` lê os segredos do `.env` local (ignorado pelo git) e grava `/opt/revnault/.env.secrets` com permissão 600, carregado antes do `docker stack deploy`.
+- `docker-stack.yml` e `docker-compose.prod.yml` recebem `REVNAULT_ENV=production` e os segredos nos serviços `app` e `worker`.
 - Os arquivos `data/*.db` ficam fora do pacote; só seguem com `python scripts/deploy_vps.py --seed-database`, para montar um servidor novo.
 
-**Por que.** O deploy extraía o banco local por cima do volume de produção (`/opt/rvops/data`). Cada deploy substituía os dados de produção, o que também desfaria qualquer troca de senha feita no servidor. Os deploys anteriores, inclusive os de hoje, já fizeram essa substituição; os dados alterados em produção entre um deploy e outro não puderam ser recuperados.
+**Por que.** O deploy extraía o banco local por cima do volume de produção (`/opt/revnault/data`). Cada deploy substituía os dados de produção, o que também desfaria qualquer troca de senha feita no servidor. Os deploys anteriores, inclusive os de hoje, já fizeram essa substituição; os dados alterados em produção entre um deploy e outro não puderam ser recuperados.
 
 ---
 

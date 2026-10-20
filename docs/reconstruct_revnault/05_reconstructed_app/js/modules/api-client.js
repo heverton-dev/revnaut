@@ -9,24 +9,24 @@ const API_BASE = (typeof window !== 'undefined' && window.location.origin && win
 
 export function getAuthToken() {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem('revnaut_auth_token') || sessionStorage.getItem('revnaut_auth_token') || window.AUTH_TOKEN || null;
+  return localStorage.getItem('revnault_auth_token') || sessionStorage.getItem('revnault_auth_token') || window.AUTH_TOKEN || null;
 }
 
 export function setAuthToken(token, persist = true) {
   if (typeof window === 'undefined') return;
   window.AUTH_TOKEN = token;
   if (persist) {
-    localStorage.setItem('revnaut_auth_token', token);
+    localStorage.setItem('revnault_auth_token', token);
   } else {
-    sessionStorage.setItem('revnaut_auth_token', token);
+    sessionStorage.setItem('revnault_auth_token', token);
   }
 }
 
 export function clearAuthToken() {
   if (typeof window === 'undefined') return;
   window.AUTH_TOKEN = null;
-  localStorage.removeItem('revnaut_auth_token');
-  sessionStorage.removeItem('revnaut_auth_token');
+  localStorage.removeItem('revnault_auth_token');
+  sessionStorage.removeItem('revnault_auth_token');
 }
 
 export async function apiRequest(endpoint, options = {}) {

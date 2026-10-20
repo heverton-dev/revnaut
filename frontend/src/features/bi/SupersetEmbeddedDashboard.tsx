@@ -288,7 +288,7 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
   // TICKET-ANA-01/02: favoritos de perguntas e compartilhamento role-scoped
   const [favoriteQueries, setFavoriteQueries] = useState<string[]>(() => {
     try {
-      const raw = localStorage.getItem("revnaut_bi_favorite_queries");
+      const raw = localStorage.getItem("revnault_bi_favorite_queries");
       return raw ? (JSON.parse(raw) as string[]) : [];
     } catch {
       return [];
@@ -541,7 +541,7 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
   const persistFavoriteQueries = useCallback((next: string[]) => {
     setFavoriteQueries(next);
     try {
-      localStorage.setItem("revnaut_bi_favorite_queries", JSON.stringify(next));
+      localStorage.setItem("revnault_bi_favorite_queries", JSON.stringify(next));
     } catch {
       // localStorage indisponível em contexto privado
     }

@@ -67,7 +67,6 @@ def make_tarball(source_dir: Path, output_filename: str, include_databases: bool
                 tar.add(str(p), arcname=file)
 
         tar.add(str(source_dir / "src"), arcname="src")
-        tar.add(str(source_dir / "backend"), arcname="backend")
         tar.add(str(source_dir / "data"), arcname="data", filter=_data_filter(include_databases))
         
         migrations_src = source_dir / "migrations"

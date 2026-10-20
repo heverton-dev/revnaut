@@ -179,7 +179,7 @@ export function CredentialsVaultPage({ initialTab = "vault" }: { initialTab?: st
   const [, setLoadingUsers] = React.useState(false);
   const [showUserModal, setShowUserModal] = React.useState(false);
   const [newUserName, setNewUserName] = React.useState("Dr. Consultor Comercial");
-  const [newUserEmail, setNewUserEmail] = React.useState("consultor.novo@revnaut.com");
+  const [newUserEmail, setNewUserEmail] = React.useState("consultor.novo@revnault.com");
   const [newUserRole, setNewUserRole] = React.useState("Consultor Comercial");
   const [newUserPassword, setNewUserPassword] = React.useState("RevNault@2026");
 

@@ -59,7 +59,7 @@ def test_evolution_api_webhook_updates_surgeon_score_and_timeline():
 
     payload = {
         "event": "messages.upsert",
-        "instance": "revnaut-evolution-prod",
+        "instance": "revnault-evolution-prod",
         "data": {
             "key": {
                 "remoteJid": f"{phone_clean}@s.whatsapp.net",

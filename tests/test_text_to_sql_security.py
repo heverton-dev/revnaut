@@ -35,7 +35,7 @@ def setup_text_to_sql_data():
             INSERT OR REPLACE INTO users (
                 id, account_id, name, email, role, team_id, custom_data_scope, is_active, is_superadmin
             ) VALUES (
-                'usr-sql-consultant', '0f14ffff', 'Marcos Consultor', 'marcos@revnaut.com',
+                'usr-sql-consultant', '0f14ffff', 'Marcos Consultor', 'marcos@revnault.com',
                 'Consultor Comercial', 'team-sql-pr', 'self', 1, 0
             )
         """)
@@ -43,7 +43,7 @@ def setup_text_to_sql_data():
             INSERT OR REPLACE INTO users (
                 id, account_id, name, email, role, custom_data_scope, is_active, is_superadmin
             ) VALUES (
-                'usr-sql-director', '0f14ffff', 'Carlos Diretor', 'carlos@revnaut.com',
+                'usr-sql-director', '0f14ffff', 'Carlos Diretor', 'carlos@revnault.com',
                 'Diretor Geral', 'tenant_global', 1, 0
             )
         """)

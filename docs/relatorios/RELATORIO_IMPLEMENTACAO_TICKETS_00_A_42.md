@@ -150,7 +150,7 @@ A aplicacao foi implantada e esta respondendo com certificados SSL Let's Encrypt
   [https://revnault.vpsconexao.org/api/v1/health](https://revnault.vpsconexao.org/api/v1/health)
 
 ### Credenciais de Acesso Inicial
-- **Usuario Super Admin:** `admin@revnaut.local` (ou botao de acesso rapido "Entrar com Super Admin" na tela de login).
+- **Usuario Super Admin:** `admin@revnault.local` (ou botao de acesso rapido "Entrar com Super Admin" na tela de login).
 - **Gestao de Infraestrutura (Portainer):** `https://portainer.vpsconexao.org`
 
 ---

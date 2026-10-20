@@ -60,7 +60,7 @@ def test_login_invalid_password_fails():
 def test_login_nonexistent_user_fails():
     """Valida que usuário inexistente é rejeitado com 401."""
     payload = {
-        "email": "desconhecido@revnaut.com",
+        "email": "desconhecido@revnault.com",
         "password": "qualquer_senha"
     }
     res = client.post("/api/v1/auth/login", json=payload)
@@ -144,7 +144,7 @@ def test_users_management_crud_and_security_invariants():
 
     # 3. Criação de novo colaborador pelo Super Admin
     import uuid
-    collab_email = f"dr.colaborador.{uuid.uuid4().hex[:6]}@revnaut.com"
+    collab_email = f"dr.colaborador.{uuid.uuid4().hex[:6]}@revnault.com"
     create_res = client.post("/api/v1/auth/users", json={
         "name": "Dr. Fernando Odonto",
         "email": collab_email,
@@ -170,7 +170,7 @@ def test_users_management_crud_and_security_invariants():
     # 5. Colaborador comum NÃO PODE cadastrar novos usuários (403 Forbidden)
     forbidden_res = client.post("/api/v1/auth/users", json={
         "name": "Intruso",
-        "email": "intruso@revnaut.com",
+        "email": "intruso@revnault.com",
         "password": "123"
     }, headers=collab_headers)
     assert forbidden_res.status_code == 403
@@ -213,7 +213,7 @@ def test_users_management_crud_and_security_invariants():
 
 def test_login_rate_limiting_brute_force():
     """Testa bloqueio por rate limiting após 5 tentativas falhas de login."""
-    test_email = "bruteforce.target@revnaut.com"
+    test_email = "bruteforce.target@revnault.com"
     # 5 tentativas com senha errada
     for i in range(5):
         res = client.post("/api/v1/auth/login", json={

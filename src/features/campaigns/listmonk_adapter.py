@@ -24,8 +24,8 @@ class ListmonkClient:
         mock_mode: Optional[bool] = None,
     ) -> None:
         self.base_url = (base_url or os.getenv("LISTMONK_URL", "http://localhost:9000")).rstrip("/")
-        self.username = username or os.getenv("LISTMONK_USER", "revnaut_admin")
-        self.password = password or os.getenv("LISTMONK_PASSWORD", "revnaut_secret")
+        self.username = username or os.getenv("LISTMONK_USER", "revnault_admin")
+        self.password = password or os.getenv("LISTMONK_PASSWORD", "revnault_secret")
         if mock_mode is not None:
             self.mock_mode = mock_mode
         else:

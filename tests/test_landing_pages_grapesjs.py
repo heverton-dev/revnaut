@@ -61,7 +61,7 @@ def test_landing_page_crud_and_cfo_guard(client):
     assert res_pub.status_code == 200
     pub_data = res_pub.json()
     assert pub_data["is_published"] is True
-    assert "cdn.revnaut.app/lp/imersao-guiada-2026" in pub_data["published_r2_url"] or "r2" in pub_data["published_r2_url"]
+    assert "cdn.revnault.app/lp/imersao-guiada-2026" in pub_data["published_r2_url"] or "r2" in pub_data["published_r2_url"]
 
 
 def test_landing_page_public_submission_and_event_publishing(client):

@@ -20,7 +20,7 @@ PBKDF2_ITERATIONS = int(os.getenv("PASSWORD_PBKDF2_ITERATIONS", "600000"))
 MIN_PASSWORD_LENGTH = 12
 
 # Senhas padrão e vazadas (seed de homologação e LoginPage publicado): nunca aceitas em produção
-_COMPROMISED_PASSWORDS = ("admin", "admin123", "revnaut", "revnaut123", "123456")
+_COMPROMISED_PASSWORDS = ("admin", "admin123", "revnault", "revnault123", "123456")
 COMPROMISED_LEGACY_HASHES = frozenset(
     {hashlib.sha256(p.encode("utf-8")).hexdigest() for p in _COMPROMISED_PASSWORDS}
     | {"579ac58e034634060983ac3b0100617b0e10fa05438675d44bb19b1533cdb0a6"}  # hash semeado do Super Admin
@@ -63,7 +63,7 @@ def is_compromised_hash(stored_hash: Optional[str]) -> bool:
 
 
 def production_mode() -> bool:
-    return os.getenv("REVNAUT_ENV", "").lower() == "production"
+    return os.getenv("REVNAULT_ENV", "").lower() == "production"
 
 
 def validate_new_password(password: str) -> None:
