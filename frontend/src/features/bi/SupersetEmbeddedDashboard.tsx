@@ -616,10 +616,10 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-text-main">
-              {title || "Cockpit Executivo & Inteligência de Carteira"}
+              {title || "Painel Geral de Vendas & Clientes"}
             </h1>
             <p className="text-xs sm:text-sm text-text-secondary mt-1">
-              Visão consolidada em tempo real de Pipeline Comercial, ROAS de Campanhas, Radar Anti-Churn RFM e Grafo Clínico KOL.
+              Acompanhe oportunidades em aberto, faturamento mensal, clientes inativos para reativação e rede de parceiros.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -678,7 +678,7 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
           <Card className="p-4 border-border">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold uppercase text-text-secondary">
-                Pipeline Ativo Total
+                Negociações em Andamento
               </span>
               <TrendingUp className="h-4 w-4 text-brand-primary" />
             </div>
@@ -686,14 +686,14 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
               {formatBrl(pipelineMetrics?.total_value ?? pipelineMetrics?.pipelineTotal ?? pipelineMetrics?.pipeline_total ?? 0)}
             </p>
             <p className="text-xs text-text-secondary mt-1">
-              {(pipelineMetrics?.total_deals ?? pipelineMetrics?.totalDeals ?? pipelineMetrics?.dealsCount ?? 0)} oportunidades • Conv. {(pipelineMetrics?.conversion_rate ?? pipelineMetrics?.conversionRate ?? pipelineMetrics?.win_rate ?? 0)}%
+              {(pipelineMetrics?.total_deals ?? pipelineMetrics?.totalDeals ?? pipelineMetrics?.dealsCount ?? 0)} propostas ativas • {(pipelineMetrics?.conversion_rate ?? pipelineMetrics?.conversionRate ?? pipelineMetrics?.win_rate ?? 0)}% de conversão
             </p>
           </Card>
 
           <Card className="p-4 border-border">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold uppercase text-text-secondary">
-                MRR / Receita Recorrente
+                Faturamento Recorrente
               </span>
               <BarChart3 className="h-4 w-4 text-status-success" />
             </div>
@@ -701,42 +701,42 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
               {formatBrl(pipelineMetrics?.won_value ?? pipelineMetrics?.mrr ?? pipelineMetrics?.closedWonMRR ?? 0)}
             </p>
             <p className="text-xs text-text-secondary mt-1">
-              Fechado Ganho: {formatBrl(pipelineMetrics?.won_value ?? pipelineMetrics?.closedWonMRR ?? pipelineMetrics?.mrr ?? 0)}
+              Total ganho no período: {formatBrl(pipelineMetrics?.won_value ?? pipelineMetrics?.closedWonMRR ?? pipelineMetrics?.mrr ?? 0)}
             </p>
           </Card>
 
           <Card className="p-4 border-border">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold uppercase text-text-secondary">
-                Performance Mídia & ROAS
+                Retorno dos Anúncios
               </span>
               <Layers className="h-4 w-4 text-brand-navy" />
             </div>
             <p className="text-xl font-bold text-text-main mt-2">
-              {campaignMetrics?.average_roas ? `${campaignMetrics.average_roas.toFixed(2)}x ROAS` : "4.8x ROAS"}
+              {campaignMetrics?.average_roas ? `${campaignMetrics.average_roas.toFixed(1)}x retorno` : "4.8x retorno"}
             </p>
             <p className="text-xs text-text-secondary mt-1">
-              {campaignMetrics?.total_leads ?? 0} leads gerados • CAC {formatBrl(campaignMetrics?.average_cac)}
+              {campaignMetrics?.total_leads ?? 0} contatos gerados • Custo médio {formatBrl(campaignMetrics?.average_cac)}
             </p>
           </Card>
 
           <Card className="p-4 border-border">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold uppercase text-text-secondary">
-                Grafo Clínico & Radar Churn
+                Rede de Parceiros & Retenção
               </span>
               <Network className="h-4 w-4 text-status-warning" />
             </div>
             <p className="text-xl font-bold text-text-main mt-2">
-              {clinicalGraph?.total_nodes ?? 0} Instituições / {clinicalGraph?.kol_speakers_count ?? 0} KOLs
+              {clinicalGraph?.total_nodes ?? 0} Polos / {clinicalGraph?.kol_speakers_count ?? 0} Líderes
             </p>
             <p className="text-xs text-status-danger mt-1">
-              {churnData?.summary?.critical_count ?? 0} clínicas em risco crítico de churn
+              {churnData?.summary?.critical_count ?? 0} clientes precisam de atenção imediata
             </p>
           </Card>
         </div>
 
-        {/* Abas Executivas Selecionáveis (Feedback: Radar Anti-Churn, Ecossistema KOL, Funil Comercial) */}
+        {/* Abas Executivas Selecionáveis */}
         <div className="flex items-center gap-2 border-b border-border-subtle pb-3 overflow-x-auto">
           <button
             type="button"
@@ -748,12 +748,12 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
             }`}
           >
             <Activity className="h-3.5 w-3.5" />
-            Radar Anti-Churn RFM Odontológico
+            Clientes para Reativação
             <Badge
               variant={executiveCockpitTab === "radar" ? "outline" : "danger"}
               className={`text-[10px] ml-1 ${executiveCockpitTab === "radar" ? "border-text-inverse/40 text-text-inverse" : ""}`}
             >
-              {radarItems.filter((r) => r.churn_risk_level === "critico").length || churnData?.summary?.critical_count || 0} Críticos
+              {radarItems.filter((r) => r.churn_risk_level === "critico").length || churnData?.summary?.critical_count || 0} em Risco
             </Badge>
           </button>
 
@@ -767,7 +767,7 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
             }`}
           >
             <Network className="h-3.5 w-3.5" />
-            Ecossistema Clínico KOL & Polos Credenciados
+            Rede de Clínicas & Parceiros
             <Badge
               variant={executiveCockpitTab === "ecosystem" ? "outline" : "navy"}
               className={`text-[10px] ml-1 ${executiveCockpitTab === "ecosystem" ? "border-text-inverse/40 text-text-inverse" : ""}`}
@@ -786,12 +786,12 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
             }`}
           >
             <BarChart3 className="h-3.5 w-3.5" />
-            Funil Comercial por Estágio
+            Etapas das Negociações
             <Badge
               variant={executiveCockpitTab === "funnel" ? "outline" : "secondary"}
               className={`text-[10px] ml-1 ${executiveCockpitTab === "funnel" ? "border-text-inverse/40 text-text-inverse" : ""}`}
             >
-              {pipelineMetrics?.total_deals ?? 0} Negócios
+              {pipelineMetrics?.total_deals ?? 0} Propostas
             </Badge>
           </button>
         </div>
@@ -803,18 +803,18 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
               <div className="flex flex-col gap-3">
                 <div className="flex items-center justify-between gap-2">
                   <div>
-                    <CardTitle>Radar Anti-Churn RFM Odontológico</CardTitle>
+                    <CardTitle>Clientes sem Pedidos Recentes</CardTitle>
                     <CardDescription>
-                      Monitoramento determinístico de intervalo de recompra de implantes por cirurgião.
+                      Cirurgiões e clínicas que estão há mais tempo sem comprar implantes e precisam de reativação.
                     </CardDescription>
                   </div>
                   <Badge variant="danger">
-                    {radarItems.filter((r) => r.churn_risk_level === "critico").length || churnData?.summary?.critical_count || 0} Críticos ({radarItems.length} em monitoramento)
+                    {radarItems.filter((r) => r.churn_risk_level === "critico").length || churnData?.summary?.critical_count || 0} em Risco ({radarItems.length} monitorados)
                   </Badge>
                 </div>
                 <div className="flex items-center gap-2">
                   <label className="text-[11px] font-semibold uppercase text-text-secondary shrink-0" htmlFor="churn-days">
-                    Janela sem Pedido
+                    Tempo sem Compras
                   </label>
                   <select
                     id="churn-days"
@@ -824,25 +824,25 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
                       setRadarPage(1);
                     }}
                     className="h-8 rounded-md border border-border bg-surface-card px-2.5 text-xs text-text-main font-medium cursor-pointer shadow-xs focus:ring-1 focus:ring-brand-primary"
-                    aria-label="Filtro temporal de monitoramento de churn"
+                    aria-label="Filtro temporal de monitoramento de clientes sem pedido"
                   >
-                    <option value="all">Todas as Janelas (Histórico Completo)</option>
-                    <option value="30">Alerta Inicial (Acima de 30 dias sem pedido)</option>
-                    <option value="45">Risco Moderado (Acima de 45 dias sem pedido)</option>
-                    <option value="60">Risco Elevado (Acima de 60 dias sem pedido)</option>
-                    <option value="90">Atraso Crítico (Acima de 90 dias sem pedido)</option>
+                    <option value="all">Todos os Períodos</option>
+                    <option value="30">Mais de 30 dias sem compras</option>
+                    <option value="45">Mais de 45 dias sem compras</option>
+                    <option value="60">Mais de 60 dias sem compras</option>
+                    <option value="90">Atraso Crítico (Mais de 90 dias)</option>
                   </select>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Gráfico SVG de Barras Horizontais de Risco com Paginação e Dossiê 360° */}
+              {/* Lista em 2 Colunas para melhor aproveitamento visual e escaneabilidade */}
               {radarItems.length === 0 ? (
                 <p className="text-xs text-text-muted py-4">
-                  Nenhum alerta de churn detectado para os critérios selecionados.
+                  Nenhum cliente inativo detectado para os critérios selecionados.
                 </p>
               ) : (
-                <div className="space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {radarItems
                     .slice((radarPage - 1) * RADAR_ITEMS_PER_PAGE, radarPage * RADAR_ITEMS_PER_PAGE)
                     .map((item) => {
@@ -859,32 +859,32 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
                               handleOpenChurnDrawer(item);
                             }
                           }}
-                          className="space-y-1 p-2.5 rounded-lg border border-transparent hover:border-border-subtle hover:bg-surface-bg/70 transition-all cursor-pointer group"
+                          className="space-y-2 p-3 rounded-lg border border-border-subtle bg-surface-card hover:bg-surface-bg/80 hover:border-brand-primary/40 transition-all cursor-pointer group shadow-xs"
+                          title="Clique para ver o dossiê completo deste cliente"
                         >
-                          <div className="flex items-center justify-between text-xs">
+                          <div className="flex items-center justify-between text-xs gap-2">
                             <span className="font-semibold text-text-main group-hover:text-brand-primary transition-colors truncate">
                               {item.name} ({item.cro || item.uf || "BR"})
                             </span>
-                            <span className="flex items-center gap-2 shrink-0">
-                              <span className="text-text-secondary">
-                                Score {item.churn_risk_score} • {item.days_since_last_order}d sem pedido
-                              </span>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-6 px-2 gap-1 text-[10px]"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleReactivateWhatsApp(item);
-                                }}
-                                title="Disparar mensagem de reativação via WhatsApp"
-                              >
-                                <MessageCircle className="h-3 w-3" />
-                                Reativar via WhatsApp
-                              </Button>
-                            </span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-6 px-2 gap-1 text-[10px] shrink-0"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleReactivateWhatsApp(item);
+                              }}
+                              title="Disparar mensagem de reativação via WhatsApp"
+                            >
+                              <MessageCircle className="h-3 w-3" />
+                              Reativar no WhatsApp
+                            </Button>
                           </div>
-                          <svg className="w-full h-2.5 rounded-full overflow-hidden bg-surface-bg" viewBox="0 0 100 10" preserveAspectRatio="none">
+                          <div className="flex items-center justify-between text-[11px] text-text-secondary">
+                            <span>Nível de urgência: {item.churn_risk_score}/100</span>
+                            <span className="font-semibold text-status-danger">{item.days_since_last_order} dias sem comprar</span>
+                          </div>
+                          <svg className="w-full h-2 rounded-full overflow-hidden bg-surface-bg" viewBox="0 0 100 10" preserveAspectRatio="none">
                             <rect
                               x="0"
                               y="0"
@@ -897,7 +897,7 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
                               }
                             />
                           </svg>
-                          <p className="text-[11px] text-text-muted">{item.recommended_action}</p>
+                          <p className="text-[11px] text-text-muted truncate">{item.recommended_action}</p>
                         </div>
                       );
                     })}
@@ -953,9 +953,9 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
               <CardHeader>
                 <div className="flex items-center justify-between gap-2">
                   <div>
-                    <CardTitle>Ecossistema Clínico KOL & Polos Credenciados</CardTitle>
+                    <CardTitle>Rede de Clínicas e Parceiros</CardTitle>
                     <CardDescription>
-                      Topologia de relacionamentos entre Cirurgiões, Clínicas, Laboratórios CAD/CAM e Universidades.
+                      Relacionamentos entre consultórios, hospitais, laboratórios de prótese e faculdades.
                     </CardDescription>
                   </div>
                   <div className="flex items-center gap-2">
@@ -1119,9 +1119,9 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
           <CardHeader>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
-                <CardTitle>Funil Comercial por Estágio</CardTitle>
+                <CardTitle>Andamento das Negociações</CardTitle>
                 <CardDescription>
-                  Clique em qualquer barra para abrir o workspace de Deals já filtrado pelo estágio correspondente.
+                  Acompanhe os valores e clique em qualquer etapa para abrir os detalhes das propostas comerciais.
                 </CardDescription>
               </div>
               <div className="flex flex-wrap items-center gap-2">
