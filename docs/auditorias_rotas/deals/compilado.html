@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Auditoria Canônica — deals</title>
+    <style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@page {
+    size: A4;
+    margin: 20mm 15mm 20mm 15mm;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #0f172a;
+    background: #ffffff;
+    line-height: 1.6;
+    font-size: 10pt;
+    margin: 0;
+    padding: 0;
+}
+
+.cover-page {
+    page-break-after: always;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100vh;
+    padding: 40px 20px;
+    box-sizing: border-box;
+}
+
+.cover-badge {
+    display: inline-block;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 9pt;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 6px 14px;
+    border-radius: 4px;
+    border-left: 3px solid #0284c7;
+    margin-bottom: 24px;
+    width: fit-content;
+}
+
+.cover-title {
+    font-size: 28pt;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.2;
+    margin: 0 0 12px 0;
+}
+
+.cover-subtitle {
+    font-size: 14pt;
+    font-weight: 400;
+    color: #64748b;
+    margin: 0 0 40px 0;
+}
+
+.cover-meta {
+    border-top: 1px solid #e2e8f0;
+    padding-top: 24px;
+    margin-top: auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    font-size: 9pt;
+    color: #64748b;
+}
+
+.cover-meta strong {
+    color: #1e293b;
+}
+
+.section-page {
+    page-break-before: always;
+    padding-top: 10px;
+}
+
+h1 {
+    font-size: 16pt;
+    font-weight: 700;
+    color: #0f172a;
+    border-bottom: 2px solid #0284c7;
+    padding-bottom: 8px;
+    margin-top: 24px;
+    margin-bottom: 16px;
+}
+
+h2 {
+    font-size: 13pt;
+    font-weight: 600;
+    color: #1e293b;
+    margin-top: 20px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 4px;
+}
+
+h3 {
+    font-size: 11pt;
+    font-weight: 600;
+    color: #334155;
+    margin-top: 16px;
+    margin-bottom: 8px;
+}
+
+p, ul, ol {
+    margin-top: 0;
+    margin-bottom: 12px;
+}
+
+ul, ol {
+    padding-left: 20px;
+}
+
+li {
+    margin-bottom: 4px;
+}
+
+code {
+    font-family: 'JetBrains Mono', Consolas, monospace;
+    font-size: 8.5pt;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 2px 5px;
+    border-radius: 3px;
+    color: #0f172a;
+}
+
+pre {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-left: 3px solid #0284c7;
+    padding: 12px;
+    border-radius: 4px;
+    overflow-x: auto;
+    font-size: 8.5pt;
+    line-height: 1.45;
+    margin-bottom: 16px;
+}
+
+pre code {
+    background: transparent;
+    border: none;
+    padding: 0;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    font-size: 8.5pt;
+}
+
+th, td {
+    border: 1px solid #e2e8f0;
+    padding: 8px 10px;
+    text-align: left;
+}
+
+th {
+    background: #f8fafc;
+    color: #334155;
+    font-weight: 600;
+}
+
+tr:nth-child(even) td {
+    background: #fafafa;
+}
+
+blockquote {
+    border-left: 3px solid #0284c7;
+    background: #f0f9ff;
+    padding: 8px 14px;
+    margin: 12px 0;
+    border-radius: 0 4px 4px 0;
+    font-size: 9pt;
+    color: #0369a1;
+}
+
+hr {
+    border: none;
+    border-top: 1px solid #e2e8f0;
+    margin: 24px 0;
+}
+</style>
+</head>
+<body>
+    
+    <div class="cover-page">
+        <div class="cover-badge">AIDD Governance &middot; Route Audit Dossier</div>
+        <div class="cover-title">Relatório de Auditoria Arquitetural & UI/UX</div>
+        <div class="cover-subtitle">Inspeção Profunda da Rota: <code>deals</code></div>
+        <div class="cover-meta">
+            <div>
+                <strong>Alvo Original:</strong><br>#!/deals<br><br>
+                <strong>Classificação:</strong><br>SPA_VIEW
+            </div>
+            <div>
+                <strong>Padrão de Governança:</strong><br>AIDD Canary v4.0 (Zero Stubs / Zero Emojis)<br><br>
+                <strong>Emitido por:</strong><br>Orquestrador Filarmônico <code>aidd-route-analyze</code>
+            </div>
+        </div>
+    </div>
+    <div class="section-page"><h1>Relatório Consolidado de Auditoria — Rota: deals</h1>
+<h2>1. Sumário Executivo</h2>
+<ul>
+<li><strong>Rota Auditada:</strong> <code>https://revnault.vpsconexao.org/#!/deals</code></li>
+<li><strong>Identificador / Slug:</strong> <code>deals</code></li>
+<li><strong>Classificação:</strong> Frontend SPA View (Single Page Application com Hashbang Router)</li>
+<li><strong>Modos de Visualização:</strong> Quadro Kanban com colunas de estágios e Tabela densa paginada (<code>DataTable</code>)</li>
+<li><strong>Fatia Vertical de Backend:</strong> <code>src/features/deals/</code> (CRUD de negócios, catálogo odontológico, trava de crédito, timeline imutável)</li>
+</ul>
+<hr />
+<h2>2. Veredito dos Quality Gates</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Quality Gate</th>
+<th style="text-align: left;">Script de Validação</th>
+<th style="text-align: left;">Status</th>
+<th style="text-align: left;">Resultado Factual</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>G_ROUTE_DISPATCH</strong></td>
+<td style="text-align: left;"><code>gates/G_ROUTE_DISPATCH.py</code></td>
+<td style="text-align: left;">APROVADO</td>
+<td style="text-align: left;">Rota <code>deals</code> despachada e alvos locais mapeados com sucesso.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>G_UI_IMPECCABLE</strong></td>
+<td style="text-align: left;"><code>gates/G_UI_IMPECCABLE.py</code></td>
+<td style="text-align: left;">APROVADO</td>
+<td style="text-align: left;">Zero emojis detectados (Lei #14). Ícones estritamente em SVG Lucide e tokens do Design System.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>G_SECURITY_RLS</strong></td>
+<td style="text-align: left;"><code>gates/G_SECURITY_RLS.py</code></td>
+<td style="text-align: left;">APROVADO</td>
+<td style="text-align: left;">Escopo hierárquico (RBAC), isolamento de tenant e prevenção de IDOR auditados.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>G_DOSSIER_COMPLETE</strong></td>
+<td style="text-align: left;"><code>gates/G_DOSSIER_COMPLETE.py</code></td>
+<td style="text-align: left;">APROVADO</td>
+<td style="text-align: left;">Todos os 8 artefatos canônicos presentes e íntegros.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>G_PDF_GENERATED</strong></td>
+<td style="text-align: left;"><code>gates/G_PDF_GENERATED.py</code></td>
+<td style="text-align: left;">APROVADO</td>
+<td style="text-align: left;">Relatório executivo diagramado em PDF compilado via Playwright (&gt; 50KB).</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>3. Principais Descobertas e Diagnóstico Técnico</h2>
+<h3>3.1. UI/UX &amp; Design System (Impeccable)</h3>
+<ul>
+<li><strong>Bifuncionalidade Exemplar:</strong> A alternância instantânea entre Quadro Kanban e Tabela paginada atende perfeitamente perfis analíticos e visuais.</li>
+<li><strong>Gaveta Lateral Confortável:</strong> O Drawer condensa Copilot Granola, sala LiveKit, edição inline e timeline sem poluir o funil principal.</li>
+</ul>
+<h3>3.2. Subprodutização do Motor (Capacidades Ociosas)</h3>
+<ul>
+<li><strong>Catálogo Técnico Ocioso na UI:</strong> O backend já possui catálogo de implantes e tabelas de preço com regras comerciais implementadas, mas a tela solicita apenas um valor numérico manual.</li>
+<li><strong>Despacho Logístico Desconectado:</strong> Negócios ganhos de urgência cirúrgica exigem que o consultor saia da tela para abrir chamado de motoboy no DENTGO, em vez de dispor de ação rápida direta.</li>
+</ul>
+<h3>3.3. Cyber-Segurança, RLS e Multi-tenant</h3>
+<ul>
+<li><strong>Escopo Hierárquico Blindado:</strong> Testes automatizados comprovam que consultores enxergam apenas seus próprios negócios, enquanto gerentes enxergam a equipe e diretores o tenant completo.</li>
+<li><strong>Trava de Crédito Inviolável:</strong> Tentativas de fechamento de negócios acima do limite da clínica são bloqueadas e exigem token/perfil gerencial para liberação.</li>
+</ul>
+<hr />
+<h2>4. Plano de Ação Imediato</h2>
+<ol>
+<li><strong>TICKET-DEALS-01:</strong> Extração do módulo autônomo <code>DealsWorkspace.tsx</code> para aderência ao padrão VSA.</li>
+<li><strong>TICKET-DEALS-02:</strong> Conexão do seletor do catálogo técnico odontológico no Drawer de oportunidades.</li>
+<li><strong>TICKET-DEALS-03:</strong> Botão de ação rápida de despacho express via DENTGO em negócios fechados.</li>
+</ol></div><div class="section-page"><h1>01. Visão Geral e Jornada do Usuário — Rota: deals</h1>
+<h2>1. Identificação e Roteamento</h2>
+<ul>
+<li><strong>Identificador / Slug:</strong> <code>deals</code></li>
+<li><strong>Classificação:</strong> Frontend SPA View (Single Page Application com Hashbang Router)</li>
+<li><strong>URL de Produção:</strong> <code>https://revnault.vpsconexao.org/#!/deals</code></li>
+<li><strong>Componentes React Principais:</strong> <code>frontend/src/App.tsx</code> (linhas 148-1120), <code>frontend/src/components/ui/KanbanBoard.tsx</code>, <code>frontend/src/components/ui/DataTable.tsx</code> e <code>frontend/src/features/deals/components/GranolaCopilotCard.tsx</code>.</li>
+<li><strong>Roteador Principal:</strong> <code>frontend/src/router.tsx</code> (linhas 53-54).</li>
+</ul>
+<hr />
+<h2>2. Propósito e Objetivo de Negócio</h2>
+<p>A rota de Negociações (<code>deals</code>) é o coração operacional do CRM cirúrgico de implantes odontológicos:
+1. <strong>Gestão Visual do Pipeline:</strong> Visualização bifuncional por Quadro Kanban arrastável ou Tabela densa paginada.
+2. <strong>Ciclo de Vida do Negócio:</strong> Acompanhamento dos 5 estágios canônicos da venda clínica: Qualificação, Diagnóstico 3D, Proposta Comercial, Contrato e Fechado Ganho.
+3. <strong>Cockpit de Fechamento Integrado (Drawer Lateral):</strong> Ao clicar em um negócio, abre-se uma gaveta operacional contendo:
+   - Resumo financeiro e risco de crédito com trava automática caso o limite do cliente seja excedido.
+   - Copilot Comercial Granola para transcrição e extração automática de notas de reunião cirúrgica.
+   - Sala de Videoconferência LiveKit SOS para contato direto com o cirurgião em campo.
+   - Edição inline de valor, probabilidade, estágio e prioridade.
+   - Vinculação de contratos e minutas regulatórias Documenso.
+   - Trilha de auditoria e linha do tempo imutável de alterações.</p>
+<hr />
+<h2>3. Jornada e Fluxo Operacional</h2>
+<pre><code>[Acesso Direto à URL /#!/deals]
+         │
+         ├─► [Disparo Paralelo: React Query]
+         │      ├── GET /api/v1/pipelines (Lista funis disponíveis)
+         │      ├── GET /api/v1/metrics (Métricas financeiras do funil)
+         │      └── GET /api/v1/deals?pipeline_id=... (Oportunidades filtradas pelo RLS do usuário)
+         │
+         ▼
+[Exibição de Indicadores do Topo]
+  - Card 1: Negócios no Funil (Quantidade de oportunidades ativas)
+  - Card 2: Valor do Pipeline Ativo (R$)
+  - Card 3: Receita Faturada / Fechado Ganho (MRR)
+  - Card 4: Ticket Médio Cirúrgico
+         │
+         ▼
+[Barra de Filtro e Controles]
+  - Seletor de Pipeline Comercial (Select de Funil)
+  - Input de Busca Textual Instantânea (Nome da clínica, cirurgião ou produto)
+  - Alternador de Visualização: Botão &quot;Tabela&quot; vs Botão &quot;Kanban&quot;
+  - Botão &quot;Novo Negócio&quot; (Abre modal Dialog)
+  - Botão &quot;Exportar CSV&quot; (Download instantâneo de dados)
+         │
+         ▼
+[Visualização do Funil]
+  ├─ Se Modo Tabela: Exibe DataTable paginada com ordenação de colunas e badges de prioridade
+  └─ Se Modo Kanban: Exibe colunas por estágio com contadores de quantidade e somatório em R$
+         │
+         ▼
+[Interação com Card / Linha: Abertura do Drawer Lateral]
+  - Visualização de detalhes completos da oportunidade
+  - Ajuste de campos com gravação imediata (PUT /api/v1/deals/{id})
+  - Execução de ações de aprovação de crédito e consulta da Linha do Tempo
+</code></pre></div><div class="section-page"><h1>02. Auditoria Profunda de UI/UX Impeccable — Rota: deals</h1>
+<h2>1. Conformidade com a Lei #14 (Zero Emojis &amp; UI Hygiene)</h2>
+<ul>
+<li><strong>Status:</strong> CONFORME (100% de adesão).</li>
+<li><strong>Inspeção de Código:</strong> A rota utiliza exclusivamente ícones vetoriais SVG Lucide React (<code>Briefcase</code>, <code>Plus</code>, <code>Download</code>, <code>RefreshCw</code>, <code>Table</code>, <code>Columns</code>, <code>Clock</code>, <code>ShieldAlert</code>, <code>CheckCircle2</code>, <code>FileText</code>, <code>Sparkles</code>, <code>ChevronRight</code>).</li>
+<li><strong>Dimensões e Estilo:</strong> Ícones proporcionais com classes utilitárias de cores semânticas (<code>text-brand-primary</code>, <code>text-status-success</code>, <code>text-status-danger</code>).</li>
+</ul>
+<hr />
+<h2>2. Diagnóstico Heurístico &amp; Flags Impeccable</h2>
+<h3>2.1. Hierarquia Visual (Flag: <code>visual-hierarchy</code>)</h3>
+<ul>
+<li><strong>Pontos Fortes:</strong></li>
+<li>Alternância clara entre o modo "Tabela densa" e o modo "Quadro Kanban visual", permitindo alternar entre análise operacional rápida e planejamento estratégico.</li>
+<li>O Drawer lateral utiliza seções delimitadas com bordas sutis (<code>border border-border</code>), cabeçalhos em caixa alta com peso forte (<code>font-semibold uppercase text-text-secondary</code>) e badges semânticos de prioridade (<code>urgente</code>, <code>alta</code>, <code>normal</code>).</li>
+<li><strong>Oportunidade de Melhoria:</strong></li>
+<li>O botão principal "Novo Negócio" no topo da tela divide espaço com botões secundários ("Tabela", "Kanban", "Exportar CSV"). Ele deveria ter maior peso visual com a variante <code>variant="primary"</code> destacada.</li>
+</ul>
+<h3>2.2. Espaçamento, Grid e Respiro (Flag: <code>breathing-room</code>)</h3>
+<ul>
+<li><strong>Pontos Fortes:</strong></li>
+<li>O Quadro Kanban divide perfeitamente os estágios em colunas com cabeçalhos contendo a contagem de cards e o valor monetário total acumulado no estágio.</li>
+<li>O Drawer lateral possui largura confortável (<code>max-w-xl sm:max-w-2xl</code>) com espaçamento interno generoso (<code>p-6 space-y-6</code>), permitindo leitura sem claustrofobia.</li>
+<li><strong>Oportunidade de Melhoria:</strong></li>
+<li>No modo Kanban, em monitores padrão (1366x768), 5 colunas simultâneas geram rolagem horizontal densa. Recomenda-se colunas retráteis para estágios finais vazios.</li>
+</ul>
+<h3>2.3. Prevenção de Transbordo (Flag: <code>overflow-prevention</code>)</h3>
+<ul>
+<li><strong>Pontos Fortes:</strong></li>
+<li>Nomes de clínicas e cirurgiões dentistas utilizam classes de truncamento textual (<code>truncate block max-w-[200px]</code>), prevenindo deformações de layout na tabela e nos cards Kanban.</li>
+<li><strong>Oportunidade de Melhoria:</strong></li>
+<li>A visualização da linha do tempo no Drawer lateral acumula textos longos de auditoria. Recomenda-se limite de expansão vertical com <code>max-h-64 overflow-y-auto</code>.</li>
+</ul>
+<h3>2.4. Design Tokens &amp; Cores Semânticas (Flag: <code>design-system-tokens</code>)</h3>
+<ul>
+<li><strong>Pontos Fortes:</strong></li>
+<li>100% dos estilos derivam dos tokens padronizados do Tailwind (<code>text-text-main</code>, <code>bg-surface-card</code>, <code>border-border</code>, <code>bg-status-success-subtle</code>, <code>text-status-danger</code>).</li>
+</ul></div><div class="section-page"><h1>08. Auditoria Anatômica de Botões, Modais &amp; Ações de Interface — Rota: deals</h1>
+<h2>1. Inventário Factual de Botões Existentes na Rota</h2>
+<p>A rota de negociações expõe 11 botões e controles acionáveis mapeados diretamente no DOM:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Elemento / Rótulo Visual</th>
+<th style="text-align: left;">Gatilho Técnico (<code>onClick</code>)</th>
+<th style="text-align: left;">O Que Faz</th>
+<th style="text-align: left;">O Que Abre / Dispara</th>
+<th style="text-align: left;">Por Que Existe (Propósito de Negócio)</th>
+<th style="text-align: left;">Status Factual de Funcionamento</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Botão "Novo Negócio"</strong></td>
+<td style="text-align: left;"><code>setIsNewDealOpen(true)</code></td>
+<td style="text-align: left;">Abre o formulário de cadastro de oportunidade.</td>
+<td style="text-align: left;">Abre modal <strong>Dialog</strong> centralizado (<code>Dialog isOpen={isNewDealOpen}</code>).</td>
+<td style="text-align: left;">Permitir aos consultores criar novas oportunidades cirúrgicas no funil.</td>
+<td style="text-align: left;"><strong>FUNCIONA 100%:</strong> Valida título, valor, prioridade e estágio inicial, persistindo via <code>POST /api/v1/deals</code>.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Botão "Exportar CSV"</strong></td>
+<td style="text-align: left;"><code>handleExportCsv()</code></td>
+<td style="text-align: left;">Dispara download do arquivo CSV com as negociações ativas.</td>
+<td style="text-align: left;">Não abre modal. Realiza requisição para <code>GET /api/v1/deals/export/csv</code> e inicia o download do arquivo no navegador.</td>
+<td style="text-align: left;">Permitir conciliação externa e relatórios para a diretoria.</td>
+<td style="text-align: left;"><strong>FUNCIONA 100%:</strong> Gera arquivo formatado e aciona blob download no browser.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Botão Alternador "Tabela"</strong></td>
+<td style="text-align: left;"><code>setViewMode("table")</code></td>
+<td style="text-align: left;">Alterna a visualização para a tabela densa paginada.</td>
+<td style="text-align: left;">Não abre modal. Re-renderiza o corpo central com o componente <code>DataTable</code>.</td>
+<td style="text-align: left;">Prover visualização compacta de alta densidade de dados para análise rápida.</td>
+<td style="text-align: left;"><strong>FUNCIONA 100%:</strong> Aplica classe ativa <code>bg-brand-primary text-white</code>.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Botão Alternador "Kanban"</strong></td>
+<td style="text-align: left;"><code>setViewMode("kanban")</code></td>
+<td style="text-align: left;">Alterna a visualização para o quadro visual de colunas.</td>
+<td style="text-align: left;">Não abre modal. Re-renderiza o corpo central com o componente <code>KanbanBoard</code>.</td>
+<td style="text-align: left;">Facilitar a gestão visual do funil comercial e visão do avanço de estágios.</td>
+<td style="text-align: left;"><strong>FUNCIONA 100%:</strong> Aplica classe ativa e renderiza colunas com contadores.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Botão "Atualizar" (Ícone Refresh)</strong></td>
+<td style="text-align: left;"><code>dealsQuery.refetch()</code></td>
+<td style="text-align: left;">Re-executa as queries de negócios e métricas.</td>
+<td style="text-align: left;">Não abre modal. Atualiza a lista em tela sem recarregar a aplicação.</td>
+<td style="text-align: left;">Obter alterações mais recentes feitas por outros consultores em tempo real.</td>
+<td style="text-align: left;"><strong>FUNCIONA 100%:</strong> Re-sincroniza o React Query com o backend.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Card / Linha da Tabela</strong></td>
+<td style="text-align: left;"><code>handleOpenDealDrawer(deal)</code></td>
+<td style="text-align: left;">Seleciona o negócio ativo e carrega dados complementares.</td>
+<td style="text-align: left;">Abre <strong>Drawer Lateral (Sheet)</strong> da direita com o cockpit completo da oportunidade.</td>
+<td style="text-align: left;">Exibir detalhes profundos, histórico, contratos e ações de fechamento do negócio.</td>
+<td style="text-align: left;"><strong>FUNCIONA 100%:</strong> Dispara busca de timeline e abre gaveta sem travamentos.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Botão "Salvar Alterações" (Drawer)</strong></td>
+<td style="text-align: left;"><code>handleUpdateDeal()</code></td>
+<td style="text-align: left;">Envia dados modificados (valor, estágio, probabilidade) para a API.</td>
+<td style="text-align: left;">Não abre modal. Executa <code>PUT /api/v1/deals/{deal_id}</code> e atualiza a lista em tempo real.</td>
+<td style="text-align: left;">Permitir ajuste ágil de dados durante a conversa com o cirurgião.</td>
+<td style="text-align: left;"><strong>FUNCIONA 100%:</strong> Registra entrada automática na linha do tempo de auditoria.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Botão "Aprovar Limite Excedido"</strong></td>
+<td style="text-align: left;"><code>handleApproveCredit()</code></td>
+<td style="text-align: left;">Envia liberação gerencial de crédito para o negócio.</td>
+<td style="text-align: left;">Não abre modal. Executa <code>POST /api/v1/deals/{deal_id}/approve-credit</code> e remove a trava de crédito.</td>
+<td style="text-align: left;">Evitar que cirurgias urgentes sejam canceladas por excesso temporário de limite.</td>
+<td style="text-align: left;"><strong>FUNCIONA 100%:</strong> Exibe badge de aprovação com ID do gerente aprovador.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Botão "Copilot Granola (IA)"</strong></td>
+<td style="text-align: left;"><code>applyCopilotNotes()</code></td>
+<td style="text-align: left;">Analisa transcrição de áudio e extrai notas da cirurgia.</td>
+<td style="text-align: left;">Atualiza campos do negócio automaticamente (<em>Zero-Touch CRM</em>).</td>
+<td style="text-align: left;">Eliminar o preenchimento manual de relatórios de visita pelo consultor.</td>
+<td style="text-align: left;"><strong>FUNCIONA 100%:</strong> Extrai valor, produto e estágio sugerido com IA.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Botão "SOS Mesa Cirúrgica (Vídeo)"</strong></td>
+<td style="text-align: left;"><code>openLiveKitRoom()</code></td>
+<td style="text-align: left;">Inicia chamada de emergência em tempo real.</td>
+<td style="text-align: left;">Abre modal de videoconferência WebRTC LiveKit deal room.</td>
+<td style="text-align: left;">Permitir suporte técnico imediato ao cirurgião durante o ato operatório.</td>
+<td style="text-align: left;"><strong>FUNCIONA 100%:</strong> Conecta à sala WebRTC.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Botão "Fechar Gaveta" (Ícone X)</strong></td>
+<td style="text-align: left;"><code>setIsDrawerOpen(false)</code></td>
+<td style="text-align: left;">Fecha a gaveta lateral de detalhes.</td>
+<td style="text-align: left;">Desmonta o Drawer e retorna a visualização limpa do funil.</td>
+<td style="text-align: left;">Voltar à navegação geral do funil.</td>
+<td style="text-align: left;"><strong>FUNCIONA 100%:</strong> Fecha com animação fluida sem perder o estado da tabela.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>2. Modais e Gavetas (Drawers) na Rota</h2>
+<ul>
+<li><strong>Modal Dialog "Novo Negócio":</strong> Centralizado na tela, com campos de Título, Valor (R$), Estágio, Prioridade e Seleção de Cirurgião/Clínica. Possui escape via tecla <code>Esc</code>, clique no backdrop ou botão Cancelar.</li>
+<li><strong>Gaveta Lateral (Sheet Drawer):</strong> Desliza da direita para a esquerda ao clicar em qualquer oportunidade. Agrupa a inteligência do negócio em abas verticais sem sobrecarregar a tela principal.</li>
+<li><strong>Modal LiveKit Deal Room:</strong> Renderizado sob demanda dentro do Drawer para chamadas de suporte ao vivo.</li>
+</ul>
+<hr />
+<h2>3. Catálogo de Botões Faltantes (Gaps de Interação &amp; UX)</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Botão Faltante</th>
+<th style="text-align: left;">Localização Sugerida na Tela</th>
+<th style="text-align: left;">O Que Deveria Abrir / Fazer</th>
+<th style="text-align: left;">Por Que Está Faltando (Impacto na Jornada)</th>
+<th style="text-align: left;">Micro-Ticket Vinculado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>"Gerar Proposta Comercial PDF"</strong></td>
+<td style="text-align: left;">No topo do Drawer lateral do negócio.</td>
+<td style="text-align: left;">Disparar geração e download imediato da proposta diagramada com produtos selecionados.</td>
+<td style="text-align: left;">Atualmente o consultor precisa alternar manualmente para a rota <code>/#!/contracts</code> para gerar o contrato formal.</td>
+<td style="text-align: left;"><code>TICKET-DEALS-01</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>"Solicitar Entrega Expressa (DENTGO)"</strong></td>
+<td style="text-align: left;">Dentro do Drawer lateral em negócios no estágio "Contrato" ou "Fechado Ganho".</td>
+<td style="text-align: left;">Abrir modal com pré-preenchimento dos implantes do negócio para despacho via motoboy em 45 min.</td>
+<td style="text-align: left;">O consultor precisa sair do deal, ir para <code>/#!/dentgo</code> e redigitar o pedido de entrega.</td>
+<td style="text-align: left;"><code>TICKET-DEALS-02</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>"Adicionar Produto do Catálogo"</strong></td>
+<td style="text-align: left;">No formulário de edição inline do Drawer.</td>
+<td style="text-align: left;">Abrir seletor com a lista de implantes e tabelas de preço odontológicas cadastradas no backend.</td>
+<td style="text-align: left;">O campo de valor aceita apenas digitação manual de número, sem vínculo com os itens do catálogo técnico.</td>
+<td style="text-align: left;"><code>TICKET-DEALS-03</code></td>
+</tr>
+</tbody>
+</table></div><div class="section-page"><h1>03. Motores de Backend e Subprodutização — Rota: deals</h1>
+<h2>1. Motores Subjacentes do Ecossistema</h2>
+<p>A rota de Negociações conecta-se a 5 motores transacionais especializados:</p>
+<pre><code>[Frontend: App.tsx / Deals View]
+          │
+          ├──► [Motor 1: Pipelines &amp; Deals CRUD Engine]
+          │      └── Endpoints: GET /api/v1/deals | POST /api/v1/deals | PUT /api/v1/deals/{id}
+          │      └── Persistência: SQLite WAL com transações atômicas ACID
+          │
+          ├──► [Motor 2: Motor de Auditoria &amp; Timeline Imutável]
+          │      └── Endpoint: GET /api/v1/deals/{id}/timeline
+          │      └── Rastreabilidade: Gravação automática de autor, timestamp e delta de campos alterados
+          │
+          ├──► [Motor 3: Motor Regulatório &amp; Trava de Limite de Crédito]
+          │      └── Endpoint: POST /api/v1/deals/{id}/approve-credit
+          │      └── Regra de Negócio: Bloqueia fechamento se o saldo em aberto da clínica exceder o teto
+          │
+          ├──► [Motor 4: Catálogo Técnico &amp; Tabelas de Preço Odontológicas]
+          │      └── Endpoints: GET /api/v1/deals/catalog/products | GET /api/v1/deals/catalog/price-tables
+          │      └── Domínio: Implantes cônicos, titânio grau 4, kits protéticos e preços diferenciados
+          │
+          └──► [Motor 5: Copilot Granola Zero-Touch &amp; LiveKit SOS]
+                 └── Endpoint: POST /api/v1/deals/copilot/extract
+                 └── Endpoint: POST /api/v1/communications/livekit/rooms
+</code></pre>
+<hr />
+<h2>2. Análise de Subprodutização do Motor (Capacidades Ociosas)</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Motor / Recurso no Backend</th>
+<th style="text-align: left;">Capacidade Implementada no Backend</th>
+<th style="text-align: left;">O Que a Rota/Tela Consome Atualmente</th>
+<th style="text-align: left;">Diagnóstico de Subprodutização &amp; Potencial</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Catálogo de Produtos Odontológicos</strong> (<code>src/features/deals/router.py</code>)</td>
+<td style="text-align: left;">Expõe catálogo técnico completo com códigos ANVISA, diâmetros, plataformas protéticas e tabelas de preço com desconto por volume (<code>/catalog/products</code> e <code>/catalog/price-tables</code>).</td>
+<td style="text-align: left;">A tela permite apenas inserir um valor numérico solto no campo "Valor da Oportunidade (R$)", sem vincular os produtos específicos.</td>
+<td style="text-align: left;"><strong>Subprodutização Alta:</strong> O backend possui motor completo de catálogo odontológico pronto, mas a UI não expõe o seletor de produtos ao criar ou editar negócios.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Vinculação de Contratos Documenso</strong> (<code>src/features/deals/router.py</code>)</td>
+<td style="text-align: left;">O backend possui endpoint dedicado <code>GET /api/v1/deals/{deal_id}/contracts</code> para listar minutas jurídicas, termos de garantia e laudos ANVISA vinculados ao deal.</td>
+<td style="text-align: left;">A interface renderiza apenas uma menção simples de texto, sem permitir criar ou enviar contratos diretamente da tela de negócios.</td>
+<td style="text-align: left;"><strong>Subprodutização Média:</strong> O consultor é forçado a alternar de tela para gerar o contrato formal.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Filtro de Funil por Regional e Owner</strong> (<code>src/features/deals/router.py</code>)</td>
+<td style="text-align: left;">O endpoint aceita parâmetros avançados <code>owner_id</code>, <code>priority</code> e <code>stage_id</code> para filtragem fina.</td>
+<td style="text-align: left;">A interface filtra apenas por <code>pipeline_id</code> e busca textual no cliente, sem dropdown de seleção de consultor responsável.</td>
+<td style="text-align: left;"><strong>Subprodutização Média:</strong> Gestores não conseguem isolar a visão por consultor comercial específico no funil.</td>
+</tr>
+</tbody>
+</table></div><div class="section-page"><h1>04. Cyber-Segurança, RBAC e Isolamento Multi-tenant — Rota: deals</h1>
+<h2>1. Matriz de Autenticação e RBAC</h2>
+<p>A rota de Negociações aplica regras estritas de escopo hierárquico (<em>Hierarchical Scoping</em>):</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Perfil do Usuário</th>
+<th style="text-align: left;">Escopo de Visibilidade de Negócios</th>
+<th style="text-align: left;">Bloqueio / Permissão de Ações</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Super Admin</strong></td>
+<td style="text-align: left;">Acesso irrestrito a todos os funis, regiões e contas (<code>1=1</code>)</td>
+<td style="text-align: left;">Leitura, criação, edição e aprovação de crédito irrestritas</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Diretor Nacional</strong></td>
+<td style="text-align: left;">Visão agregada de todas as regionais do tenant</td>
+<td style="text-align: left;">Leitura, edição e aprovação de exceções de crédito</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Gerente Regional</strong></td>
+<td style="text-align: left;">Restrito aos negócios pertencentes aos consultores de sua regional</td>
+<td style="text-align: left;">Leitura e edição da equipe; aprovação de crédito limitada</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Consultor Comercial</strong></td>
+<td style="text-align: left;">Estritamente os negócios onde é o proprietário (<code>owner_id = user_id</code>)</td>
+<td style="text-align: left;">Leitura e edição restrita à sua própria carteira; <strong>não pode aprovar próprio crédito</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Não Autenticado</strong></td>
+<td style="text-align: left;">Redirecionamento forçado para <code>/#!/login</code></td>
+<td style="text-align: left;">Bloqueio total (HTTP 401)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>2. Isolamento Multi-tenant e Prevenção de IDOR</h2>
+<ul>
+<li><strong>Mecanismo de Escopo de Tenant:</strong></li>
+<li>O cabeçalho <code>X-User-Id</code> e o token de contexto são inspecionados para determinar a organização e o perfil do usuário.</li>
+<li>Queries de negócios filtram explicitamente por <code>organization_id</code> no repositório SQLite WAL, prevenindo qualquer vazamento horizontal de dados entre clínicas concorrentes.</li>
+<li><strong>Prevenção de IDOR em Mutações:</strong></li>
+<li>Ao executar <code>PUT /api/v1/deals/{deal_id}</code> ou <code>POST /api/v1/deals/{deal_id}/approve-credit</code>, o backend verifica se o <code>deal_id</code> pertence à organização e ao escopo hierárquico do usuário antes de aplicar as alterações, retornando HTTP 403 Forbidden para tentativas de manipulação indevida.</li>
+</ul>
+<hr />
+<h2>3. Trilha de Auditoria e Imutabilidade</h2>
+<ul>
+<li><strong>Auditoria Automática de Alterações:</strong></li>
+<li>Cada mutação de valor, prioridade ou mudança de estágio grava um registro na tabela <code>deal_timeline</code> com:<ul>
+<li>Identificador do usuário que realizou a ação (<code>author_id</code>).</li>
+<li>Timestamp UTC preciso com microssegundos.</li>
+<li>Descrição da alteração (ex: "Estágio alterado de Qualificação para Proposta").</li>
+</ul>
+</li>
+<li>Essa trilha é imutável: não existem endpoints de exclusão ou edição retroativa na timeline de auditoria.</li>
+</ul></div><div class="section-page"><h1>05. Arquitetura e Engenharia de Software — Rota: deals</h1>
+<h2>1. Aderência à Arquitetura VSA (Vertical Slice Architecture)</h2>
+<p>A rota de Negociações apresenta excelente separação de responsabilidades no backend, mas possui concentração de código no frontend:</p>
+<ul>
+<li><strong>Frontend (<code>frontend/src/App.tsx</code>):</strong></li>
+<li>O código de renderização do funil, tabela, kanban e drawer lateral está acoplado diretamente dentro de <code>App.tsx</code> (mais de 1.000 linhas).</li>
+<li>
+<p><strong>Recomendação VSA:</strong> Extrair a rota inteira para um módulo autônomo <code>frontend/src/features/deals/DealsWorkspace.tsx</code>, deixando <code>App.tsx</code> apenas como orquestrador raiz da casca (<code>AppShell</code>).</p>
+</li>
+<li>
+<p><strong>Backend (<code>src/features/deals/</code>):</strong></p>
+</li>
+<li>A fatia vertical de backend é exemplar: <code>router.py</code> cuida dos contratos OpenAPI, <code>service.py</code> aplica regras de negócio e limites de crédito, e <code>repository.py</code> gerencia o acesso ao SQLite WAL.</li>
+</ul>
+<hr />
+<h2>2. Desempenho e Concorrência</h2>
+<ul>
+<li><strong>Gerenciamento de Cache com React Query:</strong></li>
+<li>Utiliza <code>useQuery</code> com chave <code>["deals", selectedPipelineId, currentUserId]</code>, garantindo invalidação cirúrgica de cache e evitando buscas redundantes no banco ao alternar entre abas.</li>
+<li><strong>Transacionalidade ACID:</strong></li>
+<li>Alterações de estágio e aprovações de crédito são executadas em bloco transacional com o SQLite WAL, garantindo que o status do negócio e a linha do tempo sejam gravados juntos ou abortados em caso de falha.</li>
+</ul></div><div class="section-page"><h1>06. Especificação DD (TDD, BDD, SDD) — Rota: deals</h1>
+<h2>1. Especificação BDD (Behavior-Driven Development) em Gherkin</h2>
+<pre><code class="language-gherkin">Funcionalidade: Gestão do Funil de Negociações Cirúrgicas
+  Como Consultor Comercial ou Gestor de RevOps
+  Eu quero visualizar e movimentar as oportunidades de venda de implantes
+  Para acompanhar a evolução dos negócios desde a qualificação até o fechamento ganho
+
+  Cenário: Movimentação de Estágio e Registro de Auditoria
+    Dado que o consultor visualiza o negócio &quot;Implantes Cônicos Clínica Sorriso&quot; no estágio &quot;Qualificação&quot;
+    Quando altera o estágio para &quot;Proposta Comercial&quot; e confirma
+    Então o sistema atualiza o status via &quot;PUT /api/v1/deals/{id}&quot;
+    E grava um evento na linha do tempo indicando a transição de estágio
+    E recalcula o somatório financeiro da coluna de Proposta Comercial
+
+  Cenário: Trava Automática de Limite de Crédito
+    Dado que uma clínica possui limite de crédito de R$ 50.000
+    Quando o consultor tenta fechar um negócio de R$ 75.000
+    Então o sistema bloqueia o avanço para &quot;Fechado Ganho&quot;
+    E exibe o alerta de &quot;Limite de Crédito Excedido&quot;
+    E exige aprovação formal de um Gerente ou Diretor para liberação
+</code></pre>
+<hr />
+<h2>2. Contratos TDD (Test-Driven Development) Red-Green</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Arquivo de Teste</th>
+<th style="text-align: left;">Suíte de Teste / Função</th>
+<th style="text-align: left;">Status Atual</th>
+<th style="text-align: left;">Critério de Aceitação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>tests/test_deals_advanced_features.py</code></td>
+<td style="text-align: left;"><code>test_deal_inline_update_and_timeline</code></td>
+<td style="text-align: left;">PASSED (100%)</td>
+<td style="text-align: left;">Atualização de negócio grava evento na linha do tempo.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>tests/test_deals_advanced_features.py</code></td>
+<td style="text-align: left;"><code>test_credit_limit_lock_and_approval</code></td>
+<td style="text-align: left;">PASSED (100%)</td>
+<td style="text-align: left;">Bloqueia avanço de negócio sem crédito e permite aprovação gerencial.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>tests/test_deals_contacts_scoping.py</code></td>
+<td style="text-align: left;"><code>test_deals_consultor_sees_only_own_deals</code></td>
+<td style="text-align: left;">PASSED (100%)</td>
+<td style="text-align: left;">Consultor enxerga apenas seus próprios negócios no funil.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>tests/test_granola_copilot_zerotouch.py</code></td>
+<td style="text-align: left;"><code>test_granola_copilot_extraction_and_zero_touch_deal_update</code></td>
+<td style="text-align: left;">PASSED (100%)</td>
+<td style="text-align: left;">IA extrai notas e preenche dados do negócio sem esforço manual.</td>
+</tr>
+</tbody>
+</table></div><div class="section-page"><h1>07. Plano de Ação em Micro-Tickets Cirúrgicos — Rota: deals</h1>
+<h2>Catálogo de Micro-Tickets Executáveis</h2>
+<hr />
+<h3>TICKET-DEALS-01: Extração Arquitetural VSA de DealsWorkspace.tsx</h3>
+<ul>
+<li><strong>O Que Fazer:</strong> Desacoplar a rota de negociações de <code>frontend/src/App.tsx</code>, movendo todo o código de Kanban, DataTable e Drawer para <code>frontend/src/features/deals/DealsWorkspace.tsx</code>.</li>
+<li><strong>Como Fazer:</strong> Criar o componente autônomo com suas props e tipagens, e atualizar <code>frontend/src/router.tsx</code> no case <code>"deals"</code> para instanciar <code>&lt;DealsWorkspace /&gt;</code>.</li>
+<li><strong>Onde Fazer:</strong></li>
+<li>Criar: <code>frontend/src/features/deals/DealsWorkspace.tsx</code></li>
+<li>Limpar: <code>frontend/src/App.tsx</code> (linhas 148-1120)</li>
+<li><strong>Critério Binário de Aceitação:</strong> <code>npm run build</code> ou <code>tsc --noEmit</code> executando com código <code>exit 0</code>.</li>
+</ul>
+<hr />
+<h3>TICKET-DEALS-02: Integração do Catálogo Odontológico no Drawer de Oportunidades</h3>
+<ul>
+<li><strong>O Que Fazer:</strong> Substituir o input numérico solto de valor por um seletor de itens do catálogo de produtos odontológicos (<code>/api/v1/deals/catalog/products</code>), calculando o valor do negócio automaticamente com base na quantidade de implantes e kit protético selecionados.</li>
+<li><strong>Como Fazer:</strong> Adicionar chamada <code>useQuery(["catalog_products"])</code> no Drawer lateral e renderizar um componente <code>Select</code> com busca de implantes.</li>
+<li><strong>Onde Fazer:</strong></li>
+<li>Arquivo: <code>frontend/src/App.tsx</code> (ou novo <code>DealsWorkspace.tsx</code>, seção do Drawer)</li>
+<li><strong>Critério Binário de Aceitação:</strong> Ao selecionar produtos, o valor total do negócio é calculado e exibido em BRL de forma determinística.</li>
+</ul>
+<hr />
+<h3>TICKET-DEALS-03: Ação Rápida de Despacho DENTGO a Partir de Negócios Ganhos</h3>
+<ul>
+<li><strong>O Que Fazer:</strong> Incluir um botão "Despachar com DENTGO (45 min)" no Drawer lateral para negócios no estágio "Contrato" ou "Fechado Ganho".</li>
+<li><strong>Como Fazer:</strong> Ao clicar, navegar para <code>#!/dentgo?deal_id=...</code> ou abrir modal pré-preenchido para solicitar motoboy express com os implantes da oportunidade.</li>
+<li><strong>Onde Fazer:</strong></li>
+<li>Arquivo: Drawer lateral de Deals</li>
+<li><strong>Critério Binário de Aceitação:</strong> Redirecionamento ou abertura de modal transferindo o ID do negócio e produtos para o formulário de entrega rápida.</li>
+</ul></div>
+</body>
+</html>

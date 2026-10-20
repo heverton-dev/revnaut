@@ -1,0 +1,9 @@
+{
+  "raw_target": "#!/settings",
+  "slug": "settings",
+  "route_type": "spa_view",
+  "frontend_element_id": "settings-view",
+  "frontend_files": [],
+  "backend_files": [],
+  "matched_endpoints": []
+}
