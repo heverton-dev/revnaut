@@ -19,6 +19,10 @@ import {
   Play,
   CheckCircle2,
   Layers,
+  Share2,
+  Star,
+  MessageCircle,
+  Maximize2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -26,12 +30,15 @@ import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Tabs } from "@/components/ui/Tabs";
+import { Dialog } from "@/components/ui/Dialog";
 
 export type DashboardTypeOption =
   | "industry_consignment"
   | "clinic_chair"
   | "dentgo_sla"
   | "anvisa_quality_gate";
+
+export type SnapshotExportFormat = "csv" | "parquet";
 
 export interface SupersetEmbeddedProps {
   mode?: "executive_cockpit" | "bi_studio";
@@ -40,6 +47,7 @@ export interface SupersetEmbeddedProps {
   dashboardType?: DashboardTypeOption;
   accountId?: string;
   title?: string;
+  onNavigate?: (route: string, opts?: { stage?: string }) => void;
 }
 
 export interface GuestTokenData {
@@ -166,6 +174,7 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
   dashboardType: initialDashboardType = "industry_consignment",
   accountId: initialAccountId,
   title,
+  onNavigate,
 }) => {
   const [selectedUserId, setSelectedUserId] = useState<string>(initialUserId || "usr-director-br");
   const [selectedDashType, setSelectedDashType] = useState<DashboardTypeOption>(initialDashboardType);
@@ -179,6 +188,9 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
   const [exportSuccess, setExportSuccess] = useState<string | null>(null);
   const [showTechnicalDetails, setShowTechnicalDetails] = useState<boolean>(false);
 
+  // TICKET-DASH-02: seletor de formato do Snapshot R2
+  const [exportFormat, setExportFormat] = useState<SnapshotExportFormat>("csv");
+
   // Estados Cockpit Executivo
   const [pipelineMetrics, setPipelineMetrics] = useState<PipelineMetrics | null>(null);
   const [campaignMetrics, setCampaignMetrics] = useState<CampaignMetrics | null>(null);
@@ -187,6 +199,26 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
   const [dealsData, setDealsData] = useState<any>(null);
   const [chartViewMode, setChartViewMode] = useState<"stage" | "trend" | "consignment">("stage");
   const [loadingExecutive, setLoadingExecutive] = useState<boolean>(false);
+
+  // TICKET-DASH-03: filtro temporal do Radar Anti-Churn
+  const [churnDaysThreshold, setChurnDaysThreshold] = useState<string>("all");
+
+  // TICKET-DASH-07: modal de topologia expandida do grafo clínico
+  const [showTopologyModal, setShowTopologyModal] = useState<boolean>(false);
+
+  // TICKET-ANA-01/02: favoritos de perguntas e compartilhamento role-scoped
+  const [favoriteQueries, setFavoriteQueries] = useState<string[]>(() => {
+    try {
+      const raw = localStorage.getItem("revnaut_bi_favorite_queries");
+      return raw ? (JSON.parse(raw) as string[]) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [showShareModal, setShowShareModal] = useState<boolean>(false);
+  const [shareRole, setShareRole] = useState<string>("viewer");
+  const [shareLink, setShareLink] = useState<string>("");
+  const [shareCopied, setShareCopied] = useState<boolean>(false);
 
   // Estados Console Text-to-SQL
   const [nlQuery, setNlQuery] = useState<string>("Qual o faturamento por regional?");
@@ -228,10 +260,14 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
   const fetchExecutiveCockpit = useCallback(async () => {
     setLoadingExecutive(true);
     try {
+      const churnQuery =
+        churnDaysThreshold && churnDaysThreshold !== "all"
+          ? `?days_threshold=${encodeURIComponent(churnDaysThreshold)}`
+          : "";
       const [mRes, cRes, chRes, cgRes, dRes] = await Promise.all([
         fetch("/api/v1/metrics"),
         fetch("/api/v1/campaigns/metrics"),
-        fetch("/api/v1/intelligence/churn-risk"),
+        fetch(`/api/v1/intelligence/churn-risk${churnQuery}`),
         fetch("/api/v1/intelligence/clinical-graph"),
         fetch("/api/v1/deals"),
       ]);
@@ -245,7 +281,7 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
     } finally {
       setLoadingExecutive(false);
     }
-  }, []);
+  }, [churnDaysThreshold]);
 
   const runTextToSql = useCallback(
     async (customNl?: string, customRawSql?: string) => {
@@ -321,6 +357,78 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
 
   const formatBrl = (val?: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val || 0);
+
+  // TICKET-DASH-05: reativação de cirurgião em risco via WhatsApp
+  const handleReactivateWhatsApp = useCallback((item: ChurnRiskItem) => {
+    const phone = (item as any).phone || (item as any).whatsapp || "";
+    const digits = String(phone).replace(/\D/g, "");
+    const message = encodeURIComponent(
+      `Dr(a). ${item.name}, identificamos que sua última reposição de implantes foi há ${item.days_since_last_order} dias. Podemos preparar um pedido de reativação com condições especiais de giro.`
+    );
+    const waUrl = digits
+      ? `https://wa.me/${digits.startsWith("55") ? digits : `55${digits}`}?text=${message}`
+      : `https://wa.me/?text=${message}`;
+    window.open(waUrl, "_blank", "noopener,noreferrer");
+  }, []);
+
+  // TICKET-DASH-06: clicar na barra do funil navega para deals filtrando o estágio
+  const handleStageBarClick = useCallback(
+    (stageLabel: string) => {
+      if (onNavigate) {
+        onNavigate("deals", { stage: stageLabel });
+      } else {
+        window.location.hash = `#!/deals?stage=${encodeURIComponent(stageLabel)}`;
+      }
+    },
+    [onNavigate]
+  );
+
+  // TICKET-ANA-01: chips de perguntas favoritas
+  const persistFavoriteQueries = useCallback((next: string[]) => {
+    setFavoriteQueries(next);
+    try {
+      localStorage.setItem("revnaut_bi_favorite_queries", JSON.stringify(next));
+    } catch {
+      // localStorage indisponível em contexto privado
+    }
+  }, []);
+
+  const toggleFavoriteQuery = useCallback(
+    (query: string) => {
+      const q = query.trim();
+      if (!q) return;
+      const next = favoriteQueries.includes(q)
+        ? favoriteQueries.filter((f) => f !== q)
+        : [...favoriteQueries, q];
+      persistFavoriteQueries(next);
+    },
+    [favoriteQueries, persistFavoriteQueries]
+  );
+
+  // TICKET-ANA-02: link de compartilhamento role-scoped
+  const buildShareLink = useCallback(
+    (role: string) => {
+      const token = Math.random().toString(36).slice(2, 10);
+      const base = `${window.location.origin}${window.location.pathname}`;
+      return `${base}#!/analytics?share=${token}&role=${encodeURIComponent(role)}&dash=${encodeURIComponent(resolvedDashboardId)}`;
+    },
+    [resolvedDashboardId]
+  );
+
+  const handleGenerateShareLink = useCallback(() => {
+    setShareLink(buildShareLink(shareRole));
+    setShareCopied(false);
+    setShowShareModal(true);
+  }, [buildShareLink, shareRole]);
+
+  const handleCopyShareLink = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(shareLink);
+      setShareCopied(true);
+    } catch {
+      setShareCopied(false);
+    }
+  }, [shareLink]);
 
   const formatBrlShort = (val?: number) => {
     const v = val || 0;
@@ -410,10 +518,25 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
               <RefreshCw className="h-3.5 w-3.5" />
               Atualizar Cockpit
             </Button>
+            <div className="flex items-center gap-1.5">
+              <label className="text-[11px] font-semibold uppercase text-text-secondary" htmlFor="snapshot-format">
+                Formato
+              </label>
+              <select
+                id="snapshot-format"
+                value={exportFormat}
+                onChange={(e) => setExportFormat(e.target.value as SnapshotExportFormat)}
+                className="h-8 rounded-md border border-border bg-surface-card px-2 text-xs text-text-main"
+                aria-label="Formato do Snapshot R2"
+              >
+                <option value="csv">CSV</option>
+                <option value="parquet">PARQUET</option>
+              </select>
+            </div>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => handleExportDataset("csv")}
+              onClick={() => handleExportDataset(exportFormat)}
               disabled={exporting}
               className="gap-1.5"
             >
@@ -497,16 +620,36 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="border-border">
             <CardHeader>
-              <div className="flex items-center justify-between gap-2">
-                <div>
-                  <CardTitle>Radar Anti-Churn RFM Odontológico</CardTitle>
-                  <CardDescription>
-                    Monitoramento determinístico de intervalo de recompra de implantes por cirurgião.
-                  </CardDescription>
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <CardTitle>Radar Anti-Churn RFM Odontológico</CardTitle>
+                    <CardDescription>
+                      Monitoramento determinístico de intervalo de recompra de implantes por cirurgião.
+                    </CardDescription>
+                  </div>
+                  <Badge variant="danger">
+                    {churnData?.summary?.critical_count ?? 0} Críticos
+                  </Badge>
                 </div>
-                <Badge variant="danger">
-                  {churnData?.summary?.critical_count ?? 0} Críticos
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <label className="text-[11px] font-semibold uppercase text-text-secondary" htmlFor="churn-days">
+                    Janela temporal
+                  </label>
+                  <select
+                    id="churn-days"
+                    value={churnDaysThreshold}
+                    onChange={(e) => setChurnDaysThreshold(e.target.value)}
+                    className="h-8 rounded-md border border-border bg-surface-card px-2 text-xs text-text-main"
+                    aria-label="Filtro temporal de churn"
+                  >
+                    <option value="all">Todos</option>
+                    <option value="30">{"&gt; 30 dias"}</option>
+                    <option value="45">{"&gt; 45 dias"}</option>
+                    <option value="60">{"&gt; 60 dias"}</option>
+                    <option value="90">{"&gt; 90 dias"}</option>
+                  </select>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -525,8 +668,19 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
                           <span className="font-medium text-text-main truncate">
                             {item.name} ({item.cro || item.uf || "BR"})
                           </span>
-                          <span className="text-text-secondary shrink-0">
-                            Score {item.churn_risk_score} • {item.days_since_last_order}d sem pedido
+                          <span className="flex items-center gap-2 shrink-0">
+                            <span className="text-text-secondary">
+                              Score {item.churn_risk_score} • {item.days_since_last_order}d sem pedido
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-6 px-2 gap-1 text-[10px]"
+                              onClick={() => handleReactivateWhatsApp(item)}
+                            >
+                              <MessageCircle className="h-3 w-3" />
+                              Reativar via WhatsApp
+                            </Button>
                           </span>
                         </div>
                         <svg className="w-full h-2.5 rounded-full overflow-hidden bg-surface-bg" viewBox="0 0 100 10" preserveAspectRatio="none">
@@ -560,9 +714,20 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
                     Topologia de relacionamentos entre Cirurgiões, Clínicas, Laboratórios CAD/CAM e Universidades.
                   </CardDescription>
                 </div>
-                <Badge variant="navy">
-                  {clinicalGraph?.total_edges ?? 0} Vínculos Ativos
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <Badge variant="navy">
+                    {clinicalGraph?.total_edges ?? 0} Vínculos Ativos
+                  </Badge>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 px-2 gap-1 text-[11px]"
+                    onClick={() => setShowTopologyModal(true)}
+                  >
+                    <Maximize2 className="h-3 w-3" />
+                    Expandir Topologia do Grafo
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -594,6 +759,102 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
             </CardContent>
           </Card>
         </div>
+
+        {/* TICKET-DASH-06: Funil por Estágio com navegação para `#!/deals` */}
+        <Card className="border-border">
+          <CardHeader>
+            <CardTitle>Funil Comercial por Estágio</CardTitle>
+            <CardDescription>
+              Clique em qualquer barra para abrir o workspace de Deals já filtrado pelo estágio correspondente.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {computedChartBars.map((bar: { label: string; value: number; count: number; fillClass: string }) => (
+                <button
+                  key={bar.label}
+                  type="button"
+                  onClick={() => handleStageBarClick(bar.label)}
+                  className="w-full text-left group focus-visible:outline-none"
+                  aria-label={`Filtrar deals pelo estágio ${bar.label}`}
+                >
+                  <div className="flex items-center justify-between text-xs mb-1">
+                    <span className="font-medium text-text-main group-hover:text-brand-primary transition-colors">
+                      {bar.label}
+                    </span>
+                    <span className="text-text-secondary">
+                      {formatBrl(bar.value)} • {bar.count} itens
+                    </span>
+                  </div>
+                  <svg className="w-full h-3.5 rounded overflow-hidden bg-surface-bg" viewBox="0 0 100 10" preserveAspectRatio="none">
+                    <rect
+                      x="0"
+                      y="0"
+                      width={Math.min(100, Math.max(6, Math.round((bar.value / Math.max(1, pipelineMetrics?.total_value || 1)) * 100)))}
+                      height="10"
+                      className={`${bar.fillClass} group-hover:opacity-80 transition-opacity`}
+                    />
+                  </svg>
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* TICKET-DASH-07: Modal de Topologia Expandida */}
+        <Dialog
+          isOpen={showTopologyModal}
+          onClose={() => setShowTopologyModal(false)}
+          title="Topologia Expandida do Grafo Clínico KOL"
+          description="Nós e vínculos N:N do ecossistema odontológico (Cirurgiões, Clínicas, Labs CAD/CAM, Universidades)."
+          className="max-w-3xl"
+        >
+          <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <div className="p-2.5 rounded-lg bg-surface-bg border border-border-subtle">
+                <span className="text-[11px] text-text-secondary block">Nós</span>
+                <span className="text-base font-bold text-text-main">{clinicalGraph?.total_nodes ?? 0}</span>
+              </div>
+              <div className="p-2.5 rounded-lg bg-surface-bg border border-border-subtle">
+                <span className="text-[11px] text-text-secondary block">Arestas</span>
+                <span className="text-base font-bold text-brand-primary">{clinicalGraph?.total_edges ?? 0}</span>
+              </div>
+              <div className="p-2.5 rounded-lg bg-surface-bg border border-border-subtle">
+                <span className="text-[11px] text-text-secondary block">KOLs</span>
+                <span className="text-base font-bold text-status-success">{clinicalGraph?.kol_speakers_count ?? 0}</span>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="text-xs font-semibold uppercase text-text-secondary mb-2">Nós do Ecossistema</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {graphNodes.map((node) => (
+                  <div key={node.id} className="p-2 rounded-md border border-border-subtle bg-surface-bg flex items-center justify-between gap-2">
+                    <span className="text-xs font-medium text-text-main truncate">{node.label}</span>
+                    <Badge variant="secondary" className="text-[10px] uppercase shrink-0">{node.node_type}</Badge>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h4 className="text-xs font-semibold uppercase text-text-secondary mb-2">Vínculos N:N</h4>
+              <div className="space-y-1.5">
+                {(clinicalGraph?.edges || []).map((edge, idx) => (
+                  <div key={`${edge.source}-${edge.target}-${idx}`} className="p-2 rounded-md border border-border-subtle text-xs text-text-main flex items-center justify-between gap-2">
+                    <span className="truncate">
+                      {edge.label || edge.relationship}: {edge.source} → {edge.target}
+                    </span>
+                    {edge.is_kol && <Badge variant="success" className="text-[10px] shrink-0">KOL</Badge>}
+                  </div>
+                ))}
+                {(!clinicalGraph?.edges || clinicalGraph.edges.length === 0) && (
+                  <p className="text-xs text-text-muted">Nenhum vínculo carregado no snapshot atual.</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </Dialog>
       </div>
     );
   }
@@ -632,6 +893,15 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
           >
             <Database className="h-3.5 w-3.5" />
             Exportar Parquet (R2)
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleGenerateShareLink}
+            className="gap-1.5"
+          >
+            <Share2 className="h-3.5 w-3.5" />
+            Compartilhar Dashboard com a Equipe
           </Button>
         </div>
       </div>
@@ -911,6 +1181,33 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
                     {preset}
                   </button>
                 ))}
+                {favoriteQueries.map((fav) => (
+                  <span
+                    key={`fav-${fav}`}
+                    className="inline-flex items-center gap-1 pl-2.5 pr-1 py-1 rounded-full text-xs bg-brand-primary-subtle text-brand-primary border border-brand-primary/30 whitespace-nowrap shrink-0"
+                  >
+                    <Star className="h-3 w-3 fill-current" aria-hidden="true" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNlQuery(fav);
+                        setRawSqlInput("");
+                        runTextToSql(fav, "");
+                      }}
+                      className="hover:underline"
+                    >
+                      {fav}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => toggleFavoriteQuery(fav)}
+                      className="ml-0.5 rounded-full p-0.5 hover:bg-brand-primary/10"
+                      aria-label={`Remover favorito ${fav}`}
+                    >
+                      <span className="text-[10px]">x</span>
+                    </button>
+                  </span>
+                ))}
               </div>
             </div>
           </CardHeader>
@@ -938,7 +1235,16 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
               </div>
             </div>
 
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => toggleFavoriteQuery(nlQuery)}
+                className="gap-1.5"
+              >
+                <Star className={`h-3.5 w-3.5 ${favoriteQueries.includes(nlQuery.trim()) ? "fill-current" : ""}`} />
+                {favoriteQueries.includes(nlQuery.trim()) ? "Remover dos Favoritos" : "Salvar Pergunta nos Favoritos"}
+              </Button>
               <Button
                 size="sm"
                 onClick={() => runTextToSql(nlQuery, rawSqlInput)}
@@ -1000,6 +1306,47 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
           </CardContent>
         </Card>
       )}
+
+      {/* TICKET-ANA-02: Modal de compartilhamento com escopo de papel */}
+      <Dialog
+        isOpen={showShareModal}
+        onClose={() => {
+          setShowShareModal(false);
+          setShareCopied(false);
+        }}
+        title="Compartilhar Dashboard com a Equipe"
+        description="Gera um link role-scoped com RLS aplicado conforme o papel selecionado."
+      >
+        <div className="space-y-4">
+          <Select
+            label="Papel de Acesso (RLS Escopo)"
+            value={shareRole}
+            onChange={(e) => {
+              setShareRole(e.target.value);
+              setShareLink(buildShareLink(e.target.value));
+              setShareCopied(false);
+            }}
+            options={[
+              { value: "viewer", label: "Visualizador (Somente Leitura)" },
+              { value: "analyst", label: "Analista (Consulta + Exportação)" },
+              { value: "manager", label: "Gerente (Escopo de Equipe)" },
+              { value: "director", label: "Diretor (Escopo Nacional)" },
+            ]}
+          />
+          <div>
+            <label className="block text-xs font-medium text-text-secondary mb-1">Link Gerado</label>
+            <div className="flex items-center gap-2">
+              <Input value={shareLink} readOnly placeholder="Clique em gerar link" />
+              <Button variant="outline" size="sm" onClick={handleCopyShareLink} disabled={!shareLink}>
+                {shareCopied ? "Copiado" : "Copiar"}
+              </Button>
+            </div>
+          </div>
+          <p className="text-xs text-text-muted">
+            O link expira em 24h e aplica automaticamente as restrições RLS do papel no Guest Token.
+          </p>
+        </div>
+      </Dialog>
     </div>
   );
 };

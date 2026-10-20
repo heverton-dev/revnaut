@@ -25,6 +25,8 @@ import {
   ExternalLink,
   Wand2,
   Trash2,
+  FlaskConical,
+  X,
 } from "lucide-react";
 import { QrCodeSvg } from "@/components/shared/QrCodeSvg";
 import { Button } from "@/components/ui/Button";
@@ -113,6 +115,13 @@ export const LandingPageBuilder: React.FC<LandingPageBuilderProps> = ({
   const [editorMode, setEditorMode] = useState<"visual" | "code">("visual");
   const [copyFixLog, setCopyFixLog] = useState<string[]>([]);
   const [tokenCss, setTokenCss] = useState<string>("");
+
+  // TICKET-MKT-01: Teste A/B Split 50/50
+  const [abTestEnabled, setAbTestEnabled] = useState<boolean>(false);
+  const [showAbModal, setShowAbModal] = useState<boolean>(false);
+  const [abVariantA, setAbVariantA] = useState<string>("");
+  const [abVariantB, setAbVariantB] = useState<string>("");
+  const [abVariantName, setAbVariantName] = useState<string>("Hero Headline Test");
 
   const [savedPages, setSavedPages] = useState<LandingPageItem[]>([]);
   const [resolvedCampaignId, setResolvedCampaignId] = useState<string>(campaignId || "");
@@ -956,6 +965,23 @@ export const LandingPageBuilder: React.FC<LandingPageBuilderProps> = ({
                 </Button>
                 <Button
                   type="button"
+                  variant={abTestEnabled ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    if (!abTestEnabled) {
+                      setAbVariantA(editorHtml);
+                      setAbVariantB(editorHtml);
+                      setShowAbModal(true);
+                    }
+                    setAbTestEnabled(!abTestEnabled);
+                  }}
+                  className="w-full flex items-center justify-center gap-1.5 text-xs"
+                >
+                  <FlaskConical className="h-3.5 w-3.5 text-brand-navy" />
+                  {abTestEnabled ? "A/B Ativo (Split 50/50)" : "Ativar Teste A/B (Split 50/50)"}
+                </Button>
+                <Button
+                  type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => applyContent("", editorCss)}
@@ -1671,6 +1697,61 @@ export const LandingPageBuilder: React.FC<LandingPageBuilderProps> = ({
                 </div>
               )}
             </Card>
+          </div>
+        </div>
+      )}
+
+      {/* TICKET-MKT-01: Modal de Teste A/B Split 50/50 */}
+      {showAbModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-text-main/50">
+          <div className="bg-surface-card border border-border rounded-xl w-full max-w-2xl p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-text-main">Ativar Teste A/B (Split 50/50)</h3>
+              <button type="button" onClick={() => setShowAbModal(false)} className="text-text-secondary hover:text-text-main">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <p className="text-xs text-text-secondary">
+              O tráfego da landing page será dividido igualmente entre as variantes A e B. A variante com maior conversão será promovida automaticamente.
+            </p>
+            <div>
+              <label className="block text-xs font-medium text-text-secondary mb-1">Nome do Experimento</label>
+              <input
+                value={abVariantName}
+                onChange={(e) => setAbVariantName(e.target.value)}
+                className="w-full h-9 rounded-md border border-border bg-surface-card px-3 text-sm text-text-main"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-text-secondary mb-1">Variante A (Controle)</label>
+                <textarea
+                  value={abVariantA}
+                  onChange={(e) => setAbVariantA(e.target.value)}
+                  className="w-full h-32 rounded-md border border-border bg-surface-card p-2 text-[11px] font-mono text-text-main"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-text-secondary mb-1">Variante B (Teste)</label>
+                <textarea
+                  value={abVariantB}
+                  onChange={(e) => setAbVariantB(e.target.value)}
+                  className="w-full h-32 rounded-md border border-border bg-surface-card p-2 text-[11px] font-mono text-text-main"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" size="sm" onClick={() => setShowAbModal(false)}>Cancelar</Button>
+              <Button
+                size="sm"
+                onClick={() => {
+                  setAbTestEnabled(true);
+                  setShowAbModal(false);
+                }}
+              >
+                Ativar Split 50/50
+              </Button>
+            </div>
           </div>
         </div>
       )}

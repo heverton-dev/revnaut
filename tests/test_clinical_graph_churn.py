@@ -152,8 +152,11 @@ def test_clinical_graph_and_kol_speakers_identification(setup_intelligence_fixtu
         "relationship_type": "operates_at"
     })
 
-    # 1. Consulta Grafo Clínico
-    res_graph = client.get("/api/v1/intelligence/clinical-graph")
+    # 1. Consulta Grafo Clínico (TICKET-DASH-04: tenant do usuário autenticado)
+    res_graph = client.get(
+        "/api/v1/intelligence/clinical-graph",
+        headers={"X-User-Id": "usr-superadmin-god"},
+    )
     assert res_graph.status_code == 200
     graph = res_graph.json()
     assert graph["total_nodes"] >= 3
@@ -181,7 +184,10 @@ def test_dental_rfm_churn_risk_radar(setup_intelligence_fixture):
     kol_id = fixture["kol_contact_id"]
     healthy_id = fixture["healthy_contact_id"]
 
-    res_radar = client.get("/api/v1/intelligence/churn-risk")
+    res_radar = client.get(
+        "/api/v1/intelligence/churn-risk",
+        headers={"X-User-Id": "usr-superadmin-god"},
+    )
     assert res_radar.status_code == 200
     radar = res_radar.json()
 

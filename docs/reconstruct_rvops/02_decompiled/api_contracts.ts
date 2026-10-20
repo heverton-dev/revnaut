@@ -755,6 +755,7 @@ export const API_V1_ROUTES = [
   '/api/v1/deals/{deal_id}',
   '/api/v1/deals/{deal_id}/approve-credit',
   '/api/v1/deals/{deal_id}/contracts',
+  '/api/v1/deals/{deal_id}/contracts/generate',
   '/api/v1/deals/{deal_id}/generate-contract',
   '/api/v1/deals/{deal_id}/stage',
   '/api/v1/deals/{deal_id}/timeline',

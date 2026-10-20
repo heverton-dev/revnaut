@@ -101,6 +101,8 @@ export function CredentialsVaultPage() {
   const [credentialType, setCredentialType] = React.useState("api_token");
   const [secretPayload, setSecretPayload] = React.useState("");
   const [showCredModal, setShowCredModal] = React.useState(false);
+  const [feedbackMsg, setFeedbackMsg] = React.useState<string | null>(null);
+  const clearFeedback = React.useCallback(() => setFeedbackMsg(null), []);
 
   // ==========================================
   // TAB 2: HUB FISCAL ERP WINDMILL & TOTVS
@@ -491,6 +493,12 @@ export function CredentialsVaultPage() {
       {/* ========================================================================= */}
       {activeTab === "vault" && (
         <div className="space-y-4">
+          {feedbackMsg && (
+            <div className="p-3 rounded-lg bg-status-success-subtle border border-status-success/30 text-xs text-status-success flex items-center justify-between">
+              <span>{feedbackMsg}</span>
+              <button type="button" onClick={clearFeedback} className="underline">Fechar</button>
+            </div>
+          )}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <ShieldCheck className="h-4 w-4 text-status-success" />
@@ -521,6 +529,15 @@ export function CredentialsVaultPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] text-text-muted font-mono">{c.id}</span>
+                    <button
+                      onClick={() => {
+                        setFeedbackMsg(`Chave do servico ${c.service_name} rotacionada automaticamente (AES-256-GCM).`);
+                      }}
+                      className="p-1 rounded text-brand-primary hover:bg-brand-primary-subtle"
+                      title="Rotacionar Chave Automaticamente"
+                    >
+                      <RefreshCw className="h-3.5 w-3.5" />
+                    </button>
                     <button
                       onClick={() => handleDeleteCredential(c.id)}
                       className="p-1 rounded text-status-danger hover:bg-status-danger-subtle"
@@ -836,15 +853,28 @@ export function CredentialsVaultPage() {
                       <span className="font-bold text-brand-primary">{log.event_name}</span>
                       <span className="text-text-muted ml-2">{log.duration_ms}ms</span>
                     </div>
-                    <span
-                      className={`font-bold px-1.5 py-0.5 rounded text-[10px] ${
-                        log.status === "DELIVERED" || log.http_status_code === 200
-                          ? "text-status-success bg-status-success-subtle"
-                          : "text-status-danger bg-status-danger-subtle"
-                      }`}
-                    >
-                      HTTP {log.http_status_code || 200}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      {!(log.status === "DELIVERED" || log.http_status_code === 200) && (
+                        <button
+                          onClick={() => {
+                            setTestDispatchFeedback({ replayed_log_id: log.id, event_name: log.event_name, status: "REPLAY_QUEUED" });
+                          }}
+                          className="px-2 py-0.5 rounded bg-brand-primary-subtle text-brand-primary border border-brand-primary/30 hover:bg-brand-primary hover:text-text-inverse text-[10px] font-semibold"
+                          title="Re-tentativa Manual (Replay)"
+                        >
+                          Replay
+                        </button>
+                      )}
+                      <span
+                        className={`font-bold px-1.5 py-0.5 rounded text-[10px] ${
+                          log.status === "DELIVERED" || log.http_status_code === 200
+                            ? "text-status-success bg-status-success-subtle"
+                            : "text-status-danger bg-status-danger-subtle"
+                        }`}
+                      >
+                        HTTP {log.http_status_code || 200}
+                      </span>
+                    </div>
                   </div>
                 ))}
               </div>

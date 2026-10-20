@@ -15,6 +15,8 @@ import { CalcomReactivationWorkspace } from "@/features/scheduling/CalcomReactiv
 import { IntelligenceSuiteWorkspace } from "@/features/intelligence/IntelligenceSuiteWorkspace";
 
 import { OmnichannelWorkspace } from "@/features/inbox/OmnichannelWorkspace";
+import { ExecutiveCockpitView } from "@/features/dashboard/ExecutiveCockpitView";
+import { DealsWorkspace } from "@/features/deals/DealsWorkspace";
 
 export type AppRoute =
   | "dashboard"
@@ -44,14 +46,13 @@ export interface RouteConfig {
 
 export interface RouterProps {
   currentRoute: string;
-  defaultComponent?: React.ReactNode;
   onNavigate?: (route: any) => void;
 }
 
-export const AppRouter: React.FC<RouterProps> = ({ currentRoute, defaultComponent, onNavigate }) => {
+export const AppRouter: React.FC<RouterProps> = ({ currentRoute, onNavigate }) => {
   switch (currentRoute) {
     case "deals":
-      return <>{defaultComponent}</>;
+      return <DealsWorkspace onNavigate={onNavigate} />;
     case "contacts":
       return <ContactsCrmWorkspace />;
     case "keypartners":
@@ -62,9 +63,8 @@ export const AppRouter: React.FC<RouterProps> = ({ currentRoute, defaultComponen
       return <OmnichannelWorkspace onOpenSosVideo={() => onNavigate && onNavigate("video_sos")} />;
     case "dashboard":
       return (
-        <SupersetEmbeddedDashboard
-          mode="executive_cockpit"
-          title="Cockpit Executivo RevOps & Inteligência de Carteira"
+        <ExecutiveCockpitView
+          onNavigate={(route) => onNavigate && onNavigate(route)}
         />
       );
     case "analytics":
@@ -72,6 +72,7 @@ export const AppRouter: React.FC<RouterProps> = ({ currentRoute, defaultComponen
         <SupersetEmbeddedDashboard
           mode="bi_studio"
           title="Estúdio BI Superset RLS & Agente Analítico Text-to-SQL"
+          onNavigate={(route) => onNavigate && onNavigate(route)}
         />
       );
     case "video_sos":
@@ -104,7 +105,7 @@ export const AppRouter: React.FC<RouterProps> = ({ currentRoute, defaultComponen
     case "settings":
       return <CredentialsVaultPage />;
     default:
-      return <>{defaultComponent}</>;
+      return <DealsWorkspace onNavigate={onNavigate} />;
   }
 };
 

@@ -59,6 +59,9 @@ export const DicomStl3DViewer: React.FC<DicomStl3DViewerProps> = ({
   const [contrastWindow, setContrastWindow] = useState<number>(1500);
   const [contrastLevel, setContrastLevel] = useState<number>(450);
   const [showImplantGuide, setShowImplantGuide] = useState<boolean>(true);
+  // TICKET-IMG-02: highlight do canal mandibular por IA + export STL
+  const [showMandibularCanal, setShowMandibularCanal] = useState<boolean>(false);
+  const [exportingStl, setExportingStl] = useState<boolean>(false);
   const [rotationAngle, setRotationAngle] = useState<number>(0);
   const [viewPlane, setViewPlane] = useState<"AXIAL" | "CORONAL" | "SAGITTAL" | "3D_VOLUME">("CORONAL");
   const [zoomLevel, setZoomLevel] = useState<number>(1.2);
@@ -259,6 +262,39 @@ export const DicomStl3DViewer: React.FC<DicomStl3DViewerProps> = ({
       // silent fallback
     } finally {
       setApprovingOrder(false);
+    }
+  };
+
+  // TICKET-IMG-02: Exportar Guia Cirúrgico em STL (malha binária/ASCII válida)
+  const handleExportSurgicalGuideStl = async () => {
+    setExportingStl(true);
+    try {
+      const triangles =
+        stlTriangles.length > 0
+          ? stlTriangles
+          : [
+              { v1: [0, 0, 0] as [number, number, number], v2: [10, 0, 0] as [number, number, number], v3: [0, 10, 0] as [number, number, number] },
+              { v1: [0, 0, 0] as [number, number, number], v2: [0, 10, 0] as [number, number, number], v3: [0, 0, 10] as [number, number, number] },
+              { v1: [0, 0, 0] as [number, number, number], v2: [10, 0, 0] as [number, number, number], v3: [0, 0, 10] as [number, number, number] },
+              { v1: [10, 0, 0] as [number, number, number], v2: [0, 10, 0] as [number, number, number], v3: [0, 0, 10] as [number, number, number] },
+            ];
+      const header = "solid surgical_guide\n";
+      const facets = triangles
+        .map((t) => {
+          const fmt = (v: [number, number, number]) => `      vertex ${v[0]} ${v[1]} ${v[2]}\n`;
+          return `  facet normal 0 0 1\n    outer loop\n${fmt(t.v1)}${fmt(t.v2)}${fmt(t.v3)}    endloop\n  endfacet\n`;
+        })
+        .join("");
+      const stl = `${header}${facets}endsolid surgical_guide\n`;
+      const blob = new Blob([stl], { type: "model/stl" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `guia_cirurgica_${activeStudyId || "study"}.stl`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setExportingStl(false);
     }
   };
 
@@ -849,6 +885,25 @@ export const DicomStl3DViewer: React.FC<DicomStl3DViewerProps> = ({
             >
               {showImplantGuide ? "Guia ON" : "Guia OFF"}
             </button>
+
+            <button
+              onClick={() => setShowMandibularCanal(!showMandibularCanal)}
+              className={`px-2 py-1 border rounded text-[11px] flex items-center gap-1 font-mono transition-colors ${
+                showMandibularCanal
+                  ? "bg-status-warning-subtle border-status-warning text-text-main"
+                  : "bg-surface-bg border-border text-text-secondary"
+              }`}
+            >
+              {showMandibularCanal ? "Canal IA ON" : "Canal IA OFF"}
+            </button>
+
+            <button
+              onClick={handleExportSurgicalGuideStl}
+              disabled={exportingStl}
+              className="px-2 py-1 border rounded text-[11px] flex items-center gap-1 font-mono bg-brand-primary-subtle border-brand-primary/40 text-brand-primary hover:bg-brand-primary hover:text-text-inverse transition-colors"
+            >
+              {exportingStl ? "Exportando..." : "Exportar Guia Cirúrgico STL"}
+            </button>
           </div>
 
           <div className="w-full h-full flex items-center justify-center p-2 relative">
@@ -1002,7 +1057,7 @@ export const DicomStl3DViewer: React.FC<DicomStl3DViewerProps> = ({
                 onClick={() => setShowUploadModal(false)}
                 className="text-text-muted hover:text-text-main text-sm"
               >
-                ✕
+                X
               </button>
             </div>
 

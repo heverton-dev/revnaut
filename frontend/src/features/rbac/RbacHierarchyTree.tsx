@@ -10,6 +10,8 @@ import {
   Sparkles,
   GitFork,
   Sliders,
+  Download,
+  Lock,
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
@@ -159,6 +161,8 @@ export function RbacHierarchyTree({
   const [statementUserId, setStatementUserId] = React.useState<string>("u_cons_sp_01");
   const [statementPeriod, setStatementPeriod] = React.useState<string>("2026-Q4");
   const [statementResult, setStatementResult] = React.useState<any>(null);
+  // TICKET-RBAC-01: Bloqueio temporário de usuário
+  const [userBlockToggle, setUserBlockToggle] = React.useState<boolean>(false);
 
   // Carregar Dados da Tab 1 (BU & Teams)
   const fetchTreeData = React.useCallback(async () => {
@@ -1080,6 +1084,38 @@ export function RbacHierarchyTree({
                   />
                   <Button size="sm" variant="secondary" onClick={handleGetStatement} className="text-xs h-7 py-0">
                     Consultar
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-xs h-7 py-0 gap-1"
+                    onClick={() => {
+                      const rows = [
+                        "user_id,user_name,period,total_commission_payout",
+                        `${statementResult?.user_id || statementUserId},${statementResult?.user_name || "-"},${statementResult?.period || statementPeriod},${statementResult?.total_commission_payout || 0}`,
+                      ].join("\n");
+                      const blob = new Blob([rows], { type: "text/csv;charset=utf-8;" });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = "folha_comissoes_erp.csv";
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    }}
+                  >
+                    <Download className="h-3 w-3" />
+                    Exportar Folha ERP
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-xs h-7 py-0 gap-1"
+                    onClick={() => {
+                      setUserBlockToggle(!userBlockToggle);
+                    }}
+                  >
+                    <Lock className="h-3 w-3" />
+                    {userBlockToggle ? "Desbloquear Usuario" : "Bloqueio Temporario"}
                   </Button>
                 </div>
               </div>

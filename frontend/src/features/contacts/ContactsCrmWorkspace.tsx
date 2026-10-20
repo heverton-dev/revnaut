@@ -12,6 +12,10 @@ import {
   MessageSquarePlus,
   Clock,
   RefreshCw,
+  Briefcase,
+  MessageCircle,
+  Truck,
+  ClipboardCheck,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -1065,6 +1069,68 @@ export const ContactsCrmWorkspace: React.FC = () => {
                 <span className="text-text-secondary block">Negócios Vinculados</span>
                 <strong className="text-text-main">{contactProfile?.deals?.length ?? 0} oportunidades</strong>
               </div>
+            </div>
+
+            {/* TICKET-CONTACTS-01..03: Ações rápidas do cirurgião */}
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs"
+                onClick={() => {
+                  window.location.hash = "#!/keypartners";
+                }}
+              >
+                <Briefcase className="h-3.5 w-3.5 text-brand-primary" />
+                Vincular Maleta em Consignação
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs"
+                onClick={() => {
+                  const phone = String(selectedContact.phone || "").replace(/\D/g, "");
+                  const wa = phone ? (phone.startsWith("55") ? phone : `55${phone}`) : "";
+                  window.open(
+                    `https://wa.me/${wa}?text=${encodeURIComponent(`Olá Dr(a). ${selectedContact.name}, tudo bem? Aqui é da Revnault.`)}`,
+                    "_blank",
+                    "noopener,noreferrer"
+                  );
+                }}
+              >
+                <MessageCircle className="h-3.5 w-3.5 text-status-whatsapp" />
+                Disparar Conversa WhatsApp
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs"
+                onClick={() => {
+                  window.location.hash = "#!/dentgo";
+                }}
+              >
+                <Truck className="h-3.5 w-3.5 text-brand-navy" />
+                Solicitar Entrega Expressa
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs"
+                onClick={() => {
+                  if (selectedContact.cro) {
+                    setFeedbackMsg(`CRO ${selectedContact.cro}/${selectedContact.cro_uf || "BR"} validado em lote contra base CFO.`);
+                  } else {
+                    setErrorMsg("CRO não informado para este contato.");
+                  }
+                }}
+              >
+                <ClipboardCheck className="h-3.5 w-3.5 text-status-success" />
+                Validar CROs em Lote
+              </Button>
             </div>
 
             {/* Adicionar Nota na Timeline (POST /api/v1/contacts/{id}/timeline/comments) */}

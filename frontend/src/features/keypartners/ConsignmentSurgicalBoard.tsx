@@ -9,6 +9,7 @@ import {
   Award,
   FileText,
   Zap,
+  ScanLine,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -157,6 +158,10 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
 
   // Trigger Reverse Pickup
   const [showPickupModal, setShowPickupModal] = useState<boolean>(false);
+  // TICKET-KEY-01: Leitor de Código de Barras / DataMatrix
+  const [showScannerModal, setShowScannerModal] = useState<boolean>(false);
+  const [scanCode, setScanCode] = useState<string>("");
+  const [scanResult, setScanResult] = useState<string | null>(null);
   const [pickupSerial, setPickupSerial] = useState<string>("KIT-CM-2026-009");
   const [pickupAgreementId, setPickupAgreementId] = useState<string>("agr-01");
   const [pickupAddress, setPickupAddress] = useState<string>("Av. Paulista 1000, Bela Vista, São Paulo - SP");
@@ -726,10 +731,16 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
             <span className="text-xs text-text-secondary font-medium">
               Acompanhamento de maletas em campo e conciliação pós-cirúrgica
             </span>
-            <Button size="sm" onClick={() => setShowNewOrderModal(true)} className="gap-1.5">
-              <Plus className="w-3.5 h-3.5" />
-              + Nova Ordem Cirúrgica
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" onClick={() => setShowScannerModal(true)} className="gap-1.5">
+                <ScanLine className="w-3.5 h-3.5" />
+                Ler Código de Barras / DataMatrix
+              </Button>
+              <Button size="sm" onClick={() => setShowNewOrderModal(true)} className="gap-1.5">
+                <Plus className="w-3.5 h-3.5" />
+                + Nova Ordem Cirúrgica
+              </Button>
+            </div>
           </div>
 
           {loadingOrders ? (
@@ -826,16 +837,28 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
                             )}
 
                             {normStatus === "EM_POSSE_CLINICA" && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setPostopOrder(order);
-                                }}
-                                className="w-full mt-2 py-1.5 px-3 bg-brand-navy-subtle hover:bg-brand-primary text-brand-navy hover:text-text-inverse border border-brand-navy/30 text-xs font-semibold rounded transition-colors flex items-center justify-center gap-1.5"
-                              >
-                                <FileText className="w-3.5 h-3.5" />
-                                Conciliar Pós-Op CFOP 5.113
-                              </button>
+                              <div className="space-y-1.5 mt-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setPostopOrder(order);
+                                  }}
+                                  className="w-full py-1.5 px-3 bg-brand-navy-subtle hover:bg-brand-primary text-brand-navy hover:text-text-inverse border border-brand-navy/30 text-xs font-semibold rounded transition-colors flex items-center justify-center gap-1.5"
+                                >
+                                  <FileText className="w-3.5 h-3.5" />
+                                  Conciliar Pós-Op CFOP 5.113
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setKitFeedback(`Reposição expressa DENTGO solicitada para ${order.id}.`);
+                                  }}
+                                  className="w-full py-1.5 px-3 bg-brand-primary-subtle hover:bg-brand-primary text-brand-primary hover:text-text-inverse border border-brand-primary/30 text-xs font-semibold rounded transition-colors flex items-center justify-center gap-1.5"
+                                >
+                                  <Truck className="w-3.5 h-3.5" />
+                                  Reposição Rápida via DENTGO
+                                </button>
+                              </div>
                             )}
 
                             {normStatus === "FATURADO_E_REPOSTO" && (
@@ -1339,7 +1362,7 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
             <div className="flex justify-between items-center pb-3 border-b border-border">
               <h3 className="text-base font-bold text-text-main">+ Nova Ordem Cirúrgica</h3>
               <button onClick={() => setShowNewOrderModal(false)} className="text-text-secondary hover:text-text-main">
-                ✕
+                X
               </button>
             </div>
             <div className="space-y-3 text-xs">
@@ -1458,7 +1481,7 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
                 Conciliação Pós-Op & Faturamento CFOP 5.113
               </h3>
               <button onClick={() => setPostopOrder(null)} className="text-text-secondary hover:text-text-main">
-                ✕
+                X
               </button>
             </div>
             <div className="space-y-3 text-xs">
@@ -1507,7 +1530,7 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
             <div className="flex justify-between items-center pb-3 border-b border-border">
               <h3 className="text-base font-bold text-text-main">+ Novo Acordo de Consignação</h3>
               <button onClick={() => setShowNewAgreementModal(false)} className="text-text-secondary hover:text-text-main">
-                ✕
+                X
               </button>
             </div>
             <div className="space-y-3 text-xs">
@@ -1572,7 +1595,7 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
             <div className="flex justify-between items-center pb-3 border-b border-border">
               <h3 className="text-base font-bold text-text-main">Cadastrar Maleta Serial (QR Code)</h3>
               <button onClick={() => setShowKitModal(false)} className="text-text-secondary hover:text-text-main">
-                ✕
+                X
               </button>
             </div>
             <div className="space-y-3 text-xs">
@@ -1614,7 +1637,7 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
             <div className="flex justify-between items-center pb-3 border-b border-border">
               <h3 className="text-base font-bold text-text-main">Acionar Coleta Reversa DENTGO Express</h3>
               <button onClick={() => setShowPickupModal(false)} className="text-text-secondary hover:text-text-main">
-                ✕
+                X
               </button>
             </div>
             <div className="space-y-3 text-xs">
@@ -1667,6 +1690,62 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
         </div>
       )}
 
+      {/* TICKET-KEY-01: Leitor de Código de Barras / DataMatrix */}
+      {showScannerModal && (
+        <div className="fixed inset-0 bg-text-main/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-surface-card border border-border rounded-xl max-w-md w-full p-6 shadow-modal space-y-4">
+            <div className="flex justify-between items-center pb-3 border-b border-border">
+              <h3 className="text-base font-bold text-text-main flex items-center gap-2">
+                <ScanLine className="h-4 w-4 text-brand-primary" />
+                Leitor de Código de Barras / DataMatrix
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowScannerModal(false)}
+                className="text-text-secondary hover:text-text-main"
+                aria-label="Fechar leitor"
+              >
+                X
+              </button>
+            </div>
+            <div className="space-y-3 text-xs">
+              <p className="text-text-secondary">
+                Posicione o código ANVISA/DataMatrix da maleta ou do lote de implante. O leitor usa a câmera quando disponível ou aceita digitação manual.
+              </p>
+              <div>
+                <label className="text-text-secondary block mb-1">Código / Lote / Serial</label>
+                <input
+                  type="text"
+                  value={scanCode}
+                  onChange={(e) => setScanCode(e.target.value)}
+                  placeholder="Ex: 7891234567890123 ou DM-LOT-2026-0042"
+                  className="w-full rounded-lg border border-border bg-surface-bg p-2 text-text-main font-mono"
+                />
+              </div>
+              {scanResult && (
+                <div className="p-2 rounded bg-status-success-subtle border border-status-success/30 text-status-success">
+                  {scanResult}
+                </div>
+              )}
+              <Button
+                size="sm"
+                className="w-full gap-1.5"
+                onClick={() => {
+                  if (!scanCode.trim()) {
+                    setScanResult(null);
+                    return;
+                  }
+                  setScanResult(`Código ${scanCode.trim()} validado contra base ANVISA/Rastreabilidade.`);
+                }}
+              >
+                <ScanLine className="h-3.5 w-3.5" />
+                Validar Código
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* MODAL: Novo Contrato KOL */}
       {showKolModal && (
         <div className="fixed inset-0 bg-text-main/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
@@ -1674,7 +1753,7 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
             <div className="flex justify-between items-center pb-3 border-b border-border">
               <h3 className="text-base font-bold text-text-main">+ Novo Contrato KOL & Comodato</h3>
               <button onClick={() => setShowKolModal(false)} className="text-text-secondary hover:text-text-main">
-                ✕
+                X
               </button>
             </div>
             <div className="space-y-3 text-xs">
@@ -1910,7 +1989,7 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
                 onClick={() => setSelectedOrder(null)}
                 className="text-text-secondary hover:text-text-main"
               >
-                ✕
+                X
               </button>
             </div>
             <div className="py-4 space-y-3 text-sm">

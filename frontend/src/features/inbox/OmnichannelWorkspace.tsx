@@ -729,7 +729,7 @@ export const OmnichannelWorkspace: React.FC<OmnichannelWorkspaceProps> = ({
                 onClick={() => setShowInstanceModal(false)}
                 className="text-text-muted hover:text-text-main text-sm"
               >
-                ✕
+                X
               </button>
             </div>
             <div className="space-y-3">

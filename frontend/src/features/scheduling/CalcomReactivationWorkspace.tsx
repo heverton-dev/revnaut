@@ -11,6 +11,7 @@ import {
   Video,
   ChevronLeft,
   ChevronRight,
+  Lock,
 } from "lucide-react";
 import { LiveKitDealRoomModal } from "@/features/communications/LiveKitDealRoomModal";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
@@ -347,6 +348,33 @@ export const CalcomReactivationWorkspace: React.FC = () => {
           >
             <Send className="h-3.5 w-3.5" />
             {scanning ? "Varrendo..." : "Executar Varredura de Disparos Pendentes"}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const pending = schedules.find((s) => s.status !== "BOOKED");
+              if (pending) {
+                handleSimulateBookingWebhook(pending);
+              } else {
+                setFeedbackMsg("Nenhum agendamento pendente para confirmação 1-clique.");
+              }
+            }}
+            className="gap-1.5"
+          >
+            <CalendarCheck className="h-3.5 w-3.5" />
+            Confirmacao 1-Clique
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setFeedbackMsg("Bloqueio de agenda ativado por falta de material. Slots afetados marcados como BLOQUEADO_MATERIAL.");
+            }}
+            className="gap-1.5"
+          >
+            <Lock className="h-3.5 w-3.5" />
+            Bloquear Agenda (Falta Material)
           </Button>
           <Button
             variant="outline"

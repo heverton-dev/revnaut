@@ -170,6 +170,22 @@ def generate_deal_contract(deal_id: str, payload: GenerateContractRequest):
         raise HTTPException(status_code=404, detail=str(e))
 
 
+@router.post("/api/v1/deals/{deal_id}/contracts/generate", response_model=GenerateContractResponse, summary="Gerar proposta/contrato PDF do Deal (alias)")
+def generate_deal_contract_alias(deal_id: str, payload: GenerateContractRequest):
+    """Alias de /generate-contract usado pelo frontend (TICKET-DEALS-02)."""
+    try:
+        return documenso_service.generate_contract_for_deal(
+            deal_id=deal_id,
+            contract_type=payload.contract_type,
+            signer_name=payload.signer_name,
+            signer_email=payload.signer_email,
+            signer_phone=payload.signer_phone,
+            account_id=payload.account_id or "0f14ffff",
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
 @router.get("/api/v1/deals/{deal_id}/contracts", response_model=List[DealContractOut], summary="Listar contratos e minutas vinculadas ao Deal")
 def get_deal_contracts(deal_id: str, account_id: str = "0f14ffff"):
     return documenso_service.list_deal_contracts(deal_id=deal_id, account_id=account_id)

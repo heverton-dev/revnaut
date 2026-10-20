@@ -6,8 +6,10 @@ Endpoints para Grafo Clínico KOL, Vínculos N:N e Radar Anti-Churn Odontológic
 
 from __future__ import annotations
 from typing import List, Optional
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
+from src.features.auth.router import get_current_user
+from src.features.auth.schemas import UserProfileOut
 from src.features.intelligence import service
 from src.features.intelligence import transcription_worker
 from src.features.intelligence import granola_copilot
@@ -50,24 +52,28 @@ orthanc_client = OrthancDicomClient()
 
 @router.get("/churn-risk", response_model=ChurnRiskResponse, summary="Radar Anti-Churn & Inteligência de Carteira (RFM Odontológico)")
 def get_churn_risk(
-    account_id: str = "0f14ffff",
+    current_user: UserProfileOut = Depends(get_current_user),
     days_threshold: Optional[int] = Query(None, description="Filtrar clientes com dias de atraso acima deste limite")
 ):
     """
     Algoritmo determinístico de RFM odontológico:
     Cruza o ciclo médio de recompra de implantes/componentes com a data da última compra/deal ganho.
     Identifica clientes em atraso crítico (> 30 dias quando ciclo <= 20) com risco de migrar para concorrentes.
+
+    TICKET-DASH-04: o tenant é derivado exclusivamente do usuário autenticado.
     """
-    return service.get_churn_risk_radar(account_id=account_id, days_threshold=days_threshold)
+    return service.get_churn_risk_radar(account_id=current_user.account_id, days_threshold=days_threshold)
 
 
 @router.get("/clinical-graph", response_model=ClinicalGraphResponse, summary="Grafo de Relacionamento Clínico KOL (Ecossistema do Implante)")
-def get_clinical_graph(account_id: str = "0f14ffff"):
+def get_clinical_graph(current_user: UserProfileOut = Depends(get_current_user)):
     """
     Retorna os nós (Cirurgiões, Clínicas, Laboratórios CAD/CAM, Universidades, Radiologias) e arestas
     do ecossistema odontológico, identificando Key Opinion Leaders (KOLs) e Speakers acadêmicos.
+
+    TICKET-DASH-04: o tenant é derivado exclusivamente do usuário autenticado.
     """
-    return service.get_clinical_graph(account_id=account_id)
+    return service.get_clinical_graph(account_id=current_user.account_id)
 
 
 @router.get("/kol-speakers", response_model=KOLSpeakerResponse, summary="Listar Key Opinion Leaders (KOLs) e Speakers Oficiais")
@@ -197,13 +203,17 @@ def query_catalog_rag(payload: CatalogRagQueryRequest):
     response_model=SupersetGuestTokenResponse,
     summary="Gerar Guest Token JWT com Row-Level Security (RLS) para Apache Superset Embedded"
 )
-def get_superset_guest_token(payload: SupersetGuestTokenRequest):
+def get_superset_guest_token(
+    payload: SupersetGuestTokenRequest,
+    current_user: UserProfileOut = Depends(get_current_user)
+):
+    # TICKET-DASH-04: RLS do Guest Token sempre herda o tenant do usuário autenticado
     try:
         return superset_embedded.generate_superset_guest_token(
-            user_id=payload.user_id,
+            user_id=payload.user_id or current_user.id,
             dashboard_id=payload.dashboard_id,
             dashboard_type=payload.dashboard_type or "industry_consignment",
-            account_id=payload.account_id or "0f14ffff"
+            account_id=current_user.account_id
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

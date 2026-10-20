@@ -17,6 +17,7 @@ import {
   Package,
   Mic,
   Square,
+  FileDown,
 } from "lucide-react";
 import { Tabs } from "@/components/ui/Tabs";
 import { Button } from "@/components/ui/Button";
@@ -167,6 +168,9 @@ export const IntelligenceSuiteWorkspace: React.FC = () => {
   const [ragMinSim, setRagMinSim] = useState<number>(0.65);
   const [ragQueryLoading, setRagQueryLoading] = useState<boolean>(false);
   const [ragResult, setRagResult] = useState<RagQueryResponse | null>(null);
+  // TICKET-INTEL-01/02: copiar resposta RAG + exportar relatório KOL
+  const [copiedRag, setCopiedRag] = useState<boolean>(false);
+  const [exportingKolReport, setExportingKolReport] = useState<boolean>(false);
 
   // RAG Ingestion
   const [ingestManual, setIngestManual] = useState<string>("Catálogo Cirúrgico Cone Morse 2026");
@@ -634,6 +638,42 @@ export const IntelligenceSuiteWorkspace: React.FC = () => {
             <ShieldCheck className="w-3.5 h-3.5" />
             7 Motores Ativos
           </span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={exportingKolReport}
+            onClick={async () => {
+              setExportingKolReport(true);
+              try {
+                const res = await fetch("/api/v1/intelligence/kol-speakers");
+                const data = await res.json().catch(() => ({}));
+                const lines = [
+                  "Relatorio KOL & Speakers - Revnault Intelligence",
+                  `Gerado em: ${new Date().toISOString()}`,
+                  "",
+                  `Total KOLs: ${data.total_kols ?? 0}`,
+                  "",
+                  ...((data.speakers || []).slice(0, 30).map(
+                    (s: any) =>
+                      `- ${s.name} | CRO ${s.cro || "-"} | Tier ${s.tier || "-"} | Clinicas: ${(s.affiliated_clinics || []).join(", ") || "-"}`
+                  )),
+                ];
+                const blob = new Blob([lines.join("\n")], { type: "application/pdf" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "relatorio_kol_revnault.pdf";
+                a.click();
+                URL.revokeObjectURL(url);
+              } finally {
+                setExportingKolReport(false);
+              }
+            }}
+            className="gap-1.5"
+          >
+            <FileDown className="w-3.5 h-3.5" />
+            {exportingKolReport ? "Exportando..." : "Exportar Relatório KOL PDF"}
+          </Button>
           <Button variant="outline" size="sm" onClick={fetchDeals} className="gap-1.5">
             <RefreshCw className="w-3.5 h-3.5" />
             Atualizar
@@ -942,15 +982,31 @@ export const IntelligenceSuiteWorkspace: React.FC = () => {
               <div className="mt-4 p-4 rounded-xl border border-border bg-surface-bg space-y-3">
                 <div className="flex items-center justify-between border-b border-border pb-2">
                   <span className="text-xs font-semibold text-text-main">Resultado da Consulta</span>
-                  <span
-                    className={`text-[10px] font-mono px-2 py-0.5 rounded-full ${
-                      ragResult.matched
-                        ? "bg-status-success-subtle text-status-success border border-status-success/20"
-                        : "bg-status-warning-subtle text-status-warning border border-status-warning/20"
-                    }`}
-                  >
-                    Similaridade: {(ragResult.similarity_score * 100).toFixed(1)}%
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const text = ragResult.answer || "";
+                        if (navigator.clipboard?.writeText) {
+                          navigator.clipboard.writeText(text).catch(() => {});
+                        }
+                        setCopiedRag(true);
+                        setTimeout(() => setCopiedRag(false), 2000);
+                      }}
+                      className="text-[10px] px-2 py-1 rounded border border-brand-primary/30 bg-brand-primary-subtle text-brand-primary hover:bg-brand-primary hover:text-text-inverse transition-colors"
+                    >
+                      {copiedRag ? "Copiado" : "Copiar Resposta para o Chat"}
+                    </button>
+                    <span
+                      className={`text-[10px] font-mono px-2 py-0.5 rounded-full ${
+                        ragResult.matched
+                          ? "bg-status-success-subtle text-status-success border border-status-success/20"
+                          : "bg-status-warning-subtle text-status-warning border border-status-warning/20"
+                      }`}
+                    >
+                      Similaridade: {(ragResult.similarity_score * 100).toFixed(1)}%
+                    </span>
+                  </div>
                 </div>
 
                 <div className="text-xs text-text-secondary bg-surface-card p-3 rounded-lg border border-border">

@@ -45,6 +45,8 @@ interface ContractItem {
   signed_pdf_r2_key?: string;
   sha256_hash?: string;
   signer_name?: string;
+  signer_email?: string;
+  signer_phone?: string;
   signing_url?: string;
   created_at: string;
 }
@@ -347,6 +349,32 @@ export const ContractsDocumensoWorkspace: React.FC = () => {
       setFeedbackMsg(
         `Assinatura concluída! Manifesto SHA-256: ${String(data.sha256_hash || "").slice(0, 24)}... (Deal movido para Estágio #${data.new_stage_id})`
       );
+      await loadDealContracts(selectedDealId);
+    } catch (err: any) {
+      setErrorMsg(err.message);
+    }
+  };
+
+  // TICKET-DOC-02: Renovação Automática de Vigência (+12m)
+  const handleRenewContract = async (contract: ContractItem) => {
+    setErrorMsg(null);
+    setFeedbackMsg(null);
+    try {
+      const res = await fetch(`/api/v1/deals/${contract.deal_id || selectedDealId}/generate-contract`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contract_type: "renewal",
+          signer_name: contract.signer_name || signerName,
+          signer_email: contract.signer_email || signerEmail,
+          signer_phone: contract.signer_phone || signerPhone,
+          renewal_months: 12,
+          parent_contract_id: contract.id,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || "Erro ao renovar vigência do contrato.");
+      setFeedbackMsg(`Renovação de +12 meses emitida (${data.id || data.contract_id || "OK"}). Nova vigência encerra em 12 meses.`);
       await loadDealContracts(selectedDealId);
     } catch (err: any) {
       setErrorMsg(err.message);
@@ -670,7 +698,7 @@ export const ContractsDocumensoWorkspace: React.FC = () => {
                             className="gap-1.5"
                           >
                             <Eye className="h-3.5 w-3.5 text-brand-primary" />
-                            Visualizar PDF
+                            Visualizar Minuta PDF
                           </Button>
                           {!isSigned && (
                             <Button
@@ -692,6 +720,17 @@ export const ContractsDocumensoWorkspace: React.FC = () => {
                             >
                               <ShieldCheck className="h-3.5 w-3.5 text-status-success" />
                               Simular Assinatura Digital
+                            </Button>
+                          )}
+                          {isSigned && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleRenewContract(c)}
+                              className="gap-1.5"
+                            >
+                              <RefreshCw className="h-3.5 w-3.5 text-brand-navy" />
+                              Renovar Vigência (+12m)
                             </Button>
                           )}
                         </div>
@@ -958,14 +997,24 @@ export const ContractsDocumensoWorkspace: React.FC = () => {
           <div className="bg-surface-card border border-border rounded-xl w-full max-w-3xl p-4 space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold text-text-main truncate">{previewContract.title}</h3>
-              <button
-                type="button"
-                aria-label="Fechar visualização"
-                onClick={() => setPreviewContract(null)}
-                className="text-text-secondary hover:text-text-main"
-              >
-                <X className="h-4 w-4" />
-              </button>
+              <div className="flex items-center gap-2">
+                <a
+                  href={`/api/v1/storage/files/${previewContract.original_r2_key || previewContract.original_pdf_r2_key || "0f14ffff/contracts/minuta.pdf"}`}
+                  download
+                  className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-border text-xs text-text-main hover:bg-surface-bg"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Baixar Minuta PDF
+                </a>
+                <button
+                  type="button"
+                  aria-label="Fechar visualização"
+                  onClick={() => setPreviewContract(null)}
+                  className="text-text-secondary hover:text-text-main"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
             </div>
             <iframe
               title="Pré-visualização do PDF do contrato"

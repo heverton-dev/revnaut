@@ -164,7 +164,11 @@ def test_superset_bi_api_endpoints(client):
         "dashboard_id": "dash-api-test",
         "dashboard_type": "industry_consignment"
     }
-    res_t = client.post("/api/v1/intelligence/bi/guest-token", json=payload_token)
+    res_t = client.post(
+        "/api/v1/intelligence/bi/guest-token",
+        json=payload_token,
+        headers={"X-User-Id": "usr-superadmin-god"},
+    )
     assert res_t.status_code == 200
     t_data = res_t.json()
     assert "token" in t_data

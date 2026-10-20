@@ -92,6 +92,107 @@ export interface FinancialSplitItem {
   created_at: string;
 }
 
+// TICKET-DENTGO-01: Signature Pad interativo para recibo de entrega (POD)
+const DeliverySignaturePad: React.FC<{
+  onSigned: (dataUrl: string) => void;
+  onClear: () => void;
+  hasSignature: boolean;
+}> = ({ onSigned, onClear, hasSignature }) => {
+  const canvasRef = React.useRef<HTMLCanvasElement>(null);
+  const drawingRef = React.useRef<boolean>(false);
+
+  React.useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.strokeStyle = "hsl(220, 20%, 12%)";
+    ctx.fillStyle = "hsl(0, 0%, 100%)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }, []);
+
+  const getPos = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current!;
+    const rect = canvas.getBoundingClientRect();
+    const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
+    const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
+    return {
+      x: ((clientX - rect.left) / rect.width) * canvas.width,
+      y: ((clientY - rect.top) / rect.height) * canvas.height,
+    };
+  };
+
+  const start = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    drawingRef.current = true;
+    const ctx = canvasRef.current?.getContext("2d");
+    const p = getPos(e);
+    ctx?.beginPath();
+    ctx?.moveTo(p.x, p.y);
+  };
+
+  const move = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    if (!drawingRef.current) return;
+    e.preventDefault();
+    const ctx = canvasRef.current?.getContext("2d");
+    const p = getPos(e);
+    ctx?.lineTo(p.x, p.y);
+    ctx?.stroke();
+  };
+
+  const end = () => {
+    if (!drawingRef.current) return;
+    drawingRef.current = false;
+    const canvas = canvasRef.current;
+    if (canvas) onSigned(canvas.toDataURL("image/png"));
+  };
+
+  const clear = () => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (canvas && ctx) {
+      ctx.fillStyle = "hsl(0, 0%, 100%)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+    onClear();
+  };
+
+  return (
+    <div className="space-y-1">
+      <label className="text-[10px] text-text-secondary block">
+        Assinatura Digital do Recebedor (desenhe abaixo):
+      </label>
+      <canvas
+        ref={canvasRef}
+        width={400}
+        height={120}
+        className="w-full h-24 rounded border border-border bg-surface-card cursor-crosshair touch-none"
+        onMouseDown={start}
+        onMouseMove={move}
+        onMouseUp={end}
+        onMouseLeave={end}
+        onTouchStart={start}
+        onTouchMove={move}
+        onTouchEnd={end}
+      />
+      <div className="flex items-center justify-between">
+        <button
+          type="button"
+          onClick={clear}
+          className="text-[10px] text-text-secondary hover:text-text-main underline"
+        >
+          Limpar assinatura
+        </button>
+        {hasSignature && (
+          <span className="text-[10px] font-medium text-status-success">Assinatura capturada</span>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export const DentgoExpressCockpit: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("orders");
 
@@ -122,6 +223,9 @@ export const DentgoExpressCockpit: React.FC = () => {
   const [deliveryPin, setDeliveryPin] = useState<string>("");
   const [deliveryRecipient, setDeliveryRecipient] = useState<string>("Dra. Camila Soares (Auxiliar)");
   const [transitionLoading, setTransitionLoading] = useState<boolean>(false);
+
+  // TICKET-DENTGO-01: Signature Pad digital do recibo de entrega
+  const [deliverySignatureDataUrl, setDeliverySignatureDataUrl] = useState<string | null>(null);
 
   // Tab 2: Hubs & Haversine
   const [hubs, setHubs] = useState<HubItem[]>([]);
@@ -798,6 +902,11 @@ export const DentgoExpressCockpit: React.FC = () => {
                             </span>
                           )}
                         </div>
+                        <DeliverySignaturePad
+                          hasSignature={Boolean(deliverySignatureDataUrl)}
+                          onSigned={(dataUrl) => setDeliverySignatureDataUrl(dataUrl)}
+                          onClear={() => setDeliverySignatureDataUrl(null)}
+                        />
                         <Button
                           size="sm"
                           onClick={() =>
@@ -805,6 +914,7 @@ export const DentgoExpressCockpit: React.FC = () => {
                               entered_pin: deliveryPin,
                               proof_photo_r2_key: podPhotoKey || `pod/${selectedOrder.id}/entrega.jpg`,
                               recipient_name: deliveryRecipient,
+                              recipient_signature_data_url: deliverySignatureDataUrl || undefined,
                             })
                           }
                           disabled={transitionLoading || deliveryPin.length !== 4}
@@ -1307,7 +1417,7 @@ export const DentgoExpressCockpit: React.FC = () => {
             <div className="flex justify-between items-center pb-3 border-b border-border">
               <h3 className="text-base font-bold text-text-main">+ Novo Despacho Emergencial (Same-Day)</h3>
               <button onClick={() => setShowCheckoutModal(false)} className="text-text-secondary hover:text-text-main">
-                ✕
+                X
               </button>
             </div>
             <div className="space-y-3 text-xs">
@@ -1444,7 +1554,7 @@ export const DentgoExpressCockpit: React.FC = () => {
             <div className="flex justify-between items-center pb-3 border-b border-border">
               <h3 className="text-base font-bold text-text-main">+ Cadastrar Hub Urbano</h3>
               <button onClick={() => setShowHubModal(false)} className="text-text-secondary hover:text-text-main">
-                ✕
+                X
               </button>
             </div>
             <div className="space-y-3 text-xs">
@@ -1517,7 +1627,7 @@ export const DentgoExpressCockpit: React.FC = () => {
             <div className="flex justify-between items-center pb-3 border-b border-border">
               <h3 className="text-base font-bold text-text-main">+ Abastecer Lote no Hub</h3>
               <button onClick={() => setShowInventoryModal(false)} className="text-text-secondary hover:text-text-main">
-                ✕
+                X
               </button>
             </div>
             <div className="space-y-3 text-xs">
@@ -1626,7 +1736,7 @@ export const DentgoExpressCockpit: React.FC = () => {
                 Reservar Lote Flash Deal ({selectedFefoDeal.discount_percentage}% OFF)
               </h3>
               <button onClick={() => setSelectedFefoDeal(null)} className="text-text-secondary hover:text-text-main">
-                ✕
+                X
               </button>
             </div>
             <div className="space-y-3 text-xs">
