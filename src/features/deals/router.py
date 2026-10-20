@@ -5,7 +5,8 @@ Endpoints OpenAPI 3.1 para Funil e Negócios.
 """
 
 from typing import Optional, List
-from fastapi import APIRouter, HTTPException, Header, status
+from fastapi import APIRouter, Depends, HTTPException, status
+from src.features.auth.router import get_effective_user_id
 from fastapi.responses import Response
 from src.features.deals.schemas import (
     DealCreate, DealMove, DealUpdate, PipelineItemOut,
@@ -42,7 +43,7 @@ def read_metrics():
 def read_deals(
     pipeline_id: Optional[int] = None,
     account_id: str = "0f14ffff",
-    x_user_id: Optional[str] = Header(None)
+    x_user_id: str = Depends(get_effective_user_id)
 ):
     return service.get_pipeline_and_deals(pipeline_id=pipeline_id, account_id=account_id, user_id=x_user_id)
 
@@ -51,7 +52,7 @@ def read_deals(
 def create_deal(
     payload: DealCreate,
     account_id: str = "0f14ffff",
-    x_user_id: Optional[str] = Header(None)
+    x_user_id: str = Depends(get_effective_user_id)
 ):
     conn = get_connection()
     try:
@@ -65,7 +66,7 @@ def create_deal(
 def move_deal(
     deal_id: str, 
     payload: DealMove,
-    x_user_id: Optional[str] = Header(None)
+    x_user_id: str = Depends(get_effective_user_id)
 ):
     try:
         success = service.move_deal_stage(deal_id, payload.stage_id, user_id=x_user_id)
@@ -80,7 +81,7 @@ def move_deal(
 def update_deal_inline(
     deal_id: str,
     payload: DealUpdate,
-    x_user_id: Optional[str] = Header(None)
+    x_user_id: str = Depends(get_effective_user_id)
 ):
     try:
         updated = service.update_deal(deal_id, payload.model_dump(exclude_unset=True), user_id=x_user_id)
@@ -97,7 +98,7 @@ def get_deal_timeline(deal_id: str):
 @router.post("/api/v1/deals/{deal_id}/approve-credit", response_model=DealApproveCreditResponse, summary="Aprovar Limite de Crédito para Liberação de Consignação")
 def approve_deal_credit(
     deal_id: str,
-    x_user_id: Optional[str] = Header(None)
+    x_user_id: str = Depends(get_effective_user_id)
 ):
     success = service.approve_deal_credit_limit(deal_id, approver_name="Controladoria Financeira", user_id=x_user_id)
     if not success:
@@ -110,7 +111,7 @@ def approve_deal_credit(
 def export_deals_csv(
     pipeline_id: Optional[int] = None,
     account_id: str = "0f14ffff",
-    x_user_id: Optional[str] = Header(None)
+    x_user_id: str = Depends(get_effective_user_id)
 ):
     csv_content = service.export_deals_csv(pipeline_id=pipeline_id, account_id=account_id, user_id=x_user_id)
     return Response(
@@ -125,7 +126,7 @@ def export_deals(
     format: str = "csv",
     pipeline_id: Optional[int] = None,
     account_id: str = "0f14ffff",
-    x_user_id: Optional[str] = Header(None)
+    x_user_id: str = Depends(get_effective_user_id)
 ):
     fmt = (format or "csv").lower().strip()
     data_bytes = service.export_deals_data(format=fmt, pipeline_id=pipeline_id, account_id=account_id, user_id=x_user_id)

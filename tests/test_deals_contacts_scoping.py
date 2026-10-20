@@ -7,10 +7,11 @@ Valida a restrição matemática de isolamento hierárquico nas rotas:
 """
 
 from fastapi.testclient import TestClient
+from tests.auth_helpers import bearer_headers
 from src.main import app
 from src.core.database import get_connection
 
-client = TestClient(app)
+client = TestClient(app, headers=bearer_headers())
 
 
 def setup_deals_contacts_scoping_fixture():

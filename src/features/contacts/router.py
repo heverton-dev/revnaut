@@ -4,7 +4,8 @@ Vertical Slice: Contacts Router
 """
 
 from typing import Optional, List
-from fastapi import APIRouter, Header, status, HTTPException, Response
+from fastapi import APIRouter, Depends, status, HTTPException, Response
+from src.features.auth.router import get_effective_user_id
 from src.features.contacts.schemas import (
     ContactCreate, ContactImportRequest, ContactImportResponse,
     ContactOut, ContactProfileResponse, ContactTimelineResponse,
@@ -24,7 +25,7 @@ router = APIRouter(tags=["Contatos & Leads"])
 def read_contacts(
     q: Optional[str] = None,
     account_id: str = "0f14ffff",
-    x_user_id: Optional[str] = Header(None)
+    x_user_id: str = Depends(get_effective_user_id)
 ):
     return service.list_contacts(query=q, account_id=account_id, user_id=x_user_id)
 
@@ -34,7 +35,7 @@ def export_contacts(
     format: str = "csv",
     q: Optional[str] = None,
     account_id: str = "0f14ffff",
-    x_user_id: Optional[str] = Header(None)
+    x_user_id: str = Depends(get_effective_user_id)
 ):
     fmt = (format or "csv").lower().strip()
     data_bytes = service.export_contacts_data(format=fmt, query=q, account_id=account_id, user_id=x_user_id)
@@ -55,7 +56,7 @@ def export_contacts(
 def create_contact(
     payload: ContactCreate,
     account_id: str = "0f14ffff",
-    x_user_id: Optional[str] = Header(None)
+    x_user_id: str = Depends(get_effective_user_id)
 ):
     conn = get_connection()
     try:
@@ -69,7 +70,7 @@ def create_contact(
 def import_contacts(
     payload: ContactImportRequest,
     account_id: str = "0f14ffff",
-    x_user_id: Optional[str] = Header(None)
+    x_user_id: str = Depends(get_effective_user_id)
 ):
     conn = get_connection()
     try:
@@ -102,7 +103,7 @@ def get_contact_timeline(contact_id: int):
 def add_timeline_comment(
     contact_id: int, 
     payload: ContactTimelineCommentCreate,
-    x_user_id: Optional[str] = Header(None)
+    x_user_id: str = Depends(get_effective_user_id)
 ):
     return service.add_contact_timeline_comment(
         contact_id=contact_id, 

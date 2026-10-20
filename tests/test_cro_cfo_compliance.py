@@ -5,6 +5,7 @@ TDD Tests for TICKET-06: Validador Ético CFO e Verificador de Registro CRO/UF
 
 import pytest
 from fastapi.testclient import TestClient
+from tests.auth_helpers import bearer_headers
 from src.main import app
 from src.features.contacts.cro_validator import (
     validate_cro_syntax,
@@ -15,7 +16,7 @@ from src.features.contacts.cro_validator import (
 
 @pytest.fixture
 def client():
-    return TestClient(app)
+    return TestClient(app, headers=bearer_headers())
 
 
 def test_cro_syntax_validation():

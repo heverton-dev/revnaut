@@ -31,22 +31,48 @@ from src.features.auth.service import (
 router = APIRouter(prefix="/api/v1/auth", tags=["Autenticação & Sessão"])
 
 
+def resolve_effective_user_id(authorization: Optional[str], x_user_id: Optional[str] = None) -> str:
+    """
+    Identidade da requisição a partir do token Bearer de sessão (HMAC, com validade).
+    X-User-Id só troca a identidade (impersonação do seletor de usuário) quando o usuário
+    autenticado é superadmin; para os demais o header é ignorado.
+    """
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=401,
+            detail="Não autenticado. Envie Authorization: Bearer <token de sessão>.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    auth_user_id = verify_session_token(authorization.split("Bearer ", 1)[1].strip())
+    if not auth_user_id:
+        raise HTTPException(status_code=401, detail="Sessão inválida ou expirada.", headers={"WWW-Authenticate": "Bearer"})
+    auth_profile = get_user_profile(auth_user_id)
+    if not auth_profile or not auth_profile.get("is_active", 1):
+        raise HTTPException(status_code=401, detail="Sessão inválida ou usuário inativo.", headers={"WWW-Authenticate": "Bearer"})
+
+    requested = (x_user_id or "").strip()
+    if requested and requested != auth_user_id and auth_profile.get("is_superadmin"):
+        target = get_user_profile(requested)
+        # Alvo inexistente ou inativo: mantém a identidade autenticada (nunca amplia privilégio)
+        if target and target.get("is_active", 1):
+            return requested
+    return auth_user_id
+
+
+def get_effective_user_id(
+    authorization: Optional[str] = Header(None),
+    x_user_id: Optional[str] = Header(None)
+) -> str:
+    """Dependência FastAPI: id do usuário efetivo (autenticado ou impersonado por superadmin)."""
+    return resolve_effective_user_id(authorization, x_user_id)
+
+
 def get_current_user(
     authorization: Optional[str] = Header(None),
     x_user_id: Optional[str] = Header(None)
 ) -> UserProfileOut:
-    """Extrai usuário autenticado via Bearer Token ou fallback X-User-Id."""
-    user_id = None
-    if authorization and authorization.startswith("Bearer "):
-        token = authorization.split("Bearer ", 1)[1].strip()
-        user_id = verify_session_token(token)
-
-    if not user_id and x_user_id:
-        user_id = x_user_id
-
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Não autenticado. Forneça credenciais válidas.")
-
+    """Perfil do usuário efetivo da requisição (exige token Bearer de sessão válido)."""
+    user_id = resolve_effective_user_id(authorization, x_user_id)
     profile = get_user_profile(user_id)
     if not profile:
         raise HTTPException(status_code=401, detail="Sessão inválida ou expirada.")

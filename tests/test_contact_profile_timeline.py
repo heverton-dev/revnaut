@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 import pytest
 from fastapi.testclient import TestClient
+from tests.auth_helpers import bearer_headers
 from src.main import app
 from src.core.database import get_connection
 
-client = TestClient(app)
+client = TestClient(app, headers=bearer_headers())
 
 def test_contact_full_profile_and_timeline():
     # 1. Fetch contacts

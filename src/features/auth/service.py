@@ -133,7 +133,8 @@ def get_user_profile(user_id: str) -> Optional[Dict[str, Any]]:
     conn = get_connection()
     cur = conn.cursor()
     cur.execute(
-        "SELECT id, account_id, name, email, role, is_superadmin, team_id, role_id, phone "
+        "SELECT id, account_id, name, email, role, is_superadmin, team_id, role_id, phone, "
+        "COALESCE(is_active, 1) AS is_active "
         "FROM users WHERE id = ?",
         (user_id,)
     )

@@ -7,10 +7,11 @@ Valida vínculos N:N, ecossistema do implante, identificação de Speakers e rad
 import pytest
 from datetime import datetime, timedelta, timezone
 from fastapi.testclient import TestClient
+from tests.auth_helpers import bearer_headers
 from src.main import app
 from src.core.database import get_connection
 
-client = TestClient(app)
+client = TestClient(app, headers=bearer_headers())
 
 
 @pytest.fixture(autouse=True)

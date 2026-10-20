@@ -6,6 +6,7 @@ TDD Tests for TICKET-29: Integração do Apache Superset Embedded com Guest Toke
 import jwt
 import pytest
 from fastapi.testclient import TestClient
+from tests.auth_helpers import bearer_headers
 from src.main import app
 from src.core.config import SUPERSET_SECRET_KEY
 from src.core.database import get_connection, init_db
@@ -14,7 +15,7 @@ from src.features.intelligence import superset_embedded
 
 @pytest.fixture
 def client():
-    return TestClient(app)
+    return TestClient(app, headers=bearer_headers())
 
 
 @pytest.fixture(autouse=True)

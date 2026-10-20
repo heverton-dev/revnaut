@@ -6,11 +6,12 @@ Valida a camada de tráfego, persistência SQLite WAL e Quarteto Sine Qua Non Di
 
 import pytest
 from fastapi.testclient import TestClient
+from tests.auth_helpers import bearer_headers
 from backend.main import app
 from backend.database import init_db, get_connection
 
 init_db()
-client = TestClient(app)
+client = TestClient(app, headers=bearer_headers())
 
 
 def test_health_and_sqlite_wal():

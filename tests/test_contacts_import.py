@@ -6,9 +6,10 @@ com Regras de Distribuição Territorial, Especialidades e Round-Robin.
 
 import pytest
 from fastapi.testclient import TestClient
+from tests.auth_helpers import bearer_headers
 from src.main import app
 
-client = TestClient(app)
+client = TestClient(app, headers=bearer_headers())
 
 
 def test_contacts_bulk_import_json_territorial():

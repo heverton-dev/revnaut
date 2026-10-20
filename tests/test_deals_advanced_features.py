@@ -1,9 +1,10 @@
 import pytest
 from fastapi.testclient import TestClient
+from tests.auth_helpers import bearer_headers
 from src.main import app
 from src.core.database import get_connection
 
-client = TestClient(app)
+client = TestClient(app, headers=bearer_headers())
 
 def test_deal_inline_update_and_timeline():
     # 1. Obter negócio existente
@@ -21,7 +22,7 @@ def test_deal_inline_update_and_timeline():
         "expected_close_date": "2026-11-30",
         "priority": "alta",
         "comment": "Ajuste de margem acordado em conferência"
-    }, headers={"X-User-Id": "usr_superadmin"})
+    }, headers={"X-User-Id": "usr-superadmin-god"})
     assert res_update.status_code == 200
     data = res_update.json()
     assert data["value"] == 45000.0
@@ -61,7 +62,7 @@ def test_credit_limit_lock_and_approval():
     assert "Trava de Limite de Crédito" in res_fail.json()["detail"]
 
     # Aprovar crédito
-    res_approve = client.post(f"/api/v1/deals/{deal_id}/approve-credit", headers={"X-User-Id": "usr_superadmin"})
+    res_approve = client.post(f"/api/v1/deals/{deal_id}/approve-credit", headers={"X-User-Id": "usr-superadmin-god"})
     assert res_approve.status_code == 200
     assert res_approve.json()["credit_approved"] is True
 
@@ -110,13 +111,13 @@ def test_create_deal_with_pipeline_and_owner():
 
 def test_export_deals_csv_and_parquet_endpoint():
     # Teste exportação CSV padronizada
-    res_csv = client.get("/api/v1/deals/export?format=csv", headers={"X-User-Id": "usr-director-br"})
+    res_csv = client.get("/api/v1/deals/export?format=csv", headers={"X-User-Id": "usr-superadmin-god"})
     assert res_csv.status_code == 200
     assert "text/csv" in res_csv.headers["content-type"]
     assert "ID,Titulo,Empresa,Contato,Valor_R$" in res_csv.text
 
     # Teste exportação PARQUET padronizada
-    res_parquet = client.get("/api/v1/deals/export?format=parquet", headers={"X-User-Id": "usr-director-br"})
+    res_parquet = client.get("/api/v1/deals/export?format=parquet", headers={"X-User-Id": "usr-superadmin-god"})
     assert res_parquet.status_code == 200
     assert "application/vnd.apache.parquet" in res_parquet.headers["content-type"]
     assert len(res_parquet.content) > 0

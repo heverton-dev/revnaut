@@ -5,6 +5,7 @@ TDD Tests for TICKET-07: Construtor de Landing Pages Odontológicas (GrapesJS) e
 
 import pytest
 from fastapi.testclient import TestClient
+from tests.auth_helpers import bearer_headers
 from src.main import app
 from src.features.campaigns.landing_pages import (
     get_prebuilt_templates,
@@ -16,7 +17,7 @@ from src.features.campaigns.landing_pages import (
 
 @pytest.fixture
 def client():
-    return TestClient(app)
+    return TestClient(app, headers=bearer_headers())
 
 
 def test_landing_page_prebuilt_templates():
