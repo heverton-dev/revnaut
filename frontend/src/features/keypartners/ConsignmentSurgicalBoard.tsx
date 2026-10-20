@@ -13,6 +13,7 @@ import {
   Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { RouteHeader } from "@/components/ui/RouteHeader";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Tabs } from "@/components/ui/Tabs";
@@ -736,35 +737,63 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
     { id: "loyalty", label: "Fidelidade (Moeda Cirúrgica)" },
   ];
 
+  const [exportFormat, setExportFormat] = React.useState<"csv" | "parquet">("csv");
+  const [isExporting, setIsExporting] = React.useState<boolean>(false);
+
+  const handleExportConsignment = async () => {
+    setIsExporting(true);
+    try {
+      const res = await fetch("/api/v1/intelligence/bi/export-dataset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          dataset_name: "consignment_turnover",
+          format: exportFormat,
+          user_id: "usr-director-br",
+          account_id: "0f14ffff",
+        }),
+      });
+      if (!res.ok) throw new Error("Erro ao exportar dados de consignação.");
+      const data = await res.json();
+      if (data.download_url) {
+        window.open(data.download_url, "_blank");
+      }
+    } catch (err: any) {
+      console.error(err);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="w-full space-y-6 font-sans text-text-main">
-      {/* Top Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-border">
-        <div>
-          <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-primary-subtle text-brand-primary border border-brand-primary/20">
-              <Package className="h-5 w-5" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold tracking-tight text-text-main">
-                KeyPartners • Cockpit de Consignação Cirúrgica & Parcerias
-              </h1>
-              <p className="text-xs text-text-secondary mt-0.5">
-                Quadro 4 Estágios, Acordos de Consignação, Maletas Seriais, Contratos KOL e Moeda Cirúrgica.
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
+      <RouteHeader
+        title="KeyPartners • Cockpit de Consignação Cirúrgica & Parcerias"
+        description="Quadro 4 Estágios, Acordos de Consignação, Maletas Seriais, Contratos KOL e Moeda Cirúrgica."
+        badge={
           <span className="inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full bg-status-success-subtle text-status-success border border-status-success/20">
             CFOP 5.113 / 6.113 Ativo
           </span>
-          <Button variant="outline" size="sm" onClick={fetchSurgicalOrders} className="gap-1.5">
-            <RefreshCw className="w-3.5 h-3.5" />
-            Atualizar
-          </Button>
-        </div>
-      </div>
+        }
+        exportConfig={{
+          format: exportFormat,
+          onFormatChange: (fmt) => setExportFormat(fmt as "csv" | "parquet"),
+          onExport: handleExportConsignment,
+          loading: isExporting,
+          label: "FORMATO",
+          exportLabel: "Exportar",
+        }}
+        actions={[
+          {
+            id: "refresh",
+            label: "Atualizar",
+            variant: "outline",
+            icon: <RefreshCw className="w-3.5 h-3.5" />,
+            title: "Atualizar Ordens de Consignação",
+            onClick: fetchSurgicalOrders,
+          },
+        ]}
+      />
 
       {/* Tabs */}
       <Tabs tabs={tabsConfig} activeTab={activeTab} onChange={setActiveTab} />
@@ -1431,7 +1460,7 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
 
       {/* MODAL: Nova Ordem Cirúrgica */}
       {showNewOrderModal && (
-        <div className="fixed inset-0 bg-text-main/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0 flex items-center justify-center p-4 z-50">
           <div className="bg-surface-card border border-border rounded-xl max-w-lg w-full p-6 shadow-modal space-y-4">
             <div className="flex justify-between items-center pb-3 border-b border-border">
               <h3 className="text-base font-bold text-text-main">+ Nova Ordem Cirúrgica</h3>
@@ -1548,7 +1577,7 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
 
       {/* MODAL: Conciliação Pós-Operatória */}
       {postopOrder && (
-        <div className="fixed inset-0 bg-text-main/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0 flex items-center justify-center p-4 z-50">
           <div className="bg-surface-card border border-border rounded-xl max-w-lg w-full p-6 shadow-modal space-y-4">
             <div className="flex justify-between items-center pb-3 border-b border-border">
               <h3 className="text-base font-bold text-text-main">
@@ -1599,7 +1628,7 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
 
       {/* MODAL: Novo Acordo */}
       {showNewAgreementModal && (
-        <div className="fixed inset-0 bg-text-main/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0 flex items-center justify-center p-4 z-50">
           <div className="bg-surface-card border border-border rounded-xl max-w-md w-full p-6 shadow-modal space-y-4">
             <div className="flex justify-between items-center pb-3 border-b border-border">
               <h3 className="text-base font-bold text-text-main">+ Novo Acordo de Consignação</h3>
@@ -1664,7 +1693,7 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
 
       {/* MODAL: Cadastrar Kit Serial */}
       {showKitModal && (
-        <div className="fixed inset-0 bg-text-main/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0 flex items-center justify-center p-4 z-50">
           <div className="bg-surface-card border border-border rounded-xl max-w-md w-full p-6 shadow-modal space-y-4">
             <div className="flex justify-between items-center pb-3 border-b border-border">
               <h3 className="text-base font-bold text-text-main">Cadastrar Maleta Serial (QR Code)</h3>
@@ -1706,7 +1735,7 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
 
       {/* MODAL: Coleta Reversa DENTGO */}
       {showPickupModal && (
-        <div className="fixed inset-0 bg-text-main/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0 flex items-center justify-center p-4 z-50">
           <div className="bg-surface-card border border-border rounded-xl max-w-md w-full p-6 shadow-modal space-y-4">
             <div className="flex justify-between items-center pb-3 border-b border-border">
               <h3 className="text-base font-bold text-text-main">Acionar Coleta Reversa DENTGO Express</h3>
@@ -1766,7 +1795,7 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
 
       {/* TICKET-KEY-01: Leitor de Código de Barras / DataMatrix */}
       {showScannerModal && (
-        <div className="fixed inset-0 bg-text-main/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0 flex items-center justify-center p-4 z-50">
           <div className="bg-surface-card border border-border rounded-xl max-w-md w-full p-6 shadow-modal space-y-4">
             <div className="flex justify-between items-center pb-3 border-b border-border">
               <h3 className="text-base font-bold text-text-main flex items-center gap-2">
@@ -1854,7 +1883,7 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
 
       {/* MODAL: Novo Contrato KOL */}
       {showKolModal && (
-        <div className="fixed inset-0 bg-text-main/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0 flex items-center justify-center p-4 z-50">
           <div className="bg-surface-card border border-border rounded-xl max-w-md w-full p-6 shadow-modal space-y-4">
             <div className="flex justify-between items-center pb-3 border-b border-border">
               <h3 className="text-base font-bold text-text-main">+ Novo Contrato KOL & Comodato</h3>
@@ -1936,7 +1965,7 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
 
       {/* MODAL: Apontar Consumo KOL */}
       {consumptionContractId && (
-        <div className="fixed inset-0 bg-text-main/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0 flex items-center justify-center p-4 z-50">
           <div className="bg-surface-card border border-border rounded-xl max-w-sm w-full p-5 shadow-modal space-y-4">
             <h3 className="text-sm font-bold text-text-main">Apontar Consumo Mensal de Implantes</h3>
             <div className="space-y-2 text-xs">
@@ -1962,7 +1991,7 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
 
       {/* MODAL: Remeter Lotes para Custódia */}
       {showDispatchCustodyModal && (
-        <div className="fixed inset-0 bg-text-main/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0 flex items-center justify-center p-4 z-50">
           <div className="bg-surface-card border border-border rounded-xl max-w-md w-full p-5 shadow-modal space-y-4">
             <h3 className="text-sm font-bold text-text-main">Remeter Lotes para Custódia ({selectedCustodyAgreementId})</h3>
             <div className="space-y-3 text-xs">
@@ -2074,7 +2103,7 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
 
       {/* MODAL: Submeter Evidência R2 */}
       {evidenceContractId && (
-        <div className="fixed inset-0 bg-text-main/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0 flex items-center justify-center p-4 z-50">
           <div className="bg-surface-card border border-border rounded-xl max-w-md w-full p-5 shadow-modal space-y-4">
             <h3 className="text-sm font-bold text-text-main">Registrar Evidência Científica no Cloudflare R2</h3>
             <div className="space-y-3 text-xs">
@@ -2118,7 +2147,7 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
 
       {/* MODAL: Detalhes da Ordem Cirúrgica */}
       {selectedOrder && (
-        <div className="fixed inset-0 bg-text-main/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0 flex items-center justify-center p-4 z-50">
           <div className="bg-surface-card border border-border rounded-xl max-w-lg w-full p-6 shadow-modal">
             <div className="flex justify-between items-center pb-3 border-b border-border">
               <h3 className="text-base font-bold text-text-main">Detalhes da Ordem Cirúrgica</h3>

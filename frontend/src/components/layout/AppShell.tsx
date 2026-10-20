@@ -28,6 +28,7 @@ import {
   ArrowRight,
   LogOut,
   AlertCircle,
+  Radar,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { cn } from "@/lib/utils";
@@ -64,13 +65,13 @@ export const ROLE_WORKSPACES: Record<string, RoleWorkspaceConfig> = {
   field_sales: {
     roleKey: "field_sales",
     displayName: "Consultor Externo (Campo)",
-    visibleRoutes: ["deals", "contacts", "keypartners", "dentgo", "video_sos", "intelligence"],
+    visibleRoutes: ["deals", "contacts", "keypartners", "dentgo", "video_sos", "intelligence", "market_intel"],
     defaultLandingRoute: "deals",
   },
   inside_sales: {
     roleKey: "inside_sales",
     displayName: "Consultor Interno (Atendimento)",
-    visibleRoutes: ["omnichannel", "deals", "contacts", "contracts", "scoring", "scheduling"],
+    visibleRoutes: ["omnichannel", "deals", "contacts", "contracts", "scoring", "scheduling", "market_intel"],
     defaultLandingRoute: "omnichannel",
   },
   logistics: {
@@ -88,7 +89,7 @@ export const ROLE_WORKSPACES: Record<string, RoleWorkspaceConfig> = {
   sales_manager: {
     roleKey: "sales_manager",
     displayName: "Gerente Comercial",
-    visibleRoutes: ["dashboard", "deals", "contacts", "keypartners", "contracts", "rbac", "marketing"],
+    visibleRoutes: ["dashboard", "deals", "contacts", "keypartners", "contracts", "rbac", "marketing", "market_intel"],
     defaultLandingRoute: "dashboard",
   },
   superadmin: {
@@ -97,7 +98,7 @@ export const ROLE_WORKSPACES: Record<string, RoleWorkspaceConfig> = {
     visibleRoutes: [
       "dashboard", "deals", "contacts", "omnichannel", "scoring", "marketing",
       "keypartners", "dentgo", "contracts", "video_sos", "imaging",
-      "intelligence", "analytics", "scheduling", "support", "rbac", "settings"
+      "intelligence", "market_intel", "analytics", "scheduling", "support", "rbac", "settings"
     ],
     defaultLandingRoute: "dashboard",
   },
@@ -268,6 +269,7 @@ export function AppShell({
       title: "Gestão e Suporte",
       items: [
         { id: "intelligence", label: "Assistente Comercial", icon: Sparkles, shortcut: "I" },
+        { id: "market_intel", label: "Radar de Mercado e Concorrência", icon: Radar, shortcut: "N" },
         { id: "analytics", label: "Relatórios e Metas", icon: Database, shortcut: "B" },
         { id: "scheduling", label: "Retorno de Pacientes", icon: Calendar, shortcut: "R" },
         { id: "support", label: "Suporte Clínico e Garantias", icon: LifeBuoy, shortcut: "A" },
@@ -364,11 +366,11 @@ export function AppShell({
   };
 
   return (
-    <div className="flex h-screen w-full bg-surface-bg text-text-main overflow-hidden font-sans">
+    <div className="flex h-screen h-[100dvh] max-h-screen w-full bg-surface-bg text-text-main overflow-hidden font-sans">
       {/* Backdrop do Drawer Mobile/Tablet (< 1024px) */}
       {isMobileDrawerOpen && (
         <div
-          className="fixed inset-0 z-40 bg-text-main/50 backdrop-blur-xs lg:hidden"
+          className="fixed inset-0 z-40 bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0 lg:hidden"
           onClick={() => setIsMobileDrawerOpen(false)}
           aria-hidden="true"
         />
@@ -377,7 +379,7 @@ export function AppShell({
       {/* Sidebar Lateral RBAC Dual (Fixa e Imóvel ao Scroll da Tela) */}
       <aside
         className={cn(
-          "bg-surface-sidebar text-text-inverse flex flex-col justify-between transition-all duration-200 z-40 shrink-0 h-screen max-h-screen sticky top-0 self-start overflow-hidden",
+          "bg-surface-sidebar text-text-inverse flex flex-col justify-between transition-all duration-200 z-40 shrink-0 h-screen h-[100dvh] max-h-screen sticky top-0 left-0 self-start overflow-hidden",
           isMobileDrawerOpen
             ? "max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:w-64 max-lg:border-r max-lg:border-border max-lg:shadow-modal"
             : "max-lg:fixed max-lg:left-0 max-lg:top-0 max-lg:w-0 max-lg:h-0 max-lg:overflow-hidden max-lg:border-0",
@@ -569,9 +571,9 @@ export function AppShell({
       </aside>
 
       {/* Área Principal de Conteúdo */}
-      <div className="flex flex-col flex-1 min-w-0 w-full overflow-hidden">
+      <div className="flex flex-col flex-1 min-w-0 h-screen h-[100dvh] max-h-screen overflow-hidden">
         {/* Topbar Superior */}
-        <header className="h-14 sm:h-16 border-b border-border bg-surface-card px-3 sm:px-6 flex items-center justify-between gap-2 shrink-0 w-full overflow-hidden">
+        <header className="sticky top-0 z-30 h-14 sm:h-16 border-b border-border bg-surface-card px-3 sm:px-6 flex items-center justify-between gap-2 shrink-0 w-full shadow-2xs">
           <div className="flex items-center gap-2 min-w-0 flex-1">
             {/* Botão Hamburger para Mobile/Tablet */}
             <button
@@ -682,7 +684,7 @@ export function AppShell({
       {isCommandOpen && (
         <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 p-4">
           <div
-            className="fixed inset-0 bg-text-main/50 backdrop-blur-xs"
+            className="fixed inset-0 bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0"
             onClick={() => setIsCommandOpen(false)}
           />
           <div

@@ -18,12 +18,12 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
+import { RouteHeader } from "@/components/ui/RouteHeader";
 import { Deal } from "@/types/api_contracts";
 import {
   Plus,
   RefreshCw,
   AlertCircle,
-  Download,
   LayoutGrid,
   List,
   Search,
@@ -551,23 +551,30 @@ export const DealsWorkspace: React.FC<DealsWorkspaceProps> = ({ currentUserId })
     }
   };
 
-  const handleExportCsv = async () => {
+  const [exportFormat, setExportFormat] = React.useState<"csv" | "parquet">("csv");
+  const [isExporting, setIsExporting] = React.useState<boolean>(false);
+
+  const handleExportDeals = async () => {
+    setIsExporting(true);
     try {
-      const res = await fetch(`/api/v1/deals/export/csv?pipeline_id=${encodeURIComponent(selectedPipelineId)}`, {
+      const res = await fetch(`/api/v1/deals/export?format=${exportFormat}&pipeline_id=${encodeURIComponent(selectedPipelineId)}`, {
         headers: { "X-User-Id": userId },
       });
-      if (!res.ok) throw new Error("Falha ao exportar CSV do pipeline.");
-      const csvText = await res.text();
-      const blob = new Blob([csvText], { type: "text/csv;charset=utf-8;" });
+      if (!res.ok) throw new Error(`Falha ao exportar ${exportFormat.toUpperCase()} do pipeline.`);
+      const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `pipeline_revnault_${selectedPipelineId}.csv`;
+      a.download = `pipeline_revnault_${selectedPipelineId}.${exportFormat}`;
+      document.body.appendChild(a);
       a.click();
+      document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      setDealActionFeedback("Exportação CSV concluída com sucesso.");
+      setDealActionFeedback(`Exportação ${exportFormat.toUpperCase()} concluída com sucesso.`);
     } catch (err: any) {
-      setDealActionError(err.message);
+      setDealActionError(err.message || "Erro ao exportar arquivo.");
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -719,30 +726,37 @@ export const DealsWorkspace: React.FC<DealsWorkspaceProps> = ({ currentUserId })
   return (
     <ErrorBoundary onReset={() => dealsQuery.refetch()}>
       <div className="space-y-6 max-w-7xl mx-auto">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-text-main">
-              Cockpit de Negócios & Consignação Cirúrgica
-            </h1>
-            <p className="text-xs sm:text-sm text-text-secondary mt-1">
-              Operação unificada RevOps + KeyPartners (Kits & ANVISA) + DENTGO (Logística Same-Day). Clique em um negócio para abrir o Dossiê e Aprovação de Crédito.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button variant="secondary" size="sm" onClick={() => dealsQuery.refetch()} className="gap-1.5">
-              <RefreshCw className="h-3.5 w-3.5" />
-              Atualizar
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleExportCsv} className="gap-1.5">
-              <Download className="h-3.5 w-3.5" />
-              Exportar CSV
-            </Button>
-            <Button size="sm" onClick={() => setIsNewDealOpen(true)} className="gap-1.5">
-              <Plus className="h-3.5 w-3.5" />
-              Nova Oportunidade
-            </Button>
-          </div>
-        </div>
+        <RouteHeader
+          title="Cockpit de Negócios & Consignação Cirúrgica"
+          description="Operação unificada RevOps + KeyPartners (Kits & ANVISA) + DENTGO (Logística Same-Day). Clique em um negócio para abrir o Dossiê e Aprovação de Crédito."
+          exportConfig={{
+            format: exportFormat,
+            onFormatChange: (fmt) => setExportFormat(fmt as "csv" | "parquet"),
+            onExport: handleExportDeals,
+            loading: isExporting,
+            label: "FORMATO",
+            exportLabel: "Exportar",
+          }}
+          actions={[
+            {
+              id: "new-deal",
+              label: "Oportunidade",
+              variant: "default",
+              icon: <Plus className="h-3.5 w-3.5" />,
+              title: "Cadastrar Nova Oportunidade",
+              onClick: () => setIsNewDealOpen(true),
+            },
+            {
+              id: "refresh",
+              label: "Atualizar",
+              variant: "outline",
+              icon: <RefreshCw className={`h-3.5 w-3.5 ${dealsQuery.isFetching ? "animate-spin" : ""}`} />,
+              title: "Atualizar Negócios",
+              onClick: () => dealsQuery.refetch(),
+              disabled: dealsQuery.isFetching,
+            },
+          ]}
+        />
 
         {dealActionFeedback && (
           <div className="p-3 rounded-lg bg-status-success-subtle border border-status-success/30 text-xs text-status-success flex items-center gap-2">

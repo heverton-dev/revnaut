@@ -171,6 +171,64 @@ async def handle_audit_stream(event: Dict[str, Any]) -> Dict[str, Any]:
     return {"status": "processed", "stream": StreamName.AUDIT.value, "event_type": event_type}
 
 
+@event_consumer(StreamName.MARKET_INTEL, group_name="worker_group_market_intel")
+async def handle_market_intel_stream(event: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Fila passiva da Inteligência de Mercado (TICKET-MKTINTEL-03):
+    - market_intel.batch.tick: lote agendado de coleta de concorrentes (somente janela 01:00-05:00 UTC).
+    - competitor.snapshot.ingested: cruza o snapshot novo com o catálogo (PRICE_COUNTER_ATTACK).
+    - market_signal.ingested: classifica o sinal e gera oportunidade cruzada com o portfólio.
+    """
+    init_db()
+    event_type = event.get("event_type", "")
+    payload = event.get("payload") or {}
+    tenant_id = event.get("tenant_id") or payload.get("account_id") or "0f14ffff"
+    result: Dict[str, Any] = {}
+
+    if event_type == "market_intel.batch.tick":
+        from src.features.market_intel.crawler_engine import run_scheduled_competitor_batch
+        batch = await asyncio.to_thread(
+            run_scheduled_competitor_batch,
+            tenant_id,
+            None,
+            bool(payload.get("force_scheduled_batch", False)),
+        )
+        result = {"batch_status": batch["status"], "processed_pages": batch["processed_pages"]}
+    elif event_type == "competitor.snapshot.ingested" and payload.get("snapshot_id"):
+        from src.features.market_intel.opportunity_matcher import amatch_and_create_opportunity
+        opp = await amatch_and_create_opportunity(
+            account_id=tenant_id,
+            competitor_snapshot_id=str(payload["snapshot_id"]),
+            region_code=payload.get("region_code"),
+        )
+        result = {"opportunity_id": opp["id"], "created": opp["created"]}
+    elif event_type == "market_signal.ingested" and payload.get("signal_id"):
+        from src.features.market_intel.llm_classifier import classify_market_signal
+        from src.features.market_intel.opportunity_matcher import amatch_and_create_opportunity
+        signal_id = str(payload["signal_id"])
+        conn = get_connection()
+        try:
+            row = conn.execute(
+                "SELECT title, raw_content FROM market_signals WHERE id = ? AND account_id = ?",
+                (signal_id, tenant_id),
+            ).fetchone()
+            if row:
+                classified = await asyncio.to_thread(classify_market_signal, row["title"], row["raw_content"])
+                classified.pop("engine", None)
+                conn.execute(
+                    "UPDATE market_signals SET structured_payload = ? WHERE id = ?",
+                    (json.dumps(classified, ensure_ascii=False), signal_id),
+                )
+                conn.commit()
+        finally:
+            conn.close()
+        if row:
+            opp = await amatch_and_create_opportunity(account_id=tenant_id, signal_id=signal_id)
+            result = {"opportunity_id": opp["id"], "created": opp["created"]}
+
+    return {"status": "processed", "stream": StreamName.MARKET_INTEL.value, "event_type": event_type, **result}
+
+
 def build_registered_worker_consumers(bus: Optional[EventBus] = None) -> List[ tuple[EventConsumer, Any] ]:
     target_bus = bus or default_event_bus
     pairs: List[tuple[EventConsumer, Any]] = []

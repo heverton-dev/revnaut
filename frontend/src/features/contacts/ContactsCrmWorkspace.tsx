@@ -18,6 +18,7 @@ import {
   ClipboardCheck,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
+import { RouteHeader } from "@/components/ui/RouteHeader";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
@@ -492,37 +493,74 @@ export const ContactsCrmWorkspace: React.FC = () => {
     },
   ];
 
+  const [exportFormat, setExportFormat] = React.useState<"csv" | "parquet">("csv");
+  const [isExporting, setIsExporting] = React.useState<boolean>(false);
+
+  const handleExportContacts = async () => {
+    setIsExporting(true);
+    try {
+      const res = await fetch(`/api/v1/contacts/export?format=${exportFormat}`, {
+        headers: { "X-User-Id": "usr-director-br" },
+      });
+      if (!res.ok) throw new Error(`Falha ao exportar ${exportFormat.toUpperCase()} da carteira.`);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `carteira_cirurgioes_${new Date().toISOString().split("T")[0]}.${exportFormat}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setFeedbackMsg(`Exportação ${exportFormat.toUpperCase()} gerada com sucesso.`);
+    } catch (err: any) {
+      setErrorMsg(err.message || "Erro ao exportar carteira.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-text-main">
-            CRM de Cirurgiões-Dentistas, Clínicas & Compliance CRO/CFO
-          </h1>
-          <p className="text-xs sm:text-sm text-text-secondary mt-1">
-            Gestão 360° da carteira de implantodontistas, homologação junto ao Conselho Regional de Odontologia, vínculos hospitalares e auditoria ética CFO 196/2019.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsImportCsvOpen(true)}
-            className="gap-1.5"
-          >
-            <Upload className="h-3.5 w-3.5" />
-            Importar CSV
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => setIsNewContactOpen(true)}
-            className="gap-1.5"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Novo Cirurgião
-          </Button>
-        </div>
-      </div>
+      <RouteHeader
+        title="CRM de Cirurgiões-Dentistas, Clínicas & Compliance CRO/CFO"
+        description="Gestão 360° da carteira de implantodontistas, homologação junto ao Conselho Regional de Odontologia, vínculos hospitalares e auditoria ética CFO 196/2019."
+        exportConfig={{
+          format: exportFormat,
+          onFormatChange: (fmt) => setExportFormat(fmt as "csv" | "parquet"),
+          onExport: handleExportContacts,
+          loading: isExporting,
+          label: "FORMATO",
+          exportLabel: "Exportar",
+        }}
+        actions={[
+          {
+            id: "new-contact",
+            label: "Cirurgião",
+            variant: "default",
+            icon: <Plus className="h-3.5 w-3.5" />,
+            title: "Cadastrar Novo Cirurgião-Dentista",
+            onClick: () => setIsNewContactOpen(true),
+          },
+          {
+            id: "import-csv",
+            label: "Importar",
+            variant: "outline",
+            icon: <Upload className="h-3.5 w-3.5" />,
+            title: "Importar Base CSV",
+            onClick: () => setIsImportCsvOpen(true),
+          },
+          {
+            id: "refresh",
+            label: "Atualizar",
+            variant: "outline",
+            icon: <RefreshCw className={`h-3.5 w-3.5 ${loadingContacts ? "animate-spin" : ""}`} />,
+            title: "Atualizar Carteira",
+            onClick: loadContacts,
+            disabled: loadingContacts,
+          },
+        ]}
+      />
 
       {feedbackMsg && (
         <div className="p-3 rounded-lg bg-status-success-subtle border border-status-success/30 text-xs text-status-success flex items-center justify-between">

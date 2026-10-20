@@ -1,6 +1,5 @@
 import * as React from "react";
 import {
-  Target,
   RefreshCw,
   Sparkles,
   CheckCircle2,
@@ -13,11 +12,13 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { RouteHeader } from "@/components/ui/RouteHeader";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
 
 export interface ScoringRule {
   id: string;
@@ -303,46 +304,37 @@ export const IcpScoringDashboard: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-text-main flex items-center gap-2">
-            <Target className="h-6 w-6 text-brand-primary" />
-            Classificação de Potencial de Clientes & Prioridades
-          </h1>
-          <p className="text-sm text-text-secondary mt-1">
-            Pontuação automática por volume cirúrgico, especialidade e engajamento com encaminhamento automático (Prioridade Alta &ge; 80 pts).
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={fetchScoringData}
-            className="inline-flex items-center gap-1.5"
-          >
-            <RefreshCw className="h-4 w-4" />
-            Atualizar
-          </Button>
-          <Button
-            size="sm"
-            onClick={openNewRuleModal}
-            className="inline-flex items-center gap-1.5"
-          >
-            <Plus className="h-4 w-4" />
-            Nova Regra
-          </Button>
-          <Button
-            size="sm"
-            onClick={handleRecalculate}
-            disabled={isRecalculating}
-            className="inline-flex items-center gap-1.5"
-          >
-            <Sparkles className="h-4 w-4" />
-            {isRecalculating ? "Recalculando Base..." : "Recalcular Carteira"}
-          </Button>
-        </div>
-      </div>
+      <RouteHeader
+        title="Classificação de Potencial de Clientes & Prioridades"
+        description="Pontuação automática por volume cirúrgico, especialidade e engajamento com encaminhamento automático (Prioridade Alta ≥ 80 pts)."
+        actions={[
+          {
+            id: "new-rule",
+            label: "Regra",
+            variant: "default",
+            icon: <Plus className="h-3.5 w-3.5" />,
+            title: "Criar Nova Regra de Pontuação",
+            onClick: openNewRuleModal,
+          },
+          {
+            id: "recalculate",
+            label: "Recalcular",
+            variant: "outline",
+            icon: <Sparkles className={`h-3.5 w-3.5 ${isRecalculating ? "animate-spin" : ""}`} />,
+            title: isRecalculating ? "Recalculando Base..." : "Recalcular Carteira",
+            onClick: handleRecalculate,
+            disabled: isRecalculating,
+          },
+          {
+            id: "refresh",
+            label: "Atualizar",
+            variant: "outline",
+            icon: <RefreshCw className="h-3.5 w-3.5" />,
+            title: "Atualizar Regras e Pontuações",
+            onClick: fetchScoringData,
+          },
+        ]}
+      />
 
       {recalcMessage && (
         <div className="p-3 rounded-lg border border-status-success/30 bg-status-success-subtle text-status-success text-xs font-medium flex items-center gap-2">
@@ -400,17 +392,15 @@ export const IcpScoringDashboard: React.FC = () => {
             <label className="text-[11px] font-semibold text-text-secondary block mb-1">
               Selecione o Cirurgião do CRM
             </label>
-            <select
-              value={selectedContactId}
-              onChange={(e) => setSelectedContactId(Number(e.target.value))}
-              className="w-full px-2.5 py-1.5 rounded-lg border border-border bg-surface-bg text-xs font-mono text-text-main"
-            >
-              {contacts.map((c) => (
-                <option key={c.id} value={c.id}>
-                  #{c.id} - {c.name} ({c.cro_uf || "Sem CRO"}) [Score: {c.score ?? 0}]
-                </option>
-              ))}
-            </select>
+            <Select
+              value={String(selectedContactId)}
+              onValueChange={(val) => setSelectedContactId(Number(val))}
+              options={contacts.map((c) => ({
+                value: String(c.id),
+                label: `#${c.id} - ${c.name} (${c.cro_uf || "Sem CRO"}) [Score: ${c.score ?? 0}]`,
+              }))}
+              triggerClassName="h-9 text-xs font-mono"
+            />
           </div>
 
           <div className="flex gap-2">
@@ -648,15 +638,16 @@ export const IcpScoringDashboard: React.FC = () => {
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="font-semibold text-text-secondary block mb-1">Categoria</label>
-                  <select
+                  <Select
                     value={ruleCategory}
-                    onChange={(e) => setRuleCategory(e.target.value)}
-                    className="w-full px-2.5 py-1.5 rounded-lg border border-border bg-surface-bg text-xs text-text-main"
-                  >
-                    <option value="Firmográfico">Firmográfico</option>
-                    <option value="Demográfico">Demográfico</option>
-                    <option value="Comportamental">Comportamental</option>
-                  </select>
+                    onValueChange={(val) => setRuleCategory(val)}
+                    options={[
+                      { value: "Firmográfico", label: "Firmográfico" },
+                      { value: "Demográfico", label: "Demográfico" },
+                      { value: "Comportamental", label: "Comportamental" },
+                    ]}
+                    triggerClassName="h-9 text-xs"
+                  />
                 </div>
 
                 <div>

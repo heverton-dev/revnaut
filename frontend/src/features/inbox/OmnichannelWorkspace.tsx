@@ -1,10 +1,12 @@
 import * as React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { OmnichannelContextSidebar } from "./OmnichannelContextSidebar";
+import { RouteHeader } from "@/components/ui/RouteHeader";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
+import { Select } from "@/components/ui/Select";
 import {
   MessageSquare,
   Send,
@@ -320,47 +322,37 @@ export const OmnichannelWorkspace: React.FC<OmnichannelWorkspaceProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* Top Header / Breadcrumb */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 border-b border-border pb-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-text-main flex items-center gap-2">
-              <MessageSquare className="h-5 w-5 text-brand-primary" />
-              Central Omnichannel & Shards Evolution API
-            </h1>
-            <Badge variant="outline" className="border-brand-primary/30 text-brand-primary bg-brand-primary-subtle text-xs">
-              LiveKit & Chatwoot Sync
-            </Badge>
-          </div>
-          <p className="text-xs text-text-secondary mt-0.5">
-            Mensageria multicanal unificada com distribuição de carga entre shards Evolution API e contexto cirúrgico 360°.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
+      <RouteHeader
+        title="Central Omnichannel & Shards Evolution API"
+        description="Mensageria multicanal unificada com distribuição de carga entre shards Evolution API e contexto cirúrgico 360°."
+        badge={
+          <Badge variant="outline" className="border-brand-primary/30 text-brand-primary bg-brand-primary-subtle text-xs">
+            LiveKit & Chatwoot Sync
+          </Badge>
+        }
+        actions={[
+          {
+            id: "new-instance",
+            label: "Instância",
+            variant: "default",
+            icon: <Plus className="h-3.5 w-3.5" />,
+            title: "Conectar Nova Instância WhatsApp",
+            onClick: () => setShowInstanceModal(true),
+          },
+          {
+            id: "refresh",
+            label: "Atualizar",
+            variant: "outline",
+            icon: <RefreshCw className="h-3.5 w-3.5" />,
+            title: "Atualizar Mensagens e Instâncias",
+            onClick: () => {
               refetchConversations();
               refetchMessages();
               refetchInstances();
-            }}
-            className="flex items-center gap-1.5"
-          >
-            <RefreshCw className="h-3.5 w-3.5" />
-            Atualizar
-          </Button>
-          <Button
-            variant="default"
-            size="sm"
-            onClick={() => setShowInstanceModal(true)}
-            className="flex items-center gap-1.5"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Nova Instância WhatsApp
-          </Button>
-        </div>
-      </div>
+            },
+          },
+        ]}
+      />
 
       {/* 3-Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
@@ -674,18 +666,20 @@ export const OmnichannelWorkspace: React.FC<OmnichannelWorkspaceProps> = ({
                   {creatingDealFromChat ? "Criando..." : "Criar Oportunidade (Deal)"}
                 </Button>
                 <div className="flex items-center gap-1">
-                  <select
+                  <Select
                     value={transferTarget}
-                    onChange={(e) => setTransferTarget(e.target.value)}
-                    className="h-7 rounded border border-border bg-surface-bg px-1.5 text-[10px] text-text-main"
+                    onValueChange={(val) => setTransferTarget(val)}
+                    placeholder="Transferir conversa..."
+                    options={[
+                      { value: "supervisor", label: "Supervisor Comercial" },
+                      { value: "clinico", label: "Suporte Clínico" },
+                      { value: "logistica", label: "DENTGO Logística" },
+                      { value: "financeiro", label: "Financeiro / Credit" },
+                    ]}
+                    className="w-48"
+                    triggerClassName="h-7 text-xs py-0 px-2"
                     aria-label="Transferir conversa"
-                  >
-                    <option value="">Transferir conversa...</option>
-                    <option value="supervisor">Supervisor Comercial</option>
-                    <option value="clinico">Suporte Clínico</option>
-                    <option value="logistica">DENTGO Logística</option>
-                    <option value="financeiro">Financeiro / Credit</option>
-                  </select>
+                  />
                   <Button
                     type="button"
                     variant="outline"
@@ -782,7 +776,7 @@ export const OmnichannelWorkspace: React.FC<OmnichannelWorkspaceProps> = ({
       </div>
 
       {qrInstance && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-text-main/60 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0 p-4">
           <Card className="w-full max-w-sm p-5 bg-surface-card border border-border space-y-3 shadow-xl">
             <div className="flex items-center justify-between border-b border-border pb-2.5">
               <h3 className="text-sm font-bold text-text-main">QR Code: {qrInstance.instance_name}</h3>

@@ -15,6 +15,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { RouteHeader } from "@/components/ui/RouteHeader";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Tabs } from "@/components/ui/Tabs";
@@ -667,35 +668,63 @@ export const DentgoExpressCockpit: React.FC = () => {
     { id: "split", label: "Repasses e Custos de Entrega" },
   ];
 
+  const [exportFormat, setExportFormat] = React.useState<"csv" | "parquet">("csv");
+  const [isExporting, setIsExporting] = React.useState<boolean>(false);
+
+  const handleExportDentgo = async () => {
+    setIsExporting(true);
+    try {
+      const res = await fetch("/api/v1/intelligence/bi/export-dataset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          dataset_name: "dentgo_deliveries",
+          format: exportFormat,
+          user_id: "usr-director-br",
+          account_id: "0f14ffff",
+        }),
+      });
+      if (!res.ok) throw new Error("Erro ao exportar entregas DENTGO.");
+      const data = await res.json();
+      if (data.download_url) {
+        window.open(data.download_url, "_blank");
+      }
+    } catch (err: any) {
+      console.error(err);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="w-full space-y-6 font-sans text-text-main">
-      {/* Top Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-border">
-        <div>
-          <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-primary-subtle text-brand-primary border border-brand-primary/20">
-              <Truck className="h-5 w-5" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold tracking-tight text-text-main">
-                Entrega Rápida (45 min) • Logística e Despacho Cirúrgico
-              </h1>
-              <p className="text-xs text-text-secondary mt-0.5">
-                Despacho prioritário, busca de estoque mais próximo, ofertas de lotes e controle de entregas.
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
+      <RouteHeader
+        title="Entrega Rápida (45 min) • Logística e Despacho Cirúrgico"
+        description="Despacho prioritário, busca de estoque mais próximo, ofertas de lotes e controle de entregas."
+        badge={
           <span className="inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full bg-brand-navy-subtle text-brand-navy border border-border">
             Plantão Cirúrgico 24h Ativo
           </span>
-          <Button variant="outline" size="sm" onClick={fetchOrders} className="gap-1.5">
-            <RefreshCw className="w-3.5 h-3.5" />
-            Atualizar
-          </Button>
-        </div>
-      </div>
+        }
+        exportConfig={{
+          format: exportFormat,
+          onFormatChange: (fmt) => setExportFormat(fmt as "csv" | "parquet"),
+          onExport: handleExportDentgo,
+          loading: isExporting,
+          label: "FORMATO",
+          exportLabel: "Exportar",
+        }}
+        actions={[
+          {
+            id: "refresh",
+            label: "Atualizar",
+            variant: "outline",
+            icon: <RefreshCw className="w-3.5 h-3.5" />,
+            title: "Atualizar Despachos Express",
+            onClick: fetchOrders,
+          },
+        ]}
+      />
 
       {/* Tabs */}
       <Tabs tabs={tabsConfig} activeTab={activeTab} onChange={setActiveTab} />
@@ -1469,7 +1498,7 @@ export const DentgoExpressCockpit: React.FC = () => {
 
       {/* MODAL: Checkout Novo Pedido Emergencial */}
       {showCheckoutModal && (
-        <div className="fixed inset-0 bg-text-main/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0 flex items-center justify-center p-4 z-50">
           <div className="bg-surface-card border border-border rounded-xl max-w-lg w-full p-6 shadow-modal space-y-4">
             <div className="flex justify-between items-center pb-3 border-b border-border">
               <h3 className="text-base font-bold text-text-main">+ Novo Despacho Emergencial (Same-Day)</h3>
@@ -1606,7 +1635,7 @@ export const DentgoExpressCockpit: React.FC = () => {
 
       {/* MODAL: Novo Hub */}
       {showHubModal && (
-        <div className="fixed inset-0 bg-text-main/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0 flex items-center justify-center p-4 z-50">
           <div className="bg-surface-card border border-border rounded-xl max-w-md w-full p-6 shadow-modal space-y-4">
             <div className="flex justify-between items-center pb-3 border-b border-border">
               <h3 className="text-base font-bold text-text-main">+ Cadastrar Hub Urbano</h3>
@@ -1679,7 +1708,7 @@ export const DentgoExpressCockpit: React.FC = () => {
 
       {/* MODAL: Abastecer Estoque no Hub */}
       {showInventoryModal && (
-        <div className="fixed inset-0 bg-text-main/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0 flex items-center justify-center p-4 z-50">
           <div className="bg-surface-card border border-border rounded-xl max-w-md w-full p-6 shadow-modal space-y-4">
             <div className="flex justify-between items-center pb-3 border-b border-border">
               <h3 className="text-base font-bold text-text-main">+ Abastecer Lote no Hub</h3>
@@ -1786,7 +1815,7 @@ export const DentgoExpressCockpit: React.FC = () => {
 
       {/* MODAL: Reservar Flash Deal */}
       {selectedFefoDeal && (
-        <div className="fixed inset-0 bg-text-main/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0 flex items-center justify-center p-4 z-50">
           <div className="bg-surface-card border border-border rounded-xl max-w-md w-full p-6 shadow-modal space-y-4">
             <div className="flex justify-between items-center pb-3 border-b border-border">
               <h3 className="text-base font-bold text-text-main">

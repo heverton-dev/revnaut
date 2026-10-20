@@ -1059,6 +1059,11 @@ def seed_multinational_enterprise(db_path: Path | str | None = None, clean_reset
         VALUES ('outbox-01', '0f14ffff', 'TOTVS_SA1', 'idemp-cust-01', '{"customer_id": "cust-01"}', 'sent', 1, NULL, '{"protheus_status": "synced"}', ?, ?)
     """, (now_iso, now_iso))
 
+    # TICKET-MKTINTEL-02: Inteligência de Mercado, Radar de Concorrência e histórico de campanha tática
+    from src.features.market_intel.seed import seed_market_intel, seed_market_intel_campaign_history
+    seed_market_intel(conn, account_id=ACCOUNT_ID)
+    seed_market_intel_campaign_history(conn, account_id=ACCOUNT_ID)
+
     conn.commit()
     conn.execute("PRAGMA foreign_keys = ON;")
 

@@ -40,6 +40,56 @@ def list_contacts(
         conn.close()
 
 
+def export_contacts_data(
+    format: str = "csv",
+    query: Optional[str] = None,
+    account_id: str = "0f14ffff",
+    user_id: Optional[str] = None
+) -> bytes:
+    fmt = (format or "csv").lower().strip()
+    contacts = list_contacts(query=query, account_id=account_id, user_id=user_id)
+    if fmt == "parquet":
+        import pyarrow as pa
+        import pyarrow.parquet as pq
+        clean_contacts = []
+        for c in contacts:
+            clean_contacts.append({
+                "id": str(c.get("id", "")),
+                "name": str(c.get("name", "") or ""),
+                "email": str(c.get("email", "") or ""),
+                "phone": str(c.get("phone", "") or ""),
+                "company": str(c.get("company", "") or ""),
+                "cro": str(c.get("cro", "") or ""),
+                "cro_uf": str(c.get("cro_uf", "") or ""),
+                "score": int(c.get("score", 0) or 0),
+                "customer_type": str(c.get("customer_type", "") or ""),
+            })
+        if not clean_contacts:
+            clean_contacts = [{"id": "", "name": "", "email": "", "phone": "", "company": "", "cro": "", "cro_uf": "", "score": 0, "customer_type": ""}]
+        table = pa.Table.from_pylist(clean_contacts)
+        sink = pa.BufferOutputStream()
+        pq.write_table(table, sink)
+        return sink.getvalue().to_pybytes()
+
+    import io, csv
+    output = io.StringIO()
+    writer = csv.writer(output, lineterminator="\n")
+    writer.writerow(["ID", "Nome", "Email", "Telefone", "Clinica_Empresa", "CRO", "UF", "Score", "Tipo"])
+    for c in contacts:
+        writer.writerow([
+            c.get("id", ""),
+            c.get("name", ""),
+            c.get("email", ""),
+            c.get("phone", ""),
+            c.get("company", ""),
+            c.get("cro", ""),
+            c.get("cro_uf", ""),
+            c.get("score", 0),
+            c.get("customer_type", "")
+        ])
+    return output.getvalue().encode("utf-8")
+
+
 def create_contact(payload: ContactCreate) -> Dict[str, Any]:
     from src.features.contacts.cro_validator import verify_cro_status
 

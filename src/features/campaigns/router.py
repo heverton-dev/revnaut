@@ -4,7 +4,7 @@ Vertical Slice: Campaigns Router (FastAPI)
 """
 
 from typing import List, Optional
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import HTMLResponse
 from src.features.campaigns.schemas import (
     CampaignCreate,
@@ -31,6 +31,10 @@ from src.features.campaigns import service
 from src.features.campaigns import landing_pages
 from src.features.campaigns import referral_mgm
 from src.features.campaigns.listmonk_adapter import ListmonkClient, process_listmonk_webhook_event
+from src.features.market_intel import campaign_dispatcher
+from src.features.market_intel.rbac import MarketIntelPrincipal, get_market_intel_principal
+from src.features.market_intel.router import raise_http_for
+from src.features.market_intel.schemas import CampaignDispatchResult
 
 
 router = APIRouter(prefix="/api/v1/campaigns", tags=["Campanhas & Mídia"])
@@ -177,3 +181,16 @@ def get_mgm_dashboard(referrer_id: str, account_id: str = "0f14ffff"):
 
 
 
+
+
+# TICKET-MKTINTEL-08: Aprovação e disparo de campanha tática com trava anti-spam de 15 dias (RBAC Seção 5)
+@router.post(
+    "/{campaign_id}/dispatch",
+    response_model=CampaignDispatchResult,
+    summary="Aprovar e disparar campanha tática (somente Diretoria/Gerente Regional) com trava de 15 dias",
+)
+def dispatch_targeted_campaign(campaign_id: str, principal: MarketIntelPrincipal = Depends(get_market_intel_principal)):
+    try:
+        return campaign_dispatcher.dispatch_campaign(principal, campaign_id)
+    except Exception as exc:
+        raise_http_for(exc)

@@ -33,6 +33,8 @@ from src.features.intelligence.router import router as intelligence_router, imag
 from src.features.storage.router import router as storage_router
 from src.features.keypartners.router import router as keypartners_router
 from src.features.dentgo.router import router as dentgo_router
+from src.features.market_intel.router import router as market_intel_router
+from src.features.competitors.router import router as competitors_router
 
 # Inicializa schema e seed SQLite WAL
 
@@ -106,6 +108,8 @@ app.include_router(imaging_router)
 app.include_router(storage_router)
 app.include_router(keypartners_router)
 app.include_router(dentgo_router)
+app.include_router(market_intel_router)
+app.include_router(competitors_router)
 
 
 # Rotas Públicas: Landing Pages e Convites VIP de Indicação (MGM)

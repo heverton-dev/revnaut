@@ -14,6 +14,7 @@ import {
   Cpu,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
+import { RouteHeader } from "@/components/ui/RouteHeader";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
@@ -542,30 +543,61 @@ export const SupportAnvisaWorkspace: React.FC = () => {
     },
   ];
 
+  const [exportFormat, setExportFormat] = React.useState<"csv" | "parquet">("csv");
+  const [isExporting, setIsExporting] = React.useState<boolean>(false);
+
+  const handleExportAnvisa = async () => {
+    setIsExporting(true);
+    try {
+      const res = await fetch("/api/v1/intelligence/bi/export-dataset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          dataset_name: "anvisa_rma",
+          format: exportFormat,
+          user_id: "usr-director-br",
+          account_id: "0f14ffff",
+        }),
+      });
+      if (!res.ok) throw new Error("Erro ao exportar dados ANVISA/RMA.");
+      const data = await res.json();
+      if (data.download_url) {
+        window.open(data.download_url, "_blank");
+      }
+    } catch (err: any) {
+      console.error(err);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-text-main">
-            Tecnovigilância ANVISA (RMA), SOS Mesa Cirúrgica & Pós-Operatório B2C
-          </h1>
-          <p className="text-xs sm:text-sm text-text-secondary mt-1">
-            Garantia de osseointegração com bloqueio preventivo de lote fabril, socorro imediato de centro cirúrgico e monitoramento clínico 24h/48h/72h/7d.
-          </p>
-        </div>
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => {
-            loadRmaClaims();
-            loadPostOpSchedules();
-          }}
-          className="gap-1.5 self-start sm:self-auto"
-        >
-          <RefreshCw className="h-3.5 w-3.5" />
-          Atualizar Central
-        </Button>
-      </div>
+      <RouteHeader
+        title="Tecnovigilância ANVISA (RMA), SOS Mesa Cirúrgica & Pós-Operatório B2C"
+        description="Garantia de osseointegração com bloqueio preventivo de lote fabril, socorro imediato de centro cirúrgico e monitoramento clínico 24h/48h/72h/7d."
+        exportConfig={{
+          format: exportFormat,
+          onFormatChange: (fmt) => setExportFormat(fmt as "csv" | "parquet"),
+          onExport: handleExportAnvisa,
+          loading: isExporting,
+          label: "FORMATO",
+          exportLabel: "Exportar",
+        }}
+        actions={[
+          {
+            id: "refresh",
+            label: "Atualizar",
+            variant: "outline",
+            icon: <RefreshCw className="h-3.5 w-3.5" />,
+            title: "Atualizar Central ANVISA & Pós-Operatório",
+            onClick: () => {
+              loadRmaClaims();
+              loadPostOpSchedules();
+            },
+          },
+        ]}
+      />
 
       {feedbackMsg && (
         <div className="p-3 rounded-lg bg-status-success-subtle border border-status-success/30 text-xs text-status-success flex items-center justify-between">

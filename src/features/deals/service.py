@@ -347,6 +347,43 @@ def export_deals_csv(
     return output.getvalue()
 
 
+def export_deals_data(
+    format: str = "csv",
+    pipeline_id: Optional[int] = None, 
+    account_id: str = "0f14ffff", 
+    user_id: Optional[str] = None
+) -> bytes:
+    fmt = (format or "csv").lower().strip()
+    result = get_pipeline_and_deals(pipeline_id=pipeline_id, account_id=account_id, user_id=user_id)
+    deals = result.get("deals", [])
+    
+    if fmt == "parquet":
+        import pyarrow as pa
+        import pyarrow.parquet as pq
+        clean_deals = []
+        for d in deals:
+            clean_deals.append({
+                "id": str(d.get("id", "")),
+                "title": str(d.get("title", "") or ""),
+                "company": str(d.get("company", "") or ""),
+                "contact_name": str(d.get("contact_name", "") or ""),
+                "value": float(d.get("value", 0.0) or 0.0),
+                "stage_name": str(d.get("stage_name", "") or ""),
+                "priority": str(d.get("priority", "") or ""),
+                "expected_close_date": str(d.get("expected_close_date", "") or "")
+            })
+        if not clean_deals:
+            clean_deals = [{"id": "", "title": "", "company": "", "contact_name": "", "value": 0.0, "stage_name": "", "priority": "", "expected_close_date": ""}]
+        table = pa.Table.from_pylist(clean_deals)
+        sink = pa.BufferOutputStream()
+        pq.write_table(table, sink)
+        return sink.getvalue().to_pybytes()
+
+    # CSV fallback
+    csv_str = export_deals_csv(pipeline_id=pipeline_id, account_id=account_id, user_id=user_id)
+    return csv_str.encode("utf-8")
+
+
 def calculate_split_commissions(
     total_value: float,
     base_rate_pct: float = 5.0,

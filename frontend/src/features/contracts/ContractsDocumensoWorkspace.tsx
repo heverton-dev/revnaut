@@ -174,7 +174,7 @@ const SignaturePadModal: React.FC<SignaturePadModalProps> = ({ contractTitle, in
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-text-main/50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0">
       <div className="bg-surface-card border border-border rounded-xl w-full max-w-xl p-4 space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-bold text-text-main">Assinar na Tela: {contractTitle}</h3>
@@ -1196,7 +1196,7 @@ export const ContractsDocumensoWorkspace: React.FC = () => {
       )}
 
       {previewContract && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-text-main/50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0">
           <div className="bg-surface-card border border-border rounded-xl w-full max-w-3xl p-4 space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold text-text-main truncate">{previewContract.title}</h3>

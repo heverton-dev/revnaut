@@ -25,9 +25,9 @@ export function Sheet({
 
   return (
     <div className="fixed inset-0 z-50 flex">
-      {/* Backdrop */}
+      {/* Backdrop com desfoque e esmaecimento estritos (Regra Global de Foco & UX) */}
       <div
-        className="fixed inset-0 bg-text-main/40 backdrop-blur-xs transition-opacity"
+        className="fixed inset-0 bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0"
         onClick={onClose}
         aria-hidden="true"
       />

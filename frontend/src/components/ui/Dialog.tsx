@@ -27,7 +27,7 @@ export function Dialog({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop com desfoque e esmaecimento estritos (Regra Global de Foco & UX) */}
       <div
-        className="fixed inset-0 bg-text-main/60 backdrop-blur-sm transition-all duration-200"
+        className="fixed inset-0 bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0"
         onClick={onClose}
         aria-hidden="true"
       />

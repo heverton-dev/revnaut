@@ -24,6 +24,7 @@ class StreamName(str, Enum):
     GROWTH = "stream:growth"
     WEBHOOKS = "stream:webhooks"
     AUDIT = "stream:audit"
+    MARKET_INTEL = "stream:market_intel"
     DLQ = "stream:dlq"
 
 

@@ -1,6 +1,5 @@
 import * as React from "react";
 import {
-  KeyRound,
   ShieldCheck,
   Plus,
   Trash2,
@@ -20,6 +19,7 @@ import {
   History,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { RouteHeader } from "@/components/ui/RouteHeader";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
@@ -491,23 +491,15 @@ export function CredentialsVaultPage() {
 
   return (
     <div className="space-y-4 max-w-6xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-text-main flex items-center gap-2">
-              <KeyRound className="h-5 w-5 text-brand-primary" />
-              Configurações Enterprise, Hub Fiscal ERP & Governança
-            </h1>
-            <Badge variant="outline" className="border-brand-primary/30 text-brand-primary bg-brand-primary-subtle text-xs">
-              Windmill + Protheus + Webhooks + Quarteto
-            </Badge>
-          </div>
-          <p className="text-xs text-text-secondary mt-0.5">
-            Cofre cifrado AES-256-GCM, emissão de NF-e CFOP 5917/1918/5113, webhooks com circuit breaker e canais canônicos.
-          </p>
-        </div>
-      </div>
+      <RouteHeader
+        title="Configurações Enterprise, Hub Fiscal ERP & Governança"
+        description="Cofre cifrado AES-256-GCM, emissão de NF-e CFOP 5917/1918/5113, webhooks com circuit breaker e canais canônicos."
+        badge={
+          <Badge variant="outline" className="border-brand-primary/30 text-brand-primary bg-brand-primary-subtle text-xs">
+            Windmill + Protheus + Webhooks + Quarteto
+          </Badge>
+        }
+      />
 
       {/* Tabs */}
       <Tabs

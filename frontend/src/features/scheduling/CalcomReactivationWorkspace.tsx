@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { LiveKitDealRoomModal } from "@/features/communications/LiveKitDealRoomModal";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
+import { RouteHeader } from "@/components/ui/RouteHeader";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
@@ -362,56 +363,51 @@ export const CalcomReactivationWorkspace: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-text-main">
-            Motor Cal.com • Reativação Preventiva de Pacientes (6 / 12 / 18 Meses)
-          </h1>
-          <p className="text-xs sm:text-sm text-text-secondary mt-1">
-            Automação de retorno profilático pós-implante com disparo de convite WhatsApp e criação automática de oportunidade de kit de manutenção peri-implantar.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={handleScanDispatches}
-            disabled={scanning}
-            className="gap-1.5"
-          >
-            <Send className="h-3.5 w-3.5" />
-            {scanning ? "Varrendo..." : "Executar Varredura de Disparos Pendentes"}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleBatchRescheduleNoShows}
-            disabled={rescheduling}
-            className="gap-1.5 border-brand-primary/40 text-brand-primary hover:bg-brand-primary-subtle"
-          >
-            <RotateCcw className={`h-3.5 w-3.5 ${rescheduling ? "animate-spin" : ""}`} />
-            {rescheduling ? "Reagendando..." : "Reagendamento de Faltosos"}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
+      <RouteHeader
+        title="Motor Cal.com • Reativação Preventiva de Pacientes (6 / 12 / 18 Meses)"
+        description="Automação de retorno profilático pós-implante com disparo de convite WhatsApp e criação automática de oportunidade de kit de manutenção peri-implantar."
+        actions={[
+          {
+            id: "scan",
+            label: "Varredura",
+            variant: "default",
+            icon: <Send className="h-3.5 w-3.5" />,
+            disabled: scanning,
+            loading: scanning,
+            title: "Executar Varredura de Disparos Pendentes",
+            onClick: handleScanDispatches,
+          },
+          {
+            id: "reschedule",
+            label: "Reagendar",
+            variant: "outline",
+            icon: <RotateCcw className={`h-3.5 w-3.5 ${rescheduling ? "animate-spin" : ""}`} />,
+            disabled: rescheduling,
+            title: "Reagendamento de Faltosos",
+            onClick: handleBatchRescheduleNoShows,
+          },
+          {
+            id: "simulate-one-click",
+            label: "Confirmar",
+            variant: "outline",
+            icon: <CalendarCheck className="h-3.5 w-3.5" />,
+            title: "Confirmação 1-Clique de Agendamento",
+            onClick: () => {
               const pending = schedules.find((s) => s.status !== "BOOKED");
               if (pending) {
                 handleSimulateBookingWebhook(pending);
               } else {
                 setFeedbackMsg("Nenhum agendamento pendente para confirmação 1-clique.");
               }
-            }}
-            className="gap-1.5"
-          >
-            <CalendarCheck className="h-3.5 w-3.5" />
-            Confirmacao 1-Clique
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={async () => {
+            },
+          },
+          {
+            id: "block-material",
+            label: "Bloquear",
+            variant: "outline",
+            icon: <Lock className="h-3.5 w-3.5" />,
+            title: "Bloquear Agenda (Falta Material)",
+            onClick: async () => {
               try {
                 const res = await fetch("/api/v1/automations/calcom/webhook", {
                   method: "POST",
@@ -428,27 +424,19 @@ export const CalcomReactivationWorkspace: React.FC = () => {
               } catch (err: any) {
                 setErrorMsg(err.message || "Erro ao bloquear agenda.");
               }
-            }}
-            className="gap-1.5"
-          >
-            <Lock className="h-3.5 w-3.5" />
-            Bloquear Agenda (Falta Material)
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleSimulateBookingWebhook()}
-            className="gap-1.5"
-          >
-            <CalendarCheck className="h-3.5 w-3.5" />
-            Simular Booking Webhook
-          </Button>
-          <Button variant="ghost" size="sm" onClick={loadCalcomData} className="gap-1.5">
-            <RefreshCw className="h-3.5 w-3.5" />
-            Atualizar
-          </Button>
-        </div>
-      </div>
+            },
+          },
+          {
+            id: "refresh",
+            label: "Atualizar",
+            variant: "outline",
+            icon: <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />,
+            title: "Atualizar Agendamentos",
+            onClick: loadCalcomData,
+            disabled: loading,
+          },
+        ]}
+      />
 
       {feedbackMsg && (
         <div className="p-3 rounded-lg bg-status-success-subtle border border-status-success/30 text-xs text-status-success flex items-center justify-between">

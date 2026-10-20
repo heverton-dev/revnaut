@@ -556,6 +556,99 @@ def get_connection() -> sqlite3.Connection:
 
 
 
+MARKET_INTEL_DDL = """
+CREATE TABLE IF NOT EXISTS market_signals (
+    id TEXT PRIMARY KEY,
+    account_id TEXT NOT NULL DEFAULT 'acc_default',
+    title TEXT NOT NULL,
+    source_url TEXT UNIQUE NOT NULL,
+    source_type TEXT NOT NULL CHECK (source_type IN ('scientific_journal', 'regulatory_anvisa', 'congress_ciosp', 'news')),
+    raw_content TEXT NOT NULL,
+    structured_payload TEXT NOT NULL DEFAULT '{}',
+    geographic_scope TEXT NOT NULL DEFAULT 'GLOBAL',
+    created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_mkt_signals_scope ON market_signals(account_id, geographic_scope, created_at);
+CREATE INDEX IF NOT EXISTS idx_mkt_signals_type ON market_signals(account_id, source_type);
+
+CREATE TABLE IF NOT EXISTS competitors (
+    id TEXT PRIMARY KEY,
+    account_id TEXT NOT NULL DEFAULT 'acc_default',
+    name TEXT NOT NULL,
+    domain TEXT UNIQUE NOT NULL,
+    social_handles TEXT NOT NULL DEFAULT '{}',
+    active INTEGER NOT NULL DEFAULT 1,
+    crawl_frequency_hours INTEGER NOT NULL DEFAULT 72,
+    last_scraped_at TEXT,
+    created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_competitors_acc ON competitors(account_id, active);
+
+CREATE TABLE IF NOT EXISTS competitor_snapshots (
+    id TEXT PRIMARY KEY,
+    account_id TEXT NOT NULL DEFAULT 'acc_default',
+    competitor_id TEXT NOT NULL,
+    page_type TEXT NOT NULL CHECK (page_type IN ('pricing_table', 'catalog', 'blog_post', 'social_ad')),
+    extracted_title TEXT NOT NULL,
+    content_hash TEXT NOT NULL,
+    detected_offers TEXT NOT NULL DEFAULT '[]',
+    tactical_summary TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY (competitor_id) REFERENCES competitors(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_comp_snap_lookup ON competitor_snapshots(account_id, competitor_id, page_type, created_at);
+CREATE INDEX IF NOT EXISTS idx_comp_snap_hash ON competitor_snapshots(competitor_id, content_hash);
+
+CREATE TABLE IF NOT EXISTS market_opportunities (
+    id TEXT PRIMARY KEY,
+    account_id TEXT NOT NULL DEFAULT 'acc_default',
+    signal_id TEXT,
+    competitor_snapshot_id TEXT,
+    bu_target TEXT NOT NULL CHECK (bu_target IN ('Implantodontia', 'Prótese Digital', 'Biomateriais')),
+    recommended_product_ids TEXT NOT NULL DEFAULT '[]',
+    opportunity_type TEXT NOT NULL CHECK (opportunity_type IN ('PRICE_COUNTER_ATTACK', 'CLINICAL_UPGRADE', 'EVENT_SURGE')),
+    suggested_action TEXT NOT NULL,
+    region_code TEXT NOT NULL DEFAULT 'GLOBAL',
+    status TEXT NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'CAMPAIGN_TRIGGERED', 'DISMISSED')),
+    created_at TEXT NOT NULL,
+    FOREIGN KEY (signal_id) REFERENCES market_signals(id) ON DELETE SET NULL,
+    FOREIGN KEY (competitor_snapshot_id) REFERENCES competitor_snapshots(id) ON DELETE SET NULL
+);
+CREATE INDEX IF NOT EXISTS idx_mkt_opp_filter ON market_opportunities(account_id, region_code, bu_target, status);
+
+CREATE TABLE IF NOT EXISTS targeted_campaigns (
+    id TEXT PRIMARY KEY,
+    account_id TEXT NOT NULL DEFAULT 'acc_default',
+    opportunity_id TEXT NOT NULL,
+    target_audience_filter TEXT NOT NULL DEFAULT '{}',
+    message_template TEXT NOT NULL,
+    channel TEXT NOT NULL CHECK (channel IN ('WHATSAPP', 'EMAIL')),
+    dispatch_status TEXT NOT NULL DEFAULT 'DRAFT' CHECK (dispatch_status IN ('DRAFT', 'SCHEDULED', 'EXECUTED')),
+    scheduled_for TEXT,
+    sent_count INTEGER NOT NULL DEFAULT 0,
+    skipped_cooldown_15d_count INTEGER NOT NULL DEFAULT 0,
+    created_by_user_id TEXT,
+    approved_by_user_id TEXT,
+    executed_at TEXT,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY (opportunity_id) REFERENCES market_opportunities(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_tgt_camp_status ON targeted_campaigns(account_id, dispatch_status, created_at);
+
+CREATE TABLE IF NOT EXISTS campaign_recipient_locks (
+    id TEXT PRIMARY KEY,
+    account_id TEXT NOT NULL DEFAULT 'acc_default',
+    contact_id TEXT NOT NULL,
+    campaign_id TEXT NOT NULL,
+    opportunity_id TEXT,
+    channel TEXT NOT NULL,
+    sent_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_camp_locks_contact ON campaign_recipient_locks(account_id, contact_id, sent_at);
+CREATE INDEX IF NOT EXISTS idx_camp_locks_campaign ON campaign_recipient_locks(campaign_id);
+"""
+
+
 def init_db() -> None:
     conn = get_connection()
     with conn:
@@ -1746,6 +1839,8 @@ def init_db() -> None:
         CREATE INDEX IF NOT EXISTS idx_wh_log_evt ON webhook_delivery_logs(event_name);
         """)
 
+        # TICKET-MKTINTEL-01: Inteligência de Mercado, Radar de Concorrência e Disparo Determinístico
+        conn.executescript(MARKET_INTEL_DDL)
 
         # Migração idempotente para colunas complementares em deals e contacts
         cur = conn.cursor()
@@ -2228,6 +2323,13 @@ def init_db() -> None:
             cur.execute("UPDATE kp_surgical_orders SET status = 'DISPATCHED_SEALED' WHERE status IN ('EM_TRANSITO', 'DESPACHADA')")
             cur.execute("UPDATE kp_surgical_orders SET status = 'POSTOP_REPORTED' WHERE status = 'CONCLUIDA'")
         except Exception:
+            pass
+
+        # TICKET-MKTINTEL-02: Seed idempotente de sinais, concorrentes, snapshots e oportunidades
+        try:
+            from src.features.market_intel.seed import seed_market_intel
+            seed_market_intel(conn)
+        except (ImportError, ModuleNotFoundError):
             pass
 
     conn.close()

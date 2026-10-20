@@ -8,7 +8,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
   BarChart3,
-  Database,
   Download,
   RefreshCw,
   ShieldCheck,
@@ -32,6 +31,7 @@ import {
   ExternalLink,
   Activity,
   MapPin,
+  Search,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -230,6 +230,7 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
 
   // Paginação do Radar Anti-Churn no Cockpit
   const [radarPage, setRadarPage] = useState<number>(1);
+  const [radarSearchQuery, setRadarSearchQuery] = useState<string>("");
   const RADAR_ITEMS_PER_PAGE = 6;
 
   // Abas de navegação executiva abaixo dos KPIs (Feedback: Radar, Ecossistema, Funil)
@@ -424,6 +425,25 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
   const formatBrl = (val?: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val || 0);
 
+  const handleExportRadarCsv = (items: ChurnRiskItem[]) => {
+    if (!items.length) return;
+    const header = "Nome;CRO;UF;Dias sem Pedido;Nivel de Risco;Score;Volume Mensal Implantes;Acao Recomendada\n";
+    const rows = items
+      .map((i) =>
+        `"${i.name}";"${i.cro || ""}";"${i.uf || ""}";${i.days_since_last_order};"${i.churn_risk_level}";${i.churn_risk_score};${i.monthly_implant_volume || 0};"${i.recommended_action || ""}"`
+      )
+      .join("\n");
+    const blob = new Blob([`\uFEFF${header}${rows}`], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `clientes_reativacao_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   // TICKET-DASH-05: reativação de cirurgião em risco via WhatsApp
   const handleReactivateWhatsApp = useCallback((item: ChurnRiskItem) => {
     const phone = (item as any).phone || (item as any).whatsapp || "";
@@ -583,11 +603,25 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
   // ============================================================================
   if (mode === "executive_cockpit") {
     const rawRadarItems = churnData?.radar || [];
-    const radarItems = rawRadarItems.filter((item) => {
-      if (!churnDaysThreshold || churnDaysThreshold === "all") return true;
-      const threshold = Number(churnDaysThreshold);
-      return (item.days_since_last_order || 0) >= threshold;
-    });
+    const radarItems = rawRadarItems
+      .filter((item) => {
+        if (!churnDaysThreshold || churnDaysThreshold === "all") return true;
+        const threshold = Number(churnDaysThreshold);
+        return (item.days_since_last_order || 0) >= threshold;
+      })
+      .filter((item) => {
+        if (!radarSearchQuery.trim()) return true;
+        const q = radarSearchQuery.toLowerCase();
+        return (
+          item.name.toLowerCase().includes(q) ||
+          (item.cro && item.cro.toLowerCase().includes(q)) ||
+          (item.clinic_name && item.clinic_name.toLowerCase().includes(q)) ||
+          (item.uf && item.uf.toLowerCase().includes(q)) ||
+          (item.recommended_action && item.recommended_action.toLowerCase().includes(q))
+        );
+      });
+    const totalImplantsAtRisk = radarItems.reduce((acc, r) => acc + (r.monthly_implant_volume || 0), 0);
+    const criticalRiskCount = radarItems.filter((r) => r.churn_risk_level === "critico").length;
     const graphNodes = clinicalGraph?.nodes || [];
     const institutionNodes = graphNodes.filter(
       (n) => n.node_type !== "surgeon" && !n.id.startsWith("surgeon_")
@@ -689,24 +723,22 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
 
     return (
       <div className="space-y-6 max-w-7xl mx-auto">
-        {/* Cabeçalho da Rota Padronizado (RouteHeader com Ação de Destaque Laranja de 1 Palavra) */}
+        {/* Cabeçalho da Rota Padronizado Canônico */}
         <RouteHeader
           title={title || "Painel Geral de Vendas & Clientes"}
           description="Acompanhe oportunidades em aberto, faturamento mensal, clientes inativos para reativação e rede de parceiros."
+          exportConfig={{
+            format: exportFormat,
+            onFormatChange: (fmt) => setExportFormat(fmt as SnapshotExportFormat),
+            onExport: () => handleExportDataset(exportFormat),
+            loading: exporting,
+            label: "FORMATO",
+            exportLabel: "Exportar",
+          }}
           actions={[
             {
-              id: "export",
-              label: "Exportar", // Ação primária de destaque (laranja) - estritamente 1 palavra
-              variant: "default",
-              icon: <Download className={`h-3.5 w-3.5 ${exporting ? "animate-bounce" : ""}`} />,
-              onClick: () => handleExportDataset(exportFormat),
-              disabled: exporting,
-              loading: exporting,
-              title: "Exportar Snapshot Analítico R2",
-            },
-            {
               id: "refresh",
-              label: "Atualizar", // Ação secundária neutra - 1 palavra
+              label: "Atualizar",
               variant: "outline",
               icon: <RefreshCw className={`h-3.5 w-3.5 ${loadingExecutive ? "animate-spin" : ""}`} />,
               onClick: () => {
@@ -718,23 +750,7 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
               title: "Atualizar Cockpit Executivo",
             },
           ]}
-        >
-          <div className="flex items-center gap-1.5 bg-surface-bg border border-border-subtle rounded-md px-2 py-1 h-8">
-            <label className="text-[11px] font-semibold uppercase text-text-secondary whitespace-nowrap" htmlFor="snapshot-format">
-              Formato
-            </label>
-            <select
-              id="snapshot-format"
-              value={exportFormat}
-              onChange={(e) => setExportFormat(e.target.value as SnapshotExportFormat)}
-              className="h-6 rounded bg-transparent text-xs text-text-main font-medium focus:outline-none cursor-pointer"
-              aria-label="Formato do Snapshot R2"
-            >
-              <option value="csv">CSV</option>
-              <option value="parquet">PARQUET</option>
-            </select>
-          </div>
-        </RouteHeader>
+        />
 
         {exportSuccess && (
           <div className="p-3 rounded-lg bg-status-success-subtle border border-status-success/30 text-xs text-status-success flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -854,48 +870,93 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
         {/* Conteúdo Renderizado por Aba Selecionada */}
         {executiveCockpitTab === "radar" && (
           <Card className="border-border w-full">
-            <CardHeader>
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center justify-between gap-2">
-                  <div>
-                    <CardTitle>Clientes sem Pedidos Recentes</CardTitle>
-                    <CardDescription>
-                      Cirurgiões e clínicas que estão há mais tempo sem comprar implantes e precisam de reativação.
-                    </CardDescription>
+            <CardHeader className="p-4 sm:p-5 border-b border-border-subtle">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <CardTitle className="text-base font-semibold text-text-main">Clientes sem Pedidos Recentes</CardTitle>
+                    <Badge variant="danger" className="text-xs font-medium">
+                      {criticalRiskCount} em Risco Crítico
+                    </Badge>
+                    {totalImplantsAtRisk > 0 && (
+                      <Badge variant="warning" className="text-xs font-normal">
+                        Impacto: ~{totalImplantsAtRisk} implantes/mês
+                      </Badge>
+                    )}
                   </div>
-                  <Badge variant="danger">
-                    {radarItems.filter((r) => r.churn_risk_level === "critico").length || churnData?.summary?.critical_count || 0} em Risco ({radarItems.length} monitorados)
-                  </Badge>
+                  <CardDescription className="text-xs text-text-secondary">
+                    Cirurgiões e clínicas com retenção sob alerta temporal prioritária para reativação comercial.
+                  </CardDescription>
                 </div>
-                <div className="flex items-center gap-2">
-                  <label className="text-[11px] font-semibold uppercase text-text-secondary shrink-0" htmlFor="churn-days">
-                    Tempo sem Compras
-                  </label>
-                  <select
-                    id="churn-days"
-                    value={churnDaysThreshold}
-                    onChange={(e) => {
-                      setChurnDaysThreshold(e.target.value);
-                      setRadarPage(1);
-                    }}
-                    className="h-8 rounded-md border border-border bg-surface-card px-2.5 text-xs text-text-main font-medium cursor-pointer shadow-xs focus:ring-1 focus:ring-brand-primary"
-                    aria-label="Filtro temporal de monitoramento de clientes sem pedido"
+
+                {/* Toolbar Unificada em Linha */}
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <div className="relative w-full sm:w-56">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-text-muted pointer-events-none" />
+                    <Input
+                      type="text"
+                      placeholder="Buscar por nome, CRM ou UF..."
+                      value={radarSearchQuery}
+                      onChange={(e) => {
+                        setRadarSearchQuery(e.target.value);
+                        setRadarPage(1);
+                      }}
+                      className="h-8 pl-8 pr-2 text-xs bg-surface-card border-border"
+                      aria-label="Buscar cirurgião por nome, CRM ou UF"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <label className="text-[11px] font-semibold uppercase text-text-secondary shrink-0 hidden sm:inline" htmlFor="churn-days">
+                      Período:
+                    </label>
+                    <Select
+                      id="churn-days"
+                      value={churnDaysThreshold}
+                      onValueChange={(val) => {
+                        setChurnDaysThreshold(val);
+                        setRadarPage(1);
+                      }}
+                      options={[
+                        { value: "all", label: "Todos os Períodos" },
+                        { value: "30", label: "> 30 dias sem compras" },
+                        { value: "45", label: "> 45 dias sem compras" },
+                        { value: "60", label: "> 60 dias sem compras" },
+                        { value: "90", label: "Atraso Crítico (> 90 dias)" },
+                      ]}
+                      className="w-44"
+                      triggerClassName="h-8 text-xs font-medium bg-surface-card"
+                      aria-label="Filtro temporal de monitoramento de clientes sem pedido"
+                    />
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 px-2.5 gap-1.5 text-xs shrink-0"
+                    onClick={() => handleExportRadarCsv(radarItems)}
+                    disabled={radarItems.length === 0}
+                    title="Exportar lista filtrada para o time comercial (CSV)"
                   >
-                    <option value="all">Todos os Períodos</option>
-                    <option value="30">Mais de 30 dias sem compras</option>
-                    <option value="45">Mais de 45 dias sem compras</option>
-                    <option value="60">Mais de 60 dias sem compras</option>
-                    <option value="90">Atraso Crítico (Mais de 90 dias)</option>
-                  </select>
+                    <Download className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Exportar</span>
+                  </Button>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Lista em 2 Colunas para melhor aproveitamento visual e escaneabilidade */}
               {radarItems.length === 0 ? (
-                <p className="text-xs text-text-muted py-4">
-                  Nenhum cliente inativo detectado para os critérios selecionados.
-                </p>
+                <div className="py-8 text-center space-y-1">
+                  <p className="text-xs font-medium text-text-main">
+                    Nenhum cliente inativo detectado
+                  </p>
+                  <p className="text-xs text-text-muted">
+                    {radarSearchQuery
+                      ? `Nenhum resultado corresponde à busca "${radarSearchQuery}".`
+                      : "Todos os cirurgiões monitorados estão dentro da frequência esperada."}
+                  </p>
+                </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {radarItems
@@ -964,7 +1025,8 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
             {radarItems.length > 0 && (
               <div className="p-4 pt-3 border-t border-border-subtle flex items-center justify-between text-xs text-text-secondary">
                 <span>
-                  Mostrando {(radarPage - 1) * RADAR_ITEMS_PER_PAGE + 1}–{Math.min(radarPage * RADAR_ITEMS_PER_PAGE, radarItems.length)} de {radarItems.length} cirurgiões em risco
+                  Mostrando {(radarPage - 1) * RADAR_ITEMS_PER_PAGE + 1}–{Math.min(radarPage * RADAR_ITEMS_PER_PAGE, radarItems.length)} de {radarItems.length} cirurgiões
+                  {radarSearchQuery ? ` (filtrados por "${radarSearchQuery}")` : " em risco"}
                 </span>
                 <div className="flex items-center gap-1.5">
                   <Button
@@ -1015,27 +1077,28 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     {/* Filtro Dinâmico de Tipos de Instituição */}
-                    <div className="flex items-center gap-1.5 bg-surface-bg border border-border-subtle rounded-md px-2 py-1">
-                      <label htmlFor="filter-inst-type" className="text-[11px] font-medium text-text-secondary whitespace-nowrap">
+                    <div className="flex items-center gap-1.5 bg-surface-bg border border-border-subtle rounded-md px-2 py-0.5">
+                      <span className="text-[11px] font-medium text-text-secondary whitespace-nowrap">
                         Tipo:
-                      </label>
-                      <select
+                      </span>
+                      <Select
                         id="filter-inst-type"
                         value={selectedInstitutionType}
-                        onChange={(e) => {
-                          setSelectedInstitutionType(e.target.value);
+                        onValueChange={(val) => {
+                          setSelectedInstitutionType(val);
                           setCockpitInstitutionsPage(1);
                         }}
-                        className="h-6 text-xs bg-transparent border-0 text-text-main font-medium focus:outline-none cursor-pointer"
+                        options={[
+                          { value: "all", label: `Todos (${institutionNodes.length})` },
+                          ...Object.entries(dynamicInstitutionTypes).map(([typeKey, count]) => ({
+                            value: typeKey,
+                            label: `${String(institutionTypeLabels[typeKey] || typeKey)} (${String(count)})`,
+                          })),
+                        ]}
+                        className="w-48"
+                        triggerClassName="h-7 text-xs border-0 bg-transparent shadow-none px-2 py-0 font-medium"
                         aria-label="Filtrar por tipo de instituição"
-                      >
-                        <option value="all">Todos ({institutionNodes.length})</option>
-                        {Object.entries(dynamicInstitutionTypes).map(([typeKey, count]) => (
-                          <option key={typeKey} value={typeKey}>
-                            {String(institutionTypeLabels[typeKey] || typeKey)} ({String(count)})
-                          </option>
-                        ))}
-                      </select>
+                      />
                     </div>
 
                     {/* Filtro Específico: Instituições com KOLs (Feedback do Usuário) */}
@@ -1945,48 +2008,40 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
   // VISÃO 2: ESTÚDIO BI SUPERSET RLS & CONSOLE TEXT-TO-SQL (rota `analytics`)
   // ============================================================================
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-text-main">
-            {title || "Estúdio BI Superset RLS & Agente Analítico Text-to-SQL"}
-          </h1>
-          <p className="text-xs sm:text-sm text-text-secondary mt-1">
-            Governança de Guest Tokens JWT com Row-Level Security (RLS), exportação analítica Parquet/CSV no R2 e consultas em linguagem natural protegidas por AST.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => handleExportDataset("csv")}
-            disabled={exporting || loadingToken}
-            className="gap-1.5"
-          >
-            <Download className="h-3.5 w-3.5" />
-            {exporting ? "Exportando..." : "Exportar CSV (R2)"}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleExportDataset("parquet")}
-            disabled={exporting || loadingToken}
-            className="gap-1.5"
-          >
-            <Database className="h-3.5 w-3.5" />
-            Exportar Parquet (R2)
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleGenerateShareLink}
-            className="gap-1.5"
-          >
-            <Share2 className="h-3.5 w-3.5" />
-            Compartilhar Dashboard com a Equipe
-          </Button>
-        </div>
-      </div>
+    <div className="space-y-6 w-full">
+      <RouteHeader
+        title={title || "Estúdio BI Superset RLS & Agente Analítico Text-to-SQL"}
+        description="Governança de Guest Tokens JWT com Row-Level Security (RLS), exportação analítica Parquet/CSV no R2 e consultas em linguagem natural protegidas por AST."
+        exportConfig={{
+          format: exportFormat,
+          onFormatChange: (fmt) => setExportFormat(fmt as SnapshotExportFormat),
+          onExport: () => handleExportDataset(exportFormat),
+          loading: exporting,
+          label: "FORMATO",
+          exportLabel: "Exportar",
+        }}
+        actions={[
+          {
+            id: "share",
+            label: "Compartilhar",
+            variant: "outline",
+            icon: <Share2 className="h-3.5 w-3.5" />,
+            onClick: handleGenerateShareLink,
+            title: "Compartilhar Dashboard com a Equipe",
+          },
+          {
+            id: "refresh",
+            label: "Atualizar",
+            variant: "outline",
+            icon: <RefreshCw className={`h-3.5 w-3.5 ${loadingToken ? "animate-spin" : ""}`} />,
+            onClick: () => {
+              fetchGuestToken();
+            },
+            disabled: loadingToken,
+            title: "Atualizar Tokens e Conexão Superset",
+          },
+        ]}
+      />
 
       {exportSuccess && (
         <div className="p-3 rounded-lg bg-status-success-subtle border border-status-success/30 text-xs text-status-success flex items-center gap-2">

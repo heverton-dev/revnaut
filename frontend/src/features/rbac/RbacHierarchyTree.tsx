@@ -3,7 +3,6 @@ import {
   Building2,
   Percent,
   Plus,
-  Shield,
   Target,
   DollarSign,
   TrendingUp,
@@ -15,6 +14,7 @@ import {
   History,
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
+import { RouteHeader } from "@/components/ui/RouteHeader";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -512,37 +512,28 @@ export function RbacHierarchyTree({
 
   return (
     <div className={`space-y-4 ${className || ""}`}>
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-text-main flex items-center gap-2">
-              <Shield className="h-5 w-5 text-brand-primary" />
-              Equipes, Metas e Comissões
-            </h1>
-            <Badge variant="outline" className="border-brand-primary/30 text-brand-primary bg-brand-primary-subtle text-xs">
-              18 Endpoints Expostos
-            </Badge>
-          </div>
-          <p className="text-xs text-text-secondary mt-0.5">
-            Estrutura de equipes e unidades de negócio, metas de vendas e comissionamento.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
+      <RouteHeader
+        title="Equipes, Metas e Comissões"
+        description="Estrutura de equipes e unidades de negócio, metas de vendas e comissionamento."
+        badge={
+          <Badge variant="outline" className="border-brand-primary/30 text-brand-primary bg-brand-primary-subtle text-xs">
+            18 Endpoints Expostos
+          </Badge>
+        }
+        actions={[
+          {
+            id: "audit-history",
+            label: "Histórico",
+            variant: "outline",
+            icon: <History className="h-3.5 w-3.5" />,
+            title: "Histórico de Alterações de Cargo e Hierarquia",
+            onClick: () => {
               setShowAuditModal(true);
               fetchAuditHistory();
-            }}
-            className="gap-1.5 text-xs border-brand-primary/40 text-brand-primary hover:bg-brand-primary-subtle"
-          >
-            <History className="h-3.5 w-3.5" />
-            Histórico de Alterações de Cargo
-          </Button>
-        </div>
-      </div>
+            },
+          },
+        ]}
+      />
 
       {/* Tabs */}
       <Tabs

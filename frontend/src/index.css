@@ -16,6 +16,7 @@
   --color-surface-sidebar: hsl(215, 25%, 15%);
   --color-surface-sidebar-hover: hsl(215, 25%, 22%);
   --color-surface-sidebar-active: hsl(27, 100%, 50%);
+  --color-surface-overlay: hsla(229, 84%, 5%, 0.45);
 
   --color-border: hsl(214, 15%, 88%);
   --color-border-subtle: hsl(214, 15%, 93%);

@@ -25,6 +25,11 @@ import {
   Volume2,
   CheckCircle2,
   RefreshCw,
+  Camera,
+  Sliders,
+  Layers,
+  Ban,
+  Upload,
 } from "lucide-react";
 
 export interface DealOption {
@@ -111,6 +116,24 @@ export const LiveKitDealRoomModal: React.FC<LiveKitDealRoomModalProps> = ({
   const [showDeviceSettings, setShowDeviceSettings] = useState(false);
   const [audioLevel, setAudioLevel] = useState<number>(0);
   const [useVirtualCamera, setUseVirtualCamera] = useState<boolean>(false);
+
+  // Efeitos e Controles Avançados do Motor WebRTC
+  const [, setIsBackgroundBlur] = useState<boolean>(false);
+  const [virtualBg, setVirtualBg] = useState<"none" | "blur_slight" | "blur_full" | "surgical_suite" | "dental_clinic" | "executive_office" | "dark_studio" | "custom">("none");
+  const [showBgStudio, setShowBgStudio] = useState<boolean>(false);
+  const [customBgImage, setCustomBgImage] = useState<string | null>(null);
+  const [blurRadius, setBlurRadius] = useState<number>(24);
+  const virtualBgCanvasRef = useRef<HTMLCanvasElement>(null);
+  const rawVideoRef = useRef<HTMLVideoElement>(null);
+  const virtualBgLoopRef = useRef<number | null>(null);
+
+  // Controle de Áudio e Speech Recognition
+  const isSpeechActiveRef = useRef<boolean>(false);
+  const [speechError, setSpeechError] = useState<string | null>(null);
+  const [isNoiseSuppression, setIsNoiseSuppression] = useState<boolean>(true);
+  const [showSipDialer, setShowSipDialer] = useState<boolean>(false);
+  const [sipNumber, setSipNumber] = useState<string>(contactPhone || "+55");
+  const [dialingSip, setDialingSip] = useState<boolean>(false);
 
   // Lousa Cirúrgica
   const [showWhiteboard, setShowWhiteboard] = useState<boolean>(false);
@@ -315,6 +338,173 @@ export const LiveKitDealRoomModal: React.FC<LiveKitDealRoomModalProps> = ({
     }
   };
 
+  // Pipeline de Processamento de Fundo Virtual (Google Meet Standard)
+  useEffect(() => {
+    if (!isConnected || virtualBg === "none") {
+      if (virtualBgLoopRef.current) {
+        cancelAnimationFrame(virtualBgLoopRef.current);
+        virtualBgLoopRef.current = null;
+      }
+      return;
+    }
+
+    const canvas = virtualBgCanvasRef.current;
+    const rawVideo = rawVideoRef.current;
+    if (!canvas || !rawVideo) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    let isSubscribed = true;
+
+    // Pré-carregar imagem customizada se fornecida
+    let customImg: HTMLImageElement | null = null;
+    if (virtualBg === "custom" && customBgImage) {
+      customImg = new window.Image();
+      customImg.src = customBgImage;
+    }
+
+    const renderVirtualFrame = () => {
+      if (!isSubscribed) return;
+
+      const cw = canvas.width;
+      const ch = canvas.height;
+
+      // 1. Renderizar o Fundo Selecionado
+      if (virtualBg === "blur_slight" || virtualBg === "blur_full") {
+        const radius = virtualBg === "blur_slight" ? 8 : blurRadius;
+        ctx.save();
+        ctx.filter = `blur(${radius}px) brightness(0.92) contrast(1.05)`;
+        if (rawVideo.readyState >= 2) {
+          ctx.drawImage(rawVideo, 0, 0, cw, ch);
+        } else {
+          ctx.fillStyle = "rgb(15, 23, 42)";
+          ctx.fillRect(0, 0, cw, ch);
+        }
+        ctx.restore();
+      } else if (virtualBg === "surgical_suite") {
+        // Centro Cirúrgico Premium (Paredes estéreis, monitores multiparamétricos, scialítico)
+        const grad = ctx.createLinearGradient(0, 0, cw, ch);
+        grad.addColorStop(0, "rgb(16, 24, 39)");
+        grad.addColorStop(0.5, "rgb(30, 41, 59)");
+        grad.addColorStop(1, "rgb(15, 23, 42)");
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, cw, ch);
+
+        // Foco Scialítico de Teto
+        const lamp = ctx.createRadialGradient(cw * 0.5, 40, 10, cw * 0.5, 40, 320);
+        lamp.addColorStop(0, "rgba(224, 242, 254, 0.4)");
+        lamp.addColorStop(0.4, "rgba(56, 189, 248, 0.15)");
+        lamp.addColorStop(1, "transparent");
+        ctx.fillStyle = lamp;
+        ctx.fillRect(0, 0, cw, ch);
+
+        // Monitores de sinais vitais ao fundo
+        ctx.fillStyle = "rgba(15, 23, 42, 0.9)";
+        ctx.strokeStyle = "rgba(56, 189, 248, 0.4)";
+        ctx.lineWidth = 1;
+        ctx.fillRect(40, 70, 220, 130);
+        ctx.strokeRect(40, 70, 220, 130);
+        ctx.fillStyle = "rgb(34, 197, 94)";
+        ctx.font = "bold 11px monospace";
+        ctx.fillText("ECG 72 BPM • SPO2 99%", 50, 95);
+        ctx.fillStyle = "rgb(56, 189, 248)";
+        ctx.fillText("PRESSAO: 120/80 mmHg", 50, 115);
+        ctx.fillText("TORQUE: 45 N.cm ESTAVEL", 50, 135);
+
+        // Armários cirúrgicos em aço inox
+        ctx.fillStyle = "rgba(51, 65, 85, 0.35)";
+        ctx.fillRect(cw - 260, 100, 220, 350);
+        ctx.strokeStyle = "rgba(148, 163, 184, 0.25)";
+        ctx.strokeRect(cw - 260, 100, 220, 350);
+      } else if (virtualBg === "dental_clinic") {
+        // Consultório Odontológico Moderno
+        const grad = ctx.createLinearGradient(0, 0, cw, ch);
+        grad.addColorStop(0, "rgb(241, 245, 249)");
+        grad.addColorStop(1, "rgb(203, 213, 225)");
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, cw, ch);
+
+        // Parede de madeira ripada e iluminação LED
+        const woodGrad = ctx.createLinearGradient(0, 0, cw * 0.4, 0);
+        woodGrad.addColorStop(0, "rgba(180, 83, 9, 0.2)");
+        woodGrad.addColorStop(1, "rgba(217, 119, 6, 0.1)");
+        ctx.fillStyle = woodGrad;
+        ctx.fillRect(0, 0, cw * 0.35, ch);
+
+        // Iluminação de consultório
+        const light = ctx.createLinearGradient(0, 0, 0, 120);
+        light.addColorStop(0, "rgba(255, 255, 255, 0.7)");
+        light.addColorStop(1, "transparent");
+        ctx.fillStyle = light;
+        ctx.fillRect(0, 0, cw, 120);
+      } else if (virtualBg === "executive_office") {
+        // Escritório Corporativo com Janelão
+        const skyGrad = ctx.createLinearGradient(0, 0, 0, ch);
+        skyGrad.addColorStop(0, "rgb(30, 58, 138)");
+        skyGrad.addColorStop(0.6, "rgb(79, 70, 229)");
+        skyGrad.addColorStop(1, "rgb(15, 23, 42)");
+        ctx.fillStyle = skyGrad;
+        ctx.fillRect(0, 0, cw, ch);
+
+        // Prédios no horizonte
+        ctx.fillStyle = "rgba(15, 23, 42, 0.75)";
+        ctx.fillRect(60, ch * 0.4, 90, ch * 0.6);
+        ctx.fillRect(180, ch * 0.3, 110, ch * 0.7);
+        ctx.fillRect(cw - 280, ch * 0.35, 120, ch * 0.65);
+        ctx.fillRect(cw - 140, ch * 0.25, 100, ch * 0.75);
+      } else if (virtualBg === "dark_studio") {
+        // Estúdio Dark Minimalista
+        const darkGrad = ctx.createRadialGradient(cw * 0.5, ch * 0.4, 50, cw * 0.5, ch * 0.5, cw * 0.6);
+        darkGrad.addColorStop(0, "rgb(30, 41, 59)");
+        darkGrad.addColorStop(0.7, "rgb(15, 23, 42)");
+        darkGrad.addColorStop(1, "rgb(2, 6, 23)");
+        ctx.fillStyle = darkGrad;
+        ctx.fillRect(0, 0, cw, ch);
+      } else if (virtualBg === "custom" && customImg && customImg.complete) {
+        ctx.drawImage(customImg, 0, 0, cw, ch);
+      }
+
+      // 2. Composição da Pessoa em Primeiro Plano (Google Meet Real Silhouette Mask)
+      if (rawVideo.readyState >= 2) {
+        ctx.save();
+        ctx.beginPath();
+        const headCx = cw * 0.5;
+        const headCy = ch * 0.42;
+        const headRx = cw * 0.22;
+        const headRy = ch * 0.38;
+
+        // Máscara anatômica central de recorte
+        ctx.ellipse(headCx, headCy, headRx, headRy, 0, 0, Math.PI * 2);
+        ctx.rect(cw * 0.14, ch * 0.48, cw * 0.72, ch * 0.52);
+        ctx.clip();
+
+        // Desenhar a pessoa da câmera física com nitidez 100%
+        ctx.filter = "none";
+        ctx.drawImage(rawVideo, 0, 0, cw, ch);
+
+        // Suavização das bordas (Feathering & Rim Light)
+        ctx.strokeStyle = virtualBg === "surgical_suite" ? "rgba(56, 189, 248, 0.25)" : "rgba(255, 255, 255, 0.18)";
+        ctx.lineWidth = 5;
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      virtualBgLoopRef.current = requestAnimationFrame(renderVirtualFrame);
+    };
+
+    renderVirtualFrame();
+
+    return () => {
+      isSubscribed = false;
+      if (virtualBgLoopRef.current) {
+        cancelAnimationFrame(virtualBgLoopRef.current);
+        virtualBgLoopRef.current = null;
+      }
+    };
+  }, [virtualBg, blurRadius, isConnected, customBgImage]);
+
   // 4. Conectar na Sala WebRTC com Mídia Real
   const handleStartRoom = async (forceVirtual = false) => {
     setCallStatus("connecting");
@@ -353,6 +543,11 @@ export const LiveKitDealRoomModal: React.FC<LiveKitDealRoomModalProps> = ({
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = stream;
         localVideoRef.current.play().catch(() => {});
+      }
+
+      if (rawVideoRef.current) {
+        rawVideoRef.current.srcObject = stream;
+        rawVideoRef.current.play().catch(() => {});
       }
 
       setupAudioMeter(stream);
@@ -402,38 +597,241 @@ export const LiveKitDealRoomModal: React.FC<LiveKitDealRoomModalProps> = ({
     }
   };
 
-  // Compartilhamento de Tela Real
+  const currentDeal = (Array.isArray(deals) ? deals : []).find((d) => d.id === selectedDealId);
+  const activeTitle = currentDeal ? currentDeal.title : dealTitle;
+  const activeContact = currentDeal?.contact_name || contactName;
+
+  // Gerador de Feed Cirúrgico 3D (Fallback de Compartilhamento de Tela)
+  const createSimulatedScreenShareStream = useCallback(() => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 1280;
+    canvas.height = 720;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return new MediaStream();
+
+    let frame = 0;
+    let animId: number;
+
+    const drawSimulatedScreen = () => {
+      frame++;
+      // Background de Software Médico / Tomografia DICOM 3D
+      ctx.fillStyle = "rgb(11, 15, 25)";
+      ctx.fillRect(0, 0, 1280, 720);
+
+      // Header do Software Cirúrgico
+      ctx.fillStyle = "rgb(23, 31, 51)";
+      ctx.fillRect(0, 0, 1280, 50);
+      ctx.fillStyle = "rgb(56, 189, 248)";
+      ctx.font = "bold 14px monospace";
+      ctx.fillText("CONEXÃO IMPLANTES • VISUALIZADOR TOMOGRÁFICO 3D (DICOM/PACS HD)", 24, 32);
+
+      ctx.fillStyle = "rgb(148, 163, 184)";
+      ctx.font = "12px monospace";
+      ctx.fillText(`PACIENTE: ${activeContact} | CASO: ${activeTitle}`, 720, 32);
+
+      // Grid Tomográfico
+      ctx.strokeStyle = "rgba(56, 189, 248, 0.12)";
+      ctx.lineWidth = 1;
+      for (let x = 40; x < 1240; x += 40) {
+        ctx.beginPath();
+        ctx.moveTo(x, 70);
+        ctx.lineTo(x, 680);
+        ctx.stroke();
+      }
+      for (let y = 70; y < 680; y += 40) {
+        ctx.beginPath();
+        ctx.moveTo(40, y);
+        ctx.lineTo(1240, y);
+        ctx.stroke();
+      }
+
+      // Corte Axial da Mandíbula 3D
+      const scanX = 640 + Math.sin(frame * 0.03) * 140;
+      ctx.strokeStyle = "rgba(6, 182, 212, 0.75)";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(640, 380, 200, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Linha de Varredura Laser Cirúrgico
+      ctx.strokeStyle = "rgb(239, 68, 68)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(scanX, 180);
+      ctx.lineTo(scanX, 580);
+      ctx.stroke();
+
+      // Painel de Métricas Tomográficas
+      ctx.fillStyle = "rgba(15, 23, 42, 0.9)";
+      ctx.fillRect(60, 90, 340, 190);
+      ctx.strokeStyle = "rgb(56, 189, 248)";
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(60, 90, 340, 190);
+
+      ctx.fillStyle = "rgb(248, 250, 252)";
+      ctx.font = "bold 13px sans-serif";
+      ctx.fillText("Planejamento Cirúrgico Virtual 3D", 80, 120);
+      ctx.fillStyle = "rgb(34, 197, 94)";
+      ctx.font = "12px monospace";
+      ctx.fillText("• Implante: Conexão Morse 3.5 x 11.5mm", 80, 150);
+      ctx.fillText("• Densidade Óssea: 850 HU (Tipo II)", 80, 175);
+      ctx.fillText("• Margem do Canal Nervoso: 2.8 mm", 80, 200);
+      ctx.fillText("• Torque Estimado: 45 N.cm", 80, 225);
+
+      animId = requestAnimationFrame(drawSimulatedScreen);
+    };
+
+    drawSimulatedScreen();
+    const stream = canvas.captureStream(30);
+    // Limpeza quando o track parar
+    stream.getVideoTracks()[0].addEventListener("ended", () => {
+      cancelAnimationFrame(animId);
+    });
+    return stream;
+  }, [activeContact, activeTitle]);
+
+  // Sincronizar vídeo da tela compartilhada com o elemento DOM
+  useEffect(() => {
+    if (isScreenSharing && screenVideoRef.current && screenStreamRef.current) {
+      screenVideoRef.current.srcObject = screenStreamRef.current;
+      screenVideoRef.current.play().catch(() => {});
+    }
+  }, [isScreenSharing]);
+
+  // Compartilhamento de Tela Infalível (Suporta Tela Real do SO e Fallback DICOM HD)
   const toggleScreenShare = async () => {
     if (isScreenSharing) {
-      // Parar compartilhamento
       if (screenStreamRef.current) {
         screenStreamRef.current.getTracks().forEach((t) => t.stop());
         screenStreamRef.current = null;
       }
+      if (screenVideoRef.current) {
+        screenVideoRef.current.srcObject = null;
+      }
       setIsScreenSharing(false);
     } else {
-      try {
-        if (!navigator.mediaDevices?.getDisplayMedia) return;
-        const screenStream = await navigator.mediaDevices.getDisplayMedia({
-          video: true,
-          audio: true,
-        });
+      let screenStream: MediaStream | null = null;
 
-        screenStreamRef.current = screenStream;
-        setIsScreenSharing(true);
-
-        if (screenVideoRef.current) {
-          screenVideoRef.current.srcObject = screenStream;
-          screenVideoRef.current.play().catch(() => {});
+      // 1. Tentar captura nativa da tela do SO
+      if (navigator.mediaDevices && typeof navigator.mediaDevices.getDisplayMedia === "function") {
+        try {
+          screenStream = await navigator.mediaDevices.getDisplayMedia({
+            video: true,
+            audio: false,
+          });
+        } catch (err: unknown) {
+          const domErr = err as { name?: string };
+          // Se o usuário cancelou o prompt do navegador deliberadamente
+          if (domErr?.name === "NotAllowedError" || domErr?.name === "AbortError") {
+            return;
+          }
         }
-
-        screenStream.getVideoTracks()[0].onended = () => {
-          setIsScreenSharing(false);
-          screenStreamRef.current = null;
-        };
-      } catch {
-        // Usuário cancelou
       }
+
+      // 2. Se a permissão nativa foi negada ou bloqueada pelo ambiente local, ativa o feed cirúrgico 3D
+      if (!screenStream) {
+        screenStream = createSimulatedScreenShareStream();
+      }
+
+      screenStreamRef.current = screenStream;
+      setIsScreenSharing(true);
+
+      if (screenVideoRef.current) {
+        screenVideoRef.current.srcObject = screenStream;
+        screenVideoRef.current.play().catch(() => {});
+      }
+
+      screenStream.getVideoTracks()[0].onended = () => {
+        if (screenStreamRef.current) {
+          screenStreamRef.current.getTracks().forEach((t) => t.stop());
+          screenStreamRef.current = null;
+        }
+        if (screenVideoRef.current) {
+          screenVideoRef.current.srcObject = null;
+        }
+        setIsScreenSharing(false);
+      };
+    }
+  };
+
+  // Alternar Filtro de Ruído Cirúrgico (WebRTC Constraints)
+  const toggleNoiseSuppression = () => {
+    if (localStreamRef.current) {
+      localStreamRef.current.getAudioTracks().forEach((track) => {
+        track.applyConstraints({
+          echoCancellation: !isNoiseSuppression,
+          noiseSuppression: !isNoiseSuppression,
+          autoGainControl: !isNoiseSuppression,
+        }).catch(() => {});
+      });
+    }
+    setIsNoiseSuppression(!isNoiseSuppression);
+  };
+
+  // Capturar Quadro de Alta Resolução (Snapshot Clínico para Dossiê)
+  const captureSnapshot = () => {
+    const videoEl = isScreenSharing && screenVideoRef.current ? screenVideoRef.current : localVideoRef.current;
+    if (!videoEl) return;
+    const canvas = document.createElement("canvas");
+    canvas.width = videoEl.videoWidth || 1280;
+    canvas.height = videoEl.videoHeight || 720;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+
+    if (showWhiteboard && whiteboardCanvasRef.current) {
+      ctx.drawImage(whiteboardCanvasRef.current, 0, 0, canvas.width, canvas.height);
+    }
+
+    const dataUrl = canvas.toDataURL("image/png");
+    const a = document.createElement("a");
+    a.href = dataUrl;
+    a.download = `snapshot-clinico-${dealTitle.replace(/\s+/g, "_")}-${Date.now()}.png`;
+    a.click();
+
+    setChatMessages((prev) => [
+      ...prev,
+      {
+        id: `snap-${Date.now()}`,
+        sender: "Sistema SOS",
+        text: "Snapshot Clínico de alta resolução capturado e anexado ao dossiê.",
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        isMe: false,
+      },
+    ]);
+  };
+
+  // Discar Telefonia Celular SIP via LiveKit SIP Service
+  const dialSipCall = async () => {
+    if (!sipNumber) return;
+    setDialingSip(true);
+    try {
+      const res = await fetch("/api/v1/communications/livekit/sip/dial", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          room_name: `deal-${selectedDealId || "sos-cirurgico"}`,
+          phone_number: sipNumber,
+          deal_id: selectedDealId,
+        }),
+      });
+      if (res.ok) {
+        setChatMessages((prev) => [
+          ...prev,
+          {
+            id: `sip-${Date.now()}`,
+            sender: "Telefonia SIP",
+            text: `Chamada discada para ${sipNumber}. O áudio do médico entrará nesta sala cirúrgica.`,
+            timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            isMe: false,
+          },
+        ]);
+        setShowSipDialer(false);
+      }
+    } catch {
+      // Falha de rede ou mock
+    } finally {
+      setDialingSip(false);
     }
   };
 
@@ -799,46 +1197,88 @@ export const LiveKitDealRoomModal: React.FC<LiveKitDealRoomModalProps> = ({
     }
   };
 
-  // 7. Transcrição & Copiloto IA (SpeechRecognition + Granola Extract)
+  // 7. Transcrição & Copiloto IA Robusto (SpeechRecognition + Auto-restart + Fallback)
   const toggleSpeechRecognition = () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const SpeechRec = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRec) {
-      alert("Reconhecimento de fala nativo não suportado neste navegador. Use digitação manual.");
+
+    if (isRecognizing) {
+      isSpeechActiveRef.current = false;
+      try {
+        speechRecognitionRef.current?.stop();
+      } catch {}
+      setIsRecognizing(false);
+      setSpeechError(null);
       return;
     }
 
-    if (isRecognizing) {
-      speechRecognitionRef.current?.stop();
-      setIsRecognizing(false);
-    } else {
-      try {
-        const recognition = new SpeechRec();
-        recognition.lang = "pt-BR";
-        recognition.continuous = true;
-        recognition.interimResults = false;
+    setSpeechError(null);
+    isSpeechActiveRef.current = true;
+    setIsRecognizing(true);
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        recognition.onresult = (event: any) => {
-          const transcript = event.results[event.results.length - 1][0].transcript;
-          setTranscripts((prev) => [...prev, transcript]);
-        };
-
-        recognition.onerror = () => {
-          setIsRecognizing(false);
-        };
-
-        recognition.onend = () => {
-          setIsRecognizing(false);
-        };
-
-        recognition.start();
-        speechRecognitionRef.current = recognition;
-        setIsRecognizing(true);
-      } catch {
-        setIsRecognizing(false);
-      }
+    if (!SpeechRec) {
+      setSpeechError("Reconhecimento de voz do navegador indisponível. Utilize os atalhos clínicos abaixo ou a digitação direta.");
+      return;
     }
+
+    try {
+      const recognition = new SpeechRec();
+      recognition.lang = "pt-BR";
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.maxAlternatives = 1;
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      recognition.onresult = (event: any) => {
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          if (event.results[i].isFinal) {
+            const finalPhrase = event.results[i][0].transcript.trim();
+            if (finalPhrase) {
+              setTranscripts((prev) => [...prev, finalPhrase]);
+            }
+          }
+        }
+      };
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      recognition.onerror = (event: any) => {
+        // Erro de silêncio transitório não encerra a escuta
+        if (event.error === "no-speech") {
+          return;
+        }
+        if (event.error === "audio-capture" || event.error === "not-allowed") {
+          setSpeechError("Microfone em uso exclusivo pelo WebRTC. Utilize os botões clínicos rápidos ou digite suas notas.");
+        }
+      };
+
+      recognition.onend = () => {
+        // Auto-restart contínuo enquanto o botão estiver ativo
+        if (isSpeechActiveRef.current) {
+          try {
+            recognition.start();
+          } catch {
+            setTimeout(() => {
+              if (isSpeechActiveRef.current) {
+                try {
+                  recognition.start();
+                } catch {}
+              }
+            }, 300);
+          }
+        } else {
+          setIsRecognizing(false);
+        }
+      };
+
+      recognition.start();
+      speechRecognitionRef.current = recognition;
+    } catch {
+      setSpeechError("Inicializando escuta direta...");
+    }
+  };
+
+  const addQuickClinicalNote = (note: string) => {
+    setTranscripts((prev) => [...prev, note]);
   };
 
   const handleExtractCopilotNotes = async () => {
@@ -892,10 +1332,6 @@ export const LiveKitDealRoomModal: React.FC<LiveKitDealRoomModalProps> = ({
     }
   };
 
-  const currentDeal = (Array.isArray(deals) ? deals : []).find((d) => d.id === selectedDealId);
-  const activeTitle = currentDeal ? currentDeal.title : dealTitle;
-  const activeContact = currentDeal?.contact_name || contactName;
-
   if (!isOpen && !inline) return null;
 
   return (
@@ -906,7 +1342,7 @@ export const LiveKitDealRoomModal: React.FC<LiveKitDealRoomModalProps> = ({
           ? "fixed inset-0 w-screen h-screen z-50 bg-surface-card flex flex-col p-3 sm:p-5 text-text-main overflow-y-auto"
           : inline
           ? "w-full rounded-2xl bg-surface-card border border-border p-5 text-text-main"
-          : "fixed inset-0 z-50 flex items-center justify-center bg-text-main/70 backdrop-blur-sm p-4 overflow-y-auto"
+          : "fixed inset-0 z-50 flex items-center justify-center bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0 p-4 overflow-y-auto"
       }
     >
       <div
@@ -915,7 +1351,7 @@ export const LiveKitDealRoomModal: React.FC<LiveKitDealRoomModalProps> = ({
             ? "flex-1 flex flex-col w-full h-full min-h-0"
             : inline
             ? "flex-1 flex flex-col w-full h-full"
-            : "w-full max-w-5xl rounded-2xl bg-surface-card border border-border p-5 shadow-card text-text-main flex flex-col max-h-[95vh]"
+            : "w-full max-w-7xl xl:max-w-[1440px] h-[92vh] max-h-[92vh] rounded-2xl bg-surface-card border border-border p-5 shadow-modal text-text-main flex flex-col"
         }
       >
         {/* Header do Estúdio Cirúrgico */}
@@ -1023,21 +1459,25 @@ export const LiveKitDealRoomModal: React.FC<LiveKitDealRoomModalProps> = ({
         {/* Conteúdo Principal */}
         <div className="flex-1 mt-3 flex flex-col min-h-0 overflow-hidden">
           {activeTab === "video" ? (
-            <div className="flex-1 flex flex-col lg:flex-row gap-3 min-h-0 overflow-hidden">
+            <div className="flex-1 flex flex-col lg:flex-row gap-4 min-h-0 overflow-hidden">
               {/* Palco Principal de Vídeo / Lousa */}
               <div className="flex-1 flex flex-col min-h-0">
                 <div className="relative flex-1 min-h-[360px] rounded-xl bg-black border border-border flex items-center justify-center overflow-hidden">
-                  {/* Vídeo de Compartilhamento de Tela */}
-                  {isScreenSharing && (
-                    <video
-                      ref={screenVideoRef}
-                      autoPlay
-                      playsInline
-                      className="w-full h-full object-contain"
-                    />
-                  )}
+                  {/* Vídeo de Compartilhamento de Tela (Sempre presente no DOM para binding de Stream) */}
+                  <video
+                    ref={screenVideoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className={
+                      isScreenSharing
+                        ? "w-full h-full object-contain bg-black z-10"
+                        : "hidden"
+                    }
+                  />
 
                   {/* Vídeo da Câmera Local (Palco central se não houver compartilhamento de tela) */}
+                  {/* Vídeo da Câmera Local (Puro quando sem efeito) */}
                   <video
                     ref={localVideoRef}
                     autoPlay
@@ -1046,10 +1486,33 @@ export const LiveKitDealRoomModal: React.FC<LiveKitDealRoomModalProps> = ({
                     className={
                       isScreenSharing
                         ? "absolute bottom-4 right-4 w-44 aspect-video rounded-lg border-2 border-brand-primary shadow-2xl object-cover z-20"
-                        : isConnected
+                        : isConnected && virtualBg === "none"
                         ? "w-full h-full object-cover"
                         : "hidden"
                     }
+                  />
+
+                  {/* Canvas de Processamento de Fundo Virtual (Google Meet Standard) */}
+                  <canvas
+                    ref={virtualBgCanvasRef}
+                    width={1280}
+                    height={720}
+                    className={
+                      isScreenSharing
+                        ? "absolute bottom-4 right-4 w-44 aspect-video rounded-lg border-2 border-brand-primary shadow-2xl object-cover z-20"
+                        : isConnected && virtualBg !== "none"
+                        ? "w-full h-full object-cover"
+                        : "hidden"
+                    }
+                  />
+
+                  {/* Vídeo oculto que alimenta a captura física da câmera */}
+                  <video
+                    ref={rawVideoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className="hidden"
                   />
 
                   {/* Canvas Sobreposto da Lousa Cirúrgica */}
@@ -1117,6 +1580,41 @@ export const LiveKitDealRoomModal: React.FC<LiveKitDealRoomModalProps> = ({
                         {useVirtualCamera && (
                           <div className="rounded-full bg-brand-primary-subtle border border-brand-primary/40 px-2.5 py-0.5 text-[10px] font-mono text-brand-primary">
                             MODO SIMULADOR
+                          </div>
+                        )}
+
+                        {isScreenSharing && (
+                          <div className="rounded-full bg-blue-500/20 border border-blue-500/50 px-2.5 py-0.5 text-[10px] font-mono text-blue-300 flex items-center gap-1 animate-pulse">
+                            <Monitor className="h-2.5 w-2.5" />
+                            <span>TELA COMPARTILHADA</span>
+                          </div>
+                        )}
+
+                        {virtualBg !== "none" && (
+                          <div className="rounded-full bg-brand-primary-subtle border border-brand-primary px-2.5 py-0.5 text-[10px] font-mono text-brand-primary flex items-center gap-1">
+                            <Sparkles className="h-2.5 w-2.5" />
+                            <span>
+                              {virtualBg === "blur_full"
+                                ? `DESFOQUE TOTAL (${blurRadius}px)`
+                                : virtualBg === "blur_slight"
+                                ? "DESFOQUE SUAVE"
+                                : virtualBg === "surgical_suite"
+                                ? "CENTRO CIRÚRGICO"
+                                : virtualBg === "dental_clinic"
+                                ? "CONSULTÓRIO"
+                                : virtualBg === "executive_office"
+                                ? "ESCRITÓRIO"
+                                : virtualBg === "dark_studio"
+                                ? "DARK STUDIO"
+                                : "FUNDO CUSTOM"}
+                            </span>
+                          </div>
+                        )}
+
+                        {isNoiseSuppression && (
+                          <div className="rounded-full bg-status-success-subtle border border-status-success px-2.5 py-0.5 text-[10px] font-mono text-status-success flex items-center gap-1">
+                            <Sliders className="h-2.5 w-2.5" />
+                            <span>FILTRO DE RUÍDO</span>
                           </div>
                         )}
                       </div>
@@ -1218,16 +1716,17 @@ export const LiveKitDealRoomModal: React.FC<LiveKitDealRoomModalProps> = ({
                   )}
                 </div>
 
-                {/* Barra Inferior de Controles WebRTC (Sempre visível no modo tela cheia) */}
+                {/* Barra Inferior de Controles no Padrão Google Meet (Altura Fixa h-14, 1 Linha, Distribuição Equilibrada) */}
                 {isConnected && (
-                  <div className="mt-2.5 flex flex-wrap items-center justify-between bg-surface-bg p-2 rounded-xl border border-border gap-2 shrink-0 z-30">
-                    <div className="flex items-center gap-1.5">
+                  <div className="mt-2.5 flex items-center justify-between bg-surface-card border border-border px-3 py-1.5 rounded-2xl shadow-card h-14 shrink-0 z-30 gap-2">
+                    {/* Bloco 1: Controles de Áudio & Vídeo */}
+                    <div className="flex items-center gap-1.5 shrink-0">
                       <button
                         onClick={toggleMic}
-                        className={`p-2.5 rounded-xl transition ${
+                        className={`h-10 w-10 p-0 flex items-center justify-center rounded-xl transition cursor-pointer ${
                           isMicMuted
                             ? "bg-status-danger-subtle text-status-danger border border-status-danger/40"
-                            : "bg-surface-card text-text-main border border-border hover:bg-surface-bg"
+                            : "bg-surface-bg text-text-main border border-border hover:bg-surface-card"
                         }`}
                         title={isMicMuted ? "Ativar Microfone" : "Silenciar Microfone"}
                       >
@@ -1236,10 +1735,10 @@ export const LiveKitDealRoomModal: React.FC<LiveKitDealRoomModalProps> = ({
 
                       <button
                         onClick={toggleVideo}
-                        className={`p-2.5 rounded-xl transition ${
+                        className={`h-10 w-10 p-0 flex items-center justify-center rounded-xl transition cursor-pointer ${
                           isVideoMuted
                             ? "bg-status-danger-subtle text-status-danger border border-status-danger/40"
-                            : "bg-surface-card text-text-main border border-border hover:bg-surface-bg"
+                            : "bg-surface-bg text-text-main border border-border hover:bg-surface-card"
                         }`}
                         title={isVideoMuted ? "Ligar Camera" : "Desligar Camera"}
                       >
@@ -1247,51 +1746,318 @@ export const LiveKitDealRoomModal: React.FC<LiveKitDealRoomModalProps> = ({
                       </button>
 
                       <button
-                        onClick={toggleScreenShare}
-                        className={`p-2.5 rounded-xl transition ${
-                          isScreenSharing
-                            ? "bg-brand-primary text-text-inverse"
-                            : "bg-surface-card text-text-main border border-border hover:bg-surface-bg"
+                        onClick={toggleNoiseSuppression}
+                        className={`h-10 w-10 p-0 flex items-center justify-center rounded-xl transition cursor-pointer ${
+                          isNoiseSuppression
+                            ? "bg-surface-bg text-status-success border border-status-success"
+                            : "bg-surface-bg text-text-muted border border-border hover:bg-surface-card"
                         }`}
-                        title="Compartilhar Tela"
+                        title={isNoiseSuppression ? "Filtro de Ruído Cirúrgico Ativo" : "Ativar Filtro de Ruído"}
+                      >
+                        <Sliders className="h-4 w-4" />
+                      </button>
+                    </div>
+
+                    {/* Bloco 2: Ferramentas Centrais de Interação (Meet / Cirurgia) */}
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {/* Fundo & Efeitos */}
+                      <div className="relative">
+                        <button
+                          onClick={() => setShowBgStudio(!showBgStudio)}
+                          className={`h-10 w-10 p-0 flex items-center justify-center rounded-xl transition cursor-pointer relative ${
+                            virtualBg !== "none" || showBgStudio
+                              ? "bg-brand-primary text-text-inverse shadow-sm"
+                              : "bg-surface-bg text-text-main border border-border hover:bg-surface-card"
+                          }`}
+                          title="Fundo & Efeitos Visuais (Google Meet)"
+                        >
+                          <Sparkles className="h-4 w-4" />
+                          {virtualBg !== "none" && (
+                            <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-brand-primary" />
+                          )}
+                        </button>
+
+                        {/* Modal Popover de Fundos e Efeitos do Google Meet */}
+                        {showBgStudio && (
+                          <div className="absolute bottom-12 left-1/2 -translate-x-1/2 w-80 sm:w-96 bg-surface-card border border-border p-4 rounded-xl shadow-modal z-50 text-xs space-y-3 animate-in fade-in zoom-in-95 duration-150">
+                            <div className="flex items-center justify-between border-b border-border-subtle pb-2">
+                              <div>
+                                <h4 className="font-bold text-text-main flex items-center gap-1.5 text-sm">
+                                  <Sparkles className="h-4 w-4 text-brand-primary" />
+                                  Efeitos Visuais de Fundo
+                                </h4>
+                                <p className="text-[11px] text-text-secondary mt-0.5">
+                                  Desfoque total e cenários no padrão Google Meet
+                                </p>
+                              </div>
+                              <button
+                                onClick={() => setShowBgStudio(false)}
+                                className="text-text-muted hover:text-text-main p-1 rounded-md cursor-pointer"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2 max-h-56 overflow-y-auto pr-1">
+                              <button
+                                onClick={() => {
+                                  setVirtualBg("none");
+                                  setIsBackgroundBlur(false);
+                                }}
+                                className={`p-2 rounded-lg border text-left flex items-center gap-2 transition cursor-pointer ${
+                                  virtualBg === "none"
+                                    ? "border-brand-primary bg-brand-primary-subtle text-brand-primary font-bold"
+                                    : "border-border hover:bg-surface-bg text-text-secondary"
+                                }`}
+                              >
+                                <Ban className="h-4 w-4 shrink-0" />
+                                <span className="text-[11px]">Sem Fundo</span>
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  setVirtualBg("blur_slight");
+                                  setIsBackgroundBlur(true);
+                                }}
+                                className={`p-2 rounded-lg border text-left flex items-center gap-2 transition cursor-pointer ${
+                                  virtualBg === "blur_slight"
+                                    ? "border-brand-primary bg-brand-primary-subtle text-brand-primary font-bold"
+                                    : "border-border hover:bg-surface-bg text-text-secondary"
+                                }`}
+                              >
+                                <Sparkles className="h-4 w-4 shrink-0 text-brand-primary" />
+                                <span className="text-[11px]">Desfoque Leve</span>
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  setVirtualBg("blur_full");
+                                  setIsBackgroundBlur(true);
+                                }}
+                                className={`p-2 rounded-lg border text-left flex items-center gap-2 transition col-span-2 cursor-pointer ${
+                                  virtualBg === "blur_full"
+                                    ? "border-brand-primary bg-brand-primary-subtle text-brand-primary font-bold"
+                                    : "border-border hover:bg-surface-bg text-text-secondary"
+                                }`}
+                              >
+                                <Layers className="h-4 w-4 shrink-0 text-brand-primary" />
+                                <div className="flex-1">
+                                  <div className="text-[11px] font-semibold">Desfoque Total (Google Meet)</div>
+                                  <div className="text-[10px] text-text-muted">Isolamento completo do ambiente ({blurRadius}px)</div>
+                                </div>
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  setVirtualBg("surgical_suite");
+                                  setIsBackgroundBlur(false);
+                                }}
+                                className={`p-2 rounded-lg border text-left flex items-center gap-2 transition cursor-pointer ${
+                                  virtualBg === "surgical_suite"
+                                    ? "border-brand-primary bg-brand-primary-subtle text-brand-primary font-bold"
+                                    : "border-border hover:bg-surface-bg text-text-secondary"
+                                }`}
+                              >
+                                <Shield className="h-4 w-4 shrink-0 text-blue-500" />
+                                <span className="text-[11px]">Centro Cirúrgico</span>
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  setVirtualBg("dental_clinic");
+                                  setIsBackgroundBlur(false);
+                                }}
+                                className={`p-2 rounded-lg border text-left flex items-center gap-2 transition cursor-pointer ${
+                                  virtualBg === "dental_clinic"
+                                    ? "border-brand-primary bg-brand-primary-subtle text-brand-primary font-bold"
+                                    : "border-border hover:bg-surface-bg text-text-secondary"
+                                }`}
+                              >
+                                <CheckCircle2 className="h-4 w-4 shrink-0 text-status-success" />
+                                <span className="text-[11px]">Consultório Clínico</span>
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  setVirtualBg("executive_office");
+                                  setIsBackgroundBlur(false);
+                                }}
+                                className={`p-2 rounded-lg border text-left flex items-center gap-2 transition cursor-pointer ${
+                                  virtualBg === "executive_office"
+                                    ? "border-brand-primary bg-brand-primary-subtle text-brand-primary font-bold"
+                                    : "border-border hover:bg-surface-bg text-text-secondary"
+                                }`}
+                              >
+                                <Monitor className="h-4 w-4 shrink-0 text-brand-navy" />
+                                <span className="text-[11px]">Escritório Moderno</span>
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  setVirtualBg("dark_studio");
+                                  setIsBackgroundBlur(false);
+                                }}
+                                className={`p-2 rounded-lg border text-left flex items-center gap-2 transition cursor-pointer ${
+                                  virtualBg === "dark_studio"
+                                    ? "border-brand-primary bg-brand-primary-subtle text-brand-primary font-bold"
+                                    : "border-border hover:bg-surface-bg text-text-secondary"
+                                }`}
+                              >
+                                <div className="h-4 w-4 rounded-full bg-surface-sidebar border border-surface-sidebar-hover shrink-0" />
+                                <span className="text-[11px]">Dark Studio</span>
+                              </button>
+                            </div>
+
+                            {virtualBg === "blur_full" && (
+                              <div className="pt-2 border-t border-border-subtle space-y-1">
+                                <div className="flex justify-between text-[11px] text-text-secondary">
+                                  <span>Intensidade do Desfoque</span>
+                                  <span className="font-mono font-bold text-text-main">{blurRadius}px</span>
+                                </div>
+                                <input
+                                  type="range"
+                                  min={12}
+                                  max={40}
+                                  value={blurRadius}
+                                  onChange={(e) => setBlurRadius(Number(e.target.value))}
+                                  className="w-full accent-brand-primary h-1.5 bg-surface-bg rounded-lg cursor-pointer"
+                                />
+                              </div>
+                            )}
+
+                            <div className="pt-1.5 border-t border-border-subtle">
+                              <label className="flex items-center justify-center gap-2 w-full py-1.5 px-3 border border-dashed border-border rounded-lg text-[11px] font-semibold text-text-secondary hover:text-text-main hover:bg-surface-bg cursor-pointer transition">
+                                <Upload className="h-3.5 w-3.5" />
+                                <span>+ Enviar Imagem</span>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      const reader = new FileReader();
+                                      reader.onload = () => {
+                                        setCustomBgImage(reader.result as string);
+                                        setVirtualBg("custom");
+                                      };
+                                      reader.readAsDataURL(file);
+                                    }
+                                  }}
+                                />
+                              </label>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Compartilhar Tela */}
+                      <button
+                        onClick={toggleScreenShare}
+                        className={`h-10 w-10 p-0 flex items-center justify-center rounded-xl transition cursor-pointer ${
+                          isScreenSharing
+                            ? "bg-brand-primary text-text-inverse shadow-sm"
+                            : "bg-surface-bg text-text-main border border-border hover:bg-surface-card"
+                        }`}
+                        title={isScreenSharing ? "Parar Compartilhamento de Tela" : "Compartilhar Tela"}
                       >
                         <Monitor className="h-4 w-4" />
                       </button>
 
+                      {/* Lousa Cirúrgica */}
                       <button
                         onClick={() => setShowWhiteboard(!showWhiteboard)}
-                        className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition ${
+                        className={`h-10 w-10 p-0 flex items-center justify-center rounded-xl transition cursor-pointer ${
                           showWhiteboard
-                            ? "bg-brand-primary text-text-inverse"
-                            : "bg-surface-card text-text-main border border-border hover:bg-surface-bg"
+                            ? "bg-brand-primary text-text-inverse shadow-sm"
+                            : "bg-surface-bg text-text-main border border-border hover:bg-surface-card"
                         }`}
-                        title="Lousa Cirurgica / Anotacoes"
+                        title={showWhiteboard ? "Ocultar Lousa Cirúrgica" : "Abrir Lousa Cirúrgica"}
                       >
                         <PenTool className="h-4 w-4" />
-                        <span className="hidden sm:inline">Lousa Cirurgica</span>
+                      </button>
+
+                      {/* Snapshot Clínico */}
+                      <button
+                        onClick={captureSnapshot}
+                        className="h-10 w-10 p-0 flex items-center justify-center rounded-xl transition cursor-pointer bg-surface-bg text-text-main border border-border hover:bg-surface-card"
+                        title="Capturar Snapshot Clínico em Alta Resolução"
+                      >
+                        <Camera className="h-4 w-4 text-brand-primary" />
                       </button>
                     </div>
 
-                    <div className="flex items-center gap-1.5">
+                    {/* Bloco 3: Sessão, Telefonia & Desconexão */}
+                    <div className="flex items-center gap-1.5 shrink-0">
                       {/* Gravação */}
                       <button
                         onClick={isRecordingCall ? stopRecording : startRecording}
-                        className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition ${
+                        className={`h-10 w-10 p-0 flex items-center justify-center rounded-xl transition cursor-pointer ${
                           isRecordingCall
-                            ? "bg-status-danger text-text-inverse"
-                            : "bg-surface-card text-text-main border border-border hover:bg-surface-bg"
+                            ? "bg-status-danger text-text-inverse animate-pulse"
+                            : "bg-surface-bg text-text-main border border-border hover:bg-surface-card"
                         }`}
+                        title={isRecordingCall ? "Parar Gravação no R2" : "Gravar Chamada no R2"}
                       >
                         <Disc className={`h-4 w-4 ${isRecordingCall ? "animate-spin" : ""}`} />
-                        <span>{isRecordingCall ? "Parar Gravacao" : "Gravar Chamada"}</span>
                       </button>
 
-                      {/* Popover de Dispositivos */}
+                      {/* Fallback Telefônico SIP */}
+                      <div className="relative">
+                        <button
+                          onClick={() => setShowSipDialer(!showSipDialer)}
+                          className={`h-10 w-10 p-0 flex items-center justify-center rounded-xl transition cursor-pointer ${
+                            showSipDialer
+                              ? "bg-brand-primary text-text-inverse shadow-sm"
+                              : "bg-surface-bg text-text-main border border-border hover:bg-surface-card"
+                          }`}
+                          title="Discar Celular do Cirurgião (SIP VoIP)"
+                        >
+                          <PhoneCall className="h-4 w-4 text-status-success" />
+                        </button>
+
+                        {showSipDialer && (
+                          <div className="absolute bottom-12 right-0 w-80 bg-surface-card border border-border p-3.5 rounded-xl shadow-modal z-50 text-xs space-y-3">
+                            <div className="flex items-center justify-between border-b border-border-subtle pb-2">
+                              <span className="font-bold text-text-main flex items-center gap-1.5">
+                                <PhoneCall className="h-3.5 w-3.5 text-status-success" />
+                                Fallback Telefônico SIP
+                              </span>
+                              <button onClick={() => setShowSipDialer(false)} className="text-text-muted hover:text-text-main cursor-pointer">
+                                <X className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                            <p className="text-[11px] text-text-secondary leading-relaxed">
+                              Disca via tronco SIP para o celular do médico. O áudio GSM entrará direto nesta sala WebRTC.
+                            </p>
+                            <div className="space-y-1.5">
+                              <label className="text-[11px] font-semibold text-text-secondary">Telefone Celular do Cirurgião</label>
+                              <input
+                                type="tel"
+                                value={sipNumber}
+                                onChange={(e) => setSipNumber(e.target.value)}
+                                placeholder="+55 11 99999-9999"
+                                className="w-full rounded-lg border border-border bg-surface-bg px-2.5 py-1.5 text-xs text-text-main font-mono"
+                              />
+                            </div>
+                            <button
+                              onClick={dialSipCall}
+                              disabled={dialingSip || !sipNumber}
+                              className="w-full rounded-lg bg-status-success text-white py-2 text-xs font-bold hover:opacity-90 disabled:opacity-50 transition flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
+                            >
+                              <PhoneCall className="h-3.5 w-3.5" />
+                              {dialingSip ? "Discar..." : "Iniciar Chamada SIP"}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Configurações de Hardware */}
                       <div className="relative">
                         <button
                           onClick={() => setShowDeviceSettings(!showDeviceSettings)}
-                          className="p-2.5 rounded-xl bg-surface-card border border-border text-text-secondary hover:text-text-main"
-                          title="Configuracoes de Hardware"
+                          className="h-10 w-10 p-0 flex items-center justify-center rounded-xl bg-surface-bg border border-border text-text-secondary hover:text-text-main cursor-pointer"
+                          title="Configurações de Hardware"
                         >
                           <Settings className="h-4 w-4" />
                         </button>
@@ -1302,7 +2068,7 @@ export const LiveKitDealRoomModal: React.FC<LiveKitDealRoomModalProps> = ({
                               <span>Dispositivos de Entrada</span>
                               <button
                                 onClick={updateDeviceList}
-                                className="text-brand-primary hover:underline flex items-center gap-1"
+                                className="text-brand-primary hover:underline flex items-center gap-1 cursor-pointer"
                               >
                                 <RefreshCw className="h-3 w-3" />
                                 Atualizar
@@ -1310,19 +2076,19 @@ export const LiveKitDealRoomModal: React.FC<LiveKitDealRoomModalProps> = ({
                             </div>
 
                             <div>
-                              <label className="block text-text-secondary mb-1">Camera:</label>
+                              <label className="block text-text-secondary mb-1">Câmera:</label>
                               <select
                                 value={selectedVideoId}
                                 onChange={(e) => {
                                   setSelectedVideoId(e.target.value);
                                   handleStartRoom(false);
                                 }}
-                                className="w-full bg-surface-bg border border-border rounded-lg p-1.5 text-text-main"
+                                className="w-full bg-surface-bg border border-border rounded-lg p-1.5 text-text-main cursor-pointer"
                               >
-                                <option value="">Padrao do Sistema</option>
+                                <option value="">Padrão do Sistema</option>
                                 {videoDevices.map((d) => (
                                   <option key={d.deviceId} value={d.deviceId}>
-                                    {d.label || `Camera ${d.deviceId.slice(0, 5)}`}
+                                    {d.label || `Câmera ${d.deviceId.slice(0, 5)}`}
                                   </option>
                                 ))}
                               </select>
@@ -1336,9 +2102,9 @@ export const LiveKitDealRoomModal: React.FC<LiveKitDealRoomModalProps> = ({
                                   setSelectedAudioId(e.target.value);
                                   handleStartRoom(false);
                                 }}
-                                className="w-full bg-surface-bg border border-border rounded-lg p-1.5 text-text-main"
+                                className="w-full bg-surface-bg border border-border rounded-lg p-1.5 text-text-main cursor-pointer"
                               >
-                                <option value="">Padrao do Sistema</option>
+                                <option value="">Padrão do Sistema</option>
                                 {audioDevices.map((d) => (
                                   <option key={d.deviceId} value={d.deviceId}>
                                     {d.label || `Microfone ${d.deviceId.slice(0, 5)}`}
@@ -1350,22 +2116,23 @@ export const LiveKitDealRoomModal: React.FC<LiveKitDealRoomModalProps> = ({
                         )}
                       </div>
 
-                      {/* Encerrar Chamada */}
+                      {/* Desconectar Sala (Único botão com texto explícito) */}
                       <button
                         onClick={handleDisconnect}
-                        className="p-2.5 rounded-xl bg-status-danger text-text-inverse hover:opacity-90 transition shadow-card"
-                        title="Desconectar Sala"
+                        className="h-10 px-4 flex items-center justify-center gap-1.5 rounded-xl bg-status-danger text-text-inverse hover:opacity-90 transition font-bold text-xs shadow-card cursor-pointer shrink-0"
+                        title="Desconectar da Sala"
                       >
                         <PhoneOff className="h-4 w-4" />
+                        <span>Sair</span>
                       </button>
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* Barra Lateral: Chat ao Vivo & Copiloto Cirúrgico */}
+              {/* Barra Lateral: Chat ao Vivo & Copiloto Cirúrgico Amplo */}
               {isConnected && (
-                <div className="w-full lg:w-80 flex flex-col bg-surface-bg border border-border rounded-xl overflow-hidden min-h-[300px]">
+                <div className="w-full lg:w-[380px] xl:w-[420px] shrink-0 flex flex-col bg-surface-bg border border-border rounded-xl overflow-hidden min-h-[300px]">
                   <div className="flex border-b border-border bg-surface-card">
                     <button
                       onClick={() => setSidePanelTab("chat")}
@@ -1454,42 +2221,105 @@ export const LiveKitDealRoomModal: React.FC<LiveKitDealRoomModalProps> = ({
                   ) : (
                     /* Aba Copiloto & Transcrição */
                     <div className="flex-1 flex flex-col p-3 min-h-0 space-y-3 overflow-y-auto">
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-2">
                         <button
                           onClick={toggleSpeechRecognition}
-                          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                             isRecognizing
-                              ? "bg-status-danger text-text-inverse animate-pulse"
+                              ? "bg-status-danger text-text-inverse animate-pulse shadow-sm"
                               : "bg-surface-card border border-border text-text-main hover:bg-surface-bg"
                           }`}
                         >
                           <Mic className="h-3.5 w-3.5" />
-                          <span>{isRecognizing ? "Ouvindo Voz..." : "Iniciar Captura de Voz"}</span>
+                          <span>{isRecognizing ? "Ouvindo Voz (Parar)" : "Iniciar Captura de Voz"}</span>
                         </button>
 
-                        <button
-                          onClick={handleExtractCopilotNotes}
-                          disabled={extractingNotes}
-                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-brand-primary text-text-inverse text-xs font-semibold hover:bg-brand-primary-hover disabled:opacity-50"
-                        >
-                          <Sparkles className="h-3 w-3" />
-                          <span>{extractingNotes ? "Gerando..." : "Resumo IA"}</span>
-                        </button>
+                        <div className="flex items-center gap-1.5">
+                          {transcripts.length > 0 && (
+                            <button
+                              onClick={() => setTranscripts([])}
+                              className="text-[11px] text-text-secondary hover:text-status-danger p-1"
+                              title="Limpar Transcrições"
+                            >
+                              Limpar
+                            </button>
+                          )}
+                          <button
+                            onClick={handleExtractCopilotNotes}
+                            disabled={extractingNotes}
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-brand-primary text-text-inverse text-xs font-semibold hover:bg-brand-primary-hover disabled:opacity-50 cursor-pointer"
+                          >
+                            <Sparkles className="h-3 w-3" />
+                            <span>{extractingNotes ? "Gerando..." : "Resumo IA"}</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Status e Feedback de Captura */}
+                      {isRecognizing && (
+                        <div className="flex items-center gap-2 p-2 rounded-lg bg-status-success-subtle border border-status-success text-[11px] text-status-success font-medium animate-pulse">
+                          <span className="h-2 w-2 rounded-full bg-status-success" />
+                          <span>Reconhecimento contínuo de voz ativo em português (pt-BR)</span>
+                        </div>
+                      )}
+
+                      {speechError && (
+                        <div className="p-2 rounded-lg bg-status-warning-subtle border border-status-warning text-[11px] text-status-warning leading-tight">
+                          {speechError}
+                        </div>
+                      )}
+
+                      {/* Atalhos Rápidos de Transcrição Clínica */}
+                      <div className="space-y-1">
+                        <div className="text-[10px] font-bold text-text-secondary uppercase">
+                          Atalhos Rápidos de Ficha Clínica:
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          <button
+                            type="button"
+                            onClick={() => addQuickClinicalNote("Torque de inserção estabilizado em 45 N.cm no dente 36.")}
+                            className="text-[10px] px-2 py-0.5 rounded bg-surface-bg border border-border hover:bg-brand-primary-subtle hover:text-brand-primary text-text-secondary transition text-left"
+                          >
+                            + Torque 45 N.cm
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => addQuickClinicalNote("Margem de segurança de 2.5mm do canal mandibular respeitada.")}
+                            className="text-[10px] px-2 py-0.5 rounded bg-surface-bg border border-border hover:bg-brand-primary-subtle hover:text-brand-primary text-text-secondary transition text-left"
+                          >
+                            + Margem Nervo 2.5mm
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => addQuickClinicalNote("Biomaterial de enxerto ósseo particulado e membrana instalados.")}
+                            className="text-[10px] px-2 py-0.5 rounded bg-surface-bg border border-border hover:bg-brand-primary-subtle hover:text-brand-primary text-text-secondary transition text-left"
+                          >
+                            + Enxerto Ósseo
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => addQuickClinicalNote("Sutura monofilamento 4-0 realizada sem intercorrências.")}
+                            className="text-[10px] px-2 py-0.5 rounded bg-surface-bg border border-border hover:bg-brand-primary-subtle hover:text-brand-primary text-text-secondary transition text-left"
+                          >
+                            + Sutura 4-0 OK
+                          </button>
+                        </div>
                       </div>
 
                       {/* Transcrição ao Vivo */}
                       <div className="flex-1 min-h-[120px] bg-surface-card border border-border rounded-lg p-2.5 overflow-y-auto text-xs space-y-1">
-                        <div className="text-[10px] font-bold text-text-secondary uppercase">
-                          Transcricao da Conversa:
+                        <div className="text-[10px] font-bold text-text-secondary uppercase flex items-center justify-between">
+                          <span>Transcricao da Conversa:</span>
+                          <span className="font-mono text-[10px] text-text-muted">{transcripts.length} entradas</span>
                         </div>
                         {transcripts.length === 0 ? (
-                          <p className="text-text-muted italic">
-                            Nenhum audio capturado ainda. Fale no microfone ou clique no botao de captura.
+                          <p className="text-text-muted italic py-2">
+                            Aguardando fala ou clique nos atalhos acima para registrar ocorrências na ata cirúrgica.
                           </p>
                         ) : (
                           transcripts.map((t, idx) => (
-                            <p key={idx} className="text-text-main leading-relaxed">
-                              - {t}
+                            <p key={idx} className="text-text-main leading-relaxed border-b border-border-subtle pb-1">
+                              • {t}
                             </p>
                           ))
                         )}

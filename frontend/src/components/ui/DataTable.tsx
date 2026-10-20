@@ -2,6 +2,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "./Skeleton";
 import { EmptyState } from "./EmptyState";
+import { Select } from "./Select";
 
 export interface Column<T> {
   key: string;
@@ -130,18 +131,17 @@ export function DataTable<T extends { id?: string | number }>({
               <strong className="text-text-main">{endIdx}</strong> de{" "}
               <strong className="text-text-main">{totalItems}</strong> registros
             </span>
-            <select
+            <Select
               aria-label="Itens por página"
-              value={pageSize}
-              onChange={(e) => setPageSize(Number(e.target.value))}
-              className="rounded border border-border bg-surface-card px-2 py-1 text-xs text-text-main focus:outline-none"
-            >
-              {pageSizeOptions.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt} / pág
-                </option>
-              ))}
-            </select>
+              value={String(pageSize)}
+              onValueChange={(val) => setPageSize(Number(val))}
+              options={pageSizeOptions.map((opt) => ({
+                value: String(opt),
+                label: `${opt} / pág`,
+              }))}
+              className="w-28"
+              triggerClassName="h-7 text-xs py-0.5 px-2 bg-surface-card"
+            />
           </div>
 
           <div className="flex items-center gap-1.5">

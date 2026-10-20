@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import {
-  Globe,
   UploadCloud,
   Save,
   ShieldCheck,
@@ -29,6 +28,7 @@ import {
   X,
 } from "lucide-react";
 import { QrCodeSvg } from "@/components/shared/QrCodeSvg";
+import { RouteHeader } from "@/components/ui/RouteHeader";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
@@ -775,23 +775,15 @@ export const LandingPageBuilder: React.FC<LandingPageBuilderProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* Top Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-border pb-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-text-main flex items-center gap-2">
-              <Globe className="h-5 w-5 text-brand-primary" />
-              Campanhas e Indicações
-            </h1>
-            <Badge variant="outline" className="border-brand-primary/30 text-brand-primary bg-brand-primary-subtle text-xs">
-              Páginas, E-mails & Indicações
-            </Badge>
-          </div>
-          <p className="text-xs text-text-secondary mt-0.5">
-            Criação de páginas para captação de clientes, réguas de automação e programa de indicações.
-          </p>
-        </div>
-      </div>
+      <RouteHeader
+        title="Campanhas e Indicações"
+        description="Criação de páginas para captação de clientes, réguas de automação e programa de indicações."
+        badge={
+          <Badge variant="outline" className="border-brand-primary/30 text-brand-primary bg-brand-primary-subtle text-xs">
+            Páginas, E-mails & Indicações
+          </Badge>
+        }
+      />
 
       {/* Main Tabs Navigation */}
       <Tabs
@@ -1703,7 +1695,7 @@ export const LandingPageBuilder: React.FC<LandingPageBuilderProps> = ({
 
       {/* TICKET-MKT-01: Modal de Teste A/B Split 50/50 */}
       {showAbModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-text-main/50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0">
           <div className="bg-surface-card border border-border rounded-xl w-full max-w-2xl p-5 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold text-text-main">Ativar Teste A/B (Split 50/50)</h3>

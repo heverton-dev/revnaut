@@ -22,6 +22,7 @@ const config: Config = {
           sidebar: "var(--color-surface-sidebar)",
           "sidebar-hover": "var(--color-surface-sidebar-hover)",
           "sidebar-active": "var(--color-surface-sidebar-active)",
+          overlay: "var(--color-surface-overlay)",
         },
         border: {
           DEFAULT: "var(--color-border)",

@@ -17,6 +17,7 @@ import { IntelligenceSuiteWorkspace } from "@/features/intelligence/Intelligence
 import { OmnichannelWorkspace } from "@/features/inbox/OmnichannelWorkspace";
 import { ExecutiveCockpitView } from "@/features/dashboard/ExecutiveCockpitView";
 import { DealsWorkspace } from "@/features/deals/DealsWorkspace";
+import { MarketIntelRadarWorkspace } from "@/features/market_intel/MarketIntelRadarWorkspace";
 
 export type AppRoute =
   | "dashboard"
@@ -28,6 +29,7 @@ export type AppRoute =
   | "video_sos"
   | "contracts"
   | "intelligence"
+  | "market_intel"
   | "analytics"
   | "scheduling"
   | "rbac"
@@ -91,6 +93,8 @@ export const AppRouter: React.FC<RouterProps> = ({ currentRoute, onNavigate }) =
       return <ContractsDocumensoWorkspace />;
     case "intelligence":
       return <IntelligenceSuiteWorkspace />;
+    case "market_intel":
+      return <MarketIntelRadarWorkspace />;
     case "scheduling":
       return <CalcomReactivationWorkspace />;
     case "support":

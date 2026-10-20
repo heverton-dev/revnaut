@@ -14,6 +14,7 @@ const VALID_ROUTES = new Set([
   "video_sos",
   "contracts",
   "intelligence",
+  "market_intel",
   "analytics",
   "scheduling",
   "rbac",

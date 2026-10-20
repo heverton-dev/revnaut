@@ -119,13 +119,15 @@ export const GranolaCopilotCard: React.FC<GranolaCopilotCardProps> = ({ dealId: 
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-surface-bg p-2.5 rounded-xl border border-border">
-        <label className="text-xs font-medium text-text-secondary">Oportunidade Comercial (Deal):</label>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-surface-bg p-3 rounded-xl border border-border">
+        <label className="text-xs font-medium text-text-secondary whitespace-nowrap shrink-0">
+          Oportunidade Comercial (Deal):
+        </label>
         {deals.length > 0 ? (
           <select
             value={effectiveDealId}
             onChange={(e) => setSelectedDealId(e.target.value)}
-            className="rounded-lg border border-border bg-surface-card px-2.5 py-1 text-xs text-text-main focus:outline-none focus:ring-1 focus:ring-brand-primary"
+            className="w-full sm:w-auto sm:max-w-[420px] rounded-lg border border-border bg-surface-card px-3 py-1.5 text-xs text-text-main truncate focus:outline-none focus:ring-1 focus:ring-brand-primary cursor-pointer shadow-sm"
           >
             {deals.map((d) => (
               <option key={d.id} value={d.id}>

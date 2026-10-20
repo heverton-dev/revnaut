@@ -120,6 +120,28 @@ def export_deals_csv(
     )
 
 
+@router.get("/api/v1/deals/export", summary="Exportar Pipeline Comercial Ativo em CSV ou PARQUET")
+def export_deals(
+    format: str = "csv",
+    pipeline_id: Optional[int] = None,
+    account_id: str = "0f14ffff",
+    x_user_id: Optional[str] = Header(None)
+):
+    fmt = (format or "csv").lower().strip()
+    data_bytes = service.export_deals_data(format=fmt, pipeline_id=pipeline_id, account_id=account_id, user_id=x_user_id)
+    if fmt == "parquet":
+        return Response(
+            content=data_bytes,
+            media_type="application/vnd.apache.parquet",
+            headers={"Content-Disposition": "attachment; filename=pipeline_revnaut_dental.parquet"}
+        )
+    return Response(
+        content=data_bytes,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=pipeline_revnaut_dental.csv"}
+    )
+
+
 @router.get("/api/v1/deals/catalog/products", response_model=List[ProductCatalogItemOut], summary="Listar catálogo técnico odontológico")
 def get_catalog_products(account_id: str = "0f14ffff"):
     return catalog_pricing.list_catalog_products(account_id=account_id)

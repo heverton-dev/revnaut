@@ -689,6 +689,201 @@ export interface WebhookDeliveryLog {
 }
 
 // =============================================================================
+// FASE 9: Inteligência de Mercado, Radar de Concorrência e Disparo Determinístico (TICKET-MKTINTEL)
+// =============================================================================
+
+export type MarketIntelRole = 'director' | 'regional_manager' | 'inside_sales' | 'field_sales';
+export type MarketSignalSourceType = 'scientific_journal' | 'regulatory_anvisa' | 'congress_ciosp' | 'news';
+export type MarketBuTarget = 'Implantodontia' | 'Prótese Digital' | 'Biomateriais';
+export type MarketOpportunityType = 'PRICE_COUNTER_ATTACK' | 'CLINICAL_UPGRADE' | 'EVENT_SURGE';
+export type MarketOpportunityStatus = 'PENDING' | 'CAMPAIGN_TRIGGERED' | 'DISMISSED';
+export type TargetedCampaignChannel = 'WHATSAPP' | 'EMAIL';
+export type TargetedCampaignStatus = 'DRAFT' | 'SCHEDULED' | 'EXECUTED';
+export type CompetitorPageType = 'pricing_table' | 'catalog' | 'blog_post' | 'social_ad';
+
+export interface MarketSignalStructuredPayload {
+  topics: string[];
+  detected_trends: string[];
+  target_specialties: string[];
+}
+
+export interface MarketSignal {
+  id: string;
+  account_id: string;
+  title: string;
+  source_url: string;
+  source_type: MarketSignalSourceType;
+  raw_content: string;
+  structured_payload: MarketSignalStructuredPayload;
+  geographic_scope: string;
+  created_at: string;
+}
+
+export interface MarketSignalPage {
+  items: MarketSignal[];
+  total: number;
+  limit: number;
+  offset: number;
+  visible_scopes: string[];
+}
+
+export interface MarketRecommendedProduct {
+  sku: string;
+  name: string;
+  category: string;
+  base_price: number;
+}
+
+export interface MarketOpportunity {
+  id: string;
+  account_id: string;
+  signal_id?: string | null;
+  competitor_snapshot_id?: string | null;
+  source_title?: string | null;
+  bu_target: MarketBuTarget;
+  recommended_product_ids: string[];
+  recommended_products: MarketRecommendedProduct[];
+  opportunity_type: MarketOpportunityType;
+  suggested_action: string;
+  region_code: string;
+  status: MarketOpportunityStatus;
+  created_at: string;
+}
+
+export interface OpportunityMatchRequest {
+  signal_id?: string | null;
+  competitor_snapshot_id?: string | null;
+  region_code?: string | null;
+}
+
+export interface CampaignAudienceFilter {
+  region: string;
+  specialty?: string | null;
+  purchase_window: number;
+}
+
+export interface CampaignDraftRequest {
+  opportunity_id: string;
+  target_region?: string | null;
+  channel: TargetedCampaignChannel;
+  specialty?: string | null;
+  purchase_window?: number;
+  message_template?: string | null;
+}
+
+export interface CfoComplianceReport {
+  is_compliant: boolean;
+  violations: string[];
+  warnings: string[];
+  has_responsible_cro: boolean;
+  detected_cro?: string | null;
+}
+
+export interface TargetedCampaign {
+  id: string;
+  account_id: string;
+  opportunity_id: string;
+  target_audience_filter: CampaignAudienceFilter;
+  message_template: string;
+  channel: TargetedCampaignChannel;
+  dispatch_status: TargetedCampaignStatus;
+  scheduled_for?: string | null;
+  sent_count: number;
+  skipped_cooldown_15d_count: number;
+  created_by_user_id?: string | null;
+  approved_by_user_id?: string | null;
+  executed_at?: string | null;
+  created_at: string;
+  opportunity_type?: MarketOpportunityType | null;
+  bu_target?: MarketBuTarget | null;
+  opportunity_status?: MarketOpportunityStatus | null;
+  compliance?: CfoComplianceReport | null;
+}
+
+export interface CampaignDispatchResult {
+  campaign_id: string;
+  dispatch_status: TargetedCampaignStatus;
+  eligible_count: number;
+  sent_count: number;
+  skipped_cooldown_15d_count: number;
+  failed_count: number;
+  approved_by_user_id?: string | null;
+  executed_at: string;
+}
+
+export interface PassiveQueuePolicy {
+  dead_window_utc: string;
+  jitter_seconds_min: number;
+  jitter_seconds_max: number;
+  dedup: string;
+  ad_hoc_scraping_allowed: boolean;
+}
+
+export interface Competitor {
+  id: string;
+  account_id: string;
+  name: string;
+  domain: string;
+  social_handles: Record<string, string>;
+  active: boolean;
+  crawl_frequency_hours: number;
+  last_scraped_at?: string | null;
+  next_scheduled_crawl_at: string;
+  snapshots_count: number;
+  created_at: string;
+}
+
+export interface CompetitorCreateRequest {
+  name: string;
+  domain: string;
+  social_handles?: Record<string, string>;
+  crawl_frequency_hours?: number;
+}
+
+export interface CompetitorListResponse {
+  items: Competitor[];
+  passive_queue: PassiveQueuePolicy;
+  can_manage_competitors: boolean;
+}
+
+export interface CompetitorDetectedOffer {
+  product: string;
+  price: number;
+  discount: string;
+}
+
+export interface CompetitorSnapshot {
+  id: string;
+  competitor_id: string;
+  page_type: CompetitorPageType;
+  extracted_title: string;
+  content_hash: string;
+  detected_offers: CompetitorDetectedOffer[];
+  tactical_summary: string;
+  created_at: string;
+}
+
+export interface CompetitorTacticalInsight {
+  competitor_id: string;
+  competitor_name: string;
+  snapshot_id: string;
+  competitor_product: string;
+  competitor_price: number;
+  competitor_discount: string;
+  matched_sku?: string | null;
+  matched_product_name?: string | null;
+  our_base_price?: number | null;
+  price_gap_pct?: number | null;
+  counter_attack: string;
+}
+
+export interface TacticalInsightsResponse {
+  generated_at: string;
+  value_pillars: string[];
+  insights: CompetitorTacticalInsight[];
+}
+
+// =============================================================================
 // MAPA CANÔNICO 1:1 DE TODAS AS ROTAS /api/v1/* (TICKET-41)
 // =============================================================================
 
@@ -732,6 +927,7 @@ export const API_V1_ROUTES = [
   '/api/v1/campaigns/referral/qualify',
   '/api/v1/campaigns/referral/register',
   '/api/v1/campaigns/webhooks/listmonk',
+  '/api/v1/campaigns/{campaign_id}/dispatch',
   '/api/v1/chat/conversations',
   '/api/v1/chat/messages',
   '/api/v1/chat/{chat_id}/messages',
@@ -740,7 +936,11 @@ export const API_V1_ROUTES = [
   '/api/v1/communications/rooms/token',
   '/api/v1/communications/voip/dial',
   '/api/v1/communications/webhooks/livekit',
+  '/api/v1/competitors',
+  '/api/v1/competitors/tactical-insights',
+  '/api/v1/competitors/{competitor_id}/snapshots',
   '/api/v1/contacts',
+  '/api/v1/contacts/export',
   '/api/v1/contacts/import',
   '/api/v1/contacts/validate-cfo-compliance',
   '/api/v1/contacts/validate-cro',
@@ -753,6 +953,7 @@ export const API_V1_ROUTES = [
   '/api/v1/deals/catalog/calculate-proposal',
   '/api/v1/deals/catalog/price-tables',
   '/api/v1/deals/catalog/products',
+  '/api/v1/deals/export',
   '/api/v1/deals/export/csv',
   '/api/v1/deals/{deal_id}',
   '/api/v1/deals/{deal_id}/approve-credit',
@@ -852,6 +1053,12 @@ export const API_V1_ROUTES = [
   '/api/v1/keypartners/surgical-orders/{order_id}/dispatch',
   '/api/v1/keypartners/surgical-orders/{order_id}/postop-report',
   '/api/v1/keypartners/surgical-orders/{order_id}/trigger-dentgo-replenishment',
+  '/api/v1/market-intel/campaigns',
+  '/api/v1/market-intel/campaigns/generate-draft',
+  '/api/v1/market-intel/campaigns/{campaign_id}/dispatch',
+  '/api/v1/market-intel/opportunities',
+  '/api/v1/market-intel/opportunities/match',
+  '/api/v1/market-intel/signals',
   '/api/v1/metrics',
   '/api/v1/omnichannel/chatwoot-context-panel',
   '/api/v1/omnichannel/chatwoot/sync-contact/{contact_id}',

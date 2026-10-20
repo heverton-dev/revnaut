@@ -107,3 +107,20 @@ def test_create_deal_with_pipeline_and_owner():
     deals_data = res_list.json()
     assert any(d["id"] == data["id"] for d in deals_data["deals"])
 
+
+def test_export_deals_csv_and_parquet_endpoint():
+    # Teste exportação CSV padronizada
+    res_csv = client.get("/api/v1/deals/export?format=csv", headers={"X-User-Id": "usr-director-br"})
+    assert res_csv.status_code == 200
+    assert "text/csv" in res_csv.headers["content-type"]
+    assert "ID,Titulo,Empresa,Contato,Valor_R$" in res_csv.text
+
+    # Teste exportação PARQUET padronizada
+    res_parquet = client.get("/api/v1/deals/export?format=parquet", headers={"X-User-Id": "usr-director-br"})
+    assert res_parquet.status_code == 200
+    assert "application/vnd.apache.parquet" in res_parquet.headers["content-type"]
+    assert len(res_parquet.content) > 0
+    # Valida cabeçalho mágico 'PAR1' do formato Parquet
+    assert res_parquet.content[:4] == b"PAR1"
+
+

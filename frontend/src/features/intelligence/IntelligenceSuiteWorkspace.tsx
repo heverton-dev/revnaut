@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
-  Brain,
   Cpu,
   Layers,
   Activity,
@@ -17,9 +16,10 @@ import {
   Package,
   Mic,
   Square,
-  FileDown,
+  Radar,
 } from "lucide-react";
 import { Tabs } from "@/components/ui/Tabs";
+import { RouteHeader } from "@/components/ui/RouteHeader";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { GranolaCopilotCard } from "@/features/deals/components/GranolaCopilotCard";
@@ -136,38 +136,6 @@ interface HscResponse {
   recommendation: string;
 }
 
-function buildKolPdfBinary(lines: string[]): Uint8Array {
-  const ops: string[] = [];
-  let y = 750;
-  lines.forEach((l, idx) => {
-    const asciiLine = l
-      .normalize("NFD")
-      .replace(/[̀-ͯ]/g, "")
-      .replace(/\\/g, "\\\\")
-      .replace(/\(/g, "\\(")
-      .replace(/\)/g, "\\)");
-    const fontSize = idx === 0 ? 12 : 9;
-    ops.push(`BT /F1 ${fontSize} Tf 40 ${y} Td (${asciiLine}) Tj ET`);
-    y -= 18;
-  });
-
-  const streamContent = ops.join("\n");
-  const streamBytes = new TextEncoder().encode(streamContent);
-  const streamLength = streamBytes.length;
-
-  const header = `%PDF-1.4\n1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >> endobj\n4 0 obj << /Length ${streamLength} >>\nstream\n`;
-  const footer = `\nendstream\nendobj\n5 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj\nxref\n0 6\n0000000000 65535 f\ntrailer << /Root 1 0 R /Size 6 >>\n%%EOF\n`;
-
-  const headerBytes = new TextEncoder().encode(header);
-  const footerBytes = new TextEncoder().encode(footer);
-
-  const fullPdf = new Uint8Array(headerBytes.length + streamBytes.length + footerBytes.length);
-  fullPdf.set(headerBytes, 0);
-  fullPdf.set(streamBytes, headerBytes.length);
-  fullPdf.set(footerBytes, headerBytes.length + streamBytes.length);
-  return fullPdf;
-}
-
 export const IntelligenceSuiteWorkspace: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("copilot");
 
@@ -200,9 +168,8 @@ export const IntelligenceSuiteWorkspace: React.FC = () => {
   const [ragMinSim, setRagMinSim] = useState<number>(0.65);
   const [ragQueryLoading, setRagQueryLoading] = useState<boolean>(false);
   const [ragResult, setRagResult] = useState<RagQueryResponse | null>(null);
-  // TICKET-INTEL-01/02: copiar resposta RAG + exportar relatório KOL
+  // TICKET-INTEL-01/02: copiar resposta RAG
   const [copiedRag, setCopiedRag] = useState<boolean>(false);
-  const [exportingKolReport, setExportingKolReport] = useState<boolean>(false);
 
   // RAG Ingestion
   const [ingestManual, setIngestManual] = useState<string>("Catálogo Cirúrgico Cone Morse 2026");
@@ -646,78 +613,74 @@ export const IntelligenceSuiteWorkspace: React.FC = () => {
     { id: "health_score", label: "Índice de Saúde do Cliente" },
   ];
 
+  const [intelExportFormat, setIntelExportFormat] = React.useState<"csv" | "parquet">("csv");
+  const [isExportingIntel, setIsExportingIntel] = React.useState<boolean>(false);
+
+  const handleExportIntelDataset = async () => {
+    setIsExportingIntel(true);
+    try {
+      const res = await fetch("/api/v1/intelligence/bi/export-dataset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          dataset_name: "deals_funnel",
+          format: intelExportFormat,
+          user_id: "usr-director-br",
+          account_id: "0f14ffff",
+        }),
+      });
+      if (!res.ok) throw new Error("Erro ao exportar dataset de inteligência.");
+      const data = await res.json();
+      if (data.download_url) {
+        window.open(data.download_url, "_blank");
+      }
+    } catch (err: any) {
+      console.error(err);
+    } finally {
+      setIsExportingIntel(false);
+    }
+  };
+
   return (
     <div className="w-full space-y-6 font-sans text-text-main">
-      {/* Top Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-border">
-        <div>
-          <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-primary-subtle text-brand-primary border border-brand-primary/20">
-              <Brain className="h-5 w-5" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold tracking-tight text-text-main">
-                Assistente Inteligente & Análise Preditiva
-              </h1>
-              <p className="text-xs text-text-secondary mt-0.5">
-                Resumos de Reuniões, Consulta de Protocolos, Controle de Maletas Paradas e Rentabilidade de Clínicas.
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-2.5">
+      <RouteHeader
+        title="Assistente Inteligente & Análise Preditiva"
+        description="Resumos de Reuniões, Consulta de Protocolos, Controle de Maletas Paradas e Rentabilidade de Clínicas."
+        badge={
           <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full bg-status-success-subtle text-status-success border border-status-success/20">
             <ShieldCheck className="w-3.5 h-3.5" />
             7 Motores Ativos
           </span>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={exportingKolReport}
-            onClick={async () => {
-              setExportingKolReport(true);
-              try {
-                const res = await fetch("/api/v1/intelligence/kol-speakers");
-                const data = await res.json().catch(() => ({}));
-                const lines = [
-                  "Relatorio KOL & Speakers - Revnault Intelligence",
-                  `Gerado em: ${new Date().toISOString()}`,
-                  "",
-                  `Total KOLs: ${data.total_kols ?? 0}`,
-                  "",
-                  ...((data.speakers || []).slice(0, 30).map(
-                    (s: any) =>
-                      `- ${s.name} | CRO ${s.cro || "-"} | Tier ${s.tier || "-"} | Clinicas: ${(s.affiliated_clinics || []).join(", ") || "-"}`
-                  )),
-                ];
-                const pdfBytes = buildKolPdfBinary(lines);
-                await fetch("/api/v1/storage/upload-direct/reports/relatorio_kol_revnault.pdf", {
-                  method: "PUT",
-                  headers: { "Content-Type": "application/pdf" },
-                  body: new Blob([pdfBytes as any], { type: 'application/pdf' }),
-                });
-                const a = document.createElement("a");
-                a.href = "/api/v1/storage/files/reports/relatorio_kol_revnault.pdf";
-                a.download = "relatorio_kol_revnault.pdf";
-                a.target = "_blank";
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-              } finally {
-                setExportingKolReport(false);
-              }
-            }}
-            className="gap-1.5"
-          >
-            <FileDown className="w-3.5 h-3.5" />
-            {exportingKolReport ? "Exportando..." : "Exportar Relatório KOL PDF"}
-          </Button>
-          <Button variant="outline" size="sm" onClick={fetchDeals} className="gap-1.5">
-            <RefreshCw className="w-3.5 h-3.5" />
-            Atualizar
-          </Button>
-        </div>
-      </div>
+        }
+        exportConfig={{
+          format: intelExportFormat,
+          onFormatChange: (fmt) => setIntelExportFormat(fmt as "csv" | "parquet"),
+          onExport: handleExportIntelDataset,
+          loading: isExportingIntel,
+          label: "FORMATO",
+          exportLabel: "Exportar",
+        }}
+        actions={[
+          {
+            id: "market-intel",
+            label: "Radar de Mercado",
+            variant: "outline",
+            icon: <Radar className="w-3.5 h-3.5" />,
+            title: "Abrir Inteligência de Mercado & Radar de Concorrência",
+            onClick: () => {
+              window.location.hash = "#!/market_intel";
+            },
+          },
+          {
+            id: "refresh",
+            label: "Atualizar",
+            variant: "outline",
+            icon: <RefreshCw className="w-3.5 h-3.5" />,
+            title: "Atualizar Indicadores",
+            onClick: fetchDeals,
+          },
+        ]}
+      />
 
       {/* Tabs Navigation */}
       <Tabs tabs={tabsConfig} activeTab={activeTab} onChange={setActiveTab} />

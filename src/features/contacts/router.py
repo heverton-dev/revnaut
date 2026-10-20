@@ -4,7 +4,7 @@ Vertical Slice: Contacts Router
 """
 
 from typing import Optional, List
-from fastapi import APIRouter, Header, status, HTTPException
+from fastapi import APIRouter, Header, status, HTTPException, Response
 from src.features.contacts.schemas import (
     ContactCreate, ContactImportRequest, ContactImportResponse,
     ContactOut, ContactProfileResponse, ContactTimelineResponse,
@@ -27,6 +27,28 @@ def read_contacts(
     x_user_id: Optional[str] = Header(None)
 ):
     return service.list_contacts(query=q, account_id=account_id, user_id=x_user_id)
+
+
+@router.get("/api/v1/contacts/export", summary="Exportar Carteira de Contatos e Cirurgiões em CSV ou PARQUET")
+def export_contacts(
+    format: str = "csv",
+    q: Optional[str] = None,
+    account_id: str = "0f14ffff",
+    x_user_id: Optional[str] = Header(None)
+):
+    fmt = (format or "csv").lower().strip()
+    data_bytes = service.export_contacts_data(format=fmt, query=q, account_id=account_id, user_id=x_user_id)
+    if fmt == "parquet":
+        return Response(
+            content=data_bytes,
+            media_type="application/vnd.apache.parquet",
+            headers={"Content-Disposition": "attachment; filename=carteira_cirurgioes_revnault.parquet"}
+        )
+    return Response(
+        content=data_bytes,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=carteira_cirurgioes_revnault.csv"}
+    )
 
 
 @router.post("/api/v1/contacts", response_model=ContactOut, status_code=status.HTTP_201_CREATED, summary="Criar Contato com Validação RBAC")
