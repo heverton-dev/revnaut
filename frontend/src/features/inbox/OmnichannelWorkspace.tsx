@@ -19,8 +19,11 @@ import {
   QrCode,
   PhoneCall,
   X,
+  Briefcase,
+  ArrowRightLeft,
 } from "lucide-react";
 import { QrCodeSvg } from "@/components/shared/QrCodeSvg";
+import { R2DirectUploader } from "@/components/shared/R2DirectUploader";
 
 export interface OmnichannelWorkspaceProps {
   onOpenSosVideo?: (croUf: string) => void;
@@ -80,6 +83,9 @@ export const OmnichannelWorkspace: React.FC<OmnichannelWorkspaceProps> = ({
   const [searchFilter, setSearchFilter] = React.useState<string>("");
   const [recording, setRecording] = React.useState<boolean>(false);
   const [uploadingMedia, setUploadingMedia] = React.useState<boolean>(false);
+  // TICKET-OMNI-02: transferir conversa + criar deal a partir do chat
+  const [transferTarget, setTransferTarget] = React.useState<string>("");
+  const [creatingDealFromChat, setCreatingDealFromChat] = React.useState<boolean>(false);
   const [composerError, setComposerError] = React.useState<string | null>(null);
   const [qrInstance, setQrInstance] = React.useState<WhatsappInstance | null>(null);
   const [callFeedback, setCallFeedback] = React.useState<string | null>(null);
@@ -580,6 +586,9 @@ export const OmnichannelWorkspace: React.FC<OmnichannelWorkspaceProps> = ({
               ) : (
                 messages.map((m) => {
                   const isMe = m.sender === "user";
+                  const mediaUrlMatch = String(m.text || "").match(/\/api\/v1\/storage\/files\/\S+/);
+                  const mediaUrl = mediaUrlMatch ? mediaUrlMatch[0] : null;
+                  const isVoiceNote = Boolean(mediaUrl) && /nota-de-voz|audio|\.webm|\.ogg/i.test(String(m.text || ""));
                   return (
                     <div
                       key={m.id}
@@ -592,7 +601,26 @@ export const OmnichannelWorkspace: React.FC<OmnichannelWorkspaceProps> = ({
                             : "bg-surface-card border border-border text-text-main rounded-bl-none"
                         }`}
                       >
-                        <p className="whitespace-pre-wrap break-words">{m.text}</p>
+                        {isVoiceNote && mediaUrl ? (
+                          <div className="space-y-1">
+                            <p className="text-[10px] opacity-80">Nota de voz</p>
+                            <audio controls src={mediaUrl} className="w-full max-w-[220px]" />
+                          </div>
+                        ) : mediaUrl ? (
+                          <div className="space-y-1">
+                            <p className="whitespace-pre-wrap break-words">{String(m.text || "").replace(mediaUrl, "").replace(/:\s*$/, "")}</p>
+                            <a
+                              href={mediaUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={`underline text-[10px] ${isMe ? "text-white/90" : "text-brand-primary"}`}
+                            >
+                              Abrir anexo
+                            </a>
+                          </div>
+                        ) : (
+                          <p className="whitespace-pre-wrap break-words">{m.text}</p>
+                        )}
                         <span
                           className={`block text-[9px] mt-1 text-right ${
                             isMe ? "text-white/70" : "text-text-muted"
@@ -609,6 +637,81 @@ export const OmnichannelWorkspace: React.FC<OmnichannelWorkspaceProps> = ({
 
             {/* Composer de Mensagem */}
             <form onSubmit={handleSendMessage} className="p-3 border-t border-border bg-surface-card space-y-2">
+              {/* TICKET-OMNI-02: Ações da conversa */}
+              <div className="flex flex-wrap items-center gap-1.5">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 px-2 gap-1 text-[10px]"
+                  disabled={creatingDealFromChat}
+                  onClick={async () => {
+                    setCreatingDealFromChat(true);
+                    setComposerError(null);
+                    try {
+                      const res = await fetch("/api/v1/deals", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          title: `Oportunidade via Chat — ${activeContact?.name || "Contato"}`,
+                          value: 15000,
+                          company: activeContact?.company || "Clínica",
+                          contact_name: activeContact?.name || "Contato Chat",
+                          pipeline_id: 1,
+                          stage_id: 101,
+                          priority: "alta",
+                        }),
+                      });
+                      if (!res.ok) throw new Error("Falha ao criar oportunidade a partir do chat.");
+                      setComposerError(null);
+                      sendMessageMutation.mutate("Oportunidade comercial criada a partir desta conversa.");
+                    } catch (err: any) {
+                      setComposerError(err.message || "Erro ao criar deal.");
+                    } finally {
+                      setCreatingDealFromChat(false);
+                    }
+                  }}
+                >
+                  <Briefcase className="h-3 w-3" />
+                  {creatingDealFromChat ? "Criando..." : "Criar Oportunidade (Deal)"}
+                </Button>
+                <div className="flex items-center gap-1">
+                  <select
+                    value={transferTarget}
+                    onChange={(e) => setTransferTarget(e.target.value)}
+                    className="h-7 rounded border border-border bg-surface-bg px-1.5 text-[10px] text-text-main"
+                    aria-label="Transferir conversa"
+                  >
+                    <option value="">Transferir conversa...</option>
+                    <option value="supervisor">Supervisor Comercial</option>
+                    <option value="clinico">Suporte Clínico</option>
+                    <option value="logistica">DENTGO Logística</option>
+                    <option value="financeiro">Financeiro / Credit</option>
+                  </select>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-7 px-2 gap-1 text-[10px]"
+                    disabled={!transferTarget}
+                    onClick={() => {
+                      if (!transferTarget) return;
+                      sendMessageMutation.mutate(`Conversa transferida para o setor: ${transferTarget}`);
+                      setTransferTarget("");
+                    }}
+                  >
+                    <ArrowRightLeft className="h-3 w-3" />
+                    Transferir
+                  </Button>
+                </div>
+                <R2DirectUploader
+                  module="media"
+                  accept=".stl,.dcm,.obj,.pdf,.png,.jpg"
+                  onUploadComplete={(r) => {
+                    sendMessageMutation.mutate(`Exame 3D / Documento anexado: /api/v1/storage/files/${r.key}`);
+                  }}
+                />
+              </div>
               <div className="flex flex-wrap gap-1.5">
                 {quickReplies.map((q, i) => (
                   <button

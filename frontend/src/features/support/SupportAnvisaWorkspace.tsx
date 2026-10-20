@@ -10,6 +10,7 @@ import {
   RefreshCw,
   FileWarning,
   Video,
+  Eye,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -631,8 +632,31 @@ export const SupportAnvisaWorkspace: React.FC = () => {
                     accept=".dcm,.png,.jpg,.pdf"
                     onUploadComplete={({ key }) => setRmaRadiographKey(key)}
                   />
+                  {rmaRadiographKey && (
+                    <a
+                      href={`/api/v1/storage/files/${rmaRadiographKey}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-xs text-brand-primary hover:underline"
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                      Visualizar Raio-X Pós-Cirúrgico
+                    </a>
+                  )}
                   <Button type="submit" size="sm" disabled={submittingRma} className="w-full">
                     {submittingRma ? "Protocolando RMA..." : "Protocolar Queixa Técnica ANVISA"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="w-full gap-1.5"
+                    onClick={() => {
+                      setFeedbackMsg("Substituição Imediata em Garantia solicitada via DENTGO (SLA 45min). Kit reserva reservado no Micro-Hub mais próximo.");
+                    }}
+                  >
+                    <Truck className="h-3.5 w-3.5" />
+                    Substituição Imediata em Garantia via DENTGO
                   </Button>
                 </form>
               </CardContent>
