@@ -32,6 +32,7 @@ import {
 import { Avatar } from "@/components/ui/Avatar";
 import { cn } from "@/lib/utils";
 import { getActiveUserId, setActiveUserId, ToastPayload } from "@/lib/api";
+import { NotificationCenter } from "@/components/layout/NotificationCenter";
 
 export interface NavItem {
   id: string;
@@ -140,6 +141,8 @@ export function AppShell({
   const [searchQuery, setSearchQuery] = React.useState("");
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = React.useState(false);
   const [isCompactSidebar, setIsCompactSidebar] = React.useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = React.useState(false);
+  const [unreadNotifCount, setUnreadNotifCount] = React.useState(0);
 
   const [selectedUserId, setSelectedUserId] = React.useState<string>(
     propUserId || getActiveUserId()
@@ -607,15 +610,37 @@ export function AppShell({
               <span>Sistema Online</span>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setIsCommandOpen(true)}
-              className="relative p-2 rounded-md text-text-secondary hover:text-text-main hover:bg-surface-bg transition-colors shrink-0"
-              aria-label="Notificações e Comandos"
-            >
-              <Bell className="h-4 w-4" />
-              <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-status-danger" />
-            </button>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsNotificationsOpen((prev) => !prev)}
+                className={cn(
+                  "relative p-2 rounded-md transition-colors shrink-0 cursor-pointer",
+                  isNotificationsOpen
+                    ? "bg-surface-card text-brand-primary border border-border"
+                    : "text-text-secondary hover:text-text-main hover:bg-surface-bg"
+                )}
+                aria-label="Notificações e Comandos"
+                aria-expanded={isNotificationsOpen}
+                title="Central de Notificações Dinâmica por Cargo"
+              >
+                <Bell className="h-4 w-4" />
+                {unreadNotifCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 rounded-full bg-status-danger text-text-inverse text-[10px] font-bold flex items-center justify-center leading-none shadow-xs border border-surface-card">
+                    {unreadNotifCount > 9 ? "9+" : unreadNotifCount}
+                  </span>
+                )}
+              </button>
+
+              <NotificationCenter
+                currentRoleKey={currentRoleConfig.roleKey}
+                roleDisplayName={currentRoleConfig.displayName}
+                isOpen={isNotificationsOpen}
+                onClose={() => setIsNotificationsOpen(false)}
+                onNavigate={(routeId) => handleSelectNav(routeId)}
+                onUnreadCountChange={setUnreadNotifCount}
+              />
+            </div>
           </div>
         </header>
 

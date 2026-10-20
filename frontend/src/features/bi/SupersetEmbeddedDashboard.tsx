@@ -30,6 +30,8 @@ import {
   ChevronLeft,
   ChevronRight,
   ExternalLink,
+  Activity,
+  MapPin,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -217,6 +219,17 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
   const [nodesPage, setNodesPage] = useState<number>(1);
   const [edgesPage, setEdgesPage] = useState<number>(1);
   const TOPOLOGY_ITEMS_PER_PAGE = 7;
+
+  // Paginação do Card de Ecossistema Clínico no Cockpit (sem scroll vertical)
+  const [cockpitInstitutionsPage, setCockpitInstitutionsPage] = useState<number>(1);
+  const COCKPIT_INSTITUTIONS_PER_PAGE = 6;
+
+  // Paginação do Radar Anti-Churn no Cockpit
+  const [radarPage, setRadarPage] = useState<number>(1);
+  const RADAR_ITEMS_PER_PAGE = 6;
+
+  // Abas de navegação executiva abaixo dos KPIs (Feedback: Radar, Ecossistema, Funil)
+  const [executiveCockpitTab, setExecutiveCockpitTab] = useState<"radar" | "ecosystem" | "funnel">("radar");
 
   // Drawer Lateral Dossiê 360° do Cliente / Cirurgião no Radar Anti-Churn (Feedback 8)
   const [selectedContactForDrawer, setSelectedContactForDrawer] = useState<ChurnRiskItem | null>(null);
@@ -720,9 +733,69 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
           </Card>
         </div>
 
-        {/* Gráficos Analíticos SVG Nativos + Radar Anti-Churn e Grafo Clínico */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="border-border">
+        {/* Abas Executivas Selecionáveis (Feedback: Radar Anti-Churn, Ecossistema KOL, Funil Comercial) */}
+        <div className="flex items-center gap-2 border-b border-border-subtle pb-3 overflow-x-auto">
+          <button
+            type="button"
+            onClick={() => setExecutiveCockpitTab("radar")}
+            className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
+              executiveCockpitTab === "radar"
+                ? "bg-brand-primary text-text-inverse shadow-xs"
+                : "bg-surface-card border border-border text-text-secondary hover:text-text-main hover:bg-surface-bg"
+            }`}
+          >
+            <Activity className="h-3.5 w-3.5" />
+            Radar Anti-Churn RFM Odontológico
+            <Badge
+              variant={executiveCockpitTab === "radar" ? "outline" : "danger"}
+              className={`text-[10px] ml-1 ${executiveCockpitTab === "radar" ? "border-text-inverse/40 text-text-inverse" : ""}`}
+            >
+              {radarItems.filter((r) => r.churn_risk_level === "critico").length || churnData?.summary?.critical_count || 0} Críticos
+            </Badge>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setExecutiveCockpitTab("ecosystem")}
+            className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
+              executiveCockpitTab === "ecosystem"
+                ? "bg-brand-primary text-text-inverse shadow-xs"
+                : "bg-surface-card border border-border text-text-secondary hover:text-text-main hover:bg-surface-bg"
+            }`}
+          >
+            <Network className="h-3.5 w-3.5" />
+            Ecossistema Clínico KOL & Polos Credenciados
+            <Badge
+              variant={executiveCockpitTab === "ecosystem" ? "outline" : "navy"}
+              className={`text-[10px] ml-1 ${executiveCockpitTab === "ecosystem" ? "border-text-inverse/40 text-text-inverse" : ""}`}
+            >
+              {clinicalGraph?.total_edges ?? 0} Vínculos
+            </Badge>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setExecutiveCockpitTab("funnel")}
+            className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
+              executiveCockpitTab === "funnel"
+                ? "bg-brand-primary text-text-inverse shadow-xs"
+                : "bg-surface-card border border-border text-text-secondary hover:text-text-main hover:bg-surface-bg"
+            }`}
+          >
+            <BarChart3 className="h-3.5 w-3.5" />
+            Funil Comercial por Estágio
+            <Badge
+              variant={executiveCockpitTab === "funnel" ? "outline" : "secondary"}
+              className={`text-[10px] ml-1 ${executiveCockpitTab === "funnel" ? "border-text-inverse/40 text-text-inverse" : ""}`}
+            >
+              {pipelineMetrics?.total_deals ?? 0} Negócios
+            </Badge>
+          </button>
+        </div>
+
+        {/* Conteúdo Renderizado por Aba Selecionada */}
+        {executiveCockpitTab === "radar" && (
+          <Card className="border-border w-full">
             <CardHeader>
               <div className="flex flex-col gap-3">
                 <div className="flex items-center justify-between gap-2">
@@ -743,7 +816,10 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
                   <select
                     id="churn-days"
                     value={churnDaysThreshold}
-                    onChange={(e) => setChurnDaysThreshold(e.target.value)}
+                    onChange={(e) => {
+                      setChurnDaysThreshold(e.target.value);
+                      setRadarPage(1);
+                    }}
                     className="h-8 rounded-md border border-border bg-surface-card px-2.5 text-xs text-text-main font-medium cursor-pointer shadow-xs focus:ring-1 focus:ring-brand-primary"
                     aria-label="Filtro temporal de monitoramento de churn"
                   >
@@ -757,184 +833,274 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Gráfico SVG de Barras Horizontais de Risco com Dossiê 360° ao Clicar (Feedback 8) */}
+              {/* Gráfico SVG de Barras Horizontais de Risco com Paginação e Dossiê 360° */}
               {radarItems.length === 0 ? (
                 <p className="text-xs text-text-muted py-4">
-                  Nenhum alerta de churn detectado na carteira atual.
+                  Nenhum alerta de churn detectado para os critérios selecionados.
                 </p>
               ) : (
                 <div className="space-y-3">
-                  {radarItems.slice(0, 6).map((item) => {
-                    const widthPct = Math.min(100, Math.max(8, Math.round((item.churn_risk_score / maxChurnScore) * 100)));
-                    return (
-                      <div
-                        key={item.contact_id}
-                        onClick={() => handleOpenChurnDrawer(item)}
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            handleOpenChurnDrawer(item);
-                          }
-                        }}
-                        className="space-y-1 p-2.5 rounded-lg border border-transparent hover:border-border-subtle hover:bg-surface-bg/70 transition-all cursor-pointer group"
-                      >
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="font-semibold text-text-main group-hover:text-brand-primary transition-colors truncate">
-                            {item.name} ({item.cro || item.uf || "BR"})
-                          </span>
-                          <span className="flex items-center gap-2 shrink-0">
-                            <span className="text-text-secondary">
-                              Score {item.churn_risk_score} • {item.days_since_last_order}d sem pedido
-                            </span>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-6 px-2 gap-1 text-[10px]"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleReactivateWhatsApp(item);
-                              }}
-                              title="Disparar mensagem de reativação via WhatsApp"
-                            >
-                              <MessageCircle className="h-3 w-3" />
-                              Reativar via WhatsApp
-                            </Button>
-                          </span>
-                        </div>
-                        <svg className="w-full h-2.5 rounded-full overflow-hidden bg-surface-bg" viewBox="0 0 100 10" preserveAspectRatio="none">
-                          <rect
-                            x="0"
-                            y="0"
-                            width={widthPct}
-                            height="10"
-                            className={
-                              item.churn_risk_level === "critico" || item.churn_risk_level === "alto"
-                                ? "fill-status-danger"
-                                : "fill-brand-primary"
+                  {radarItems
+                    .slice((radarPage - 1) * RADAR_ITEMS_PER_PAGE, radarPage * RADAR_ITEMS_PER_PAGE)
+                    .map((item) => {
+                      const widthPct = Math.min(100, Math.max(8, Math.round((item.churn_risk_score / maxChurnScore) * 100)));
+                      return (
+                        <div
+                          key={item.contact_id}
+                          onClick={() => handleOpenChurnDrawer(item)}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              handleOpenChurnDrawer(item);
                             }
-                          />
-                        </svg>
-                        <p className="text-[11px] text-text-muted">{item.recommended_action}</p>
-                      </div>
-                    );
-                  })}
+                          }}
+                          className="space-y-1 p-2.5 rounded-lg border border-transparent hover:border-border-subtle hover:bg-surface-bg/70 transition-all cursor-pointer group"
+                        >
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-semibold text-text-main group-hover:text-brand-primary transition-colors truncate">
+                              {item.name} ({item.cro || item.uf || "BR"})
+                            </span>
+                            <span className="flex items-center gap-2 shrink-0">
+                              <span className="text-text-secondary">
+                                Score {item.churn_risk_score} • {item.days_since_last_order}d sem pedido
+                              </span>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-6 px-2 gap-1 text-[10px]"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleReactivateWhatsApp(item);
+                                }}
+                                title="Disparar mensagem de reativação via WhatsApp"
+                              >
+                                <MessageCircle className="h-3 w-3" />
+                                Reativar via WhatsApp
+                              </Button>
+                            </span>
+                          </div>
+                          <svg className="w-full h-2.5 rounded-full overflow-hidden bg-surface-bg" viewBox="0 0 100 10" preserveAspectRatio="none">
+                            <rect
+                              x="0"
+                              y="0"
+                              width={widthPct}
+                              height="10"
+                              className={
+                                item.churn_risk_level === "critico" || item.churn_risk_level === "alto"
+                                  ? "fill-status-danger"
+                                  : "fill-brand-primary"
+                              }
+                            />
+                          </svg>
+                          <p className="text-[11px] text-text-muted">{item.recommended_action}</p>
+                        </div>
+                      );
+                    })}
                 </div>
               )}
             </CardContent>
-          </Card>
 
-          <Card className="border-border">
-            <CardHeader>
-              <div className="flex items-center justify-between gap-2">
-                <div>
-                  <CardTitle>Ecossistema Clínico KOL & Polos Credenciados</CardTitle>
-                  <CardDescription>
-                    Topologia de relacionamentos entre Cirurgiões, Clínicas, Laboratórios CAD/CAM e Universidades.
-                  </CardDescription>
-                </div>
-                <div className="flex items-center gap-2">
-                  {/* Feedback 2: Manter o texto e remover a palavra 'Ativos' */}
-                  <Badge variant="navy">
-                    {clinicalGraph?.total_edges ?? 0} Vínculos
-                  </Badge>
-                  {/* Feedback 3: Deixar apenas o ícone sem texto */}
+            {/* Rodapé com Paginação de Todos os Resultados do Filtro */}
+            {radarItems.length > 0 && (
+              <div className="p-4 pt-3 border-t border-border-subtle flex items-center justify-between text-xs text-text-secondary">
+                <span>
+                  Mostrando {(radarPage - 1) * RADAR_ITEMS_PER_PAGE + 1}–{Math.min(radarPage * RADAR_ITEMS_PER_PAGE, radarItems.length)} de {radarItems.length} cirurgiões em risco
+                </span>
+                <div className="flex items-center gap-1.5">
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-7 w-7 p-0 flex items-center justify-center shrink-0"
-                    onClick={() => setShowTopologyModal(true)}
-                    title="Expandir Topologia do Grafo"
-                    aria-label="Expandir Topologia do Grafo"
+                    className="h-7 px-2 text-xs"
+                    disabled={radarPage <= 1}
+                    onClick={() => setRadarPage((p) => Math.max(1, p - 1))}
+                    title="Página anterior de cirurgiões em risco"
                   >
-                    <Maximize2 className="h-3.5 w-3.5" />
+                    <ChevronLeft className="h-3.5 w-3.5 mr-0.5" />
+                    Anterior
+                  </Button>
+                  <span className="text-xs px-2 font-medium">
+                    {radarPage} / {Math.max(1, Math.ceil(radarItems.length / RADAR_ITEMS_PER_PAGE))}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 px-2 text-xs"
+                    disabled={radarPage >= Math.ceil(radarItems.length / RADAR_ITEMS_PER_PAGE)}
+                    onClick={() =>
+                      setRadarPage((p) =>
+                        Math.min(Math.ceil(radarItems.length / RADAR_ITEMS_PER_PAGE), p + 1)
+                      )
+                    }
+                    title="Próxima página de cirurgiões em risco"
+                  >
+                    Próxima
+                    <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
                   </Button>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="grid grid-cols-3 gap-2 text-center">
-                <div className="p-2.5 rounded-lg bg-surface-bg border border-border-subtle">
-                  <span className="text-[11px] text-text-secondary block">Instituições Mapeadas</span>
-                  <span className="text-base font-bold text-text-main">{clinicalGraph?.total_nodes ?? 0}</span>
-                </div>
-                <div className="p-2.5 rounded-lg bg-surface-bg border border-border-subtle">
-                  <span className="text-[11px] text-text-secondary block">Parcerias & Vínculos</span>
-                  <span className="text-base font-bold text-brand-primary">{clinicalGraph?.total_edges ?? 0}</span>
-                </div>
-                <div className="p-2.5 rounded-lg bg-surface-bg border border-border-subtle">
-                  <span className="text-[11px] text-text-secondary block">Líderes de Opinião (KOL)</span>
-                  <span className="text-base font-bold text-status-success">{clinicalGraph?.kol_speakers_count ?? 0}</span>
-                </div>
-              </div>
-
-              {/* Feedback 9: Apresentar mais detalhes por registro (ícone, localidade, conexões e badge) */}
-              <div className="divide-y divide-border-subtle max-h-72 overflow-y-auto pr-1">
-                {graphNodes.slice(0, 8).map((node) => {
-                  const edgeCount = (clinicalGraph?.edges || []).filter(
-                    (e) => e.source === node.id || e.target === node.id
-                  ).length;
-                  const isUniv = node.node_type === "university";
-                  const isLab = node.node_type === "cadcam_lab";
-                  const isClinic = node.node_type === "clinic";
-
-                  const IconComp = isUniv
-                    ? GraduationCap
-                    : isLab
-                    ? Cpu
-                    : isClinic
-                    ? Building2
-                    : Stethoscope;
-
-                  const typeLabel = isUniv
-                    ? "Universidade / Pós"
-                    : isLab
-                    ? "Lab CAD/CAM"
-                    : isClinic
-                    ? "Clínica & Hospital"
-                    : "Cirurgião Especialista";
-
-                  const badgeVariant = isUniv ? "default" : isLab ? "warning" : isClinic ? "navy" : "secondary";
-
-                  const locationText =
-                    node.metadata?.city && node.metadata?.state
-                      ? `${node.metadata.city}, ${node.metadata.state}`
-                      : node.metadata?.uf
-                      ? `UF: ${node.metadata.uf}`
-                      : "Polo Nacional";
-
-                  return (
-                    <div
-                      key={node.id}
-                      className="py-2.5 px-2 hover:bg-surface-bg rounded-md transition-colors flex items-center justify-between text-xs gap-3"
-                    >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="p-1.5 rounded-md bg-surface-bg border border-border-subtle text-brand-primary shrink-0">
-                          <IconComp className="h-3.5 w-3.5" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="font-semibold text-text-main text-xs truncate">{node.label}</p>
-                          <div className="flex items-center gap-1.5 text-[11px] text-text-secondary">
-                            <span className="truncate">{locationText}</span>
-                            <span className="text-text-muted">•</span>
-                            <span className="text-brand-primary shrink-0">{edgeCount} vínculos</span>
-                          </div>
-                        </div>
-                      </div>
-                      <Badge variant={badgeVariant} className="text-[10px] shrink-0 font-medium">
-                        {typeLabel}
-                      </Badge>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
+            )}
           </Card>
-        </div>
+        )}
+
+        {executiveCockpitTab === "ecosystem" && (
+          <Card className="border-border flex flex-col justify-between w-full">
+            <div>
+              <CardHeader>
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <CardTitle>Ecossistema Clínico KOL & Polos Credenciados</CardTitle>
+                    <CardDescription>
+                      Topologia de relacionamentos entre Cirurgiões, Clínicas, Laboratórios CAD/CAM e Universidades.
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {/* Feedback 2: Manter o texto e remover a palavra 'Ativos' */}
+                    <Badge variant="navy">
+                      {clinicalGraph?.total_edges ?? 0} Vínculos
+                    </Badge>
+                    {/* Feedback 3: Deixar apenas o ícone sem texto */}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 w-7 p-0 flex items-center justify-center shrink-0"
+                      onClick={() => setShowTopologyModal(true)}
+                      title="Expandir Topologia do Grafo"
+                      aria-label="Expandir Topologia do Grafo"
+                    >
+                      <Maximize2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="p-2.5 rounded-lg bg-surface-bg border border-border-subtle">
+                    <span className="text-[11px] text-text-secondary block">Instituições Mapeadas</span>
+                    <span className="text-base font-bold text-text-main">{clinicalGraph?.total_nodes ?? 0}</span>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-surface-bg border border-border-subtle">
+                    <span className="text-[11px] text-text-secondary block">Parcerias & Vínculos</span>
+                    <span className="text-base font-bold text-brand-primary">{clinicalGraph?.total_edges ?? 0}</span>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-surface-bg border border-border-subtle">
+                    <span className="text-[11px] text-text-secondary block">Líderes de Opinião (KOL)</span>
+                    <span className="text-base font-bold text-status-success">{clinicalGraph?.kol_speakers_count ?? 0}</span>
+                  </div>
+                </div>
+
+                {/* Lista paginada ocupando o espaço completo sem necessidade de scroll vertical */}
+                <div className="divide-y divide-border-subtle">
+                  {graphNodes
+                    .slice(
+                      (cockpitInstitutionsPage - 1) * COCKPIT_INSTITUTIONS_PER_PAGE,
+                      cockpitInstitutionsPage * COCKPIT_INSTITUTIONS_PER_PAGE
+                    )
+                    .map((node) => {
+                      const edgeCount = (clinicalGraph?.edges || []).filter(
+                        (e) => e.source === node.id || e.target === node.id
+                      ).length;
+                      const isUniv = node.node_type === "university";
+                      const isLab = node.node_type === "cadcam_lab";
+                      const isClinic = node.node_type === "clinic";
+
+                      const IconComp = isUniv
+                        ? GraduationCap
+                        : isLab
+                        ? Cpu
+                        : isClinic
+                        ? Building2
+                        : Stethoscope;
+
+                      const typeLabel = isUniv
+                        ? "Universidade / Pós"
+                        : isLab
+                        ? "Lab CAD/CAM"
+                        : isClinic
+                        ? "Clínica & Hospital"
+                        : "Cirurgião Especialista";
+
+                      const badgeVariant = isUniv ? "default" : isLab ? "warning" : isClinic ? "navy" : "secondary";
+
+                      const locationText =
+                        node.metadata?.city && node.metadata?.state
+                          ? `${node.metadata.city}, ${node.metadata.state}`
+                          : node.metadata?.uf
+                          ? `UF: ${node.metadata.uf}`
+                          : "Polo Nacional";
+
+                      return (
+                        <div
+                          key={node.id}
+                          className="py-3 px-2 hover:bg-surface-bg rounded-md transition-colors flex items-center justify-between text-xs gap-3"
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="p-2 rounded-md bg-surface-bg border border-border-subtle text-brand-primary shrink-0">
+                              <IconComp className="h-4 w-4" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-semibold text-text-main text-xs truncate">{node.label}</p>
+                              <div className="flex items-center gap-1.5 text-[11px] text-text-secondary mt-0.5">
+                                <span className="truncate">{locationText}</span>
+                                <span className="text-text-muted">•</span>
+                                <span className="text-brand-primary shrink-0 font-medium">{edgeCount} vínculos</span>
+                              </div>
+                            </div>
+                          </div>
+                          <Badge variant={badgeVariant} className="text-[10px] shrink-0 font-medium">
+                            {typeLabel}
+                          </Badge>
+                        </div>
+                      );
+                    })}
+                </div>
+              </CardContent>
+            </div>
+
+            {/* Paginação do Card de Instituições (sem scroll vertical) */}
+            <div className="p-4 pt-3 border-t border-border-subtle flex items-center justify-between text-xs text-text-secondary">
+              <span>
+                Página {cockpitInstitutionsPage} de {Math.max(1, Math.ceil(graphNodes.length / COCKPIT_INSTITUTIONS_PER_PAGE))} ({graphNodes.length} polos)
+              </span>
+              <div className="flex items-center gap-1.5">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 px-2 text-xs"
+                  disabled={cockpitInstitutionsPage <= 1}
+                  onClick={() => setCockpitInstitutionsPage((p) => Math.max(1, p - 1))}
+                  title="Página anterior de instituições"
+                >
+                  <ChevronLeft className="h-3.5 w-3.5 mr-0.5" />
+                  Anterior
+                </Button>
+                <span className="text-xs px-2 font-medium">
+                  {cockpitInstitutionsPage} / {Math.max(1, Math.ceil(graphNodes.length / COCKPIT_INSTITUTIONS_PER_PAGE))}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 px-2 text-xs"
+                  disabled={cockpitInstitutionsPage >= Math.ceil(graphNodes.length / COCKPIT_INSTITUTIONS_PER_PAGE)}
+                  onClick={() =>
+                    setCockpitInstitutionsPage((p) =>
+                      Math.min(Math.ceil(graphNodes.length / COCKPIT_INSTITUTIONS_PER_PAGE), p + 1)
+                    )
+                  }
+                  title="Próxima página de instituições"
+                >
+                  Próxima
+                  <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
+                </Button>
+              </div>
+            </div>
+          </Card>
+        )}
 
         {/* Feedback 10 e 11: Funil Comercial por Estágio com botões, filtros e textos/dados sem corte */}
-        <Card className="border-border">
+        {executiveCockpitTab === "funnel" && (
+          <Card className="border-border w-full">
           <CardHeader>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
@@ -1040,7 +1206,8 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
               })}
             </div>
           </CardContent>
-        </Card>
+          </Card>
+        )}
 
         {/* Feedback 4, 5, 6, 7: Modal de Topologia com 2 Abas, Paginação de 7 registros e texto comercial descritivo */}
         <Dialog
@@ -1092,13 +1259,19 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
               </button>
             </div>
 
-            {/* Aba 1: Nós do Ecossistema com Paginação de 7 por página (Feedback 4) */}
+            {/* Aba 1: Nós do Ecossistema em 1 coluna estrita com dados ricos e Paginação de 7 por página */}
             {topologyTab === "nodes" && (
               <div className="space-y-3">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="space-y-2">
                   {graphNodes
                     .slice((nodesPage - 1) * TOPOLOGY_ITEMS_PER_PAGE, nodesPage * TOPOLOGY_ITEMS_PER_PAGE)
                     .map((node) => {
+                      const connectedEdges = (clinicalGraph?.edges || []).filter(
+                        (e) => e.source === node.id || e.target === node.id
+                      );
+                      const edgeCount = connectedEdges.length;
+                      const isKolLinked = node.metadata?.is_kol || connectedEdges.some((e) => e.is_kol);
+
                       const isUniv = node.node_type === "university";
                       const isLab = node.node_type === "cadcam_lab";
                       const isClinic = node.node_type === "clinic";
@@ -1112,27 +1285,70 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
                         : Stethoscope;
 
                       const typeLabel = isUniv
-                        ? "Universidade"
+                        ? "Universidade / Pós"
                         : isLab
                         ? "Lab CAD/CAM"
                         : isClinic
-                        ? "Clínica"
-                        : "Cirurgião";
+                        ? "Clínica & Hospital"
+                        : "Cirurgião Especialista";
 
                       const badgeVariant = isUniv ? "default" : isLab ? "warning" : isClinic ? "navy" : "secondary";
+
+                      const locationText =
+                        node.metadata?.city && node.metadata?.state
+                          ? `${node.metadata.city}, ${node.metadata.state}`
+                          : node.metadata?.uf
+                          ? `UF: ${node.metadata.uf}`
+                          : "Cobertura Nacional";
+
+                      const specialtyText =
+                        node.metadata?.specialty ||
+                        (isUniv
+                          ? "Pesquisa & Formação Odontológica"
+                          : isLab
+                          ? "Fresagem Digital & Próteses CAD/CAM"
+                          : isClinic
+                          ? "Implantodontia & Reabilitação Oral"
+                          : "Cirurgia e Traumatologia Bucomaxilofacial");
 
                       return (
                         <div
                           key={node.id}
-                          className="p-2.5 rounded-md border border-border-subtle bg-surface-bg flex items-center justify-between gap-2"
+                          className="p-3 rounded-lg border border-border-subtle bg-surface-card hover:bg-surface-bg/80 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs"
                         >
-                          <div className="flex items-center gap-2 min-w-0">
-                            <IconComp className="h-3.5 w-3.5 text-brand-primary shrink-0" />
-                            <span className="text-xs font-medium text-text-main truncate">{node.label}</span>
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="p-2 rounded-md bg-surface-bg border border-border-subtle text-brand-primary shrink-0">
+                              <IconComp className="h-4 w-4" />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-semibold text-text-main truncate">{node.label}</span>
+                                {isKolLinked && (
+                                  <Badge variant="navy" className="text-[9px] px-1.5 py-0 h-4 shrink-0 font-semibold uppercase tracking-wider">
+                                    KOL Ativo
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-text-secondary mt-1">
+                                <span className="inline-flex items-center gap-1 shrink-0">
+                                  <MapPin className="h-3 w-3 text-text-muted shrink-0" />
+                                  <span>{locationText}</span>
+                                </span>
+                                <span className="text-text-muted hidden sm:inline">•</span>
+                                <span className="truncate text-text-muted">{specialtyText}</span>
+                              </div>
+                            </div>
                           </div>
-                          <Badge variant={badgeVariant} className="text-[10px] uppercase shrink-0 font-medium">
-                            {typeLabel}
-                          </Badge>
+
+                          <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0 border-border-subtle">
+                            <div className="text-left sm:text-right">
+                              <span className="text-xs font-bold text-brand-primary block">{edgeCount}</span>
+                              <span className="text-[10px] text-text-secondary">vínculos ativos</span>
+                            </div>
+                            <Badge variant={badgeVariant} className="text-[10px] uppercase font-medium px-2 py-0.5 shrink-0">
+                              {typeLabel}
+                            </Badge>
+                          </div>
                         </div>
                       );
                     })}
