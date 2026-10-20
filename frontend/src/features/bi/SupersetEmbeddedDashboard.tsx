@@ -69,6 +69,7 @@ export interface GuestTokenData {
   dashboard_id: string;
   dashboard_type: string;
   rls_clause: string;
+  user_id?: string;
   superset_domain: string;
   expires_in_seconds: number;
 }
@@ -168,13 +169,6 @@ const DASHBOARD_TYPE_OPTIONS: { value: DashboardTypeOption; label: string; dashI
   },
 ];
 
-const USER_RLS_OPTIONS = [
-  { value: "usr-director-br", label: "Diretor Nacional (Tenant Global RLS)" },
-  { value: "usr-manager-pr", label: "Gerente Regional Sul (Team Scope RLS)" },
-  { value: "usr-consultant-pr", label: "Consultor Comercial PR (Self Owner RLS)" },
-  { value: "usr-superadmin-god", label: "Super Admin Global (Full Audit 1=1)" },
-];
-
 const PRESET_NL_QUERIES = [
   "Qual o total faturado em deals?",
   "Qual o faturamento por regional?",
@@ -183,17 +177,13 @@ const PRESET_NL_QUERIES = [
 
 export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
   mode = "bi_studio",
-  userId: initialUserId,
   dashboardId: initialDashboardId,
   dashboardType: initialDashboardType = "industry_consignment",
-  accountId: initialAccountId,
   title,
   initialTab,
   onNavigate,
 }) => {
-  const [selectedUserId, setSelectedUserId] = useState<string>(initialUserId || "usr-director-br");
   const [selectedDashType, setSelectedDashType] = useState<DashboardTypeOption>(initialDashboardType);
-  const [activeAccount] = useState<string>(initialAccountId || "0f14ffff");
   const [studioTab, setStudioTab] = useState<string>(initialTab || "rls_studio");
 
   const [loadingToken, setLoadingToken] = useState<boolean>(true);
@@ -217,6 +207,7 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
   const [dealsData, setDealsData] = useState<any>(null);
   const [chartViewMode, setChartViewMode] = useState<"stage" | "trend" | "consignment">("stage");
   const [loadingExecutive, setLoadingExecutive] = useState<boolean>(false);
+  const [executiveErrors, setExecutiveErrors] = useState<string[]>([]);
 
   // TICKET-DASH-03: filtro temporal do Radar Anti-Churn
   const [churnDaysThreshold, setChurnDaysThreshold] = useState<string>("all");
@@ -318,10 +309,8 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          user_id: selectedUserId,
           dashboard_id: resolvedDashboardId,
           dashboard_type: selectedDashType,
-          account_id: activeAccount,
         }),
       });
       if (!res.ok) {
@@ -334,30 +323,37 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
     } finally {
       setLoadingToken(false);
     }
-  }, [selectedUserId, resolvedDashboardId, selectedDashType, activeAccount]);
+  }, [resolvedDashboardId, selectedDashType]);
 
   const fetchExecutiveCockpit = useCallback(async () => {
     setLoadingExecutive(true);
+    const failed: string[] = [];
+    const churnQuery =
+      churnDaysThreshold && churnDaysThreshold !== "all"
+        ? `?days_threshold=${encodeURIComponent(churnDaysThreshold)}`
+        : "";
+    const load = async (label: string, url: string, apply: (data: any) => void) => {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) {
+          failed.push(`${label} (HTTP ${res.status})`);
+          return;
+        }
+        apply(await res.json());
+      } catch {
+        failed.push(`${label} (sem conexão)`);
+      }
+    };
     try {
-      const churnQuery =
-        churnDaysThreshold && churnDaysThreshold !== "all"
-          ? `?days_threshold=${encodeURIComponent(churnDaysThreshold)}`
-          : "";
-      const [mRes, cRes, chRes, cgRes, dRes] = await Promise.all([
-        fetch("/api/v1/metrics"),
-        fetch("/api/v1/campaigns/metrics"),
-        fetch(`/api/v1/intelligence/churn-risk${churnQuery}`),
-        fetch("/api/v1/intelligence/clinical-graph"),
-        fetch("/api/v1/deals"),
+      await Promise.all([
+        load("Métricas do funil", "/api/v1/metrics", setPipelineMetrics),
+        load("Métricas de campanhas", "/api/v1/campaigns/metrics", setCampaignMetrics),
+        load("Radar anti-churn", `/api/v1/intelligence/churn-risk${churnQuery}`, setChurnData),
+        load("Rede de parceiros", "/api/v1/intelligence/clinical-graph", setClinicalGraph),
+        load("Negociações", "/api/v1/deals", setDealsData),
       ]);
-      if (mRes.ok) setPipelineMetrics(await mRes.json());
-      if (cRes.ok) setCampaignMetrics(await cRes.json());
-      if (chRes.ok) setChurnData(await chRes.json());
-      if (cgRes.ok) setClinicalGraph(await cgRes.json());
-      if (dRes.ok) setDealsData(await dRes.json());
-    } catch {
-      // Silencioso para não bloquear render parcial
     } finally {
+      setExecutiveErrors(failed);
       setLoadingExecutive(false);
     }
   }, [churnDaysThreshold]);
@@ -367,10 +363,7 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
       setSqlLoading(true);
       setSqlError(null);
       try {
-        const payload: Record<string, any> = {
-          user_id: selectedUserId,
-          account_id: activeAccount,
-        };
+        const payload: Record<string, any> = {};
         if (customRawSql && customRawSql.trim()) {
           payload.raw_sql = customRawSql.trim();
         } else {
@@ -393,7 +386,7 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
         setSqlLoading(false);
       }
     },
-    [selectedUserId, activeAccount, nlQuery]
+    [nlQuery]
   );
 
   useEffect(() => {
@@ -429,6 +422,11 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
   };
 
   const handleExportDataset = async (format: "csv" | "parquet") => {
+    if (format !== "csv") {
+      setExportSuccess(null);
+      setError("Exportação Parquet indisponível para datasets BI. Selecione CSV.");
+      return;
+    }
     setExporting(true);
     setExportSuccess(null);
     setError(null);
@@ -438,9 +436,7 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           dataset_name: currentDashConfig.dataset,
-          user_id: selectedUserId,
           format,
-          account_id: activeAccount,
         }),
       });
       if (!res.ok) throw new Error("Erro ao exportar dataset analítico para R2");
@@ -794,6 +790,19 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
             },
           ]}
         />
+
+        {(executiveErrors.length > 0 || error) && (
+          <div
+            role="alert"
+            className="p-3 rounded-lg bg-status-danger-subtle border border-status-danger/30 text-xs text-status-danger flex items-center gap-2"
+          >
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            <span>
+              {error ||
+                `Dados indisponíveis: ${executiveErrors.join("; ")}. Os demais painéis continuam atualizados.`}
+            </span>
+          </div>
+        )}
 
         {exportSuccess && (
           <div className="p-3 rounded-lg bg-status-success-subtle border border-status-success/30 text-xs text-status-success flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -2234,7 +2243,7 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
     <div className="space-y-6 max-w-7xl mx-auto">
       <RouteHeader
         title={title || "Estúdio BI Superset RLS & Agente Analítico Text-to-SQL"}
-        description="Governança de Guest Tokens JWT com Row-Level Security (RLS), exportação analítica Parquet/CSV no R2 e consultas em linguagem natural protegidas por AST."
+        description="Governança de Guest Tokens JWT com Row-Level Security (RLS), exportação analítica CSV no R2 e consultas em linguagem natural protegidas por AST."
         exportConfig={{
           format: exportFormat,
           onFormatChange: (fmt) => setExportFormat(fmt as SnapshotExportFormat),
@@ -2282,18 +2291,12 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
 
       {/* Barra de Seleção Dinâmica de Painel Superset e Escopo RLS */}
       <Card className="p-4 border-border">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
           <Select
             label="Painel Analítico Superset (Dashboard Type)"
             value={selectedDashType}
             onChange={(e) => setSelectedDashType(e.target.value as DashboardTypeOption)}
             options={DASHBOARD_TYPE_OPTIONS.map((d) => ({ value: d.value, label: d.label }))}
-          />
-          <Select
-            label="Simulador de Escopo Hierárquico (Usuário RLS)"
-            value={selectedUserId}
-            onChange={(e) => setSelectedUserId(e.target.value)}
-            options={USER_RLS_OPTIONS}
           />
           <div className="flex items-center justify-between p-2.5 rounded-md bg-status-success-subtle border border-status-success/20">
             <div className="min-w-0">
@@ -2377,7 +2380,7 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-text-secondary">
-                      {showTechnicalDetails ? `Escopo: ${tokenData?.rls_clause || "account_id = '0f14ffff'"}` : "Escopo: Todos os dados da unidade"}
+                      {showTechnicalDetails ? `Escopo: ${tokenData?.rls_clause || "tenant da sessão"}` : "Escopo: Todos os dados da unidade"}
                     </span>
                     <Button
                       variant="ghost"
@@ -2478,7 +2481,7 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
                 <div className="p-3 rounded-md bg-surface-bg border border-border-subtle space-y-1.5">
                   <div className="flex justify-between">
                     <span className="text-text-secondary">Usuário:</span>
-                    <code className="font-mono text-text-main">{selectedUserId}</code>
+                    <code className="font-mono text-text-main">{tokenData?.user_id || "Sessão autenticada"}</code>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-text-secondary">Dashboard:</span>
