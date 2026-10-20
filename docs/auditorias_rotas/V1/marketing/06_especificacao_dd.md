@@ -3,7 +3,7 @@
 ## 1. Especificação BDD (Gherkin)
 ```gherkin
 Funcionalidade: Operação da Rota Campanhas e Indicações (Growth & Referral)
-  Como Usuário Autenticado da Plataforma RevOps
+  Como Usuário Autenticado da Plataforma RevNault
   Eu quero acessar a rota "/#!/marketing"
   Para executar as rotinas operacionais com integridade e segurança
 

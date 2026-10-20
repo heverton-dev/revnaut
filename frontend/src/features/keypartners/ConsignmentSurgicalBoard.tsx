@@ -98,8 +98,14 @@ export interface LoyaltyWallet {
   }>;
 }
 
-export const ConsignmentSurgicalBoard: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<string>("board");
+export interface ConsignmentSurgicalBoardProps {
+  initialTab?: string;
+}
+
+export const ConsignmentSurgicalBoard: React.FC<ConsignmentSurgicalBoardProps> = ({
+  initialTab = "board",
+}) => {
+  const [activeTab, setActiveTab] = useState<string>(initialTab);
 
   // Tab 1: Orders
   const [orders, setOrders] = useState<SurgicalOrder[]>([]);
@@ -766,7 +772,7 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
   };
 
   return (
-    <div className="w-full space-y-6 font-sans text-text-main">
+    <div className="space-y-6 max-w-7xl mx-auto">
       <RouteHeader
         title="KeyPartners • Cockpit de Consignação Cirúrgica & Parcerias"
         description="Quadro 4 Estágios, Acordos de Consignação, Maletas Seriais, Contratos KOL e Moeda Cirúrgica."
@@ -796,7 +802,7 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
       />
 
       {/* Tabs */}
-      <Tabs tabs={tabsConfig} activeTab={activeTab} onChange={setActiveTab} />
+      <Tabs tabs={tabsConfig} activeTab={activeTab} onChange={setActiveTab} hideOnDesktop />
 
       {/* TAB 1: Quadro Cirúrgico 4 Estágios */}
       {activeTab === "board" && (
@@ -1461,7 +1467,7 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
       {/* MODAL: Nova Ordem Cirúrgica */}
       {showNewOrderModal && (
         <div className="fixed inset-0 bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0 flex items-center justify-center p-4 z-50">
-          <div className="bg-surface-card border border-border rounded-xl max-w-lg w-full p-6 shadow-modal space-y-4">
+          <div className="bg-surface-card border border-border rounded-2xl max-w-2xl w-full p-5 sm:p-7 shadow-modal space-y-4 max-h-[85vh] overflow-y-auto animate-in fade-in-0 zoom-in-95">
             <div className="flex justify-between items-center pb-3 border-b border-border">
               <h3 className="text-base font-bold text-text-main">+ Nova Ordem Cirúrgica</h3>
               <button onClick={() => setShowNewOrderModal(false)} className="text-text-secondary hover:text-text-main">
@@ -1578,7 +1584,7 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
       {/* MODAL: Conciliação Pós-Operatória */}
       {postopOrder && (
         <div className="fixed inset-0 bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0 flex items-center justify-center p-4 z-50">
-          <div className="bg-surface-card border border-border rounded-xl max-w-lg w-full p-6 shadow-modal space-y-4">
+          <div className="bg-surface-card border border-border rounded-2xl max-w-2xl w-full p-5 sm:p-7 shadow-modal space-y-4 max-h-[85vh] overflow-y-auto animate-in fade-in-0 zoom-in-95">
             <div className="flex justify-between items-center pb-3 border-b border-border">
               <h3 className="text-base font-bold text-text-main">
                 Conciliação Pós-Op & Faturamento CFOP 5.113
@@ -1629,7 +1635,7 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
       {/* MODAL: Novo Acordo */}
       {showNewAgreementModal && (
         <div className="fixed inset-0 bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0 flex items-center justify-center p-4 z-50">
-          <div className="bg-surface-card border border-border rounded-xl max-w-md w-full p-6 shadow-modal space-y-4">
+          <div className="bg-surface-card border border-border rounded-2xl max-w-xl w-full p-5 sm:p-7 shadow-modal space-y-4 max-h-[85vh] overflow-y-auto animate-in fade-in-0 zoom-in-95">
             <div className="flex justify-between items-center pb-3 border-b border-border">
               <h3 className="text-base font-bold text-text-main">+ Novo Acordo de Consignação</h3>
               <button onClick={() => setShowNewAgreementModal(false)} className="text-text-secondary hover:text-text-main">
@@ -1694,7 +1700,7 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
       {/* MODAL: Cadastrar Kit Serial */}
       {showKitModal && (
         <div className="fixed inset-0 bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0 flex items-center justify-center p-4 z-50">
-          <div className="bg-surface-card border border-border rounded-xl max-w-md w-full p-6 shadow-modal space-y-4">
+          <div className="bg-surface-card border border-border rounded-2xl max-w-xl w-full p-5 sm:p-7 shadow-modal space-y-4 max-h-[85vh] overflow-y-auto animate-in fade-in-0 zoom-in-95">
             <div className="flex justify-between items-center pb-3 border-b border-border">
               <h3 className="text-base font-bold text-text-main">Cadastrar Maleta Serial (QR Code)</h3>
               <button onClick={() => setShowKitModal(false)} className="text-text-secondary hover:text-text-main">
@@ -1736,7 +1742,7 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
       {/* MODAL: Coleta Reversa DENTGO */}
       {showPickupModal && (
         <div className="fixed inset-0 bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0 flex items-center justify-center p-4 z-50">
-          <div className="bg-surface-card border border-border rounded-xl max-w-md w-full p-6 shadow-modal space-y-4">
+          <div className="bg-surface-card border border-border rounded-2xl max-w-xl w-full p-5 sm:p-7 shadow-modal space-y-4 max-h-[85vh] overflow-y-auto animate-in fade-in-0 zoom-in-95">
             <div className="flex justify-between items-center pb-3 border-b border-border">
               <h3 className="text-base font-bold text-text-main">Acionar Coleta Reversa DENTGO Express</h3>
               <button onClick={() => setShowPickupModal(false)} className="text-text-secondary hover:text-text-main">
@@ -1796,7 +1802,7 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
       {/* TICKET-KEY-01: Leitor de Código de Barras / DataMatrix */}
       {showScannerModal && (
         <div className="fixed inset-0 bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0 flex items-center justify-center p-4 z-50">
-          <div className="bg-surface-card border border-border rounded-xl max-w-md w-full p-6 shadow-modal space-y-4">
+          <div className="bg-surface-card border border-border rounded-2xl max-w-xl w-full p-5 sm:p-7 shadow-modal space-y-4 max-h-[85vh] overflow-y-auto animate-in fade-in-0 zoom-in-95">
             <div className="flex justify-between items-center pb-3 border-b border-border">
               <h3 className="text-base font-bold text-text-main flex items-center gap-2">
                 <ScanLine className="h-4 w-4 text-brand-primary" />
@@ -1884,7 +1890,7 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
       {/* MODAL: Novo Contrato KOL */}
       {showKolModal && (
         <div className="fixed inset-0 bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0 flex items-center justify-center p-4 z-50">
-          <div className="bg-surface-card border border-border rounded-xl max-w-md w-full p-6 shadow-modal space-y-4">
+          <div className="bg-surface-card border border-border rounded-2xl max-w-xl w-full p-5 sm:p-7 shadow-modal space-y-4 max-h-[85vh] overflow-y-auto animate-in fade-in-0 zoom-in-95">
             <div className="flex justify-between items-center pb-3 border-b border-border">
               <h3 className="text-base font-bold text-text-main">+ Novo Contrato KOL & Comodato</h3>
               <button onClick={() => setShowKolModal(false)} className="text-text-secondary hover:text-text-main">
@@ -1966,7 +1972,7 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
       {/* MODAL: Apontar Consumo KOL */}
       {consumptionContractId && (
         <div className="fixed inset-0 bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0 flex items-center justify-center p-4 z-50">
-          <div className="bg-surface-card border border-border rounded-xl max-w-sm w-full p-5 shadow-modal space-y-4">
+          <div className="bg-surface-card border border-border rounded-2xl max-w-md w-full p-5 sm:p-7 shadow-modal space-y-4 max-h-[85vh] overflow-y-auto animate-in fade-in-0 zoom-in-95">
             <h3 className="text-sm font-bold text-text-main">Apontar Consumo Mensal de Implantes</h3>
             <div className="space-y-2 text-xs">
               <label className="text-text-secondary block">Total de implantes consumidos no mês:</label>
@@ -1992,7 +1998,7 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
       {/* MODAL: Remeter Lotes para Custódia */}
       {showDispatchCustodyModal && (
         <div className="fixed inset-0 bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0 flex items-center justify-center p-4 z-50">
-          <div className="bg-surface-card border border-border rounded-xl max-w-md w-full p-5 shadow-modal space-y-4">
+          <div className="bg-surface-card border border-border rounded-2xl max-w-xl w-full p-5 sm:p-7 shadow-modal space-y-4 max-h-[85vh] overflow-y-auto animate-in fade-in-0 zoom-in-95">
             <h3 className="text-sm font-bold text-text-main">Remeter Lotes para Custódia ({selectedCustodyAgreementId})</h3>
             <div className="space-y-3 text-xs">
               <div className="grid grid-cols-3 gap-2">
@@ -2104,7 +2110,7 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
       {/* MODAL: Submeter Evidência R2 */}
       {evidenceContractId && (
         <div className="fixed inset-0 bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0 flex items-center justify-center p-4 z-50">
-          <div className="bg-surface-card border border-border rounded-xl max-w-md w-full p-5 shadow-modal space-y-4">
+          <div className="bg-surface-card border border-border rounded-2xl max-w-xl w-full p-5 sm:p-7 shadow-modal space-y-4 max-h-[85vh] overflow-y-auto animate-in fade-in-0 zoom-in-95">
             <h3 className="text-sm font-bold text-text-main">Registrar Evidência Científica no Cloudflare R2</h3>
             <div className="space-y-3 text-xs">
               <div>
@@ -2148,7 +2154,7 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
       {/* MODAL: Detalhes da Ordem Cirúrgica */}
       {selectedOrder && (
         <div className="fixed inset-0 bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0 flex items-center justify-center p-4 z-50">
-          <div className="bg-surface-card border border-border rounded-xl max-w-lg w-full p-6 shadow-modal">
+          <div className="bg-surface-card border border-border rounded-2xl max-w-2xl w-full p-5 sm:p-7 shadow-modal max-h-[85vh] overflow-y-auto animate-in fade-in-0 zoom-in-95">
             <div className="flex justify-between items-center pb-3 border-b border-border">
               <h3 className="text-base font-bold text-text-main">Detalhes da Ordem Cirúrgica</h3>
               <button

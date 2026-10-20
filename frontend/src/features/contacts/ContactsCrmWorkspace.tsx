@@ -26,7 +26,7 @@ import { Select } from "@/components/ui/Select";
 import { Tabs } from "@/components/ui/Tabs";
 import { DataTable, Column } from "@/components/ui/DataTable";
 import { Dialog } from "@/components/ui/Dialog";
-import { Sheet } from "@/components/ui/Sheet";
+import { ModalTabBar } from "@/components/ui/ModalTabBar";
 import { CroVerifiedInput } from "@/features/contacts/components/CroVerifiedInput";
 import { IcpScoringDashboard } from "@/features/scoring/IcpScoringDashboard";
 
@@ -88,8 +88,14 @@ interface CfoValidationResult {
   detected_cro?: string | null;
 }
 
-export const ContactsCrmWorkspace: React.FC = () => {
-  const [activeTab, setActiveTab] = React.useState<string>("crm_surgeons");
+export interface ContactsCrmWorkspaceProps {
+  initialTab?: string;
+}
+
+export const ContactsCrmWorkspace: React.FC<ContactsCrmWorkspaceProps> = ({
+  initialTab = "crm_surgeons",
+}) => {
+  const [activeTab, setActiveTab] = React.useState<string>(initialTab);
 
   // Estados Tab 1: Base de Cirurgiões
   const [contacts, setContacts] = React.useState<ContactRecord[]>([]);
@@ -125,6 +131,9 @@ export const ContactsCrmWorkspace: React.FC = () => {
 
   // Drawer Dossiê 360° & Timeline
   const [selectedContact, setSelectedContact] = React.useState<ContactRecord | null>(null);
+  const [contactModalTab, setContactModalTab] = React.useState<"overview" | "timeline">("overview");
+  const [contactTimelinePage, setContactTimelinePage] = React.useState<number>(1);
+  const CONTACT_TIMELINE_PER_PAGE = 4;
   const [contactProfile, setContactProfile] = React.useState<ContactProfile | null>(null);
   const [contactTimeline, setContactTimeline] = React.useState<Array<Record<string, any>>>([]);
   const [newCommentText, setNewCommentText] = React.useState<string>("");
@@ -589,6 +598,7 @@ export const ContactsCrmWorkspace: React.FC = () => {
       <Tabs
         activeTab={activeTab}
         onChange={setActiveTab}
+        hideOnDesktop
         tabs={[
           { id: "crm_surgeons", label: "Base de Cirurgiões (CRM)", count: filteredContacts.length },
           { id: "institutions_links", label: "Clínicas, Hospitais & Vínculos", count: institutions.length },
@@ -946,6 +956,7 @@ export const ContactsCrmWorkspace: React.FC = () => {
       <Dialog
         isOpen={isNewContactOpen}
         onClose={() => setIsNewContactOpen(false)}
+        size="form"
         title="Homologar e Cadastrar Novo Cirurgião-Dentista"
         description="Valida o registro profissional junto ao CRO antes de liberar consignação de implantes."
       >
@@ -1041,6 +1052,7 @@ export const ContactsCrmWorkspace: React.FC = () => {
       <Dialog
         isOpen={isImportCsvOpen}
         onClose={() => setIsImportCsvOpen(false)}
+        size="form"
         title="Importação em Lote de Cirurgiões (CSV)"
         description="Distribuição automática por território (UF), especialidade ou round-robin."
       >
@@ -1077,169 +1089,279 @@ export const ContactsCrmWorkspace: React.FC = () => {
         </form>
       </Dialog>
 
-      {/* Drawer Sheet: Dossiê 360° & Timeline do Cirurgião */}
-      <Sheet
+      {/* Dossiê 360° do Cirurgião (Modal Padronizado 80vh com Abas e Paginação) */}
+      <Dialog
         isOpen={Boolean(selectedContact)}
         onClose={() => setSelectedContact(null)}
+        size="80vh"
         title={selectedContact ? `Dossiê 360° • ${selectedContact.name}` : "Dossiê 360°"}
         description={
           selectedContact
             ? `${selectedContact.cro || "CRO Verificado"} • ${selectedContact.specialty || "Implantodontia"}`
             : ""
         }
+        footer={
+          <div className="flex items-center justify-between w-full">
+            <span className="text-xs text-text-muted">
+              Governança RevNault • Cirurgião #{selectedContact?.id}
+            </span>
+            <Button variant="secondary" size="sm" onClick={() => setSelectedContact(null)}>
+              Fechar Dossiê
+            </Button>
+          </div>
+        }
       >
         {selectedContact && (
-          <div className="space-y-5 text-xs">
-            <div className="grid grid-cols-2 gap-2 p-3 rounded-lg bg-surface-bg border border-border">
-              <div>
-                <span className="text-text-secondary block">Clínica Principal</span>
-                <strong className="text-text-main">{selectedContact.company || "Consultório"}</strong>
-              </div>
-              <div>
-                <span className="text-text-secondary block">Score Preditivo ICP</span>
-                <strong className="text-brand-primary">{contactProfile?.score ?? selectedContact.score ?? 75} pts</strong>
-              </div>
-              <div>
-                <span className="text-text-secondary block">E-mail</span>
-                <strong className="text-text-main truncate block">{selectedContact.email || "N/D"}</strong>
-              </div>
-              <div>
-                <span className="text-text-secondary block">Negócios Vinculados</span>
-                <strong className="text-text-main">{contactProfile?.deals?.length ?? 0} oportunidades</strong>
-              </div>
-            </div>
+          <div className="flex flex-col min-h-full text-xs pb-6">
+            {/* Barra de Abas do Dossiê */}
+            <ModalTabBar
+              tabs={[
+                { id: "overview", label: "Dados Clínicos & Ações", icon: <ShieldCheck className="h-4 w-4" /> },
+                { id: "timeline", label: "Histórico & Apontamentos", count: contactTimeline.length, icon: <Clock className="h-4 w-4" /> },
+              ]}
+              activeTab={contactModalTab}
+              onChange={(t) => setContactModalTab(t as any)}
+            />
 
-            {/* TICKET-CONTACTS-01..03: Ações rápidas do cirurgião */}
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="gap-1.5 text-xs"
-                onClick={() => {
-                  window.location.hash = "#!/keypartners";
-                }}
-              >
-                <Briefcase className="h-3.5 w-3.5 text-brand-primary" />
-                Vincular Maleta em Consignação
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="gap-1.5 text-xs"
-                onClick={() => {
-                  const phone = String(selectedContact.phone || "").replace(/\D/g, "");
-                  const wa = phone ? (phone.startsWith("55") ? phone : `55${phone}`) : "";
-                  window.open(
-                    `https://wa.me/${wa}?text=${encodeURIComponent(`Olá Dr(a). ${selectedContact.name}, tudo bem? Aqui é da Revnault.`)}`,
-                    "_blank",
-                    "noopener,noreferrer"
-                  );
-                }}
-              >
-                <MessageCircle className="h-3.5 w-3.5 text-status-whatsapp" />
-                Disparar Conversa WhatsApp
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="gap-1.5 text-xs"
-                onClick={() => {
-                  window.location.hash = "#!/dentgo";
-                }}
-              >
-                <Truck className="h-3.5 w-3.5 text-brand-navy" />
-                Solicitar Entrega Expressa
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="gap-1.5 text-xs"
-                onClick={async () => {
-                  const targets = filteredContacts.filter((c) => c.cro && c.cro.trim());
-                  if (targets.length === 0) {
-                    setErrorMsg("Nenhum cirurgião visível possui CRO cadastrado.");
-                    return;
-                  }
-                  setLoadingContacts(true);
-                  try {
-                    let validCount = 0;
-                    await Promise.all(
-                      targets.map(async (c) => {
-                        const res = await fetch("/api/v1/contacts/validate-cro", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({
-                            cro: c.cro,
-                            uf: c.cro_uf || "SP",
-                            category: "CD",
-                          }),
-                        });
-                        if (res.ok) validCount++;
-                      })
-                    );
-                    setFeedbackMsg(`Validação em Lote: ${validCount}/${targets.length} cirurgiões validados com sucesso no CFO.`);
-                    await loadContacts(searchQuery);
-                  } catch (err: any) {
-                    setErrorMsg(err.message || "Falha na validação em lote de CROs.");
-                  } finally {
-                    setLoadingContacts(false);
-                  }
-                }}
-              >
-                <ClipboardCheck className="h-3.5 w-3.5 text-status-success" />
-                Validar CROs em Lote
-              </Button>
-            </div>
+            {/* ABA 1: Dados Clínicos & Ações Rápidas */}
+            {contactModalTab === "overview" && (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+                {/* Coluna Esquerda: Informações Cadastrais e Clínicas */}
+                <div className="lg:col-span-7 space-y-4">
+                  <div className="p-4 rounded-xl border border-border bg-surface-card space-y-3 shadow-2xs">
+                    <span className="font-semibold uppercase text-text-secondary flex items-center justify-between">
+                      <span>Ficha do Profissional</span>
+                      <Badge variant="navy">ID: {selectedContact.id}</Badge>
+                    </span>
 
-            {/* Adicionar Nota na Timeline (POST /api/v1/contacts/{id}/timeline/comments) */}
-            <form onSubmit={handleAddTimelineComment} className="space-y-2">
-              <label className="font-semibold uppercase text-text-secondary flex items-center gap-1.5">
-                <MessageSquarePlus className="h-3.5 w-3.5" />
-                Registrar Apontamento Clínico / Visita Field
-              </label>
-              <div className="flex gap-2">
-                <Input
-                  value={newCommentText}
-                  onChange={(e) => setNewCommentText(e.target.value)}
-                  placeholder="Ex: Cirurgião solicitou demonstração do Kit Guiado Cone Morse..."
-                />
-                <Button type="submit" size="sm" disabled={postingComment}>
-                  Registrar
-                </Button>
-              </div>
-            </form>
-
-            {/* Timeline Auditável */}
-            <div className="space-y-2">
-              <span className="font-semibold uppercase text-text-secondary flex items-center gap-1.5">
-                <Clock className="h-3.5 w-3.5" />
-                Histórico de Interações & Auditoria ({contactTimeline.length})
-              </span>
-              {contactTimeline.length === 0 ? (
-                <p className="text-text-muted py-3">Nenhuma interação registrada até o momento.</p>
-              ) : (
-                <div className="space-y-2 max-h-72 overflow-y-auto">
-                  {contactTimeline.map((item, idx) => (
-                    <div key={item.id ?? idx} className="p-2.5 rounded bg-surface-bg border border-border-subtle">
-                      <div className="flex justify-between font-medium text-text-main">
-                        <span>{item.author_name || item.event_type || "Interação"}</span>
-                        <span className="text-[10px] text-text-muted">{item.created_at || ""}</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                      <div className="p-3 rounded-lg bg-surface-bg border border-border-subtle">
+                        <span className="text-[11px] text-text-secondary block font-medium">Clínica Principal</span>
+                        <strong className="text-sm text-text-main font-semibold truncate block">
+                          {selectedContact.company || "Consultório Particular"}
+                        </strong>
                       </div>
-                      <p className="text-text-secondary mt-1">
-                        {item.comment || item.description || item.details || ""}
-                      </p>
+                      <div className="p-3 rounded-lg bg-surface-bg border border-border-subtle">
+                        <span className="text-[11px] text-text-secondary block font-medium">Score Preditivo ICP</span>
+                        <strong className="text-base text-brand-primary font-bold">
+                          {contactProfile?.score ?? selectedContact.score ?? 75} pontos
+                        </strong>
+                      </div>
+                      <div className="p-3 rounded-lg bg-surface-bg border border-border-subtle">
+                        <span className="text-[11px] text-text-secondary block font-medium">E-mail Cadastrado</span>
+                        <strong className="text-xs text-text-main font-semibold truncate block">
+                          {selectedContact.email || "N/D"}
+                        </strong>
+                      </div>
+                      <div className="p-3 rounded-lg bg-surface-bg border border-border-subtle">
+                        <span className="text-[11px] text-text-secondary block font-medium">Negócios no Funil</span>
+                        <strong className="text-sm text-text-main font-semibold">
+                          {contactProfile?.deals?.length ?? 0} oportunidades
+                        </strong>
+                      </div>
                     </div>
-                  ))}
+
+                    <div className="p-3 rounded-lg bg-surface-bg border border-border-subtle flex items-center justify-between">
+                      <span className="text-xs text-text-secondary font-medium">Registro Profissional CFO/CRO</span>
+                      <span className="font-mono text-xs font-bold text-text-main">
+                        {selectedContact.cro || "CRO Pendente"} ({selectedContact.cro_uf || "SP"})
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              )}
-            </div>
+
+                {/* Coluna Direita: Ações Rápidas Comerciais e Logísticas */}
+                <div className="lg:col-span-5 space-y-4">
+                  <div className="p-4 rounded-xl border border-border bg-surface-card space-y-2.5 shadow-2xs">
+                    <span className="font-semibold uppercase text-text-secondary block">
+                      Ações Rápidas do Cirurgião
+                    </span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="gap-2 text-xs w-full justify-start"
+                      onClick={() => {
+                        window.location.hash = "#!/keypartners";
+                      }}
+                    >
+                      <Briefcase className="h-4 w-4 text-brand-primary shrink-0" />
+                      <span>Vincular Maleta em Consignação</span>
+                    </Button>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="gap-2 text-xs w-full justify-start"
+                      onClick={() => {
+                        const phone = String(selectedContact.phone || "").replace(/\D/g, "");
+                        const wa = phone ? (phone.startsWith("55") ? phone : `55${phone}`) : "";
+                        window.open(
+                          `https://wa.me/${wa}?text=${encodeURIComponent(`Olá Dr(a). ${selectedContact.name}, tudo bem? Aqui é da RevNault.`)}`,
+                          "_blank",
+                          "noopener,noreferrer"
+                        );
+                      }}
+                    >
+                      <MessageCircle className="h-4 w-4 text-status-whatsapp shrink-0" />
+                      <span>Disparar Conversa WhatsApp</span>
+                    </Button>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="gap-2 text-xs w-full justify-start"
+                      onClick={() => {
+                        window.location.hash = "#!/dentgo";
+                      }}
+                    >
+                      <Truck className="h-4 w-4 text-brand-navy shrink-0" />
+                      <span>Solicitar Entrega Expressa (45 min)</span>
+                    </Button>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="gap-2 text-xs w-full justify-start"
+                      onClick={async () => {
+                        const targets = filteredContacts.filter((c) => c.cro && c.cro.trim());
+                        if (targets.length === 0) {
+                          setErrorMsg("Nenhum cirurgião visível possui CRO cadastrado.");
+                          return;
+                        }
+                        setLoadingContacts(true);
+                        try {
+                          let validCount = 0;
+                          await Promise.all(
+                            targets.map(async (c) => {
+                              const res = await fetch("/api/v1/contacts/validate-cro", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                  cro: c.cro,
+                                  uf: c.cro_uf || "SP",
+                                  category: "CD",
+                                }),
+                              });
+                              if (res.ok) validCount++;
+                            })
+                          );
+                          setFeedbackMsg(`Validação em Lote: ${validCount}/${targets.length} cirurgiões validados com sucesso no CFO.`);
+                          await loadContacts(searchQuery);
+                        } catch (err: any) {
+                          setErrorMsg(err.message || "Falha na validação em lote de CROs.");
+                        } finally {
+                          setLoadingContacts(false);
+                        }
+                      }}
+                    >
+                      <ClipboardCheck className="h-4 w-4 text-status-success shrink-0" />
+                      <span>Validar CROs em Lote</span>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ABA 2: Linha do Tempo & Apontamentos Paginados (Zero Scroll Vertical) */}
+            {contactModalTab === "timeline" && (
+              <div className="space-y-4">
+                {/* Formulário de Apontamento Clínico */}
+                <form onSubmit={handleAddTimelineComment} className="p-4 rounded-xl border border-border bg-surface-card space-y-3 shadow-2xs">
+                  <label className="font-semibold uppercase text-text-secondary flex items-center gap-1.5">
+                    <MessageSquarePlus className="h-4 w-4 text-brand-primary" />
+                    Registrar Apontamento Clínico / Visita Field
+                  </label>
+                  <div className="flex gap-2">
+                    <Input
+                      value={newCommentText}
+                      onChange={(e) => setNewCommentText(e.target.value)}
+                      placeholder="Ex: Cirurgião solicitou demonstração do Kit Guiado Cone Morse..."
+                    />
+                    <Button type="submit" size="sm" disabled={postingComment} className="shrink-0">
+                      Registrar
+                    </Button>
+                  </div>
+                </form>
+
+                {/* Lista Paginada de Eventos */}
+                <div className="p-4 rounded-xl border border-border bg-surface-card space-y-3 shadow-2xs">
+                  <div className="flex items-center justify-between pb-1 border-b border-border-subtle">
+                    <span className="font-semibold uppercase text-text-secondary flex items-center gap-1.5">
+                      <Clock className="h-4 w-4 text-brand-primary" />
+                      Histórico Auditável ({contactTimeline.length} eventos)
+                    </span>
+                    {Math.ceil(contactTimeline.length / CONTACT_TIMELINE_PER_PAGE) > 1 && (
+                      <span className="text-text-muted text-[11px] font-mono">
+                        Página {contactTimelinePage} de {Math.ceil(contactTimeline.length / CONTACT_TIMELINE_PER_PAGE)}
+                      </span>
+                    )}
+                  </div>
+
+                  {contactTimeline.length === 0 ? (
+                    <p className="text-text-muted py-8 text-center text-xs">
+                      Nenhuma interação registrada até o momento.
+                    </p>
+                  ) : (
+                    <div className="space-y-2.5">
+                      {contactTimeline
+                        .slice(
+                          (contactTimelinePage - 1) * CONTACT_TIMELINE_PER_PAGE,
+                          contactTimelinePage * CONTACT_TIMELINE_PER_PAGE
+                        )
+                        .map((item, idx) => (
+                          <div key={item.id ?? idx} className="p-3 rounded-lg bg-surface-bg border border-border-subtle hover:border-brand-primary/30 transition">
+                            <div className="flex justify-between items-center font-medium text-text-main mb-1 font-mono text-[11px]">
+                              <span className="font-semibold text-text-main">{item.author_name || item.event_type || "Interação"}</span>
+                              <span className="text-text-muted">{item.created_at || ""}</span>
+                            </div>
+                            <p className="text-text-secondary text-xs leading-relaxed">
+                              {item.comment || item.description || item.details || ""}
+                            </p>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+
+                  {/* Controles de Paginação */}
+                  {Math.ceil(contactTimeline.length / CONTACT_TIMELINE_PER_PAGE) > 1 && (
+                    <div className="flex items-center justify-between pt-2 border-t border-border-subtle text-xs">
+                      <span className="text-text-muted text-[11px]">
+                        Eventos {((contactTimelinePage - 1) * CONTACT_TIMELINE_PER_PAGE) + 1}–{Math.min(contactTimelinePage * CONTACT_TIMELINE_PER_PAGE, contactTimeline.length)} de {contactTimeline.length}
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={contactTimelinePage <= 1}
+                          onClick={() => setContactTimelinePage((p) => Math.max(1, p - 1))}
+                          className="h-6 px-2 text-[11px]"
+                        >
+                          Anterior
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={contactTimelinePage >= Math.ceil(contactTimeline.length / CONTACT_TIMELINE_PER_PAGE)}
+                          onClick={() => setContactTimelinePage((p) => Math.min(Math.ceil(contactTimeline.length / CONTACT_TIMELINE_PER_PAGE), p + 1))}
+                          className="h-6 px-2 text-[11px]"
+                        >
+                          Próxima
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
-      </Sheet>
+      </Dialog>
     </div>
   );
 };

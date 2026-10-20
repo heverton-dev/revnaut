@@ -3,7 +3,7 @@
 ## 1. Especificação BDD (Gherkin)
 ```gherkin
 Funcionalidade: Operação da Rota Suporte Clínico e Garantias (ANVISA & Pós-Op)
-  Como Usuário Autenticado da Plataforma RevOps
+  Como Usuário Autenticado da Plataforma RevNault
   Eu quero acessar a rota "/#!/support"
   Para executar as rotinas operacionais com integridade e segurança
 

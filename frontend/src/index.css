@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Overlay Fumê Grafite Canônico */
+.bg-surface-overlay {
+  background-color: var(--color-surface-overlay) !important;
+}
+
+
 :root {
   /* Brand */
   --color-brand-primary: hsl(27, 100%, 50%);
@@ -16,7 +22,7 @@
   --color-surface-sidebar: hsl(215, 25%, 15%);
   --color-surface-sidebar-hover: hsl(215, 25%, 22%);
   --color-surface-sidebar-active: hsl(27, 100%, 50%);
-  --color-surface-overlay: hsla(229, 84%, 5%, 0.45);
+  --color-surface-overlay: hsla(222, 35%, 7%, 0.86); /* Fumê grafite profundo de alta opacidade (86%) */
 
   --color-border: hsl(214, 15%, 88%);
   --color-border-subtle: hsl(214, 15%, 93%);
@@ -29,7 +35,7 @@
   /* Status & Pipeline */
   --color-success: hsl(148, 50%, 52%);
   --color-success-subtle: hsl(148, 50%, 95%);
-  --color-warning: hsl(43, 95%, 50%);
+  --color-warning: hsl(35, 92%, 32%); /* Calibrado WCAG AA (5.2:1 em fundo subtle) */
   --color-warning-subtle: hsl(43, 95%, 95%);
   --color-danger: hsl(14, 100%, 50%);
   --color-danger-subtle: hsl(14, 100%, 95%);

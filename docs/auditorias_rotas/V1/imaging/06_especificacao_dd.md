@@ -3,7 +3,7 @@
 ## 1. Especificação BDD (Gherkin)
 ```gherkin
 Funcionalidade: Operação da Rota Exames 3D e Tomografias (DICOM / STL CAD/CAM)
-  Como Usuário Autenticado da Plataforma RevOps
+  Como Usuário Autenticado da Plataforma RevNault
   Eu quero acessar a rota "/#!/imaging"
   Para executar as rotinas operacionais com integridade e segurança
 

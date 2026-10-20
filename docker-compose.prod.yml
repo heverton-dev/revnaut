@@ -55,7 +55,7 @@ services:
       retries: 3
 
   frontend:
-    image: rvops_frontend:latest
+    image: revnault_frontend:latest
     build:
       context: ./frontend
       dockerfile: Dockerfile
@@ -78,7 +78,7 @@ services:
         - "traefik.http.services.frontend.loadbalancer.server.port=80"
 
   app:
-    image: rvops_app:latest
+    image: revnault_app:latest
     build:
       context: .
       dockerfile: Dockerfile
@@ -86,12 +86,12 @@ services:
       - PORT=8000
       - ENVIRONMENT=production
       - REDIS_URL=redis://redis:6379/0
-      - DATABASE_URL=${DATABASE_URL:-sqlite+aiosqlite:////app/data/revnaut.db}
+      - DATABASE_URL=${DATABASE_URL:-sqlite+aiosqlite:////app/data/revnault.db}
       - POSTGRES_URL=${POSTGRES_URL:-postgresql+asyncpg://revnaut_admin:${PG_PASSWORD:-revnaut_pg_pass}@postgres:5432/revnaut}
       - R2_ENDPOINT_URL=${R2_ENDPOINT_URL:-}
       - R2_ACCESS_KEY_ID=${R2_ACCESS_KEY_ID:-}
       - R2_SECRET_ACCESS_KEY=${R2_SECRET_ACCESS_KEY:-}
-      - REVNAUT_ENV=production
+      - REVNAULT_ENV=production
       - SESSION_SECRET_KEY=${SESSION_SECRET_KEY}
       - VAULT_SECRET_KEY=${VAULT_SECRET_KEY}
       - OMNICHANNEL_WEBHOOK_SECRET=${OMNICHANNEL_WEBHOOK_SECRET}
@@ -118,16 +118,16 @@ services:
       labels:
         - "traefik.enable=true"
         - "traefik.docker.network=revnault_edge"
-        - "traefik.http.routers.revnaut.entrypoints=websecure"
-        - "traefik.http.routers.revnaut.rule=Host(`api.revnaut.internal`) || Host(`rvops.vpsconexao.org`)"
-        - "traefik.http.routers.revnaut.service=revnaut"
-        - "traefik.http.routers.revnaut.tls.certresolver=letsencryptresolver"
-        - "traefik.http.services.revnaut.loadbalancer.server.port=8000"
-        - "traefik.http.routers.revnaut.middlewares=revnaut-ratelimit,revnaut-security-headers"
-        - "traefik.http.middlewares.revnaut-ratelimit.ratelimit.average=100"
-        - "traefik.http.middlewares.revnaut-ratelimit.ratelimit.burst=50"
-        - "traefik.http.middlewares.revnaut-security-headers.headers.sslredirect=true"
-        - "traefik.http.middlewares.revnaut-security-headers.headers.stsSeconds=315360000"
+        - "traefik.http.routers.revnault.entrypoints=websecure"
+        - "traefik.http.routers.revnault.rule=Host(`api.revnaut.internal`) || Host(`revnault.vpsconexao.org`)"
+        - "traefik.http.routers.revnault.service=revnault"
+        - "traefik.http.routers.revnault.tls.certresolver=letsencryptresolver"
+        - "traefik.http.services.revnault.loadbalancer.server.port=8000"
+        - "traefik.http.routers.revnault.middlewares=revnault-ratelimit,revnault-security-headers"
+        - "traefik.http.middlewares.revnault-ratelimit.ratelimit.average=100"
+        - "traefik.http.middlewares.revnault-ratelimit.ratelimit.burst=50"
+        - "traefik.http.middlewares.revnault-security-headers.headers.sslredirect=true"
+        - "traefik.http.middlewares.revnault-security-headers.headers.stsSeconds=315360000"
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health', timeout=5)\" || exit 1"]
       interval: 15s
@@ -136,12 +136,12 @@ services:
       start_period: 10s
 
   worker:
-    image: rvops_app:latest
+    image: revnault_app:latest
     command: python -m src.workers.runner
     environment:
       - REDIS_URL=redis://redis:6379/0
-      - DATABASE_URL=${DATABASE_URL:-sqlite+aiosqlite:////app/data/revnaut.db}
-      - REVNAUT_ENV=production
+      - DATABASE_URL=${DATABASE_URL:-sqlite+aiosqlite:////app/data/revnault.db}
+      - REVNAULT_ENV=production
       - SESSION_SECRET_KEY=${SESSION_SECRET_KEY}
       - VAULT_SECRET_KEY=${VAULT_SECRET_KEY}
       - OMNICHANNEL_WEBHOOK_SECRET=${OMNICHANNEL_WEBHOOK_SECRET}
@@ -215,7 +215,7 @@ services:
     image: apache/superset:3.1.0
     command: ["/app/docker/docker-bootstrap.sh", "app-gunicorn"]
     environment:
-      - SUPERSET_SECRET_KEY=${SUPERSET_SECRET_KEY:-revnaut_superset_secret_key_default}
+      - SUPERSET_SECRET_KEY=${SUPERSET_SECRET_KEY:-revnault_superset_secret_key_default}
       - DATABASE_DB=revnaut
       - DATABASE_HOST=postgres
       - DATABASE_PORT=5432
@@ -236,7 +236,7 @@ services:
   orthanc:
     image: orthancteam/orthanc:24.3.0
     environment:
-      - ORTHANC_JSON={"Name":"Revnaut-Orthanc-DICOM","StorageDirectory":"/var/lib/orthanc/db","StorageAreaPlugin":"s3","DicomAet":"REVNAULT_PACS","DicomPort":4242,"HttpPort":8042,"RemoteAccessAllowed":true}
+      - ORTHANC_JSON={"Name":"RevNault-Orthanc-DICOM","StorageDirectory":"/var/lib/orthanc/db","StorageAreaPlugin":"s3","DicomAet":"REVNAULT_PACS","DicomPort":4242,"HttpPort":8042,"RemoteAccessAllowed":true}
     volumes:
       - orthanc_data:/var/lib/orthanc/db
     networks:
@@ -305,8 +305,8 @@ services:
         condition: on-failure
 
   wal-backup:
-    image: rvops_app:latest
-    command: python scripts/wal_backup_s3.py --db /app/data/revnaut.db --retention 30
+    image: revnault_app:latest
+    command: python scripts/wal_backup_s3.py --db /app/data/revnault.db --retention 30
     environment:
       - R2_ENDPOINT_URL=${R2_ENDPOINT_URL:-}
       - R2_ACCESS_KEY_ID=${R2_ACCESS_KEY_ID:-}

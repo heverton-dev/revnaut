@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Testes TDD - Matriz de Permissões e Functional RBAC (Lei #13 - O Portão Deve Provar que Morde)
-Valida a restrição granular por ação nos recursos do CRM RevOps:
+Valida a restrição granular por ação nos recursos do CRM RevNault:
 - GET /api/v1/hierarchy/catalog
 - GET /api/v1/hierarchy/roles
 - PUT /api/v1/hierarchy/roles/{id}/permissions

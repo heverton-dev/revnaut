@@ -12,7 +12,6 @@ import {
   Eye,
   Plus,
   Trash2,
-  X,
   Award,
   MessageSquare,
 } from "lucide-react";
@@ -24,6 +23,7 @@ import { Select } from "@/components/ui/Select";
 import { Tabs } from "@/components/ui/Tabs";
 import { RouteHeader } from "@/components/ui/RouteHeader";
 import { DataTable, Column } from "@/components/ui/DataTable";
+import { Dialog } from "@/components/ui/Dialog";
 import { R2DirectUploader } from "@/components/shared/R2DirectUploader";
 
 interface DealOption {
@@ -174,14 +174,15 @@ const SignaturePadModal: React.FC<SignaturePadModalProps> = ({ contractTitle, in
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0">
-      <div className="bg-surface-card border border-border rounded-xl w-full max-w-xl p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold text-text-main">Assinar na Tela: {contractTitle}</h3>
-          <button type="button" onClick={onCancel} aria-label="Fechar" className="text-text-secondary hover:text-text-main">
-            <X className="h-4 w-4" />
-          </button>
-        </div>
+    <Dialog
+      isOpen={true}
+      onClose={onCancel}
+      size="form"
+      className="h-[540px]"
+      title={`Assinar na Tela: ${contractTitle}`}
+      description="Coleta de assinatura manuscrita (Canvas Pad) ou emissão qualificada ICP-Brasil."
+    >
+      <div className="space-y-3">
         {/* Seletor de Modo de Assinatura */}
         <div className="flex rounded border border-border overflow-hidden bg-surface-bg p-0.5 mb-2">
           <button
@@ -305,7 +306,7 @@ const SignaturePadModal: React.FC<SignaturePadModalProps> = ({ contractTitle, in
           onTouchMove={(e) => move(e.touches[0].clientX, e.touches[0].clientY)}
           onTouchEnd={end}
         />
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between pt-3 border-t border-border-subtle">
           <Button type="button" size="sm" variant="secondary" onClick={clear} className="gap-1.5">
             <Trash2 className="h-3.5 w-3.5" />
             Limpar
@@ -324,12 +325,18 @@ const SignaturePadModal: React.FC<SignaturePadModalProps> = ({ contractTitle, in
         </>
         )}
       </div>
-    </div>
+    </Dialog>
   );
 };
 
-export const ContractsDocumensoWorkspace: React.FC = () => {
-  const [activeTab, setActiveTab] = React.useState<string>("documenso_lifecycle");
+export interface ContractsDocumensoWorkspaceProps {
+  initialTab?: string;
+}
+
+export const ContractsDocumensoWorkspace: React.FC<ContractsDocumensoWorkspaceProps> = ({
+  initialTab = "documenso_lifecycle",
+}) => {
+  const [activeTab, setActiveTab] = React.useState<string>(initialTab);
   const [feedbackMsg, setFeedbackMsg] = React.useState<string | null>(null);
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
 
@@ -516,7 +523,7 @@ export const ContractsDocumensoWorkspace: React.FC = () => {
     setRemindingContractId(contract.id);
     try {
       const recipient = contract.signer_name || signerName;
-      const text = "[Revnaut Documenso] Olá " + recipient + ", lembramos que o contrato \"" + contract.title + "\" (#" + contract.id + ") está aguardando sua assinatura digital com validade jurídica ICP-Brasil. Acesse o portal para assinar na tela ou com token: " + window.location.origin + "/#!/contracts?id=" + contract.id;
+      const text = "[RevNault Documenso] Olá " + recipient + ", lembramos que o contrato \"" + contract.title + "\" (#" + contract.id + ") está aguardando sua assinatura digital com validade jurídica ICP-Brasil. Acesse o portal para assinar na tela ou com token: " + window.location.origin + "/#!/contracts?id=" + contract.id;
       const res = await fetch("/api/v1/chat/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -733,6 +740,7 @@ export const ContractsDocumensoWorkspace: React.FC = () => {
       <Tabs
         activeTab={activeTab}
         onChange={setActiveTab}
+        hideOnDesktop
         tabs={[
           { id: "documenso_lifecycle", label: "Propostas e Contratos Digitais", count: contracts.length },
           { id: "anvisa_catalog_pricing", label: "Catálogo & Simulador de Proposta", count: products.length },
@@ -1195,38 +1203,39 @@ export const ContractsDocumensoWorkspace: React.FC = () => {
         </div>
       )}
 
-      {previewContract && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0">
-          <div className="bg-surface-card border border-border rounded-xl w-full max-w-3xl p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-text-main truncate">{previewContract.title}</h3>
-              <div className="flex items-center gap-2">
-                <a
-                  href={`/api/v1/storage/files/${previewContract.original_r2_key || previewContract.original_pdf_r2_key || "0f14ffff/contracts/minuta.pdf"}`}
-                  download
-                  className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-border text-xs text-text-main hover:bg-surface-bg"
-                >
-                  <Download className="h-3.5 w-3.5" />
-                  Baixar Minuta PDF
-                </a>
-                <button
-                  type="button"
-                  aria-label="Fechar visualização"
-                  onClick={() => setPreviewContract(null)}
-                  className="text-text-secondary hover:text-text-main"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-            <iframe
-              title="Pré-visualização do PDF do contrato"
-              src={`/api/v1/storage/files/${previewContract.original_r2_key || previewContract.original_pdf_r2_key || "0f14ffff/contracts/minuta.pdf"}`}
-              className="w-full h-96 rounded border border-border"
-            />
+      {/* Modal Pré-visualização do Contrato Padronizado */}
+      <Dialog
+        isOpen={Boolean(previewContract)}
+        onClose={() => setPreviewContract(null)}
+        size="dossier"
+        title={previewContract ? `Minuta Contratual • ${previewContract.title}` : "Visualizar Minuta"}
+        description="Visualização segura em sandbox e download do documento no Cloudflare R2."
+        footer={
+          <div className="flex items-center justify-between w-full">
+            {previewContract && (
+              <a
+                href={`/api/v1/storage/files/${previewContract.original_r2_key || previewContract.original_pdf_r2_key || "0f14ffff/contracts/minuta.pdf"}`}
+                download
+                className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-border bg-surface-bg text-xs text-text-main hover:bg-surface-card"
+              >
+                <Download className="h-3.5 w-3.5" />
+                Baixar Minuta PDF
+              </a>
+            )}
+            <Button variant="secondary" size="sm" onClick={() => setPreviewContract(null)}>
+              Fechar Visualização
+            </Button>
           </div>
-        </div>
-      )}
+        }
+      >
+        {previewContract && (
+          <iframe
+            title="Pré-visualização do PDF do contrato"
+            src={`/api/v1/storage/files/${previewContract.original_r2_key || previewContract.original_pdf_r2_key || "0f14ffff/contracts/minuta.pdf"}`}
+            className="w-full h-full min-h-[480px] rounded-xl border border-border"
+          />
+        )}
+      </Dialog>
 
       {signingContract && (
         <SignaturePadModal

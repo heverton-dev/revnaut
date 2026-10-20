@@ -3,7 +3,7 @@
 ## 1. Especificação BDD (Gherkin)
 ```gherkin
 Funcionalidade: Operação da Rota Entregas Expressas (Logística Same-Day 45min)
-  Como Usuário Autenticado da Plataforma RevOps
+  Como Usuário Autenticado da Plataforma RevNault
   Eu quero acessar a rota "/#!/dentgo"
   Para executar as rotinas operacionais com integridade e segurança
 

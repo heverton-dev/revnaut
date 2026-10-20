@@ -3,7 +3,7 @@
 Teste de Contrato & Sincronização Tipada 1:1 (TICKET-04 & TICKET-41)
 Valida que:
 1. 100% dos endpoints /api/v1/* possuem response_model tipado em Pydantic.
-2. frontend/src/types/api_contracts.ts e docs/reconstruct_rvops/02_decompiled/api_contracts.ts são 100% idênticos.
+2. frontend/src/types/api_contracts.ts e docs/reconstruct_revnault/02_decompiled/api_contracts.ts são 100% idênticos.
 3. Todas as rotas /api/v1/* registradas em src.main:app estão declaradas em API_V1_ROUTES dentro de api_contracts.ts.
 4. O gate G_CONTRACTS passa sem erros.
 """
@@ -46,10 +46,10 @@ def test_api_routes_have_typed_response_models():
 def test_api_contracts_ts_1_to_1_sync_and_domain_contracts():
     """Valida sincronia 1:1 entre os arquivos api_contracts.ts e cobertura de 100% das rotas /api/v1/*."""
     root_dir = Path(__file__).resolve().parent.parent
-    decompiled_contracts = root_dir / "docs" / "reconstruct_rvops" / "02_decompiled" / "api_contracts.ts"
+    decompiled_contracts = root_dir / "docs" / "reconstruct_revnault" / "02_decompiled" / "api_contracts.ts"
     frontend_contracts = root_dir / "frontend" / "src" / "types" / "api_contracts.ts"
 
-    assert decompiled_contracts.exists(), "docs/reconstruct_rvops/02_decompiled/api_contracts.ts não encontrado"
+    assert decompiled_contracts.exists(), "docs/reconstruct_revnault/02_decompiled/api_contracts.ts não encontrado"
     assert frontend_contracts.exists(), "frontend/src/types/api_contracts.ts não encontrado"
 
     decompiled_text = decompiled_contracts.read_text(encoding="utf-8")
@@ -57,7 +57,7 @@ def test_api_contracts_ts_1_to_1_sync_and_domain_contracts():
 
     assert decompiled_text == frontend_text, (
         "Divergência detectada entre frontend/src/types/api_contracts.ts e "
-        "docs/reconstruct_rvops/02_decompiled/api_contracts.ts"
+        "docs/reconstruct_revnault/02_decompiled/api_contracts.ts"
     )
 
     required_contracts = [

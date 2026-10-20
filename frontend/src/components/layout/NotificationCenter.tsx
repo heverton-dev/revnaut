@@ -23,6 +23,8 @@ import {
   BarChart3,
   ShieldCheck,
   MessageSquare,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -311,6 +313,13 @@ export function NotificationCenter({
   });
 
   const [filterMode, setFilterMode] = React.useState<"role" | "unread" | "all">("role");
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const pageSize = 5;
+
+  // Resetar página quando alterar filtro
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [filterMode]);
 
   // Salvar no storage
   React.useEffect(() => {
@@ -348,6 +357,19 @@ export function NotificationCenter({
     }
     return notifications.filter((n) => n.roleKey === currentRoleKey || n.roleKey === "all");
   }, [notifications, filterMode, currentRoleKey]);
+
+  const totalPages = Math.max(1, Math.ceil(displayedNotifications.length / pageSize));
+
+  React.useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
+
+  const paginatedNotifications = React.useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return displayedNotifications.slice(start, start + pageSize);
+  }, [displayedNotifications, currentPage, pageSize]);
 
   const handleMarkAllAsRead = () => {
     setNotifications((prev) =>
@@ -403,58 +425,74 @@ export function NotificationCenter({
     }
   };
 
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
-    <>
-      {/* Backdrop transparente para clique fora */}
-      <div className="fixed inset-0 z-40 bg-text-main/20 backdrop-blur-2xs" onClick={onClose} />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5">
+      {/* Backdrop Fumê com Desfoque Canônico (86% opacidade) */}
+      <div
+        className="fixed inset-0 bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0"
+        onClick={onClose}
+        aria-hidden="true"
+      />
 
-      {/* Painel Flutuante da Central de Notificações */}
+      {/* Modal Dialog Centralizado Canônico com Altura Estável Anti-Sanfona */}
       <div
         role="dialog"
+        aria-modal="true"
         aria-label="Central de Notificações Dinâmica por Cargo"
-        className="fixed right-3 sm:right-6 top-16 z-50 w-[calc(100vw-24px)] sm:w-[440px] max-w-[480px] rounded-xl border border-border bg-surface-card shadow-modal overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-150"
+        className="relative z-50 w-full max-w-2xl h-[640px] max-h-[85vh] rounded-2xl border border-border bg-surface-card shadow-modal overflow-hidden flex flex-col animate-in fade-in-0 zoom-in-95 duration-150"
       >
         {/* Cabeçalho */}
-        <div className="p-3.5 border-b border-border bg-surface-bg/50 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="p-1.5 rounded-md bg-brand-primary/10 text-brand-primary shrink-0">
-              <Bell className="h-4 w-4" />
+        <div className="p-4 sm:p-5 border-b border-border bg-surface-bg/50 flex items-center justify-between gap-3 shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="p-2 rounded-lg bg-brand-primary/10 text-brand-primary shrink-0">
+              <Bell className="h-5 w-5" />
             </div>
             <div className="min-w-0">
-              <h2 className="text-xs font-bold text-text-main flex items-center gap-1.5 truncate">
+              <h2 className="text-sm sm:text-base font-bold text-text-main flex items-center gap-2 truncate">
                 Central de Notificações
                 {unreadRoleCount > 0 && (
-                  <span className="px-1.5 py-0.2 rounded-full bg-status-danger text-text-inverse text-[10px] font-bold">
+                  <span className="px-1.5 py-0.5 rounded-full bg-status-danger text-text-inverse text-[10px] font-bold">
                     {unreadRoleCount}
                   </span>
                 )}
               </h2>
-              <p className="text-[11px] text-text-secondary truncate">
+              <p className="text-xs text-text-secondary truncate mt-0.5">
                 Foco no Cargo: <strong className="text-text-main font-semibold">{roleDisplayName}</strong>
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-1 shrink-0">
+          <div className="flex items-center gap-1.5 shrink-0">
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
               onClick={handleMarkAllAsRead}
-              className="h-7 px-2 text-[11px] text-text-secondary hover:text-text-main gap-1"
+              className="h-8 px-2.5 text-xs text-text-secondary hover:text-text-main gap-1.5"
               title="Marcar todas do cargo como lidas"
             >
               <CheckCheck className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Lidas</span>
+              <span className="hidden sm:inline">Marcar Lidas</span>
             </Button>
             <button
               type="button"
               onClick={onClose}
-              className="p-1 rounded text-text-muted hover:text-text-main hover:bg-surface-bg transition-colors"
+              className="rounded-lg p-1.5 text-text-muted hover:text-text-main hover:bg-surface-bg transition-colors shrink-0 cursor-pointer"
               aria-label="Fechar central de notificações"
             >
-              <X className="h-4 w-4" />
+              <X className="h-5 w-5" />
             </button>
           </div>
         </div>
@@ -506,15 +544,15 @@ export function NotificationCenter({
         </div>
 
         {/* Lista de Notificações */}
-        <div className="flex-1 overflow-y-auto divide-y divide-border-subtle p-1">
+        <div className="flex-1 overflow-y-auto divide-y divide-border-subtle p-1 flex flex-col">
           {displayedNotifications.length === 0 ? (
-            <div className="py-12 text-center text-xs text-text-muted space-y-1">
+            <div className="flex-1 flex flex-col items-center justify-center py-12 text-center text-xs text-text-muted space-y-1">
               <CheckCircle2 className="h-6 w-6 text-status-success mx-auto mb-2 opacity-80" />
               <p className="font-medium text-text-main">Tudo em dia!</p>
               <p className="text-[11px]">Nenhuma notificação pendente para o filtro selecionado.</p>
             </div>
           ) : (
-            displayedNotifications.map((notif) => {
+            paginatedNotifications.map((notif) => {
               return (
                 <div
                   key={notif.id}
@@ -571,6 +609,41 @@ export function NotificationCenter({
           )}
         </div>
 
+        {/* Barra de Paginação */}
+        {displayedNotifications.length > pageSize && (
+          <div className="px-4 py-2.5 border-t border-border-subtle bg-surface-bg/60 flex items-center justify-between text-xs shrink-0">
+            <span className="text-[11px] text-text-secondary">
+              Página <strong className="text-text-main font-semibold">{currentPage}</strong> de{" "}
+              <strong className="text-text-main font-semibold">{totalPages}</strong> ({displayedNotifications.length} alertas)
+            </span>
+
+            <div className="flex items-center gap-1.5">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage <= 1}
+                className="h-7 px-2.5 text-[11px] gap-1 cursor-pointer disabled:cursor-not-allowed"
+                aria-label="Página anterior"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+                <span>Anterior</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage >= totalPages}
+                className="h-7 px-2.5 text-[11px] gap-1 cursor-pointer disabled:cursor-not-allowed"
+                aria-label="Próxima página"
+              >
+                <span>Próxima</span>
+                <ChevronRight className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Rodapé Informativo */}
         <div className="p-2.5 px-3.5 border-t border-border bg-surface-bg/80 flex items-center justify-between text-[11px] text-text-secondary">
           <span className="flex items-center gap-1 text-[10px] text-text-muted">
@@ -582,6 +655,6 @@ export function NotificationCenter({
           </span>
         </div>
       </div>
-    </>
+    </div>
   );
 }

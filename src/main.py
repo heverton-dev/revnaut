@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Revnaut Canonical VSA Monolith (AIDD Master Standard)
+RevNault Canonical VSA Monolith (AIDD Master Standard)
 Agregador de fatias verticais autônomas com SQLite WAL e Quarteto Dinâmico.
 """
 
@@ -38,6 +38,7 @@ from src.features.keypartners.router import router as keypartners_router
 from src.features.dentgo.router import router as dentgo_router
 from src.features.market_intel.router import router as market_intel_router
 from src.features.competitors.router import router as competitors_router
+from src.features.access.router import router as access_router
 
 # Inicializa schema e seed SQLite WAL
 
@@ -55,7 +56,7 @@ finally:
     _vault_conn.close()
 
 app = FastAPI(
-    title="Revnaut Enterprise API & Engine",
+    title="RevNault Enterprise API & Engine",
     description="Motor oficial de Revenue Operations, Funil de Vendas e CRM Omnichannel com Quarteto Sine Qua Non Dinâmico.",
     version="1.0.0",
     docs_url="/docs",
@@ -144,6 +145,7 @@ app.include_router(keypartners_router)
 app.include_router(dentgo_router)
 app.include_router(market_intel_router)
 app.include_router(competitors_router)
+app.include_router(access_router)
 
 
 # Rotas Públicas: Landing Pages e Convites VIP de Indicação (MGM)
@@ -167,7 +169,7 @@ def serve_public_referral_invite(referral_code: str):
 _project_root = Path(__file__).resolve().parent.parent
 _frontend_dist_dir = _project_root / "frontend" / "dist"
 _docker_dist_dir = Path("/app/frontend/dist")
-_legacy_reconstruct_dir = _project_root / "docs" / "reconstruct_rvops" / "05_reconstructed_app"
+_legacy_reconstruct_dir = _project_root / "docs" / "reconstruct_revnault" / "05_reconstructed_app"
 
 _possible_static_paths = [
     _frontend_dist_dir,

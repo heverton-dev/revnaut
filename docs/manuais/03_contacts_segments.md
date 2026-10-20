@@ -1,7 +1,7 @@
 # Manual da Sub-rota: Contatos • Segmentos Inteligentes & Especialidades (`/#contacts-segments`)
 
 ## 1. Objetivo da Rota / Sub-rota
-Centralizar a operação da tela **Contatos • Segmentos Inteligentes & Especialidades** (`/#contacts-segments`) (Sub-rota integrada ao módulo principal `#contacts`) na arquitetura operacional do Revnaut Dental, assegurando governança clínica, rastreabilidade auditável e controle transacional.
+Centralizar a operação da tela **Contatos • Segmentos Inteligentes & Especialidades** (`/#contacts-segments`) (Sub-rota integrada ao módulo principal `#contacts`) na arquitetura operacional do RevNault Dental, assegurando governança clínica, rastreabilidade auditável e controle transacional.
 
 ---
 

@@ -1,4 +1,4 @@
-# Design System Raycast Zinc • Revnaut Dental
+# Design System Raycast Zinc • RevNault Dental
 
 > **Status:** Canônico / SSOT Ativo  
 > **Modo de Operação:** Operate (B2B SaaS Clínico & Comercial)  

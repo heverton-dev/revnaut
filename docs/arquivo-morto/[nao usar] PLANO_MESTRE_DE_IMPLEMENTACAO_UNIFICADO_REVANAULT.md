@@ -1,6 +1,6 @@
-# REVNAULT — Plano Mestre de Implementação Unificado (Micro-Tickets Cirúrgicos, Evolução de Stack, Motores Open-Source, KeyPartners & DENTGO)
+# RevNault — Plano Mestre de Implementação Unificado (Micro-Tickets Cirúrgicos, Evolução de Stack, Motores Open-Source, KeyPartners & DENTGO)
 
-## PARTE 1: Onde Estamos Hoje com a REVNAULT (Diagnóstico do Estado Atual)
+## PARTE 1: Onde Estamos Hoje com a RevNault (Diagnóstico do Estado Atual)
 
 A auditoria técnica do repositório atual (`heverton-dev/revnaut`) demonstra que a plataforma já possui uma fundação arquitetural moderna, regida por **AIDD (AI-Driven Development)** e protegida por **11 Gates Determinísticos de Qualidade e Segurança** (`gates/G_*.py`).
 
@@ -19,7 +19,7 @@ A auditoria técnica do repositório atual (`heverton-dev/revnaut`) demonstra qu
   * `intelligence/`: Serviços iniciais de grafo clínico e predição de churn (`test_clinical_graph_churn.py`).
   * `tickets/` & `tasks/`: Gestão de chamados de suporte cirúrgico e tarefas operacionais.
   * `quarteto/`: Governança de estúdios e aprovação cruzada (`15_governanca_studios_quarteto.md`).
-* **Design System & Protótipo Reconstruído (`docs/reconstruct_rvops/`):**
+* **Design System & Protótipo Reconstruído (`docs/reconstruct_revnault/`):**
   * Benchmark heurístico (`03_mobbin_benchmark/audit_heuristica.md`), Design Tokens mapeados (`04_design_system/tokens.css`, `tokens.json`), contratos TypeScript (`02_decompiled/api_contracts.ts`) e aplicação reconstruída inicial em Vanilla JS (`05_reconstructed_app/`).
 * **Esteira de Governança e Qualidade (`gates/`):**
   * Validação automatizada de segredos (`G_BLOQUEAR_SEGREDOS.py`), contratos de API (`G_CONTRACTS.py`), segurança OWASP (`G_CYBERSECURITY_OWASP.py`), determinismo (`G_DETERMINISMO_LEI_1.py`), AST (`G_ESTRUTURA_AST.py`), manuais (`G_MANUAIS_ROTAS.py`), performance (`G_PERFORMANCE.py`) e testes reais (`G_TESTES_REAIS.py`).
@@ -35,7 +35,7 @@ Para suportar a escala de 100 a 1.000 consultores simultâneos e a complexidade 
 | Camada Arquitetural | Como Está Hoje no Repositório | Decisão Estratégica | Stack Robusta de Produção (Alvo) | Justificativa Técnica Principal |
 | :--- | :--- | :--- | :--- | :--- |
 | **Backend Core & API** | Python + FastAPI (`src/main.py`) | **MANTER & BLINDAR** | **Python 3.12 + FastAPI + Pydantic v2 + Uvicorn/Gunicorn** | Simbiose nativa com os motores de IA (`faster-whisper`, `pyannote.audio`, `LiteLLM`) e algoritmos matemáticos preditivos ($SOK$, $PR$, $HSC$). |
-| **Camada de Acesso a Dados (ORM/DB)** | Queries diretas / Pool misto (`src/core/database.py`) | **EVOLUIR** | **SQLAlchemy 2.0 (100% Async + `asyncpg`) + Alembic Migrations** | Evita bloqueio da Event Loop sob alta concorrência de webhooks e garante versionamento determinístico de schema entre REVNAULT, KeyPartners e DENTGO. |
+| **Camada de Acesso a Dados (ORM/DB)** | Queries diretas / Pool misto (`src/core/database.py`) | **EVOLUIR** | **SQLAlchemy 2.0 (100% Async + `asyncpg`) + Alembic Migrations** | Evita bloqueio da Event Loop sob alta concorrência de webhooks e garante versionamento determinístico de schema entre RevNault, KeyPartners e DENTGO. |
 | **Banco de Dados & Busca Semântica** | SQLite (dev) / PostgreSQL inicial | **EVOLUIR** | **PostgreSQL 16 (Primário OLTP + Réplica OLAP) + `pgvector` (HNSW)** | Unifica transações críticas, leitura analítica pesada do BI e busca vetorial de catálogos/transcrições no mesmo motor. |
 | **Filas, Eventos & Workflows** | Processamento síncrono de rotas | **EVOLUIR** | **Redis 7 Streams + Workers Determinísticos (ARQ/Celery) + Windmill** | Substitui o peso de memória do n8n por workers determinísticos em Python/Rust com *exponential backoff* e *Dead-Letter Queue*. |
 | **Armazenamento de Arquivos (Storage)** | Disco local do contêiner | **EVOLUIR** | **Cloudflare R2 (API S3 v4 + Presigned URLs)** | 10 GB gratuitos, US\$ 0,015/GB adicional e **Zero Egress Fee** (taxa zero de tráfego de download), mantendo os discos NVMe das VPSs limpos. |
@@ -73,7 +73,7 @@ Rejeitamos a abordagem tradicional de *"construir protótipos de baixa fidelidad
 
 ### 3.1. Motores Proprietários Integrados Nativamente
 
-| Motor Proprietário | Repositório Origem | O que Agrega ao Ecossistema | Papel Estratégico no REVNAULT |
+| Motor Proprietário | Repositório Origem | O que Agrega ao Ecossistema | Papel Estratégico no RevNault |
 | :--- | :--- | :--- | :--- |
 | **KeyPartners** | `heverton-dev/keypartners` | Gestão de estoque consignado em posse de terceiros, rastreabilidade sanitária por lote/série e validade (ANVISA), conciliação de kits cirúrgicos pós-operatórios, divisão operacional *Field Sales* vs. *Inside Sales* e programa de fidelidade KOL (*Moeda Cirúrgica*). | **Coração da Venda B2B Cirúrgica:** Estanca o extravio de implantes e caixas cirúrgicas ($3\%$ a $7\%$ do estoque fabril) e automatiza o faturamento condicional pós-cirurgia. |
 | **DENTGO** | `heverton-web/dentgo` | Marketplace B2B on-demand ("iFood Odontológico"), roteamento para o Centro de Distribuição (CD) ou dental mais próxima, despacho de entregadores (couriers) com custódia por lacre térmico e split automático de pagamentos. | **Braço Físico & Liquidez Imediata:** Salva cirurgias em andamento com entregas em $45\text{ a }90\text{ min}$ ("Emergência de Mesa") e executa a coleta/reposição física dos kits do KeyPartners. |
@@ -96,13 +96,13 @@ Rejeitamos a abordagem tradicional de *"construir protótipos de baixa fidelidad
 
 ---
 
-## PARTE 4: Onde Chegaremos com a REVNAULT Após a Implementação
+## PARTE 4: Onde Chegaremos com a RevNault Após a Implementação
 
-Ao concluir os Micro-Tickets deste plano, a **REVNAULT** consolidar-se-á como a **primeira Plataforma Global de Receita Operacional (RevOps), Consignação Cirúrgica e Logística On-Demand para a Cadeia Odontológica**:
+Ao concluir os Micro-Tickets deste plano, a **RevNault** consolidar-se-á como a **primeira Plataforma Global de Receita Operacional (RevNault), Consignação Cirúrgica e Logística On-Demand para a Cadeia Odontológica**:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                             ARQUITETURA FINAL UNIFICADA REVNAULT                                │
+│                             ARQUITETURA FINAL UNIFICADA RevNault                                │
 ├───────────────┬──────────────────┬──────────────────┬──────────────────┬────────────────────────┤
 │   MARKETING   │  VENDAS & IA     │   KEYPARTNERS    │     DENTGO       │   CX & COSMOVIGILÂNCIA │
 │ • GrapesJS LP │ • Kanban Multi   │ • Custódia Lotes │ • App Urgência   │ • Chatwoot Omnichannel │
@@ -134,7 +134,7 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
 
 #### [x] [TICKET-00] Evolução da Stack Base: SQLAlchemy 2.0 Async + Alembic (Backend) & Bootstrap React 19 + TypeScript + shadcn/ui (Frontend)
 - **Status:** [x] DONE (Commit: `ad8eb45`, Tests: 5/5 passed, Full Suite: 96/96 passed, Gates: 11/11 approved)
-- **Descrição:** Adequação estrutural da stack tecnológica do projeto: configuração do motor assíncrono SQLAlchemy 2.0 + `asyncpg` e migrações determinísticas com **Alembic** no backend (`src/core/database.py`), e criação do workspace moderno **React 19 + TypeScript + Vite + TanStack Query + Tailwind CSS + shadcn/ui** (`frontend/`) importando diretamente os Design Tokens oficiais (`docs/reconstruct_rvops/04_design_system/tokens.css` e `tokens.json`) e contratos (`api_contracts.ts`).
+- **Descrição:** Adequação estrutural da stack tecnológica do projeto: configuração do motor assíncrono SQLAlchemy 2.0 + `asyncpg` e migrações determinísticas com **Alembic** no backend (`src/core/database.py`), e criação do workspace moderno **React 19 + TypeScript + Vite + TanStack Query + Tailwind CSS + shadcn/ui** (`frontend/`) importando diretamente os Design Tokens oficiais (`docs/reconstruct_revnault/04_design_system/tokens.css` e `tokens.json`) e contratos (`api_contracts.ts`).
 - **Como Implementar (Detalhes Técnicos):**
   1. Configurar `AsyncEngine` e `async_sessionmaker` em `src/core/database.py` mantendo compatibilidade reversa com os testes existentes e inicializar diretório `migrations/` do Alembic.
   2. Inicializar a aplicação React 19 + TypeScript + Vite em `frontend/`, mapeando todas as variáveis CSS de `tokens.css` no `tailwind.config.ts`.
@@ -238,14 +238,14 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
   3. Implementar `LandingPageBuilder.tsx` com ciclo de vida limpo (`useEffect` destroy) e manter paridade no módulo `landing-builder.js` carregando os blocos customizados odontológicos (Input CRO/UF, Seletor de Especialidade, Seletor de Sistema de Implante).
 - **DoD:** Criação, edição visual, salvamento de assets no R2 e submissão de lead criando contato no banco e publicando evento `lead.captured` no Redis Streams.
 - **TDD:** Criar landing page a partir de template de Cirurgia Guiada, publicar, simular submissão de formulário por um implantodontista e verificar criação do contato com atribuição UTM.
-- **Target Files:** `src/features/campaigns/landing_pages.py`, `src/features/campaigns/schemas.py`, `src/features/campaigns/router.py`, `frontend/src/features/campaigns/LandingPageBuilder.tsx`, `docs/reconstruct_rvops/05_reconstructed_app/js/modules/landing-builder.js`, `tests/test_landing_pages_grapesjs.py`
+- **Target Files:** `src/features/campaigns/landing_pages.py`, `src/features/campaigns/schemas.py`, `src/features/campaigns/router.py`, `frontend/src/features/campaigns/LandingPageBuilder.tsx`, `docs/reconstruct_revnault/05_reconstructed_app/js/modules/landing-builder.js`, `tests/test_landing_pages_grapesjs.py`
 - **Validation Command:** `python -m pytest tests/test_landing_pages_grapesjs.py -q`
 - **Blocked by:** TICKET-01, TICKET-06
 
 
 #### [x] [TICKET-08] Arquitetura Híbrida Mautic Visual + Despachante Determinístico de Campanhas
 - **Status:** CONCLUÍDO (Commit `2598127`)
-- **Descrição:** Implementação da ponte bidirecional entre o construtor visual de campanhas do **Mautic** e o executor determinístico do REVNAULT (`src/features/campaigns/mautic_bridge.py`), permitindo que árvores de decisão no Mautic disparem mensagens de WhatsApp pela instância exata do consultor responsável.
+- **Descrição:** Implementação da ponte bidirecional entre o construtor visual de campanhas do **Mautic** e o executor determinístico do RevNault (`src/features/campaigns/mautic_bridge.py`), permitindo que árvores de decisão no Mautic disparem mensagens de WhatsApp pela instância exata do consultor responsável.
 - **Como Implementar (Detalhes Técnicos):**
   1. Criar endpoint receptor `POST /api/v1/webhooks/mautic/campaign-action` com validação de assinatura HMAC.
   2. Quando o Mautic acionar um passo de WhatsApp ou atualização de CRM, o endpoint enfileira no stream `stream:marketing` do Redis.
@@ -262,8 +262,8 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
 - **Descrição:** Integração do motor open-source **Listmonk** (`src/features/campaigns/listmonk_adapter.py`) para envios transacionais e newsletters técnicas em alta escala (catálogos PDF, alertas de lotes, convites de congressos) para bases de 50.000+ cirurgiões sem sobrecarregar o banco principal.
 - **Como Implementar (Detalhes Técnicos):**
   1. Implementar cliente REST assíncrono para a API do Listmonk (`/api/subscribers`, `/api/campaigns`, `/api/tx`).
-  2. Sincronizar segmentos dinâmicos do REVNAULT (ex.: *"Todos os Implantodontistas Cone Morse da Região Sul"*) como listas no Listmonk.
-  3. Configurar receptor de webhooks de bounce, abertura e clique do Listmonk para retroalimentar o score de engajamento do contato no REVNAULT.
+  2. Sincronizar segmentos dinâmicos do RevNault (ex.: *"Todos os Implantodontistas Cone Morse da Região Sul"*) como listas no Listmonk.
+  3. Configurar receptor de webhooks de bounce, abertura e clique do Listmonk para retroalimentar o score de engajamento do contato no RevNault.
 - **DoD:** Sincronização de lotes de 10.000 contatos em menos de $5\text{ s}$; atualização automática de status `email_bounced` e cliques na timeline do contato.
 - **TDD:** Criar campanha segmentada por especialidade `Implantodontia`, disparar via adaptador Listmonk e simular evento de clique no catálogo técnico.
 - **Target Files:** `src/features/campaigns/listmonk_adapter.py`, `src/features/campaigns/router.py`, `docker-stack.yml`, `tests/test_listmonk_campaigns.py`
@@ -294,7 +294,7 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
   3. Configurar endpoint de discagem SIP (`POST /api/v1/communications/voip/dial`) e o componente `<LiveKitDealRoomModal />` em React.
 - **DoD:** Salas de vídeo e chamadas VoIP iniciadas em 1 clique dentro da tela do Deal; gravação salva automaticamente no R2 disparando webhook `room_finished`.
 - **TDD:** Gerar token de sala para um Deal, simular chamadas de início de Egress e webhook de encerramento do LiveKit, validando registro da gravação vinculada ao Deal.
-- **Target Files:** `src/features/communications/livekit_service.py`, `src/features/communications/router.py`, `frontend/src/features/communications/LiveKitDealRoomModal.tsx`, `docs/reconstruct_rvops/05_reconstructed_app/js/modules/livekit-room.js`, `docker-stack.yml`, `tests/test_livekit_webrtc_sip.py`
+- **Target Files:** `src/features/communications/livekit_service.py`, `src/features/communications/router.py`, `frontend/src/features/communications/LiveKitDealRoomModal.tsx`, `docs/reconstruct_revnault/05_reconstructed_app/js/modules/livekit-room.js`, `docker-stack.yml`, `tests/test_livekit_webrtc_sip.py`
 - **Validation Command:** `python -m pytest tests/test_livekit_webrtc_sip.py -q`
 - **Blocked by:** TICKET-01, TICKET-02
 
@@ -351,7 +351,7 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
 ### FASE 3: Integração Integral do Motor Proprietário KEYPARTNERS (Consignação Cirúrgica & Parcerias)
 
 #### [TICKET-16] [x] DONE - Incorporação do Domínio Core KeyPartners: Custódia de Kits, Lotes ANVISA e Saldos
-- **Descrição:** Implementação nativa completa do motor **KeyPartners** (`src/features/keypartners/`) no backend e banco de dados do REVNAULT, controlando o razão de custódia de estoque em posse de cada clínica/cirurgião com rastreabilidade estrita de lote, número de série, data de esterilização e validade ANVISA.
+- **Descrição:** Implementação nativa completa do motor **KeyPartners** (`src/features/keypartners/`) no backend e banco de dados do RevNault, controlando o razão de custódia de estoque em posse de cada clínica/cirurgião com rastreabilidade estrita de lote, número de série, data de esterilização e validade ANVISA.
 - **Como Implementar (Detalhes Técnicos):**
   1. Criar esquema relacional completo do KeyPartners via migration Alembic:
      * `kp_partner_agreements`: Contrato de parceria (Nível Silver, Gold, Black/KOL, limite de crédito consignado em R\$, piso mínimo de faturamento mensal, prazo máximo de giro em dias).
@@ -373,7 +373,7 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
   4. O sistema converte automaticamente os itens consumidos em Pedido de Venda Faturável (`CFOP 5.113/6.113`) e agenda a reposição/devolução dos excedentes.
 - **DoD:** Conciliação exata entre itens remetidos, consumidos e devolvidos; geração automática do pedido de venda apenas sobre o que foi utilizado na cirurgia.
 - **TDD:** Simular ciclo completo: remessa de 10 implantes, reporte pós-cirúrgico de 3 implantes usados (lotes A1, A2, A3) e 7 intactos; validar que o saldo em custódia caiu para 7 e que um pedido faturável de 3 unidades foi gerado para o Inside Sales.
-- **Target Files:** `src/features/keypartners/surgical_cycle.py`, `src/features/keypartners/service.py`, `src/features/keypartners/router.py`, `frontend/src/features/keypartners/ConsignmentSurgicalBoard.tsx`, `docs/reconstruct_rvops/05_reconstructed_app/js/modules/consignments.js`, `tests/test_keypartners_surgical_postop.py`
+- **Target Files:** `src/features/keypartners/surgical_cycle.py`, `src/features/keypartners/service.py`, `src/features/keypartners/router.py`, `frontend/src/features/keypartners/ConsignmentSurgicalBoard.tsx`, `docs/reconstruct_revnault/05_reconstructed_app/js/modules/consignments.js`, `tests/test_keypartners_surgical_postop.py`
 - **Validation Command:** `python -m pytest tests/test_keypartners_surgical_postop.py -q`
 - **Blocked by:** TICKET-13, TICKET-15, TICKET-16
 
@@ -393,7 +393,7 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
 ### FASE 4: Integração Integral do Motor Proprietário DENTGO (Marketplace B2B & Logística Express)
 
 #### [TICKET-19] [x] DONE - Incorporação do Domínio Core DENTGO: Hubs Logísticos, Estoque Regional e Catálogo de Urgência
-- **Descrição:** Implementação nativa do motor **DENTGO** (`src/features/dentgo/`) dentro do ecossistema REVNAULT, permitindo que indústrias, filiais e dentais parceiras operem como *Hubs Logísticos Urbanos (Sellers)* oferecendo entregas cirúrgicas expressas ($45\text{ a }90\text{ min}$) e entregas agendadas (*Same-Day*) para cirurgiões habilitados.
+- **Descrição:** Implementação nativa do motor **DENTGO** (`src/features/dentgo/`) dentro do ecossistema RevNault, permitindo que indústrias, filiais e dentais parceiras operem como *Hubs Logísticos Urbanos (Sellers)* oferecendo entregas cirúrgicas expressas ($45\text{ a }90\text{ min}$) e entregas agendadas (*Same-Day*) para cirurgiões habilitados.
 - **Como Implementar (Detalhes Técnicos):**
   1. Criar tabelas `dentgo_hubs` (CNPJ, coordenadas geográficas `lat`/`lng`, raio de atuação em km, horário de plantão cirúrgico), `dentgo_hub_inventory` (saldo disponível para pronta-entrega por lote e validade) e `dentgo_orders`.
   2. Implementar algoritmo de geolocalização (fórmula de Haversine) que, diante da busca de um cirurgião por um componente de emergência (ex.: *"Implante Cone Morse $4.3 \times 11.5\text{ mm}$ + Membrana de Colágeno"*), localiza o Hub ativo mais próximo com estoque válido e calcula o ETA (tempo estimado de chegada) e a taxa de urgência cirúrgica.
@@ -412,7 +412,7 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
   3. Publicar cada mudança de coordenada/status no Redis Streams para notificação via WhatsApp da clínica.
 - **DoD:** Nenhuma entrega cirúrgica é concluída sem validação do código de lacre/PIN e upload da evidência fotográfica no R2; rastreabilidade sanitária completa do transporte.
 - **TDD:** Executar fluxo de despacho completo; tentar finalizar entrega com PIN incorreto (validar erro 400); finalizar com PIN correto e foto no R2, confirmando publicação do evento `dentgo.delivered`.
-- **Target Files:** `src/features/dentgo/logistics_dispatch.py`, `src/features/dentgo/service.py`, `src/features/dentgo/router.py`, `frontend/src/features/dentgo/DentgoExpressCockpit.tsx`, `docs/reconstruct_rvops/05_reconstructed_app/js/modules/dentgo-dispatch.js`, `tests/test_dentgo_lastmile_custody.py`
+- **Target Files:** `src/features/dentgo/logistics_dispatch.py`, `src/features/dentgo/service.py`, `src/features/dentgo/router.py`, `frontend/src/features/dentgo/DentgoExpressCockpit.tsx`, `docs/reconstruct_revnault/05_reconstructed_app/js/modules/dentgo-dispatch.js`, `tests/test_dentgo_lastmile_custody.py`
 - **Validation Command:** `python -m pytest tests/test_dentgo_lastmile_custody.py -q`
 - **Blocked by:** TICKET-01, TICKET-19
 
@@ -428,7 +428,7 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
 - **Blocked by:** TICKET-17, TICKET-20
 
 #### [TICKET-22] [x] DONE - Motor de Monetização do Marketplace: Take-Rate, Frete Cirúrgico e Split de Pagamentos
-- **Descrição:** Implementação do motor financeiro do DENTGO (`src/features/dentgo/financial_split.py`) calculando e segregando na fonte as três receitas transacionais: valor líquido do fornecedor (Indústria/Dental), remuneração do entregador especializado (*Express Surgical Delivery Fee*) e comissão da plataforma REVNAULT (*Take-Rate* de $3\%$ a $7\%$).
+- **Descrição:** Implementação do motor financeiro do DENTGO (`src/features/dentgo/financial_split.py`) calculando e segregando na fonte as três receitas transacionais: valor líquido do fornecedor (Indústria/Dental), remuneração do entregador especializado (*Express Surgical Delivery Fee*) e comissão da plataforma RevNault (*Take-Rate* de $3\%$ a $7\%$).
 - **Como Implementar (Detalhes Técnicos):**
   1. Criar tabela `dentgo_financial_splits` registrando para cada pedido: `gross_amount`, `platform_take_rate_pct`, `platform_fee_amount`, `delivery_fee_total`, `courier_net_payout`, `seller_net_payout`, `settlement_status`.
   2. Suportar modalidade **"Faturar no Convênio/Crédito Corporativo KeyPartners"** (para clínicas parceiras aprovadas que pagam quinzenalmente) e **"Pagamento Instantâneo Pix/Cartão com Split na Fonte"**.
@@ -443,7 +443,7 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
 ### FASE 5: Camada de Customer Experience - CX (Chatwoot, Evolution Cluster, Vídeo SOS & ANVISA)
 
 #### [TICKET-23] [x] DONE - Orquestrador de Sharding da Evolution API v2 (100 a 1.000 Instâncias) e Espelhamento em Tempo Real
-- **Descrição:** Evolução de `src/features/integrations/omnichannel/` para gerenciar um cluster distribuído de **Evolution API v2** (suportando de 100 a 1.000 números de WhatsApp de consultores com balanceamento por *consistent hashing*), descarregando todas as mídias no Cloudflare R2 e espelhando conversas e contatos em tempo real no REVNAULT.
+- **Descrição:** Evolução de `src/features/integrations/omnichannel/` para gerenciar um cluster distribuído de **Evolution API v2** (suportando de 100 a 1.000 números de WhatsApp de consultores com balanceamento por *consistent hashing*), descarregando todas as mídias no Cloudflare R2 e espelhando conversas e contatos em tempo real no RevNault.
 - **Como Implementar (Detalhes Técnicos):**
   1. Criar tabela `whatsapp_instances` (`instance_name`, `consultant_user_id`, `shard_node_url`, `phone_number`, `status`, `qr_code_base64`).
   2. Implementar roteador de sharding que aloca novas instâncias de consultores no nó da Evolution API com menor carga (`shard-a`, `shard-b`, `shard-c`), configurando a instância para salvar mídias diretamente no bucket do Cloudflare R2.
@@ -457,11 +457,11 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
 #### [TICKET-24] [x] DONE - Integração Profunda Chatwoot Omnichannel + Sidebar Contextual 360° (KeyPartners + DENTGO)
 - **Descrição:** Integração bidirecional com o **Chatwoot** (`src/features/integrations/omnichannel/chatwoot_bridge.py`) e construção do Dashboard App em React (`frontend/src/features/inbox/OmnichannelContextSidebar.tsx`) exibindo em tela única: CRO do dentista, kits consignados em posse dele no **KeyPartners**, entregas em andamento no **DENTGO** e situação financeira.
 - **Como Implementar (Detalhes Técnicos):**
-  1. Sincronizar contatos, caixas de entrada e agentes do REVNAULT com o Chatwoot via API Platform/Application.
+  1. Sincronizar contatos, caixas de entrada e agentes do RevNault com o Chatwoot via API Platform/Application.
   2. Criar o endpoint e a view do *Chatwoot Dashboard App* (`GET /api/v1/omnichannel/chatwoot-context-panel?contact_phone=...`) que retorna em tempo real o resumo consolidado da conta (Deals abertos, Saldo Consignado KeyPartners, Pedidos DENTGO em trânsito e Score de Saúde).
 - **DoD:** Atendente ou consultor enxerga toda a vida cirúrgica, logística e financeira do cliente ao lado do chat sem trocar de aba.
 - **TDD:** Consultar endpoint do painel contextual para um cirurgião com 1 kit consignado e 1 entrega DENTGO em trânsito; validar que o JSON/HTML retorna ambos os ativos com precisão.
-- **Target Files:** `src/features/integrations/omnichannel/chatwoot_bridge.py`, `src/features/integrations/omnichannel/router.py`, `frontend/src/features/inbox/OmnichannelContextSidebar.tsx`, `docs/reconstruct_rvops/05_reconstructed_app/js/modules/inbox-context-sidebar.js`, `tests/test_chatwoot_context_sidebar.py`
+- **Target Files:** `src/features/integrations/omnichannel/chatwoot_bridge.py`, `src/features/integrations/omnichannel/router.py`, `frontend/src/features/inbox/OmnichannelContextSidebar.tsx`, `docs/reconstruct_revnault/05_reconstructed_app/js/modules/inbox-context-sidebar.js`, `tests/test_chatwoot_context_sidebar.py`
 - **Validation Command:** `python -m pytest tests/test_chatwoot_context_sidebar.py -q`
 - **Blocked by:** TICKET-17, TICKET-20, TICKET-23
 
@@ -470,7 +470,7 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
 - **Como Implementar (Detalhes Técnicos):**
   1. Detectar gatilho de urgência no WhatsApp/DENTGO ou botão "SOS Cirurgia" no app.
   2. Criar sala LiveKit com perfil de baixa latência e enviar o link mágico no WhatsApp do cirurgião/instrumentadora (que abre direto no navegador mobile sem exigir instalação de app).
-  3. Disparar alerta sonoro na fila de assessores clínicos do Chatwoot/REVNAULT e, caso falte algum componente físico identificado na chamada de vídeo, permitir que o assessor despache o item via **DENTGO** com 1 clique de dentro da própria chamada.
+  3. Disparar alerta sonoro na fila de assessores clínicos do Chatwoot/RevNault e, caso falte algum componente físico identificado na chamada de vídeo, permitir que o assessor despache o item via **DENTGO** com 1 clique de dentro da própria chamada.
 - **DoD:** Geração da sala e envio do link em $< 2\text{ s}$; gravação da orientação técnica arquivada no ticket; botão de despacho rápido DENTGO acoplado à tela de suporte.
 - **TDD:** Acionar endpoint `POST /api/v1/tickets/surgical-sos`, validar criação de ticket `P0`, geração de URL WebRTC LiveKit e conversão de necessidade identificada em pedido de urgência no DENTGO.
 - **Target Files:** `src/features/tickets/surgical_sos.py`, `src/features/tickets/service.py`, `src/features/tickets/router.py`, `tests/test_surgical_sos_livekit.py`
@@ -501,7 +501,7 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
 - **Blocked by:** TICKET-01, TICKET-16, TICKET-20
 
 #### [TICKET-28] [x] DONE - Réguas Automatizadas de Acompanhamento Pós-Operatório Clínico B2C (24h / 48h / 72h / 7d)
-- **Descrição:** Para clínicas, franquias e consultórios particulares que utilizam o REVNAULT, implementar a régua ativa de cuidado pós-cirúrgico do paciente (`src/features/automations/postop_patient_care.py`), monitorando sinais de dor, edema, sangramento e adesão medicamentosa via WhatsApp após cirurgias de implante ou enxerto.
+- **Descrição:** Para clínicas, franquias e consultórios particulares que utilizam o RevNault, implementar a régua ativa de cuidado pós-cirúrgico do paciente (`src/features/automations/postop_patient_care.py`), monitorando sinais de dor, edema, sangramento e adesão medicamentosa via WhatsApp após cirurgias de implante ou enxerto.
 - **Como Implementar (Detalhes Técnicos):**
   1. Ao registrar a conclusão de uma cirurgia clínica, agendar disparos automáticos via Redis/Evolution API em $+24\text{ h}$, $+48\text{ h}$, $+72\text{ h}$ e $+7\text{ dias}$ (remoção de sutura).
   2. Analisar a resposta do paciente (texto ou áudio transcrito pelo `faster-whisper`): se detectar sinais de alerta (*"sangramento intenso"*, *"febre"*, *"muita dor"*, *"parafuso soltou"*), abrir imediatamente um ticket urgente para o cirurgião responsável e notificar a recepção da clínica.
@@ -516,14 +516,14 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
 ### FASE 6: Camada de Business Intelligence - BI (Apache Superset, Text-to-SQL & Predição SOK/PR)
 
 #### [TICKET-29] [x] DONE - Integração do Apache Superset Embedded com Guest Tokens JWT e Row-Level Security (RLS)
-- **Descrição:** Implementação do módulo de BI embarcado (`src/features/intelligence/superset_embedded.py` e `frontend/src/features/bi/SupersetEmbeddedDashboard.tsx`) gerando *Guest Tokens JWT* assinados para renderizar dashboards do **Apache Superset** dentro do REVNAULT, aplicando filtros automáticos de **Row-Level Security (RLS)** baseados na árvore de RBAC do usuário logado.
+- **Descrição:** Implementação do módulo de BI embarcado (`src/features/intelligence/superset_embedded.py` e `frontend/src/features/bi/SupersetEmbeddedDashboard.tsx`) gerando *Guest Tokens JWT* assinados para renderizar dashboards do **Apache Superset** dentro do RevNault, aplicando filtros automáticos de **Row-Level Security (RLS)** baseados na árvore de RBAC do usuário logado.
 - **Como Implementar (Detalhes Técnicos):**
   1. Implementar endpoint `POST /api/v1/intelligence/bi/guest-token` que consulta `get_scoped_user_ids(current_user)` no RBAC e monta a cláusula RLS determinística (ex.: `tenant_id = 10 AND (field_owner_id IN (4, 5) OR inside_owner_id IN (4, 5))`).
   2. Assinar o token JWT compatível com o `@superset-ui/embedded-sdk` e implementar o componente React `<SupersetEmbeddedDashboard />` exibindo os painéis de Indústria (Giro de Consignado, Ranking Regional, Taxa de Perda ANVISA) e Clínica (Margem Líquida por Procedimento, Ocupação de Cadeira).
   3. Adicionar suporte à exportação de datasets analíticos pesados em formato `.parquet`/`.csv` direto para o Cloudflare R2.
 - **DoD:** Dashboards renderizados sem exigir segundo login; isolamento hermético de dados por regional/consultor via cláusula SQL injetada no token JWT.
 - **TDD:** Gerar Guest Token para um Consultor Regional do Paraná e outro para o Diretor Nacional; decodificar os tokens JWT e validar que as regras `rls` do consultor restringem estritamente aos IDs de sua carteira.
-- **Target Files:** `src/features/intelligence/superset_embedded.py`, `src/features/intelligence/router.py`, `frontend/src/features/bi/SupersetEmbeddedDashboard.tsx`, `docs/reconstruct_rvops/05_reconstructed_app/js/modules/bi-superset.js`, `docker-stack.yml`, `tests/test_superset_rls_embedded.py`
+- **Target Files:** `src/features/intelligence/superset_embedded.py`, `src/features/intelligence/router.py`, `frontend/src/features/bi/SupersetEmbeddedDashboard.tsx`, `docs/reconstruct_revnault/05_reconstructed_app/js/modules/bi-superset.js`, `docker-stack.yml`, `tests/test_superset_rls_embedded.py`
 - **Validation Command:** `python -m pytest tests/test_superset_rls_embedded.py -q`
 - **Blocked by:** TICKET-03, TICKET-04
 
@@ -568,7 +568,7 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
 
 ---
 
-### FASE 7: Camada de Growth & RevOps (Health Score HSC, Moeda Cirúrgica, MGM & Reativação Cal.com)
+### FASE 7: Camada de Growth & RevNault (Health Score HSC, Moeda Cirúrgica, MGM & Reativação Cal.com)
 
 #### [TICKET-33] [x] DONE - Motor Determinístico de Health Score Cirúrgico ($HSC$) e Prevenção Ativa de Churn
 - **Descrição:** Implementação do motor de saúde da conta (`src/features/intelligence/health_score_hsc.py`) calculando continuamente o **Health Score Cirúrgico ($HSC$)** de cada cirurgião/clínica parceira:
@@ -600,7 +600,7 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
 - **Descrição:** Implementação do motor de indicação estruturada (`src/features/campaigns/referral_mgm.py`) que transforma cirurgiões com $HSC > 75$ e CSAT alto em recrutadores ativos de novos colegas implantodontistas, recompensando ambos com créditos em implantes/insumos após a positivação da primeira cirurgia do indicado.
 - **Como Implementar (Detalhes Técnicos):**
   1. Gerar links únicos rastreáveis (`/r/{referral_code}`) para cirurgiões promotores e disparar convite personalizado no WhatsApp assinado pelo consultor da conta.
-  2. Quando o colega indicado preenche o formulário validando seu CRO/UF (TICKET-06), criar o Lead no Mautic/REVNAULT com score acelerado (+40 pts) e tag `origem_indicacao_kol`.
+  2. Quando o colega indicado preenche o formulário validando seu CRO/UF (TICKET-06), criar o Lead no Mautic/RevNault com score acelerado (+40 pts) e tag `origem_indicacao_kol`.
   3. Escutar o evento `deal.won` do primeiro pedido do indicado e creditar automaticamente o bônus em **Moedas Cirúrgicas / Crédito de Implantes** para o indicador e para o indicado.
 - **DoD:** Rastreamento de ponta a ponta do indicador ao indicado; prevenção contra auto-indicação (mesmo CPF/CRO/CNPJ); liberação condicional do bônus somente após faturamento real.
 - **TDD:** Gerar código MGM para o Dr. Marcos (CRO-SP 11111); cadastrar Dr. Lucas (CRO-SP 22222) usando o código; fechar o primeiro Deal do Dr. Lucas e validar crédito automático de R\$ 600 em bonificação para ambos.
@@ -614,7 +614,7 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
 - **Como Implementar (Detalhes Técnicos):**
   1. Implementar adaptador para a API do Cal.com sincronizando agendas dos consultores e cadeiras das clínicas, gerando links dinâmicos de sala do **LiveKit** quando o agendamento for teleconsulta/reunião online.
   2. Criar worker diário que identifica procedimentos cirúrgicos que completaram $180$, $365$ ou $540\text{ dias}$, dispara mensagem humanizada via WhatsApp (Evolution API) em nome do cirurgião e envia o link de agendamento direto do Cal.com.
-  3. Processar o webhook `BOOKING_CREATED` do Cal.com criando a tarefa/compromisso no REVNAULT e confirmando via WhatsApp.
+  3. Processar o webhook `BOOKING_CREATED` do Cal.com criando a tarefa/compromisso no RevNault e confirmando via WhatsApp.
 - **DoD:** Sincronização bidirecional de horários; conversão automática de pacientes dormentes em agendamentos confirmados na agenda da clínica.
 - **TDD:** Simular paciente cuja cirurgia de protocolo completou 180 dias hoje; validar disparo da mensagem de manutenção preventiva com link Cal.com; simular webhook `BOOKING_CREATED` e confirmar criação do agendamento e Deal de manutenção.
 - **Target Files:** `src/features/automations/calcom_reactivation.py`, `src/features/automations/router.py`, `src/features/webhooks/router.py`, `docker-stack.yml`, `tests/test_calcom_patient_reactivation.py`
@@ -659,31 +659,31 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
   3. Implementar o componente React `<DicomStl3DViewer />` (Cornerstone3D / Three.js) e manter paridade em `dicom-stl-viewer.js` para que o consultor técnico e o cirurgião meçam espessura óssea em milímetros e planejem o diâmetro do implante juntos.
 - **DoD:** Upload direto de arquivos DICOM e STL para o R2; renderização fluida no navegador autenticada por token temporário; vínculo direto do exame com o Deal ou Ticket de Cosmovigilância ANVISA.
 - **TDD:** Registrar estudo DICOM/STL vinculado a um caso de cirurgia guiada, validar geração de URL assinada no R2, verificar metadados anatômicos da arcada e testar bloqueio de acesso por usuário de outro tenant.
-- **Target Files:** `src/features/intelligence/orthanc_dicom.py`, `src/features/intelligence/router.py`, `frontend/src/features/imaging/DicomStl3DViewer.tsx`, `docs/reconstruct_rvops/05_reconstructed_app/js/modules/dicom-stl-viewer.js`, `docker-stack.yml`, `tests/test_orthanc_dicom_stl_r2.py`
+- **Target Files:** `src/features/intelligence/orthanc_dicom.py`, `src/features/intelligence/router.py`, `frontend/src/features/imaging/DicomStl3DViewer.tsx`, `docs/reconstruct_revnault/05_reconstructed_app/js/modules/dicom-stl-viewer.js`, `docker-stack.yml`, `tests/test_orthanc_dicom_stl_r2.py`
 - **Validation Command:** `python -m pytest tests/test_orthanc_dicom_stl_r2.py -q`
 - **Blocked by:** TICKET-01, TICKET-27
 
 #### [TICKET-40] [x] DONE Motor de Webhooks Outbound Plug-and-Play com Assinatura Criptográfica HMAC-SHA256
 - **Status:** [x] CONCLUIDO (241/241 testes aprovados, cobertura 100% de assinaturas HMAC-SHA256, proteção estrita anti-SSRF, circuit breaker após 15 falhas consecutivas, persistência de logs de auditoria e schemas Pydantic tipados).
-- **Descrição:** Evolução de `src/features/webhooks/` para oferecer um **Portal de Desenvolvedores & Webhooks Outbound** onde indústrias, laboratórios de prótese e clínicas cadastram URLs externas para receber eventos em tempo real do ecossistema (`deal.won`, `keypartners.custody_changed`, `dentgo.order_delivered`, `cx.surgical_sos_triggered`, `growth.hsc_critical`) assinados com cabeçalho `X-Revnault-Signature: sha256=...`.
+- **Descrição:** Evolução de `src/features/webhooks/` para oferecer um **Portal de Desenvolvedores & Webhooks Outbound** onde indústrias, laboratórios de prótese e clínicas cadastram URLs externas para receber eventos em tempo real do ecossistema (`deal.won`, `keypartners.custody_changed`, `dentgo.order_delivered`, `cx.surgical_sos_triggered`, `growth.hsc_critical`) assinados com cabeçalho `X-RevNault-Signature: sha256=...`.
 - **Como Implementar (Detalhes Técnicos):**
   1. Criar tabelas `webhook_subscriptions` (`id`, `tenant_id`, `target_url`, `subscribed_events_json`, `signing_secret_encrypted`, `is_active`) e `webhook_delivery_logs`.
   2. Consumir todos os eventos do Redis Streams (TICKET-02), assinar o payload JSON com `hmac.new(secret, payload_bytes, hashlib.sha256).hexdigest()` e despachar com timeout de $5\text{ s}$ e retentativas automáticas com *circuit breaker* (desativando a assinatura após 15 falhas consecutivas e avisando o administrador).
 - **DoD:** Assinatura HMAC-SHA256 verificável; log completo de status HTTP, latência em ms e payload de resposta; proteção contra SSRF (bloqueando chamadas para IPs internos `127.0.0.1`, `10.x.x.x`, `192.168.x.x`).
-- **TDD:** Cadastrar webhook para `dentgo.order_delivered`, disparar evento, validar que o cabeçalho `X-Revnault-Signature` bate exatamente com o cálculo HMAC-SHA256 e testar bloqueio de URL apontando para `http://127.0.0.1:8000` (prevenção SSRF).
+- **TDD:** Cadastrar webhook para `dentgo.order_delivered`, disparar evento, validar que o cabeçalho `X-RevNault-Signature` bate exatamente com o cálculo HMAC-SHA256 e testar bloqueio de URL apontando para `http://127.0.0.1:8000` (prevenção SSRF).
 - **Target Files:** `src/features/webhooks/outbound_dispatcher.py`, `src/features/webhooks/schemas.py`, `src/features/webhooks/router.py`, `tests/test_outbound_webhooks_hmac.py`
 - **Validation Command:** `python -m pytest tests/test_outbound_webhooks_hmac.py -q`
 - **Blocked by:** TICKET-02, TICKET-05
 
 #### [TICKET-41] [x] DONE Unificação do Cockpit Odontológico 360° (React 19 + TypeScript SPA) e Sincronia Estrita de Contratos
 - **Status:** [x] CONCLUIDO (AppRouter integrado no React 19 com as 6 suítes verticais, api_contracts.ts sincronizado 1:1 com FastAPI, 3/3 testes de sincronia de contratos aprovados, conformidade estrita com a Lei #14).
-- **Descrição:** Consolidação de todas as features em fatias verticais na aplicação principal **React 19 + TypeScript + TanStack Query + shadcn/ui** (`frontend/src/App.tsx`), garantindo paridade visual nos ativos de auditoria (`docs/reconstruct_rvops/05_reconstructed_app/`) e sincronização $1:1$ dos contratos tipados em `api_contracts.ts`.
+- **Descrição:** Consolidação de todas as features em fatias verticais na aplicação principal **React 19 + TypeScript + TanStack Query + shadcn/ui** (`frontend/src/App.tsx`), garantindo paridade visual nos ativos de auditoria (`docs/reconstruct_revnault/05_reconstructed_app/`) e sincronização $1:1$ dos contratos tipados em `api_contracts.ts`.
 - **Como Implementar (Detalhes Técnicos):**
   1. Integrar no roteador tipado do React (`frontend/src/router.tsx`) todas as 6 suítes (Marketing GrapesJS/Mautic, Vendas + Copiloto Granola, KeyPartners Consignados, DENTGO Express, CX Chatwoot/SOS LiveKit e BI Superset/DICOM 3D) utilizando os primitivos do Design System e respeitando o RBAC Dual.
-  2. Atualizar `docs/reconstruct_rvops/02_decompiled/api_contracts.ts` e `frontend/src/types/api_contracts.ts` com todas as interfaces e rotas criadas nos Tickets 00 a 40 para manter paridade estrita exigida pelo `test_api_contracts_sync.py`.
+  2. Atualizar `docs/reconstruct_revnault/02_decompiled/api_contracts.ts` e `frontend/src/types/api_contracts.ts` com todas as interfaces e rotas criadas nos Tickets 00 a 40 para manter paridade estrita exigida pelo `test_api_contracts_sync.py`.
 - **DoD:** Interface com estética definitiva de produção (Desktop Multi-Monitor para Inside Sales/Diretoria e Mobile-First PWA para Consultores de Campo/Cirurgiões/Couriers DENTGO); $100\%$ de sincronia entre rotas FastAPI e `api_contracts.ts`.
 - **TDD:** Executar a suíte de sincronia de contratos (`test_api_contracts_sync.py`) e validar que todas as rotas do backend possuem definição correspondente e tipada.
-- **Target Files:** `frontend/src/App.tsx`, `frontend/src/router.tsx`, `frontend/src/types/api_contracts.ts`, `docs/reconstruct_rvops/02_decompiled/api_contracts.ts`, `docs/reconstruct_rvops/05_reconstructed_app/index.html`, `docs/reconstruct_rvops/05_reconstructed_app/js/app.js`, `tests/test_api_contracts_sync.py`
+- **Target Files:** `frontend/src/App.tsx`, `frontend/src/router.tsx`, `frontend/src/types/api_contracts.ts`, `docs/reconstruct_revnault/02_decompiled/api_contracts.ts`, `docs/reconstruct_revnault/05_reconstructed_app/index.html`, `docs/reconstruct_revnault/05_reconstructed_app/js/app.js`, `tests/test_api_contracts_sync.py`
 - **Validation Command:** `python -m pytest tests/test_api_contracts_sync.py -q`
 - **Blocked by:** TICKET-00, TICKET-07, TICKET-11, TICKET-17, TICKET-20, TICKET-24, TICKET-29, TICKET-39, TICKET-40
 
@@ -735,7 +735,7 @@ Todos os Micro-Tickets seguem estritamente **TDD (Test-Driven Development)**, en
   TICKET-29 (Superset Embedded RLS) ──> TICKET-30 (Agente Text-to-SQL)
   TICKET-31 (Predição SOK e PR)     ──> TICKET-32 (Margem Líquida Clínica)
                                                        │
-[FASE 7: GROWTH & REVOPS]                              ▼
+[FASE 7: GROWTH & RevNault]                              ▼
   TICKET-33 (Health Score HSC) ──> TICKET-34 (Moeda Cirúrgica) ──> TICKET-35 (Loop Indicação MGM)
   TICKET-36 (Cal.com Reativação) & TICKET-37 (Flash Deals FEFO no DENTGO)
                                                        │

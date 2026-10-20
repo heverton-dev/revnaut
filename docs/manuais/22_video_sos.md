@@ -1,7 +1,7 @@
 # Manual da Rota: Vídeo SOS Mesa Cirúrgica • Conexão em Tempo Real LiveKit (`/#video-sos`)
 
 ## 1. Objetivo da Rota / Sub-rota
-Centralizar a operação da tela **Vídeo SOS Mesa Cirúrgica • Conexão em Tempo Real LiveKit** (`/#video-sos`) na arquitetura operacional do Revnaut Dental, assegurando governança clínica, rastreabilidade auditável e controle transacional.
+Centralizar a operação da tela **Vídeo SOS Mesa Cirúrgica • Conexão em Tempo Real LiveKit** (`/#video-sos`) na arquitetura operacional do RevNault Dental, assegurando governança clínica, rastreabilidade auditável e controle transacional.
 
 ---
 

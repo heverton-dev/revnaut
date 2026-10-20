@@ -3,15 +3,15 @@ import urllib.request
 import json
 
 urls = [
-    "https://rvops.vpsconexao.org/",
-    "https://rvops.vpsconexao.org/css/tokens.css",
-    "https://rvops.vpsconexao.org/js/app.js",
-    "https://rvops.vpsconexao.org/api/v1/health",
-    "https://rvops.vpsconexao.org/api/v1/deals",
-    "https://rvops.vpsconexao.org/docs",
-    "https://rvops.vpsconexao.org/webhooks",
-    "https://rvops.vpsconexao.org/mcp",
-    "https://rvops.vpsconexao.org/docs/guia"
+    "https://revnault.vpsconexao.org/",
+    "https://revnault.vpsconexao.org/css/tokens.css",
+    "https://revnault.vpsconexao.org/js/app.js",
+    "https://revnault.vpsconexao.org/api/v1/health",
+    "https://revnault.vpsconexao.org/api/v1/deals",
+    "https://revnault.vpsconexao.org/docs",
+    "https://revnault.vpsconexao.org/webhooks",
+    "https://revnault.vpsconexao.org/mcp",
+    "https://revnault.vpsconexao.org/docs/guia"
 ]
 
 print("=== VERIFICAÇÃO FACTUAL AO VIVO EM PRODUÇÃO ===")

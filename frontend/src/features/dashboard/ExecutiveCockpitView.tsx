@@ -25,7 +25,7 @@ const resolveStageHash = (stage?: string): string => {
 };
 
 export const ExecutiveCockpitView: React.FC<ExecutiveCockpitViewProps> = ({
-  title = "Cockpit Executivo RevOps & Inteligência de Carteira",
+  title = "Cockpit Executivo RevNault & Inteligência de Carteira",
   onNavigate,
   userId,
   accountId,

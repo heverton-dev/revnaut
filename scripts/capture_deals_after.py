@@ -3,7 +3,7 @@ from playwright.async_api import async_playwright
 from pathlib import Path
 
 async def main():
-    dest_dir = Path("docs/reconstruct_rvops")
+    dest_dir = Path("docs/reconstruct_revnault")
     dest_dir.mkdir(parents=True, exist_ok=True)
     
     async with async_playwright() as p:
@@ -12,7 +12,7 @@ async def main():
         page = await context.new_page()
         
         print("Acessando pagina de login...")
-        await page.goto("https://revnaut.vpsconexao.org/#login", wait_until="networkidle")
+        await page.goto("https://revnault.vpsconexao.org/#login", wait_until="networkidle")
         
         # Realiza autenticacao com credenciais padrao
         user_input = page.locator("#login-username")
@@ -24,7 +24,7 @@ async def main():
             await page.wait_for_timeout(1500)
             
         print("Navegando para #deals...")
-        await page.goto("https://revnaut.vpsconexao.org/#deals", wait_until="networkidle")
+        await page.goto("https://revnault.vpsconexao.org/#deals", wait_until="networkidle")
         await page.wait_for_timeout(2500)
         
         deals_shot = dest_dir / "screenshot_deals_after.png"

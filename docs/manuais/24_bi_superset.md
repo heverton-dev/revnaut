@@ -1,7 +1,7 @@
 # Manual da Rota: BI Executivo • Dashboards Analíticos Superset (`/#bi-superset`)
 
 ## 1. Objetivo da Rota / Sub-rota
-Centralizar a operação da tela **BI Executivo • Dashboards Analíticos Superset** (`/#bi-superset`) na arquitetura operacional do Revnaut Dental, assegurando governança clínica, rastreabilidade auditável e controle transacional.
+Centralizar a operação da tela **BI Executivo • Dashboards Analíticos Superset** (`/#bi-superset`) na arquitetura operacional do RevNault Dental, assegurando governança clínica, rastreabilidade auditável e controle transacional.
 
 ---
 

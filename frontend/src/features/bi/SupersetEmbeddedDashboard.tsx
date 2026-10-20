@@ -1,11 +1,11 @@
 // -*- coding: utf-8 -*-
 /**
  * SupersetEmbeddedDashboard.tsx
- * Cockpit Executivo RevOps (rota dashboard) & Estúdio BI Superset RLS + Agente Analítico Text-to-SQL (rota analytics).
+ * Cockpit Executivo RevNault (rota dashboard) & Estúdio BI Superset RLS + Agente Analítico Text-to-SQL (rota analytics).
  * Aderente à Lei #5 (Zero Stubs) e Lei #14 (Zero Emojis / Tokens Semânticos).
  */
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   BarChart3,
   Download,
@@ -32,6 +32,8 @@ import {
   Activity,
   MapPin,
   Search,
+  Clock,
+  X,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -41,7 +43,7 @@ import { Select } from "@/components/ui/Select";
 import { Tabs, RouteSubTabs } from "@/components/ui/Tabs";
 import { RouteHeader } from "@/components/ui/RouteHeader";
 import { Dialog } from "@/components/ui/Dialog";
-import { Sheet } from "@/components/ui/Sheet";
+import { ModalTabBar } from "@/components/ui/ModalTabBar";
 
 export type DashboardTypeOption =
   | "industry_consignment"
@@ -58,6 +60,7 @@ export interface SupersetEmbeddedProps {
   dashboardType?: DashboardTypeOption;
   accountId?: string;
   title?: string;
+  initialTab?: string;
   onNavigate?: (route: string, opts?: { stage?: string }) => void;
 }
 
@@ -185,12 +188,13 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
   dashboardType: initialDashboardType = "industry_consignment",
   accountId: initialAccountId,
   title,
+  initialTab,
   onNavigate,
 }) => {
   const [selectedUserId, setSelectedUserId] = useState<string>(initialUserId || "usr-director-br");
   const [selectedDashType, setSelectedDashType] = useState<DashboardTypeOption>(initialDashboardType);
   const [activeAccount] = useState<string>(initialAccountId || "0f14ffff");
-  const [studioTab, setStudioTab] = useState<string>("rls_studio");
+  const [studioTab, setStudioTab] = useState<string>(initialTab || "rls_studio");
 
   const [loadingToken, setLoadingToken] = useState<boolean>(true);
   const [tokenData, setTokenData] = useState<GuestTokenData | null>(null);
@@ -241,9 +245,45 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
 
   // Drawer Lateral Dossiê 360° do Cliente / Cirurgião no Radar Anti-Churn (Feedback 8)
   const [selectedContactForDrawer, setSelectedContactForDrawer] = useState<ChurnRiskItem | null>(null);
+  const [churnModalTab, setChurnModalTab] = useState<"diagnosis" | "timeline">("diagnosis");
+  const [churnTimelinePage, setChurnTimelinePage] = useState<number>(1);
+  const CHURN_TIMELINE_PER_PAGE = 4;
   const [contactDrawerProfile, setContactDrawerProfile] = useState<any>(null);
   const [contactDrawerTimeline, setContactDrawerTimeline] = useState<any[]>([]);
   const [loadingDrawerData, setLoadingDrawerData] = useState<boolean>(false);
+  const [churnTimelineSearch, setChurnTimelineSearch] = useState<string>("");
+  const [churnTimelineAuthor, setChurnTimelineAuthor] = useState<string>("all");
+
+  const timelineAuthors = useMemo(() => {
+    const authors = new Set<string>();
+    contactDrawerTimeline.forEach((item: any) => {
+      const a = item.author_name || item.author || "Sistema";
+      if (a) authors.add(a);
+    });
+    return Array.from(authors);
+  }, [contactDrawerTimeline]);
+
+  const filteredContactDrawerTimeline = useMemo(() => {
+    return contactDrawerTimeline.filter((item: any) => {
+      const author = item.author_name || item.author || "Sistema";
+      const action = item.action || "";
+      const text = item.description || item.comment || item.text || "";
+      const oldVal = item.old_value || "";
+      const newVal = item.new_value || "";
+
+      if (churnTimelineAuthor !== "all" && author !== churnTimelineAuthor) {
+        return false;
+      }
+
+      if (churnTimelineSearch.trim()) {
+        const query = churnTimelineSearch.toLowerCase().trim();
+        const haystack = `${author} ${action} ${text} ${oldVal} ${newVal}`.toLowerCase();
+        if (!haystack.includes(query)) return false;
+      }
+
+      return true;
+    });
+  }, [contactDrawerTimeline, churnTimelineSearch, churnTimelineAuthor]);
 
   // TICKET-ANA-01/02: favoritos de perguntas e compartilhamento role-scoped
   const [favoriteQueries, setFavoriteQueries] = useState<string[]>(() => {
@@ -462,6 +502,9 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
     setSelectedContactForDrawer(item);
     setContactDrawerProfile(null);
     setContactDrawerTimeline([]);
+    setChurnTimelineSearch("");
+    setChurnTimelineAuthor("all");
+    setChurnTimelinePage(1);
     setLoadingDrawerData(true);
     try {
       const [profRes, timeRes] = await Promise.all([
@@ -599,7 +642,7 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
 
 
   // ============================================================================
-  // VISÃO 1: COCKPIT EXECUTIVO REVOPS (rota `dashboard`)
+  // VISÃO 1: COCKPIT EXECUTIVO RevNault (rota `dashboard`)
   // ============================================================================
   if (mode === "executive_cockpit") {
     const rawRadarItems = churnData?.radar || [];
@@ -1488,13 +1531,13 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
           </Card>
         )}
 
-        {/* Feedback 4, 5, 6, 7: Modal de Topologia com 2 Abas, Paginação de 7 registros e texto comercial descritivo */}
+        {/* Feedback 4, 5, 6, 7: Modal de Topologia Estável com 2 Abas e Altura Fixa Anti-Sanfona */}
         <Dialog
           isOpen={showTopologyModal}
           onClose={() => setShowTopologyModal(false)}
           title="Topologia Expandida do Grafo Clínico KOL"
           description="Nós e vínculos comerciais do ecossistema odontológico (Cirurgiões, Clínicas, Labs CAD/CAM, Universidades)."
-          className="max-w-3xl"
+          size="dossier"
         >
           <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-1">
             <div className="grid grid-cols-3 gap-2 text-center">
@@ -1764,17 +1807,18 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
           </div>
         </Dialog>
 
-        {/* Modal de Vínculos associados à Instituição Selecionada (Feedback 3) */}
+        {/* Modal de Vínculos associados à Instituição Selecionada Estável Anti-Sanfona */}
         <Dialog
           isOpen={Boolean(selectedInstitutionForLinks)}
           onClose={() => setSelectedInstitutionForLinks(null)}
+          size="form"
+          className="h-[520px]"
           title={selectedInstitutionForLinks ? `Vínculos da Instituição • ${selectedInstitutionForLinks.label}` : "Vínculos da Instituição"}
           description={
             selectedInstitutionForLinks
               ? `${selectedInstitutionForLinks.metadata?.city ? `${selectedInstitutionForLinks.metadata.city}${selectedInstitutionForLinks.metadata.state ? `, ${selectedInstitutionForLinks.metadata.state}` : ""}` : "Polo Nacional"} • Relações mapeadas no Grafo Clínico KOL`
               : ""
           }
-          className="max-w-2xl"
         >
           {selectedInstitutionForLinks && (() => {
             const nodeEdges = (clinicalGraph?.edges || []).filter(
@@ -1855,151 +1899,330 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
           })()}
         </Dialog>
 
-        {/* Feedback 8: Drawer Lateral (Sheet) Dossiê 360° do Cliente / Cirurgião (estilo Kanban) */}
-        <Sheet
+        {/* Dossiê 360° do Cliente em Risco de Churn (Modal Padronizado 80vh com Abas) */}
+        <Dialog
           isOpen={Boolean(selectedContactForDrawer)}
           onClose={() => setSelectedContactForDrawer(null)}
+          size="80vh"
           title={selectedContactForDrawer ? `Dossiê do Cliente • ${selectedContactForDrawer.name}` : "Dossiê"}
           description={
             selectedContactForDrawer
               ? `CRO: ${selectedContactForDrawer.cro || "BR"} • ${selectedContactForDrawer.uf || "Brasil"} • ${selectedContactForDrawer.clinic_name || "Clínica Odontológica"}`
               : ""
           }
-          className="sm:max-w-lg"
+          footer={
+            <div className="flex items-center justify-between w-full">
+              <span className="text-xs text-text-muted">
+                Inteligência de Carteira • Alerta RFM Prioritário
+              </span>
+              <Button variant="secondary" size="sm" onClick={() => setSelectedContactForDrawer(null)}>
+                Fechar Dossiê
+              </Button>
+            </div>
+          }
         >
           {selectedContactForDrawer && (
-            <div className="space-y-5">
-              {/* Card de Score e Status */}
-              <div className="p-4 rounded-xl border border-border bg-surface-bg space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold uppercase text-text-secondary">
-                    Risco de Churn RFM
-                  </span>
-                  <Badge
-                    variant={
-                      selectedContactForDrawer.churn_risk_level === "critico" ||
-                      selectedContactForDrawer.churn_risk_level === "alto"
-                        ? "danger"
-                        : "warning"
-                    }
-                  >
-                    Score {selectedContactForDrawer.churn_risk_score} • {selectedContactForDrawer.churn_risk_level.toUpperCase()}
-                  </Badge>
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="p-2 rounded-md bg-surface-card border border-border-subtle">
-                    <span className="text-[11px] text-text-secondary block">Dias sem Pedido</span>
-                    <span className="text-sm font-bold text-text-main">
-                      {selectedContactForDrawer.days_since_last_order} dias
-                    </span>
-                  </div>
-                  <div className="p-2 rounded-md bg-surface-card border border-border-subtle">
-                    <span className="text-[11px] text-text-secondary block">Volume Mensal</span>
-                    <span className="text-sm font-bold text-brand-primary">
-                      {selectedContactForDrawer.monthly_implant_volume} un / mês
-                    </span>
-                  </div>
-                </div>
-                <div className="p-2.5 rounded-md bg-surface-card border border-border-subtle space-y-1">
-                  <span className="text-[11px] font-semibold text-text-secondary uppercase block">
-                    Ação Preventiva Recomendada
-                  </span>
-                  <p className="text-xs text-text-main font-medium">
-                    {selectedContactForDrawer.recommended_action}
-                  </p>
-                </div>
-              </div>
+            <div className="flex flex-col min-h-full text-xs pb-6">
+              {/* Barra de Abas do Dossiê */}
+              <ModalTabBar
+                tabs={[
+                  { id: "diagnosis", label: "Diagnóstico & Ações de Retenção", icon: <ShieldCheck className="h-4 w-4" /> },
+                  { id: "timeline", label: "Histórico de Interações", count: contactDrawerTimeline.length, icon: <Clock className="h-4 w-4" /> },
+                ]}
+                activeTab={churnModalTab}
+                onChange={(t) => setChurnModalTab(t as any)}
+              />
 
-              {/* Botões de Ação Rápida */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => handleReactivateWhatsApp(selectedContactForDrawer)}
-                  className="gap-1.5 w-full justify-center"
-                >
-                  <MessageCircle className="h-3.5 w-3.5" />
-                  Reativar via WhatsApp
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setSelectedContactForDrawer(null);
-                    if (onNavigate) {
-                      onNavigate("deals");
-                    } else {
-                      window.location.hash = "#!/deals";
-                    }
-                  }}
-                  className="gap-1.5 w-full justify-center"
-                >
-                  <ExternalLink className="h-3.5 w-3.5" />
-                  Ver Oportunidades
-                </Button>
-              </div>
-
-              {/* Dados Cadastrais e Perfil */}
-              <div className="space-y-3">
-                <h4 className="text-xs font-semibold uppercase text-text-secondary">
-                  Informações Comerciais & Cadastrais
-                </h4>
-                <div className="space-y-2 text-xs">
-                  <div className="flex justify-between py-1.5 border-b border-border-subtle">
-                    <span className="text-text-secondary">Especialidade</span>
-                    <span className="font-medium text-text-main">
-                      {contactDrawerProfile?.specialty || "Implantodontia & Prótese"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between py-1.5 border-b border-border-subtle">
-                    <span className="text-text-secondary">Tier da Conta</span>
-                    <span className="font-medium text-text-main">
-                      {selectedContactForDrawer.tier || contactDrawerProfile?.tier || "Tier Gold"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between py-1.5 border-b border-border-subtle">
-                    <span className="text-text-secondary">Clínica Credenciada</span>
-                    <span className="font-medium text-text-main truncate max-w-[200px]">
-                      {selectedContactForDrawer.clinic_name || contactDrawerProfile?.clinic_name || "Clínica Principal"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between py-1.5 border-b border-border-subtle">
-                    <span className="text-text-secondary">Atraso Estimado</span>
-                    <span className="font-medium text-status-danger">
-                      {selectedContactForDrawer.days_overdue} dias além da média
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Timeline de Atividades */}
-              <div className="space-y-3">
-                <h4 className="text-xs font-semibold uppercase text-text-secondary">
-                  Histórico de Interações
-                </h4>
-                {loadingDrawerData ? (
-                  <p className="text-xs text-text-muted py-2">Carregando histórico do cliente...</p>
-                ) : contactDrawerTimeline.length > 0 ? (
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {contactDrawerTimeline.map((item: any, i: number) => (
-                      <div key={i} className="p-2 rounded-md bg-surface-bg border border-border-subtle text-xs">
-                        <div className="flex justify-between text-[11px] text-text-muted mb-1">
-                          <span>{item.author || "Sistema"}</span>
-                          <span>{item.created_at || "Recente"}</span>
-                        </div>
-                        <p className="text-text-main">{item.description || item.comment || item.text}</p>
+              {/* ABA 1: Diagnóstico e Ações */}
+              {churnModalTab === "diagnosis" && (
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+                  {/* Coluna Esquerda: Score e Status RFM */}
+                  <div className="lg:col-span-7 space-y-4">
+                    <div className="p-4 rounded-xl border border-border bg-surface-card space-y-3 shadow-2xs">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold uppercase text-text-secondary">
+                          Classificação do Risco de Churn (RFM)
+                        </span>
+                        <Badge
+                          variant={
+                            selectedContactForDrawer.churn_risk_level === "critico" ||
+                            selectedContactForDrawer.churn_risk_level === "alto"
+                              ? "danger"
+                              : "warning"
+                          }
+                        >
+                          Score {selectedContactForDrawer.churn_risk_score} • {selectedContactForDrawer.churn_risk_level.toUpperCase()}
+                        </Badge>
                       </div>
-                    ))}
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                        <div className="p-3 rounded-lg bg-surface-bg border border-border-subtle">
+                          <span className="text-[11px] text-text-secondary block font-medium">Dias sem Pedidos</span>
+                          <span className="text-base font-bold text-text-main">
+                            {selectedContactForDrawer.days_since_last_order} dias
+                          </span>
+                        </div>
+                        <div className="p-3 rounded-lg bg-surface-bg border border-border-subtle">
+                          <span className="text-[11px] text-text-secondary block font-medium">Consumo Mensal Médio</span>
+                          <span className="text-base font-bold text-brand-primary">
+                            {selectedContactForDrawer.monthly_implant_volume} implantes / mês
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="p-3.5 rounded-lg bg-surface-bg border border-border-subtle space-y-1.5">
+                        <span className="text-[11px] font-bold text-brand-primary uppercase block">
+                          Recomendação Preventiva da IA
+                        </span>
+                        <p className="text-xs text-text-main font-medium leading-relaxed">
+                          {selectedContactForDrawer.recommended_action}
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                ) : (
-                  <div className="p-3 rounded-lg bg-surface-bg text-center text-xs text-text-muted">
-                    Nenhum registro de interação recente para este contato.
+
+                  {/* Coluna Direita: Dados Cadastrais & Ações Rápidas */}
+                  <div className="lg:col-span-5 space-y-4">
+                    <div className="p-4 rounded-xl border border-border bg-surface-card space-y-3 shadow-2xs">
+                      <h4 className="text-xs font-semibold uppercase text-text-secondary">
+                        Informações Cadastrais
+                      </h4>
+                      <div className="space-y-2 text-xs divide-y divide-border-subtle">
+                        <div className="flex justify-between py-1.5">
+                          <span className="text-text-secondary">Especialidade</span>
+                          <span className="font-semibold text-text-main">
+                            {contactDrawerProfile?.specialty || "Implantodontia & Prótese"}
+                          </span>
+                        </div>
+                        <div className="flex justify-between py-1.5">
+                          <span className="text-text-secondary">Tier da Conta</span>
+                          <span className="font-semibold text-text-main">
+                            {selectedContactForDrawer.tier || contactDrawerProfile?.tier || "Tier Gold"}
+                          </span>
+                        </div>
+                        <div className="flex justify-between py-1.5">
+                          <span className="text-text-secondary">Clínica Vinculada</span>
+                          <span className="font-semibold text-text-main truncate max-w-[200px]">
+                            {selectedContactForDrawer.clinic_name || contactDrawerProfile?.clinic_name || "Clínica Principal"}
+                          </span>
+                        </div>
+                        <div className="flex justify-between py-1.5">
+                          <span className="text-text-secondary">Desvio Temporal</span>
+                          <span className="font-bold text-status-danger">
+                            {selectedContactForDrawer.days_overdue} dias além da média
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Botões de Ação Rápida */}
+                      <div className="pt-2 grid grid-cols-1 gap-2">
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => handleReactivateWhatsApp(selectedContactForDrawer)}
+                          className="gap-1.5 w-full justify-center"
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                          Reativar Cirurgião via WhatsApp
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedContactForDrawer(null);
+                            if (onNavigate) {
+                              onNavigate("deals");
+                            } else {
+                              window.location.hash = "#!/deals";
+                            }
+                          }}
+                          className="gap-1.5 w-full justify-center"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          Abrir Negociação no Funil
+                        </Button>
+                      </div>
+                    </div>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
+
+              {/* ABA 2: Histórico de Interações Paginado com Filtros */}
+              {churnModalTab === "timeline" && (
+                <div className="p-4 rounded-xl border border-border bg-surface-card space-y-3 shadow-2xs">
+                  <div className="flex items-center justify-between pb-1 border-b border-border-subtle">
+                    <span className="font-semibold uppercase text-text-secondary flex items-center gap-1.5">
+                      <Clock className="h-4 w-4 text-brand-primary" />
+                      Interações Registradas ({filteredContactDrawerTimeline.length}{filteredContactDrawerTimeline.length !== contactDrawerTimeline.length ? ` de ${contactDrawerTimeline.length}` : ""})
+                    </span>
+                    {Math.ceil(filteredContactDrawerTimeline.length / CHURN_TIMELINE_PER_PAGE) > 1 && (
+                      <span className="text-text-muted text-[11px] font-mono">
+                        Página {churnTimelinePage} de {Math.ceil(filteredContactDrawerTimeline.length / CHURN_TIMELINE_PER_PAGE)}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Barra de Filtros das Interações */}
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-1">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-text-muted" />
+                      <Input
+                        type="text"
+                        value={churnTimelineSearch}
+                        onChange={(e) => {
+                          setChurnTimelineSearch(e.target.value);
+                          setChurnTimelinePage(1);
+                        }}
+                        placeholder="Buscar por termo, nota técnica ou ação..."
+                        className="h-8 pl-8 pr-7 text-xs bg-surface-bg border-border-subtle"
+                      />
+                      {churnTimelineSearch && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setChurnTimelineSearch("");
+                            setChurnTimelinePage(1);
+                          }}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main transition"
+                          title="Limpar busca"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+
+                    {timelineAuthors.length > 1 && (
+                      <div className="w-full sm:w-48">
+                        <Select
+                          value={churnTimelineAuthor}
+                          onValueChange={(val) => {
+                            setChurnTimelineAuthor(val);
+                            setChurnTimelinePage(1);
+                          }}
+                          options={[
+                            { value: "all", label: "Todos os autores" },
+                            ...timelineAuthors.map((author) => ({
+                              value: author,
+                              label: author,
+                            })),
+                          ]}
+                          placeholder="Autor..."
+                          className="h-8 text-xs bg-surface-bg border-border-subtle"
+                        />
+                      </div>
+                    )}
+
+                    {(churnTimelineSearch || churnTimelineAuthor !== "all") && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setChurnTimelineSearch("");
+                          setChurnTimelineAuthor("all");
+                          setChurnTimelinePage(1);
+                        }}
+                        className="h-8 px-2 text-xs text-text-muted hover:text-text-main shrink-0 gap-1"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                        Limpar
+                      </Button>
+                    )}
+                  </div>
+
+                  {loadingDrawerData ? (
+                    <p className="text-xs text-text-muted py-8 text-center">Carregando histórico do cliente...</p>
+                  ) : contactDrawerTimeline.length === 0 ? (
+                    <p className="text-xs text-text-muted py-8 text-center">
+                      Nenhum registro de interação recente para este contato.
+                    </p>
+                  ) : filteredContactDrawerTimeline.length === 0 ? (
+                    <div className="py-8 text-center space-y-2">
+                      <p className="text-xs text-text-muted">
+                        Nenhuma interação encontrada para os filtros aplicados.
+                      </p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setChurnTimelineSearch("");
+                          setChurnTimelineAuthor("all");
+                          setChurnTimelinePage(1);
+                        }}
+                        className="h-7 text-xs"
+                      >
+                        Limpar Filtros
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2.5">
+                      {filteredContactDrawerTimeline
+                        .slice(
+                          (churnTimelinePage - 1) * CHURN_TIMELINE_PER_PAGE,
+                          churnTimelinePage * CHURN_TIMELINE_PER_PAGE
+                        )
+                        .map((item: any, i: number) => (
+                          <div key={item.id ?? i} className="p-3 rounded-lg bg-surface-bg border border-border-subtle hover:border-brand-primary/30 transition space-y-1.5">
+                            <div className="flex justify-between items-center text-[11px] text-text-muted font-mono">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="font-semibold text-text-main">{item.author_name || item.author || "Sistema"}</span>
+                                {item.action && (
+                                  <Badge variant="outline" className="text-[10px] font-normal py-0 px-1.5 bg-surface-card border-border-subtle">
+                                    {item.action}
+                                  </Badge>
+                                )}
+                              </div>
+                              <span>{item.created_at || "Recente"}</span>
+                            </div>
+                            {(item.old_value || item.new_value) && (
+                              <div className="text-[10.5px] text-text-muted font-mono flex items-center gap-1">
+                                <span className="line-through">{item.old_value || "—"}</span>
+                                <span>→</span>
+                                <span className="text-brand-primary font-medium">{item.new_value || "—"}</span>
+                              </div>
+                            )}
+                            <p className="text-text-secondary text-xs leading-relaxed">{item.description || item.comment || item.text}</p>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+
+                  {/* Controles de Paginação */}
+                  {Math.ceil(filteredContactDrawerTimeline.length / CHURN_TIMELINE_PER_PAGE) > 1 && (
+                    <div className="flex items-center justify-between pt-2 border-t border-border-subtle text-xs">
+                      <span className="text-text-muted text-[11px]">
+                        Mostrando {((churnTimelinePage - 1) * CHURN_TIMELINE_PER_PAGE) + 1}–{Math.min(churnTimelinePage * CHURN_TIMELINE_PER_PAGE, filteredContactDrawerTimeline.length)} de {filteredContactDrawerTimeline.length}
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={churnTimelinePage <= 1}
+                          onClick={() => setChurnTimelinePage((p) => Math.max(1, p - 1))}
+                          className="h-6 px-2 text-[11px]"
+                        >
+                          Anterior
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={churnTimelinePage >= Math.ceil(filteredContactDrawerTimeline.length / CHURN_TIMELINE_PER_PAGE)}
+                          onClick={() => setChurnTimelinePage((p) => Math.min(Math.ceil(filteredContactDrawerTimeline.length / CHURN_TIMELINE_PER_PAGE), p + 1))}
+                          className="h-6 px-2 text-[11px]"
+                        >
+                          Próxima
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
-        </Sheet>
+        </Dialog>
       </div>
     );
   }
@@ -2008,7 +2231,7 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
   // VISÃO 2: ESTÚDIO BI SUPERSET RLS & CONSOLE TEXT-TO-SQL (rota `analytics`)
   // ============================================================================
   return (
-    <div className="space-y-6 w-full">
+    <div className="space-y-6 max-w-7xl mx-auto">
       <RouteHeader
         title={title || "Estúdio BI Superset RLS & Agente Analítico Text-to-SQL"}
         description="Governança de Guest Tokens JWT com Row-Level Security (RLS), exportação analítica Parquet/CSV no R2 e consultas em linguagem natural protegidas por AST."
@@ -2089,6 +2312,7 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
       <Tabs
         activeTab={studioTab}
         onChange={setStudioTab}
+        hideOnDesktop
         tabs={[
           { id: "rls_studio", label: "Painel Analítico RLS & Telemetria Nativa" },
           { id: "text_to_sql", label: "Console Text-to-SQL (Proteção AST Read-Only)" },
@@ -2451,6 +2675,7 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
           setShowShareModal(false);
           setShareCopied(false);
         }}
+        size="form"
         title="Compartilhar Dashboard com a Equipe"
         description="Gera um link role-scoped com RLS aplicado conforme o papel selecionado."
       >

@@ -3,7 +3,7 @@
 ## 1. Especificação BDD (Gherkin)
 ```gherkin
 Funcionalidade: Operação da Rota Relatórios e Metas (Estúdio BI Superset & Text-to-SQL)
-  Como Usuário Autenticado da Plataforma RevOps
+  Como Usuário Autenticado da Plataforma RevNault
   Eu quero acessar a rota "/#!/analytics"
   Para executar as rotinas operacionais com integridade e segurança
 

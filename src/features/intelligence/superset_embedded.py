@@ -101,7 +101,7 @@ def generate_superset_guest_token(
         cur = conn.cursor()
         cur.execute("SELECT name FROM users WHERE id = ? AND account_id = ?", (user_id, account_id))
         user_row = cur.fetchone()
-        user_name = user_row[0] if user_row else "Usuário Revnault"
+        user_name = user_row[0] if user_row else "Usuário RevNault"
 
         rls_clause = build_superset_rls_clause(conn, user_id=user_id, account_id=account_id)
 

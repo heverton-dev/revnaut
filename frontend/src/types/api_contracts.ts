@@ -1,9 +1,9 @@
 /**
- * API Contracts & Data Schemas — Revnaut Core & Dental Ops (TICKET-00 .. TICKET-42)
- * Sincronizado estritamente 1:1 entre frontend/src/types/api_contracts.ts e docs/reconstruct_rvops/02_decompiled/api_contracts.ts
+ * API Contracts & Data Schemas — RevNault Core & Dental Ops (TICKET-00 .. TICKET-42)
+ * Sincronizado estritamente 1:1 entre frontend/src/types/api_contracts.ts e docs/reconstruct_revnault/02_decompiled/api_contracts.ts
  */
 
-export interface RvopsUser {
+export interface RevNaultUser {
   id: string | number;
   email: string;
   first_name: string;
@@ -16,7 +16,7 @@ export interface RvopsUser {
   is_temp_token?: boolean;
 }
 
-export interface RvopsAccount {
+export interface RevNaultAccount {
   id: string;
   name: string;
   created_at?: string;
@@ -54,7 +54,7 @@ export interface UserRole {
 export interface AuthLoginResponse {
   access_token: string;
   refresh_token: string;
-  user: RvopsUser;
+  user: RevNaultUser;
   roles: UserRole[];
 }
 

@@ -19,6 +19,7 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Tabs } from "@/components/ui/Tabs";
+import { Dialog } from "@/components/ui/Dialog";
 
 export interface BusinessUnit {
   id: string;
@@ -89,11 +90,13 @@ export interface CommissionRule {
 export interface RbacHierarchyTreeProps {
   accountId?: string;
   className?: string;
+  initialTab?: string;
 }
 
 export function RbacHierarchyTree({
   accountId: initialAccountId,
   className,
+  initialTab,
 }: RbacHierarchyTreeProps) {
   const [accountId, setAccountId] = React.useState<string>(initialAccountId || "");
 
@@ -112,7 +115,7 @@ export function RbacHierarchyTree({
     }
   }, [initialAccountId]);
 
-  const [activeTab, setActiveTab] = React.useState<string>("tree");
+  const [activeTab, setActiveTab] = React.useState<string>(initialTab || "tree");
 
   // ==========================================
   // TAB 1: DAG DUAL TREE & BU / TEAMS
@@ -511,7 +514,7 @@ export function RbacHierarchyTree({
   };
 
   return (
-    <div className={`space-y-4 ${className || ""}`}>
+    <div className={`space-y-6 max-w-7xl mx-auto ${className || ""}`}>
       <RouteHeader
         title="Equipes, Metas e Comissões"
         description="Estrutura de equipes e unidades de negócio, metas de vendas e comissionamento."
@@ -539,6 +542,7 @@ export function RbacHierarchyTree({
       <Tabs
         activeTab={activeTab}
         onChange={(tabId) => setActiveTab(tabId)}
+        hideOnDesktop
         tabs={[
           { id: "tree", label: "Estrutura de Equipes e Unidades", count: teams.length },
           { id: "permissions", label: "Cargos & Matriz de Permissões", count: roles.length },
@@ -682,12 +686,15 @@ export function RbacHierarchyTree({
             </Card>
           </div>
 
-          {/* Modal Criar Unidade */}
-          {showBuModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-              <Card className="w-full max-w-sm p-4 bg-surface-card border border-border space-y-3 shadow-xl text-xs">
-                <h3 className="font-bold text-text-main text-sm">Nova Unidade de Negócio</h3>
-                <form onSubmit={handleCreateBu} className="space-y-2">
+          {/* Modal Criar Unidade Padronizado */}
+          <Dialog
+            isOpen={showBuModal}
+            onClose={() => setShowBuModal(false)}
+            size="confirm"
+            title="Nova Unidade de Negócio"
+            description="Estruture divisões corporativas com isolamento de faturamento e operações."
+          >
+            <form onSubmit={handleCreateBu} className="space-y-2">
                   <Input
                     placeholder="Nome da Unidade (ex: Divisão Implantes)"
                     value={newBuName}
@@ -700,21 +707,22 @@ export function RbacHierarchyTree({
                     onChange={(e) => setNewBuCode(e.target.value)}
                     required
                   />
-                  <div className="flex justify-end gap-2 pt-2">
+                  <div className="flex justify-end gap-2 pt-3 border-t border-border-subtle">
                     <Button type="button" variant="outline" size="sm" onClick={() => setShowBuModal(false)}>Cancelar</Button>
                     <Button type="submit" variant="default" size="sm">Criar Unidade</Button>
                   </div>
                 </form>
-              </Card>
-            </div>
-          )}
+          </Dialog>
 
-          {/* Modal Criar Equipe */}
-          {showTeamModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-              <Card className="w-full max-w-sm p-4 bg-surface-card border border-border space-y-3 shadow-xl text-xs">
-                <h3 className="font-bold text-text-main text-sm">Nova Equipe Comercial</h3>
-                <form onSubmit={handleCreateTeam} className="space-y-2">
+          {/* Modal Criar Equipe Padronizado */}
+          <Dialog
+            isOpen={showTeamModal}
+            onClose={() => setShowTeamModal(false)}
+            size="confirm"
+            title="Nova Equipe Comercial"
+            description="Agrupe consultores por região, alçada ou especialidade cirúrgica."
+          >
+            <form onSubmit={handleCreateTeam} className="space-y-2">
                   <Input
                     placeholder="Nome da Equipe (ex: Field Sales SP Capital)"
                     value={newTeamName}
@@ -747,14 +755,12 @@ export function RbacHierarchyTree({
                       ))}
                     </select>
                   </div>
-                  <div className="flex justify-end gap-2 pt-2">
+                  <div className="flex justify-end gap-2 pt-3 border-t border-border-subtle">
                     <Button type="button" variant="outline" size="sm" onClick={() => setShowTeamModal(false)}>Cancelar</Button>
                     <Button type="submit" variant="default" size="sm">Criar Equipe</Button>
                   </div>
                 </form>
-              </Card>
-            </div>
-          )}
+          </Dialog>
         </div>
       )}
 
@@ -861,31 +867,15 @@ export function RbacHierarchyTree({
             </Card>
           </div>
 
-          {/* TICKET-RBAC-02: Modal Histórico de Alterações de Cargo */}
-          {showAuditModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-              <div className="bg-surface-card border border-border rounded-xl p-5 max-w-2xl w-full space-y-4 shadow-2xl max-h-[85vh] flex flex-col">
-                <div className="flex items-center justify-between border-b border-border pb-3">
-                  <div className="flex items-center gap-2">
-                    <History className="h-4 w-4 text-brand-primary" />
-                    <div>
-                      <h3 className="text-sm font-bold text-text-main">
-                        Histórico de Alterações de Cargo e Transferências Regionais
-                      </h3>
-                      <p className="text-[11px] text-text-secondary">
-                        Trilha auditável imutável de promoções, reclassificações de alçada e movimentações de equipes
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowAuditModal(false)}
-                    className="h-7 w-7 p-0 text-text-muted hover:text-text-main"
-                  >
-                    X
-                  </Button>
-                </div>
+          {/* TICKET-RBAC-02: Modal Histórico de Alterações de Cargo Padronizado Estável */}
+          <Dialog
+            isOpen={showAuditModal}
+            onClose={() => setShowAuditModal(false)}
+            size="form"
+            className="h-[600px]"
+            title="Histórico de Alterações de Cargo e Transferências"
+            description="Trilha auditável imutável de promoções, reclassificações de alçada e movimentações de equipes."
+          >
 
                 <div className="flex-1 overflow-y-auto space-y-2 pr-1">
                   {loadingAudit ? (
@@ -930,7 +920,7 @@ export function RbacHierarchyTree({
                   )}
                 </div>
 
-                <div className="flex justify-between items-center border-t border-border pt-3">
+                <div className="flex justify-between items-center border-t border-border-subtle pt-3">
                   <Button variant="outline" size="sm" onClick={fetchAuditHistory} disabled={loadingAudit} className="text-xs">
                     Atualizar Trilha
                   </Button>
@@ -938,16 +928,17 @@ export function RbacHierarchyTree({
                     Fechar
                   </Button>
                 </div>
-              </div>
-            </div>
-          )}
+          </Dialog>
 
-          {/* Modal Criar Cargo */}
-          {showRoleModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-              <Card className="w-full max-w-sm p-4 bg-surface-card border border-border space-y-3 shadow-xl text-xs">
-                <h3 className="font-bold text-text-main text-sm">Novo Cargo / Perfil RBAC</h3>
-                <form onSubmit={handleCreateRole} className="space-y-2">
+          {/* Modal Criar Cargo Padronizado */}
+          <Dialog
+            isOpen={showRoleModal}
+            onClose={() => setShowRoleModal(false)}
+            size="confirm"
+            title="Novo Cargo / Perfil RBAC"
+            description="Defina a nomenclatura e o escopo de visibilidade hierárquica do cargo."
+          >
+            <form onSubmit={handleCreateRole} className="space-y-2">
                   <Input
                     placeholder="Nome do Cargo (ex: Inside Sales Specialist)"
                     value={newRoleName}
@@ -973,14 +964,12 @@ export function RbacHierarchyTree({
                       <option value="tenant_global">Global (Toda a empresa)</option>
                     </select>
                   </div>
-                  <div className="flex justify-end gap-2 pt-2">
+                  <div className="flex justify-end gap-2 pt-3 border-t border-border-subtle">
                     <Button type="button" variant="outline" size="sm" onClick={() => setShowRoleModal(false)}>Cancelar</Button>
                     <Button type="submit" variant="default" size="sm">Criar Cargo</Button>
                   </div>
                 </form>
-              </Card>
-            </div>
-          )}
+          </Dialog>
         </div>
       )}
 

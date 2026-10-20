@@ -1,7 +1,7 @@
 # Relatorio Executivo e Tecnico de Implementacao — Tickets 00 a 42
 
-**Projeto:** RevNaut Dental Ops (Suite Integrada de RevOps Odontologico, Consignacao KeyPartners e Logistica Express DENTGO)  
-**Ambiente Homologado:** Local Monolith / VPS Swarm Contabo (`https://rvops.vpsconexao.org`)  
+**Projeto:** RevNault Dental Ops (Suite Integrada de RevNault Odontologico, Consignacao KeyPartners e Logistica Express DENTGO)  
+**Ambiente Homologado:** Local Monolith / VPS Swarm Contabo (`https://revnault.vpsconexao.org`)  
 **Data da Auditoria:** 18/10/2026  
 **Status Consolidado:** 100% Concluido (43 de 43 tickets entregues, testados e em producao)  
 **Taxa de Sucesso dos Testes:** 245/245 testes aprovados (`pytest -q`)  
@@ -137,17 +137,17 @@ Todas as telas foram construidas respeitando rigorosamente o Design System insti
 A aplicacao foi implantada e esta respondendo com certificados SSL Let's Encrypt validos:
 
 - **Aplicacao Principal (Frontend & Cockpit 360):**  
-  [https://rvops.vpsconexao.org/](https://rvops.vpsconexao.org/)
+  [https://revnault.vpsconexao.org/](https://revnault.vpsconexao.org/)
 - **Swagger Studio (Documentacao Interativa OpenAPI 3.1):**  
-  [https://rvops.vpsconexao.org/docs](https://rvops.vpsconexao.org/docs)
+  [https://revnault.vpsconexao.org/docs](https://revnault.vpsconexao.org/docs)
 - **Webhook Studio (Portal de Webhooks & Assinaturas HMAC):**  
-  [https://rvops.vpsconexao.org/webhooks](https://rvops.vpsconexao.org/webhooks)
+  [https://revnault.vpsconexao.org/webhooks](https://revnault.vpsconexao.org/webhooks)
 - **MCP Studio (Servidor Nativo Model Context Protocol para IA):**  
-  [https://rvops.vpsconexao.org/mcp](https://rvops.vpsconexao.org/mcp)
+  [https://revnault.vpsconexao.org/mcp](https://revnault.vpsconexao.org/mcp)
 - **Guia do Utilizador (Manuais Operacionais e Procedimentos):**  
-  [https://rvops.vpsconexao.org/docs/guia](https://rvops.vpsconexao.org/docs/guia)
+  [https://revnault.vpsconexao.org/docs/guia](https://revnault.vpsconexao.org/docs/guia)
 - **Health Check do Cluster:**  
-  [https://rvops.vpsconexao.org/api/v1/health](https://rvops.vpsconexao.org/api/v1/health)
+  [https://revnault.vpsconexao.org/api/v1/health](https://revnault.vpsconexao.org/api/v1/health)
 
 ### Credenciais de Acesso Inicial
 - **Usuario Super Admin:** `admin@revnaut.local` (ou botao de acesso rapido "Entrar com Super Admin" na tela de login).
@@ -162,11 +162,11 @@ O escopo completo dos 43 tickets (00 a 42) do Plano Mestre de Implementacao foi 
 
 ### Atividades de Pos-Deploy e Operacao Continua (Recomendadas)
 1. **Configuracao de Variaveis Secretas Reais de Producao:**
-   - No arquivo `/opt/rvops/.env` do servidor de producao, inserir as chaves de API reais do Cloudflare R2 (`R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`) e Evolution API caso se deseje apontar para o bucket final de producao da organizacao.
+   - No arquivo `/opt/revnault/.env` do servidor de producao, inserir as chaves de API reais do Cloudflare R2 (`R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`) e Evolution API caso se deseje apontar para o bucket final de producao da organizacao.
 2. **Apontamento de Dominio Definitivo:**
-   - O ambiente atual esta configurado no subdominio de homologacao `rvops.vpsconexao.org`. Para publicar sob o dominio corporativo final (ex: `app.revnaut.com.br`), basta atualizar as regras de host no Traefik (`docker-stack.yml`).
+   - O ambiente atual esta configurado no subdominio de homologacao `revnault.vpsconexao.org`. Para publicar sob o dominio corporativo final (ex: `app.revnault.com.br`), basta atualizar as regras de host no Traefik (`docker-stack.yml`).
 3. **Agendamento do Cron de Backup WAL:**
    - O script `scripts/wal_backup_s3.py` esta pronto e validado. Pode-se adiciona-lo ao crontab do host (`crontab -e`) para rodar snapshots a cada 6 ou 12 horas:
      ```bash
-     0 */6 * * * docker exec $(docker ps -q -f name=rvops_app.1) python scripts/wal_backup_s3.py --retention 30
+     0 */6 * * * docker exec $(docker ps -q -f name=revnault_app.1) python scripts/wal_backup_s3.py --retention 30
      ```

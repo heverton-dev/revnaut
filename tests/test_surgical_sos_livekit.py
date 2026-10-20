@@ -46,7 +46,7 @@ def test_trigger_surgical_sos_livekit_room_and_p0_ticket():
 
     assert res["ticket_id"].startswith("t-")
     assert res["priority"] == "P0_SURGICAL_TABLE"
-    assert "https://meet.revops.local/room/sos-" in res["livekit_room_url"]
+    assert "https://meet.revnault.local/room/sos-" in res["livekit_room_url"]
     assert res["cro_uf"] == "CRO-SP-88771"
     assert res["status"] == "aberto"
 
@@ -134,7 +134,7 @@ def test_surgical_sos_api_endpoints(client):
     assert res.status_code == 201
     data = res.json()
     assert data["priority"] == "P0_SURGICAL_TABLE"
-    assert "https://meet.revops.local/room/sos-" in data["livekit_room_url"]
+    assert "https://meet.revnault.local/room/sos-" in data["livekit_room_url"]
 
     ticket_id = data["ticket_id"]
 

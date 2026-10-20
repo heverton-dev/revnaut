@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
+import { Dialog } from "@/components/ui/Dialog";
+import { Button } from "@/components/ui/Button";
 
 export interface ImagingStudy {
   id: string;
@@ -1042,26 +1044,15 @@ export const DicomStl3DViewer: React.FC<DicomStl3DViewerProps> = ({
         </div>
       </div>
 
-      {/* Modal Upload Presign DICOM/STL no Cloudflare R2 */}
-      {showUploadModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-md p-5 bg-surface-card border border-border rounded-xl space-y-4 shadow-xl">
-            <div className="flex items-center justify-between border-b border-border pb-2.5">
-              <h3 className="text-sm font-bold text-text-main flex items-center gap-2">
-                <svg className="w-4 h-4 text-brand-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                </svg>
-                Upload & Presign Cloudflare R2 (PACS Orthanc)
-              </h3>
-              <button
-                onClick={() => setShowUploadModal(false)}
-                className="text-text-muted hover:text-text-main text-sm"
-              >
-                X
-              </button>
-            </div>
-
-            <form onSubmit={handlePresignUpload} className="space-y-3">
+      {/* Modal Upload Presign DICOM/STL no Cloudflare R2 Padronizado */}
+      <Dialog
+        isOpen={showUploadModal}
+        onClose={() => setShowUploadModal(false)}
+        size="form"
+        title="Upload & Presign Cloudflare R2 (PACS Orthanc)"
+        description="Gera uma URL pré-assinada de alta velocidade para armazenamento seguro em conformidade com a LGPD médica."
+      >
+        <form onSubmit={handlePresignUpload} className="space-y-3">
               <div>
                 <label className="text-xs font-semibold text-text-secondary block mb-1">
                   Nome do Arquivo (.dcm / .stl)
@@ -1133,26 +1124,25 @@ export const DicomStl3DViewer: React.FC<DicomStl3DViewerProps> = ({
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
-                <button
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-border-subtle">
+                <Button
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => setShowUploadModal(false)}
-                  className="px-3 py-1.5 bg-surface-bg hover:bg-surface-card text-text-secondary text-xs font-medium rounded-lg border border-border transition-colors"
                 >
                   Cancelar
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
+                  size="sm"
                   disabled={uploading || !uploadFileName.trim()}
-                  className="px-4 py-1.5 bg-status-success text-text-inverse text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 disabled:opacity-50"
                 >
                   {uploading ? "Gerando Presign..." : "Registrar & Presign R2"}
-                </button>
+                </Button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+      </Dialog>
     </div>
   );
 };

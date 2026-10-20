@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Revnault Global Dental Group — Multinational Enterprise Seed Script
+RevNault Global Dental Group — Multinational Enterprise Seed Script
 Popula deterministicamente todas as 69 tabelas do schema SQLite WAL.
 Aderente à Lei #1 (Determinismo), Lei #5 (Zero Stubs/Mocks) e Lei #14 (Zero Emojis).
 """
@@ -21,7 +21,7 @@ from src.core.config import get_db_path
 from src.core.vector_store import compute_semantic_embedding
 
 ACCOUNT_ID = "0f14ffff"
-ACCOUNT_NAME = "Revnault Global Dental Group"
+ACCOUNT_NAME = "RevNault Global Dental Group"
 
 
 def seed_multinational_enterprise(db_path: Path | str | None = None, clean_reset: bool = False) -> dict[str, int]:
@@ -79,9 +79,10 @@ def seed_multinational_enterprise(db_path: Path | str | None = None, clean_reset
     ]
     cur.executemany("INSERT OR REPLACE INTO teams (id, account_id, business_unit_id, parent_id, name, leader_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)", teams_data)
 
-    # 4. ROLES (6) & ROLE_PERMISSIONS
+    # 4. ROLES (7) & ROLE_PERMISSIONS
     roles_data = [
         ("role-ceo", ACCOUNT_ID, "Diretoria / Administrador Geral", "Acesso irrestrito a todas as 17 áreas operacionais globais", "all", 1, now_iso),
+        ("role-access-admin", ACCOUNT_ID, "Admin de Acesso (Permissões)", "Edita grants de cargos operacionais; nao altera Super Admin nem outro Admin de Acesso", "team", 1, now_iso),
         ("role-manager", ACCOUNT_ID, "Gerente Comercial", "Supervisão de metas, aprovação de alçadas e comissionamento", "team", 0, now_iso),
         ("role-field", ACCOUNT_ID, "Consultor Externo (Campo)", "Atendimento cirúrgico presencial, entrega de kits e fechamento de novos acordos", "individual", 0, now_iso),
         ("role-inside", ACCOUNT_ID, "Consultor Interno (Atendimento)", "SDR, qualificação de leads, negociação de propostas e atendimento omnichannel", "team", 0, now_iso),
@@ -95,11 +96,17 @@ def seed_multinational_enterprise(db_path: Path | str | None = None, clean_reset
         "keypartners:read", "keypartners:write", "dentgo:read", "dentgo:write", "support:read", "support:write",
         "imaging:read", "imaging:write", "analytics:read", "rbac:read", "rbac:write", "settings:read", "settings:write"
     ]
+    # Admin de Acesso: escopo de governança (não funil/logística operacional)
+    access_admin_perms = [
+        "analytics:read", "rbac:read", "rbac:write", "settings:read",
+        "access:grant:write",
+    ]
     role_perms = []
     p_counter = 1
     for r in roles_data:
         r_id = r[0]
-        for p in perms_list:
+        scope = access_admin_perms if r_id == "role-access-admin" else perms_list
+        for p in scope:
             role_perms.append((p_counter, ACCOUNT_ID, r_id, p))
             p_counter += 1
     cur.executemany("INSERT OR REPLACE INTO role_permissions (id, account_id, role_id, permission_code) VALUES (?, ?, ?, ?)", role_perms)
@@ -619,7 +626,7 @@ def seed_multinational_enterprise(db_path: Path | str | None = None, clean_reset
         ("rew-01", ACCOUNT_ID, "Kit Brocas Cirúrgicas Guiadas Diamantadas", "INSTRUMENTAL", 2500, 750.0, 1, now_iso),
         ("rew-02", ACCOUNT_ID, "Inscrição Gratuita Congresso Internacional de Implantodontia", "EDUCACAO", 5000, 1800.0, 1, now_iso),
         ("rew-03", ACCOUNT_ID, "Voucher de Enxerto Ósseo Bovino 5g", "BIOMATERIAL", 3500, 1200.0, 1, now_iso),
-        ("rew-04", ACCOUNT_ID, "Passagem Aérea e Hospedagem para Imersão Digital Revnault", "VIP_TRAVEL", 15000, 5000.0, 1, now_iso),
+        ("rew-04", ACCOUNT_ID, "Passagem Aérea e Hospedagem para Imersão Digital RevNault", "VIP_TRAVEL", 15000, 5000.0, 1, now_iso),
     ]
     cur.executemany("""
         INSERT OR REPLACE INTO kp_loyalty_rewards_catalog (id, account_id, name, reward_type, points_cost, monetary_value_equivalent, is_active, created_at)
@@ -840,7 +847,7 @@ def seed_multinational_enterprise(db_path: Path | str | None = None, clean_reset
     """, campaigns_data)
 
     lps_data = [
-        ("lp-imersao-digital", ACCOUNT_ID, "imersao-fluxo-digital", "Imersão em Fluxo Digital e Cirurgia Guiada Revnault", "imersao_fluxo_digital",
+        ("lp-imersao-digital", ACCOUNT_ID, "imersao-fluxo-digital", "Imersão em Fluxo Digital e Cirurgia Guiada RevNault", "imersao_fluxo_digital",
          "<div><h1>Imersão em Cirurgia Guiada</h1><p>Aprenda com cirurgiões mestres o fluxo completo de implantes Cone Morse.</p></div>",
          "h1 { color: #0284c7; }", json.dumps([{"type": "text", "content": "Imersão"}]), "CRO-SP-12001", "Dr. Roberto Martins",
          "https://cdn.revnaut.io/landing/imersao-fluxo-digital.html", 1, now_iso, now_iso),
@@ -896,7 +903,7 @@ def seed_multinational_enterprise(db_path: Path | str | None = None, clean_reset
 
     tickets_data = [
         ("t-01", ACCOUNT_ID, "Solicitação de Troca Técnica em Garantia (Perda de Estabilidade Primária)", "Dr. Roberto Martins", "alta", "em_atendimento", "GARANTIA_CLINICA", now_iso, "https://revnaut.vpsconexao.org/#/video_sos?room=sos-t-01", "+55 11 98888-0001", "CRO-SP-12001", "ord-dentgo-01", "Implante 3.75x11.5mm apresentou torque inferior a 25 Ncm em osso tipo IV. Cirurgião solicita substituição imediata por Grand Morse 4.3x13mm."),
-        ("t-02", ACCOUNT_ID, "Dúvida Cirúrgica: Sequência de Fresagem para Osso Tipo D1", "Dra. Camila Nogueira", "media", "resolvido", "SUPORTE_CIRURGICO", now_iso, "https://revnaut.vpsconexao.org/#/video_sos?room=sos-t-02", "+55 41 98888-0002", "CRO-PR-12002", "ord-dentgo-02", "Alinhamento com suporte clínico Revnault sobre uso de broca counterbore."),
+        ("t-02", ACCOUNT_ID, "Dúvida Cirúrgica: Sequência de Fresagem para Osso Tipo D1", "Dra. Camila Nogueira", "media", "resolvido", "SUPORTE_CIRURGICO", now_iso, "https://revnaut.vpsconexao.org/#/video_sos?room=sos-t-02", "+55 41 98888-0002", "CRO-PR-12002", "ord-dentgo-02", "Alinhamento com suporte clínico RevNault sobre uso de broca counterbore."),
         ("t-03", ACCOUNT_ID, "Emergência de Sala: Falta de Componente Protético Ti-Base", "Dr. Fernando Sato", "urgente", "aberto", "EMERGENCIA_SALA", now_iso, "https://revnaut.vpsconexao.org/#/video_sos?room=sos-t-03", "+55 11 99999-0003", "CRO-PE-12003", "ord-dentgo-03", "Acionamento de DENTGO Express 45 min para entrega de Ti-Base."),
         ("t-04", ACCOUNT_ID, "RMA / Notificação de Tecnovigilância ANVISA", "Prof. Dr. António Simões", "baixa", "aberto", "ANVISA_RMA", now_iso, "https://revnaut.vpsconexao.org/#/video_sos?room=sos-t-04", "+351 912 345 678", "LIC-11-12007", "ord-dentgo-04", "Envio de componente explantado para ensaio de fadiga metalográfica."),
     ]

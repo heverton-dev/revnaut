@@ -104,7 +104,7 @@ def scan(repo_root: Path, simulate_bite: bool = False) -> GateResult:
     ROOT = repo_root
     # Diretórios e arquivos a auditar prioritariamente
     scan_targets = [
-        ROOT / "docs" / "reconstruct_rvops" / "05_reconstructed_app",
+        ROOT / "docs" / "reconstruct_revnault" / "05_reconstructed_app",
         ROOT / "src",
         ROOT / "docs" / "manuais",
         ROOT / "frontend" / "src",

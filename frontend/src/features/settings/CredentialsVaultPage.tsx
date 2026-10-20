@@ -24,6 +24,7 @@ import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { Tabs } from "@/components/ui/Tabs";
+import { Dialog } from "@/components/ui/Dialog";
 
 export interface VaultAuditLogItem {
   id: string;
@@ -103,8 +104,8 @@ export interface QuartetoManual {
   status: string;
 }
 
-export function CredentialsVaultPage() {
-  const [activeTab, setActiveTab] = React.useState<string>("vault");
+export function CredentialsVaultPage({ initialTab = "vault" }: { initialTab?: string }) {
+  const [activeTab, setActiveTab] = React.useState<string>(initialTab);
 
   // ==========================================
   // TAB 1: COFRE DE CREDENCIAIS AES-256-GCM
@@ -180,7 +181,7 @@ export function CredentialsVaultPage() {
   const [newUserName, setNewUserName] = React.useState("Dr. Consultor Comercial");
   const [newUserEmail, setNewUserEmail] = React.useState("consultor.novo@revnaut.com");
   const [newUserRole, setNewUserRole] = React.useState("Consultor Comercial");
-  const [newUserPassword, setNewUserPassword] = React.useState("Revnaut@2026");
+  const [newUserPassword, setNewUserPassword] = React.useState("RevNault@2026");
 
   // Carregar Credenciais
   const fetchCredentials = React.useCallback(async () => {
@@ -472,7 +473,7 @@ export function CredentialsVaultPage() {
   };
 
   const handleResetUserPassword = async (userId: string) => {
-    const pwd = prompt("Informe a nova senha temporária para o usuário:", "Revnaut@2026Nova");
+    const pwd = prompt("Informe a nova senha temporária para o usuário:", "RevNault@2026Nova");
     if (!pwd) return;
     try {
       const res = await fetch(`/api/v1/auth/users/${userId}/reset-password`, {
@@ -490,7 +491,7 @@ export function CredentialsVaultPage() {
   };
 
   return (
-    <div className="space-y-4 max-w-6xl mx-auto">
+    <div className="space-y-6 max-w-7xl mx-auto">
       <RouteHeader
         title="Configurações Enterprise, Hub Fiscal ERP & Governança"
         description="Cofre cifrado AES-256-GCM, emissão de NF-e CFOP 5917/1918/5113, webhooks com circuit breaker e canais canônicos."
@@ -505,6 +506,7 @@ export function CredentialsVaultPage() {
       <Tabs
         activeTab={activeTab}
         onChange={(tabId) => setActiveTab(tabId)}
+        hideOnDesktop
         tabs={[
           { id: "vault", label: "Cofre Cifrado AES-256", count: credentials.length },
           { id: "erp", label: "Hub Fiscal ERP & TOTVS", count: invoices.length },
@@ -694,12 +696,15 @@ export function CredentialsVaultPage() {
             )}
           </Card>
 
-          {/* Modal Nova Credencial */}
-          {showCredModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-              <Card className="w-full max-w-sm p-4 bg-surface-card border border-border space-y-3 shadow-xl text-xs">
-                <h3 className="font-bold text-text-main text-sm">Adicionar Credencial Cifrada</h3>
-                <form onSubmit={handleSaveCredential} className="space-y-2.5">
+          {/* Modal Nova Credencial Padronizado */}
+          <Dialog
+            isOpen={showCredModal}
+            onClose={() => setShowCredModal(false)}
+            size="confirm"
+            title="Adicionar Credencial Cifrada"
+            description="Armazenamento seguro com cifragem AES-256 no cofre operacional."
+          >
+            <form onSubmit={handleSaveCredential} className="space-y-2.5">
                   <div>
                     <label className="text-[11px] text-text-secondary block mb-1">Serviço de Destino</label>
                     <select
@@ -736,14 +741,12 @@ export function CredentialsVaultPage() {
                       required
                     />
                   </div>
-                  <div className="flex justify-end gap-2 pt-2">
+                  <div className="flex justify-end gap-2 pt-3 border-t border-border-subtle">
                     <Button type="button" variant="outline" size="sm" onClick={() => setShowCredModal(false)}>Cancelar</Button>
                     <Button type="submit" variant="default" size="sm">Cifrar & Salvar</Button>
                   </div>
                 </form>
-              </Card>
-            </div>
-          )}
+          </Dialog>
         </div>
       )}
 
@@ -1047,12 +1050,15 @@ export function CredentialsVaultPage() {
             </Card>
           </div>
 
-          {/* Modal Criar Assinatura Webhook */}
-          {showSubModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-              <Card className="w-full max-w-sm p-4 bg-surface-card border border-border space-y-3 shadow-xl text-xs">
-                <h3 className="font-bold text-text-main text-sm">Novo Endpoint Webhook Outbound</h3>
-                <form onSubmit={handleCreateWebhookSub} className="space-y-2">
+          {/* Modal Criar Assinatura Webhook Padronizado */}
+          <Dialog
+            isOpen={showSubModal}
+            onClose={() => setShowSubModal(false)}
+            size="confirm"
+            title="Novo Endpoint Webhook Outbound"
+            description="Cadastre um endpoint para receber eventos de negócios assinados com HMAC SHA-256."
+          >
+            <form onSubmit={handleCreateWebhookSub} className="space-y-2">
                   <Input
                     placeholder="Nome da Integração"
                     value={newSubName}
@@ -1071,14 +1077,12 @@ export function CredentialsVaultPage() {
                     onChange={(e) => setNewSubSecret(e.target.value)}
                     required
                   />
-                  <div className="flex justify-end gap-2 pt-2">
+                  <div className="flex justify-end gap-2 pt-3 border-t border-border-subtle">
                     <Button type="button" variant="outline" size="sm" onClick={() => setShowSubModal(false)}>Cancelar</Button>
                     <Button type="submit" variant="default" size="sm">Salvar Webhook</Button>
                   </div>
                 </form>
-              </Card>
-            </div>
-          )}
+          </Dialog>
         </div>
       )}
 
@@ -1198,12 +1202,15 @@ export function CredentialsVaultPage() {
             </div>
           </Card>
 
-          {/* Modal Criar Colaborador */}
-          {showUserModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-              <Card className="w-full max-w-sm p-4 bg-surface-card border border-border space-y-3 shadow-xl text-xs">
-                <h3 className="font-bold text-text-main text-sm">Cadastrar Colaborador</h3>
-                <form onSubmit={handleCreateUser} className="space-y-2">
+          {/* Modal Criar Colaborador Padronizado */}
+          <Dialog
+            isOpen={showUserModal}
+            onClose={() => setShowUserModal(false)}
+            size="confirm"
+            title="Cadastrar Colaborador"
+            description="Adicione novos membros da equipe e configure credenciais de acesso inicial."
+          >
+            <form onSubmit={handleCreateUser} className="space-y-2">
                   <Input
                     placeholder="Nome Completo"
                     value={newUserName}
@@ -1230,14 +1237,12 @@ export function CredentialsVaultPage() {
                     onChange={(e) => setNewUserPassword(e.target.value)}
                     required
                   />
-                  <div className="flex justify-end gap-2 pt-2">
+                  <div className="flex justify-end gap-2 pt-3 border-t border-border-subtle">
                     <Button type="button" variant="outline" size="sm" onClick={() => setShowUserModal(false)}>Cancelar</Button>
                     <Button type="submit" variant="default" size="sm">Cadastrar</Button>
                   </div>
                 </form>
-              </Card>
-            </div>
-          )}
+          </Dialog>
         </div>
       )}
     </div>

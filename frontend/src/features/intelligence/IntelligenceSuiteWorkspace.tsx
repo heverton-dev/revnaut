@@ -136,8 +136,14 @@ interface HscResponse {
   recommendation: string;
 }
 
-export const IntelligenceSuiteWorkspace: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<string>("copilot");
+export interface IntelligenceSuiteWorkspaceProps {
+  initialTab?: string;
+}
+
+export const IntelligenceSuiteWorkspace: React.FC<IntelligenceSuiteWorkspaceProps> = ({
+  initialTab = "copilot",
+}) => {
+  const [activeTab, setActiveTab] = useState<string>(initialTab);
 
   // Global Deals
   const [deals, setDeals] = useState<DealItem[]>([]);
@@ -642,7 +648,7 @@ export const IntelligenceSuiteWorkspace: React.FC = () => {
   };
 
   return (
-    <div className="w-full space-y-6 font-sans text-text-main">
+    <div className="space-y-6 max-w-7xl mx-auto">
       <RouteHeader
         title="Assistente Inteligente & Análise Preditiva"
         description="Resumos de Reuniões, Consulta de Protocolos, Controle de Maletas Paradas e Rentabilidade de Clínicas."
@@ -683,7 +689,7 @@ export const IntelligenceSuiteWorkspace: React.FC = () => {
       />
 
       {/* Tabs Navigation */}
-      <Tabs tabs={tabsConfig} activeTab={activeTab} onChange={setActiveTab} />
+      <Tabs tabs={tabsConfig} activeTab={activeTab} onChange={setActiveTab} hideOnDesktop />
 
       {/* TAB 1: Copiloto Granola & Whisper */}
       {activeTab === "copilot" && (

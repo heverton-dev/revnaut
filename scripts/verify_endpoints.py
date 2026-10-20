@@ -7,7 +7,7 @@ ctx = ssl.create_default_context()
 ctx.check_hostname = False
 ctx.verify_mode = ssl.CERT_NONE
 
-base_url = "https://revnaut.vpsconexao.org"
+base_url = "https://revnault.vpsconexao.org"
 
 endpoints = [
     "/",
@@ -26,7 +26,7 @@ for ep in endpoints:
         req = urllib.request.Request(
             url,
             headers={
-                "User-Agent": "RevnautVerifier/1.0",
+                "User-Agent": "RevNaultVerifier/1.0",
                 "X-User-Id": "usr-director-br"
             }
         )

@@ -1,6 +1,6 @@
-# REVNAULT — Plano Mestre de Implementação e Desmaquiagem Unificado (Micro-Tickets Cirúrgicos, Evolução de Stack, Motores Open-Source, KeyPartners & DENTGO)
+# RevNault — Plano Mestre de Implementação e Desmaquiagem Unificado (Micro-Tickets Cirúrgicos, Evolução de Stack, Motores Open-Source, KeyPartners & DENTGO)
 
-## PARTE 1: Onde Estamos Hoje com a REVNAULT (Diagnóstico Forense Pós-Auditoria)
+## PARTE 1: Onde Estamos Hoje com a RevNault (Diagnóstico Forense Pós-Auditoria)
 
 A auditoria forense linha a linha do repositório (`heverton-dev/revnaut`, commit `f366765`) revelou que a primeira passagem de execução dos Tickets `00` a `42` construiu o **esqueleto de rotas FastAPI (197 endpoints), esquemas SQLite (`init_db` com 1.686 linhas) e componentes visuais base**, mas **maquiou as integrações de motores, o acesso assíncrono a dados, os uploads no Cloudflare R2, o barramento Redis Streams e o estado real do Frontend React 19**.
 
@@ -170,7 +170,7 @@ Legenda de Status Auditado:
   2. Publicar `lead.captured` no barramento global `EventBus` (`StreamName.MARKETING`).
   3. Corrigir os imports e props de `LandingPageBuilder.tsx` e substituir todas as classes `slate-*`/`sky-*` por variáveis de `tokens.css`.
 - **DoD:** Upload real do bundle HTML para o R2 na publicação; evento `lead.captured` persistido no stream; zero erros TypeScript em `LandingPageBuilder.tsx`.
-- **Target Files:** `src/features/campaigns/landing_pages.py`, `src/features/campaigns/schemas.py`, `src/features/campaigns/router.py`, `frontend/src/features/campaigns/LandingPageBuilder.tsx`, `docs/reconstruct_rvops/05_reconstructed_app/js/modules/landing-builder.js`, `tests/test_landing_pages_grapesjs.py`
+- **Target Files:** `src/features/campaigns/landing_pages.py`, `src/features/campaigns/schemas.py`, `src/features/campaigns/router.py`, `frontend/src/features/campaigns/LandingPageBuilder.tsx`, `docs/reconstruct_revnault/05_reconstructed_app/js/modules/landing-builder.js`, `tests/test_landing_pages_grapesjs.py`
 - **Validation Command:** `python -m pytest tests/test_landing_pages_grapesjs.py -q`
 - **Blocked by:** TICKET-01, TICKET-06
 
@@ -234,7 +234,7 @@ Legenda de Status Auditado:
   2. Em `handle_livekit_webhook`, publicar `call.recording_ready` no `default_event_bus` (`StreamName.SALES`) com `call_id`, `deal_id`, `r2_audio_key` e `account_id`.
   3. Refatorar `LiveKitDealRoomModal.tsx` para usar exclusivamente tokens semânticos de `tokens.css`.
 - **DoD:** Webhook LiveKit disparando `call.recording_ready` no EventBus; configuração de Egress R2 ativa; modal 100% aderente ao `tokens.css`.
-- **Target Files:** `src/features/communications/livekit_service.py`, `src/features/communications/router.py`, `frontend/src/features/communications/LiveKitDealRoomModal.tsx`, `docs/reconstruct_rvops/05_reconstructed_app/js/modules/livekit-room.js`, `docker-stack.yml`, `tests/test_livekit_webrtc_sip.py`
+- **Target Files:** `src/features/communications/livekit_service.py`, `src/features/communications/router.py`, `frontend/src/features/communications/LiveKitDealRoomModal.tsx`, `docs/reconstruct_revnault/05_reconstructed_app/js/modules/livekit-room.js`, `docker-stack.yml`, `tests/test_livekit_webrtc_sip.py`
 - **Validation Command:** `python -m pytest tests/test_livekit_webrtc_sip.py -q`
 - **Blocked by:** TICKET-01, TICKET-02
 
@@ -316,7 +316,7 @@ Legenda de Status Auditado:
   2. Em `report_surgical_postop`, publicar o evento `keypartners.postop_reported` no `default_event_bus` (`StreamName.KEYPARTNERS`) contendo `order_id`, `agreement_id`, `consumed_units`, `billed_amount` e `consumed_items`.
   3. Refatorar `ConsignmentSurgicalBoard.tsx` para buscar dados reais de `/api/v1/keypartners/surgical-orders`, chamar `POST /api/v1/keypartners/surgical-orders/{id}/approve` e `/dispatch` nos botões de ação, implementar os 4 estados reais e remover todas as cores `#...` hardcoded em favor de `tokens.css`.
 - **DoD:** Conciliação pós-operatória exata; evento `keypartners.postop_reported` publicado no Redis Streams; `ConsignmentSurgicalBoard.tsx` 100% conectado à API real e sem hexadecimais hardcoded.
-- **Target Files:** `src/features/keypartners/surgical_cycle.py`, `src/features/keypartners/service.py`, `src/features/keypartners/router.py`, `frontend/src/features/keypartners/ConsignmentSurgicalBoard.tsx`, `docs/reconstruct_rvops/05_reconstructed_app/js/modules/consignments.js`, `tests/test_keypartners_surgical_postop.py`
+- **Target Files:** `src/features/keypartners/surgical_cycle.py`, `src/features/keypartners/service.py`, `src/features/keypartners/router.py`, `frontend/src/features/keypartners/ConsignmentSurgicalBoard.tsx`, `docs/reconstruct_revnault/05_reconstructed_app/js/modules/consignments.js`, `tests/test_keypartners_surgical_postop.py`
 - **Validation Command:** `python -m pytest tests/test_keypartners_surgical_postop.py -q`
 - **Blocked by:** TICKET-13, TICKET-15, TICKET-16
 
@@ -360,7 +360,7 @@ Legenda de Status Auditado:
   2. Publicar mudanças de status em `StreamName.DENTGO` via `default_event_bus` (especialmente `dentgo.delivered` e `dentgo.order_delivered` em `verify_and_complete_delivery`).
   3. Refatorar `DentgoExpressCockpit.tsx` para buscar dados reais de `/api/v1/dentgo/orders`, implementar ações reais de despacho/validação de PIN, exibir os 4 estados obrigatórios e substituir todas as cores `#090d16`/`#151c2c`/`#101622` por variáveis de `tokens.css`.
 - **DoD:** Validação estrita de PIN + POD no R2 publicando `dentgo.delivered`; `DentgoExpressCockpit.tsx` 100% conectado à API real e sem hexadecimais hardcoded.
-- **Target Files:** `src/features/dentgo/logistics_dispatch.py`, `src/features/dentgo/service.py`, `src/features/dentgo/router.py`, `frontend/src/features/dentgo/DentgoExpressCockpit.tsx`, `docs/reconstruct_rvops/05_reconstructed_app/js/modules/dentgo-dispatch.js`, `tests/test_dentgo_lastmile_custody.py`
+- **Target Files:** `src/features/dentgo/logistics_dispatch.py`, `src/features/dentgo/service.py`, `src/features/dentgo/router.py`, `frontend/src/features/dentgo/DentgoExpressCockpit.tsx`, `docs/reconstruct_revnault/05_reconstructed_app/js/modules/dentgo-dispatch.js`, `tests/test_dentgo_lastmile_custody.py`
 - **Validation Command:** `python -m pytest tests/test_dentgo_lastmile_custody.py -q`
 - **Blocked by:** TICKET-01, TICKET-19
 
@@ -414,14 +414,14 @@ Legenda de Status Auditado:
   1. Falta o endpoint `GET /api/v1/omnichannel/chatwoot-context-panel?contact_phone=...` especificado no Plano Mestre.
   2. Em `frontend/src/router.tsx` (linha 40), `<OmnichannelContextSidebar contactId="cnt-01" currentDealId="deal-01" />` passa props incompatíveis com `OmnichannelContextSidebarProps` (`contactIdentifier`), quebrando o TypeScript e deixando a sidebar em loading perpétuo.
   3. `OmnichannelContextSidebar.tsx` usa classes `slate-*`/`cyan-*` fora de `tokens.css`.
-  4. Faltam os arquivos com os nomes exatos `docs/reconstruct_rvops/05_reconstructed_app/js/modules/inbox-context-sidebar.js` e `tests/test_chatwoot_context_sidebar.py`.
+  4. Faltam os arquivos com os nomes exatos `docs/reconstruct_revnault/05_reconstructed_app/js/modules/inbox-context-sidebar.js` e `tests/test_chatwoot_context_sidebar.py`.
 - **Como Implementar / Corrigir (Detalhes Técnicos):**
   1. Expor `GET /api/v1/omnichannel/chatwoot-context-panel` (aceitando `contact_phone` ou `contact_identifier`) além de `/api/v1/omnichannel/context/{contact_identifier}`, e incluir `open_deals` e `health_score` no payload 360°.
   2. Em `sync_contact_to_chatwoot`, chamar a API do Chatwoot (`/api/v1/accounts/{id}/contacts`) via `httpx` quando `not mock_mode`.
   3. Corrigir as props de `OmnichannelContextSidebar.tsx` (aceitando `contactIdentifier?: string; contactId?: string; currentDealId?: string`) e substituir classes `slate-*` por `tokens.css`.
-  4. Criar `docs/reconstruct_rvops/05_reconstructed_app/js/modules/inbox-context-sidebar.js` e `tests/test_chatwoot_context_sidebar.py`.
+  4. Criar `docs/reconstruct_revnault/05_reconstructed_app/js/modules/inbox-context-sidebar.js` e `tests/test_chatwoot_context_sidebar.py`.
 - **DoD:** Endpoint `/chatwoot-context-panel` funcional; sidebar React renderizando sem erro de props; `pytest tests/test_chatwoot_context_sidebar.py` passando.
-- **Target Files:** `src/features/integrations/omnichannel/chatwoot_bridge.py`, `src/features/integrations/omnichannel/router.py`, `frontend/src/features/inbox/OmnichannelContextSidebar.tsx`, `docs/reconstruct_rvops/05_reconstructed_app/js/modules/inbox-context-sidebar.js`, `tests/test_chatwoot_context_sidebar.py`
+- **Target Files:** `src/features/integrations/omnichannel/chatwoot_bridge.py`, `src/features/integrations/omnichannel/router.py`, `frontend/src/features/inbox/OmnichannelContextSidebar.tsx`, `docs/reconstruct_revnault/05_reconstructed_app/js/modules/inbox-context-sidebar.js`, `tests/test_chatwoot_context_sidebar.py`
 - **Validation Command:** `python -m pytest tests/test_chatwoot_context_sidebar.py -q`
 - **Blocked by:** TICKET-17, TICKET-20, TICKET-23
 
@@ -484,7 +484,7 @@ Legenda de Status Auditado:
   1. Em `export_analytics_dataset`, serializar o dataset em bytes (`.csv` ou `.parquet` binário) e enviá-lo para o Cloudflare R2 usando `R2StorageClient().upload_bytes(r2_key, data_bytes, content_type)`, gerando URL pré-assinada de download via `generate_presigned_download_url`.
   2. Definir valor default `userId = 'usr-director-br'` em `SupersetEmbeddedDashboard.tsx`, corrigir a chamada em `router.tsx` e substituir todas as cores `slate-*` por variáveis de `tokens.css`.
 - **DoD:** Guest Token JWT com cláusula RLS exata por escopo; exportação analítica fazendo upload real para o R2; dashboard React sem erros de props ou tokens.
-- **Target Files:** `src/features/intelligence/superset_embedded.py`, `src/features/intelligence/router.py`, `frontend/src/features/bi/SupersetEmbeddedDashboard.tsx`, `docs/reconstruct_rvops/05_reconstructed_app/js/modules/bi-superset.js`, `docker-stack.yml`, `tests/test_superset_rls_embedded.py`
+- **Target Files:** `src/features/intelligence/superset_embedded.py`, `src/features/intelligence/router.py`, `frontend/src/features/bi/SupersetEmbeddedDashboard.tsx`, `docs/reconstruct_revnault/05_reconstructed_app/js/modules/bi-superset.js`, `docker-stack.yml`, `tests/test_superset_rls_embedded.py`
 - **Validation Command:** `python -m pytest tests/test_superset_rls_embedded.py -q`
 - **Blocked by:** TICKET-03, TICKET-04
 
@@ -526,7 +526,7 @@ Legenda de Status Auditado:
 
 ---
 
-### FASE 7: Camada de Growth & RevOps (Health Score HSC, Moeda Cirúrgica, MGM & Reativação Cal.com)
+### FASE 7: Camada de Growth & RevNault (Health Score HSC, Moeda Cirúrgica, MGM & Reativação Cal.com)
 
 #### [x] [TICKET-33] Motor Determinístico de Health Score Cirúrgico ($HSC$) e Prevenção Ativa de Churn
 - **Status Real Auditado:** `[x] CONCLUÍDO E HOMOLOGADO`
@@ -614,7 +614,7 @@ ightarrow$ `BLACK_KOL` e resgate de voucher abatendo frete no DENTGO.
   1. Adicionar sincronização HTTP real com a API REST do Orthanc (`/studies/{id}`) quando `not self.mock_mode`.
   2. Refatorar `DicomStl3DViewer.tsx` para substituir todas as cores hexadecimais `#...` e classes `slate-*` por variáveis CSS semânticas (`var(--color-*)`) de `tokens.css`.
 - **DoD:** Presigned URL R2, anonimização LGPD HMAC-SHA256, isolamento multi-tenant (403/404) e componente `DicomStl3DViewer.tsx` com zero cores hexadecimais hardcoded.
-- **Target Files:** `src/features/intelligence/orthanc_dicom.py`, `src/features/intelligence/router.py`, `frontend/src/features/imaging/DicomStl3DViewer.tsx`, `docs/reconstruct_rvops/05_reconstructed_app/js/modules/dicom-stl-viewer.js`, `docker-stack.yml`, `tests/test_orthanc_dicom_stl_r2.py`
+- **Target Files:** `src/features/intelligence/orthanc_dicom.py`, `src/features/intelligence/router.py`, `frontend/src/features/imaging/DicomStl3DViewer.tsx`, `docs/reconstruct_revnault/05_reconstructed_app/js/modules/dicom-stl-viewer.js`, `docker-stack.yml`, `tests/test_orthanc_dicom_stl_r2.py`
 - **Validation Command:** `python -m pytest tests/test_orthanc_dicom_stl_r2.py -q`
 - **Blocked by:** TICKET-01, TICKET-27
 
@@ -626,7 +626,7 @@ ightarrow$ `BLACK_KOL` e resgate de voucher abatendo frete no DENTGO.
 - **Como Implementar / Corrigir (Detalhes Técnicos):**
   1. Cifrar o segredo com `encrypt_secret(secret)` ao persistir em `webhook_subscriptions` (`signing_secret_encrypted`) e descriptografá-lo em memória com `decrypt_secret(...)` no momento de assinar o payload HMAC-SHA256.
   2. Conectar o `OutboundWebhookDispatcher` ao `src/workers/runner.py` para despachar eventos publicados em `StreamName.WEBHOOKS`.
-- **DoD:** Segredo de assinatura cifrado em repouso no banco (AES-256-GCM); assinatura `X-Revnault-Signature: sha256=...` verificável; proteção anti-SSRF e circuit breaker em 15 falhas.
+- **DoD:** Segredo de assinatura cifrado em repouso no banco (AES-256-GCM); assinatura `X-RevNault-Signature: sha256=...` verificável; proteção anti-SSRF e circuit breaker em 15 falhas.
 - **Target Files:** `src/features/webhooks/outbound_dispatcher.py`, `src/features/webhooks/schemas.py`, `src/features/webhooks/router.py`, `src/workers/runner.py`, `tests/test_outbound_webhooks_hmac.py`
 - **Validation Command:** `python -m pytest tests/test_outbound_webhooks_hmac.py -q`
 - **Blocked by:** TICKET-02, TICKET-05
@@ -636,14 +636,14 @@ ightarrow$ `BLACK_KOL` e resgate de voucher abatendo frete no DENTGO.
 - **Diagnóstico do Gap Atual:**
   1. `npm --prefix frontend run typecheck` (`tsc --noEmit`) falha por erros de tipos e imports em `router.tsx`, `CroVerifiedInput.tsx` e `LandingPageBuilder.tsx`.
   2. 7 das 14 rotas do `AppShell.tsx` (`deals`, `contacts`, `contracts`, `intelligence`, `scheduling`, `support`, `settings`) caem no `default:` do `switch` em `frontend/src/router.tsx`.
-  3. `frontend/src/types/api_contracts.ts` e `docs/reconstruct_rvops/02_decompiled/api_contracts.ts` não possuem as interfaces nem o mapa de rotas dos Tickets 01 a 37.
+  3. `frontend/src/types/api_contracts.ts` e `docs/reconstruct_revnault/02_decompiled/api_contracts.ts` não possuem as interfaces nem o mapa de rotas dos Tickets 01 a 37.
   4. `tests/test_api_contracts_sync.py` verifica apenas 6 strings antigas.
 - **Como Implementar / Corrigir (Detalhes Técnicos):**
   1. Mapear todas as 14 rotas do `AppShell` em `frontend/src/router.tsx` (`dashboard`, `deals`, `contacts`, `omnichannel`, `keypartners`, `dentgo`, `video_sos`, `contracts`, `intelligence`, `analytics`, `scheduling`, `rbac`, `support`, `settings`, além de `marketing`, `scoring` e `imaging`) para seus respectivos componentes reais conectados à API.
-  2. Atualizar `frontend/src/types/api_contracts.ts` e `docs/reconstruct_rvops/02_decompiled/api_contracts.ts` incluindo todas as interfaces de domínio dos Tickets 00 a 42 e a constante tipada `API_V1_ROUTES` mapeando 1:1 todas as rotas `/api/v1/*` expostas pelo FastAPI.
+  2. Atualizar `frontend/src/types/api_contracts.ts` e `docs/reconstruct_revnault/02_decompiled/api_contracts.ts` incluindo todas as interfaces de domínio dos Tickets 00 a 42 e a constante tipada `API_V1_ROUTES` mapeando 1:1 todas as rotas `/api/v1/*` expostas pelo FastAPI.
   3. Fortalecer `tests/test_api_contracts_sync.py` para inspecionar dinamicamente todas as rotas `/api/v1/*` registradas no `src.main:app` e exigir que 100% delas estejam declaradas em `api_contracts.ts`, além de executar `tsc --noEmit` se o Node/TypeScript estiver disponível.
 - **DoD:** Zero erros em `tsc --noEmit`; 100% das rotas FastAPI `/api/v1/*` sincronizadas 1:1 em `api_contracts.ts`; todas as 14 seções do menu lateral do React renderizando views reais conectadas ao backend.
-- **Target Files:** `frontend/src/App.tsx`, `frontend/src/router.tsx`, `frontend/src/types/api_contracts.ts`, `docs/reconstruct_rvops/02_decompiled/api_contracts.ts`, `docs/reconstruct_rvops/05_reconstructed_app/index.html`, `docs/reconstruct_rvops/05_reconstructed_app/js/app.js`, `tests/test_api_contracts_sync.py`
+- **Target Files:** `frontend/src/App.tsx`, `frontend/src/router.tsx`, `frontend/src/types/api_contracts.ts`, `docs/reconstruct_revnault/02_decompiled/api_contracts.ts`, `docs/reconstruct_revnault/05_reconstructed_app/index.html`, `docs/reconstruct_revnault/05_reconstructed_app/js/app.js`, `tests/test_api_contracts_sync.py`
 - **Validation Command:** `python -m pytest tests/test_api_contracts_sync.py -q`
 - **Blocked by:** TICKET-00 a TICKET-40
 

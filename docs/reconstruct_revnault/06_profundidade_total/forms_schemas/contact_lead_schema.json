@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RevNault Contact / Lead Complete Schema",
+  "description": "Schema factual exaustivo de campos de contato e rastreamento da RevNault",
+  "type": "object",
+  "properties": {
+    "identification": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Id do registro único" },
+        "first_name": { "type": "string", "title": "Nome" },
+        "last_name": { "type": "string", "title": "Sobrenome" },
+        "email": { "type": "string", "format": "email", "title": "E-mail" },
+        "mobile": { "type": "string", "title": "Celular" },
+        "phone": { "type": "string", "title": "Telefone" },
+        "owner_id": { "type": "string", "title": "Proprietário" },
+        "points": { "type": "integer", "default": 0, "title": "Pontos (Lead Score)" },
+        "block_whatsapp": { "type": "boolean", "default": false, "title": "Bloquear recebimento de Whatsapp" }
+      },
+      "required": ["first_name", "email"]
+    },
+    "address": {
+      "type": "object",
+      "properties": {
+        "street": { "type": "string", "title": "Endereço 1" },
+        "neighborhood": { "type": "string", "title": "Bairro" },
+        "complement": { "type": "string", "title": "Complemento" },
+        "city": { "type": "string", "title": "Cidade" },
+        "state": { "type": "string", "title": "Estado" },
+        "zipcode": { "type": "string", "title": "CEP" },
+        "country": { "type": "string", "default": "Brasil", "title": "País" }
+      }
+    },
+    "attribution_first_touch": {
+      "type": "object",
+      "description": "Dados da primeira conversão / Primeiro toque",
+      "properties": {
+        "utm_source": { "type": "string", "title": "Primeiro utm_source" },
+        "utm_medium": { "type": "string", "title": "Primeiro utm_medium" },
+        "utm_campaign": { "type": "string", "title": "Primeiro utm_campaign" },
+        "utm_content": { "type": "string", "title": "Primeiro utm_content" },
+        "utm_term": { "type": "string", "title": "Primeiro utm_term" },
+        "ad_id": { "type": "string", "title": "Primeiro Ad Id" },
+        "fbclid": { "type": "string", "title": "Primeiro FB Clid" },
+        "gclid": { "type": "string", "title": "Primeiro GClid" },
+        "ctwa_clid": { "type": "string", "title": "Primeiro CTWA Clid (Click to WhatsApp)" },
+        "referrer_url": { "type": "string", "title": "Primeiro site de referência" },
+        "landing_page": { "type": "string", "title": "Primeira página visitada" },
+        "form_id": { "type": "string", "title": "Primeiro formulário enviado" },
+        "meta_lead_id": { "type": "string", "title": "Primeiro Lead Id - Meta" }
+      }
+    },
+    "attribution_last_touch": {
+      "type": "object",
+      "description": "Dados da conversão mais recente / Último toque",
+      "properties": {
+        "utm_source": { "type": "string", "title": "Último utm_source" },
+        "utm_medium": { "type": "string", "title": "Último utm_medium" },
+        "utm_campaign": { "type": "string", "title": "Último utm_campaign" },
+        "utm_content": { "type": "string", "title": "Último utm_content" },
+        "utm_term": { "type": "string", "title": "Último utm_term" },
+        "ad_id": { "type": "string", "title": "Último Ad Id" },
+        "fbclid": { "type": "string", "title": "Último FB Clid" },
+        "gclid": { "type": "string", "title": "Último GClid" },
+        "ctwa_clid": { "type": "string", "title": "Último CTWA Clid" },
+        "ig_sid": { "type": "string", "title": "Último Ig Sid" },
+        "referrer_url": { "type": "string", "title": "Último site de referência" },
+        "landing_page": { "type": "string", "title": "Última página visitada" },
+        "form_id": { "type": "string", "title": "Último formulário enviado" },
+        "meta_lead_id": { "type": "string", "title": "Último Lead Id - Meta" }
+      }
+    },
+    "traffic_source_categorization": {
+      "type": "object",
+      "properties": {
+        "original_traffic_source": { "type": "string", "title": "Fonte original de tráfego" },
+        "traffic_detail_1": { "type": "string", "title": "Fonte detalhada de tráfego 1" },
+        "traffic_detail_2": { "type": "string", "title": "Fonte detalhada de tráfego 2" },
+        "traffic_detail_3": { "type": "string", "title": "Fonte detalhada de tráfego 3" },
+        "last_traffic_source": { "type": "string", "title": "Última fonte de tráfego" },
+        "last_traffic_detail_1": { "type": "string", "title": "Última fonte detalhada de tráfego 1" },
+        "last_traffic_detail_2": { "type": "string", "title": "Última fonte detalhada de tráfego 2" },
+        "last_traffic_detail_3": { "type": "string", "title": "Última fonte detalhada de tráfego 3" },
+        "record_source": { "type": "string", "title": "Fonte do registro" }
+      }
+    },
+    "timestamps": {
+      "type": "object",
+      "properties": {
+        "identified_at": { "type": "string", "format": "date-time", "title": "Data de identificação" },
+        "attributed_at": { "type": "string", "format": "date-time", "title": "Data de Atribuição" },
+        "last_activity_at": { "type": "string", "format": "date-time", "title": "Data da Última Atividade" },
+        "created_at": { "type": "string", "format": "date-time", "title": "Data de criação" },
+        "updated_at": { "type": "string", "format": "date-time", "title": "Data de atualização" },
+        "created_by": { "type": "string", "title": "Criado por" },
+        "updated_by": { "type": "string", "title": "Atualizado por" }
+      }
+    }
+  }
+}

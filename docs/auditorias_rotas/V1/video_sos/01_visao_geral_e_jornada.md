@@ -10,7 +10,7 @@
 ---
 
 ## 2. Propósito e Objetivo de Negócio
-A rota `video_sos` atua no ecossistema RevOps proporcionando aos operadores clínicos e comerciais:
+A rota `video_sos` atua no ecossistema RevNault proporcionando aos operadores clínicos e comerciais:
 1. Controle determinístico dos fluxos de chamadas e vídeo sos (mesa cirúrgica).
 2. Redução do tempo de atendimento e eliminação de processos analógicos na operação.
 3. Rastreabilidade ponta a ponta com persistência auditável no SQLite WAL.

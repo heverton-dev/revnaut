@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Gerador do Manual Consolidado Corporativo em PDF • Revnaut Dental Ops.
+"""Gerador do Manual Consolidado Corporativo em PDF • RevNault Dental Ops.
 
 Compila os 26 manuais anatômicos de rotas e sub-rotas em um documento executivo
 diagramado com padrão editorial corporativo via Chrome Headless Engine (A4 Paged Media).
@@ -8,7 +8,7 @@ diagramado com padrão editorial corporativo via Chrome Headless Engine (A4 Page
 Garantias:
 - Quebra de página inteligente (page-break-before por manual, page-break-inside avoid para tabelas).
 - Zero sobreposição de textos, zero tabelas cortadas, zero dados truncados.
-- Capa executiva premium com branding Revnaut Dental Ops.
+- Capa executiva premium com branding RevNault Dental Ops.
 - Sumário geral com catalogação completa e metadados de governança.
 - Lei #14 Inviolável: Zero emojis Unicode.
 
@@ -73,7 +73,7 @@ CSS_CORPORATE_THEME = """
   size: A4 portrait;
   margin: 18mm 16mm 20mm 16mm;
   @top-left {
-    content: "Revnaut Dental Ops • Manual Corporativo de Governança";
+    content: "RevNault Dental Ops • Manual Corporativo de Governança";
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     font-size: 8pt;
     color: #64748b;
@@ -436,7 +436,7 @@ def build_cover_html() -> str:
     return """
 <div class="cover-page">
   <div class="cover-header">
-    <div class="brand-badge">Revnaut Dental Ops • Especificação Canônica</div>
+    <div class="brand-badge">RevNault Dental Ops • Especificação Canônica</div>
     <div class="cover-title">MANUAL CORPORATIVO DE GOVERNANÇA, ROTAS & SUB-ROTAS</div>
     <div class="cover-subtitle">
       Catálogo Anatômico Unificado das 25 Rotas e Sub-rotas Operacionais, Auditoria do DOM, Matriz RBAC Granular e Contratos de Motores de Retaguarda.
@@ -464,9 +464,9 @@ def build_cover_html() -> str:
 
   <div class="cover-footer">
     <div>
-      <div>Plataforma: <strong>Revnaut Dental Ops Enterprise v4.0</strong></div>
+      <div>Plataforma: <strong>RevNault Dental Ops Enterprise v4.0</strong></div>
       <div>Arquitetura: <strong>Python 3.14 + SQLite WAL + Docker Swarm Cluster</strong></div>
-      <div>Ambiente Homologado: <strong>https://rvops.vpsconexao.org</strong></div>
+      <div>Ambiente Homologado: <strong>https://revnault.vpsconexao.org</strong></div>
     </div>
     <div style="text-align: right;">
       <div>Autor & Direção: <strong>Heverton Eduardo Peres</strong></div>
@@ -588,7 +588,7 @@ def generate_consolidated_document():
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Revnaut Dental Ops • Manual Corporativo Consolidado</title>
+  <title>RevNault Dental Ops • Manual Corporativo Consolidado</title>
   <style>
     {CSS_CORPORATE_THEME}
   </style>

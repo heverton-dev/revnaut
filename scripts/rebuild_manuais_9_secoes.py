@@ -13,11 +13,11 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 MANUAIS_DIR = REPO_ROOT / "docs" / "manuais"
-INDEX_HTML = REPO_ROOT / "docs" / "reconstruct_rvops" / "05_reconstructed_app" / "index.html"
+INDEX_HTML = REPO_ROOT / "docs" / "reconstruct_revnault" / "05_reconstructed_app" / "index.html"
 
 # Mapeamento Canônico das 25 Rotas e Sub-rotas do VIEW_CONFIG + 1 Governança
 CANONICAL_ROUTES = [
-    ("00", "login", "Acesso ao Sistema • Revnaut Dental", "login-view", False, ""),
+    ("00", "login", "Acesso ao Sistema • RevNault Dental", "login-view", False, ""),
     ("01", "deals", "Funil Comercial & Gestão de Pipelines Odontológicos", "deals-view", False, ""),
     ("02", "contacts", "Base de Cirurgiões-Dentistas, Clínicas & Decisores", "contacts-view", False, ""),
     ("03", "contacts-segments", "Contatos • Segmentos Inteligentes & Especialidades", "contacts-segments-view", True, "contacts"),
@@ -123,7 +123,7 @@ def build_manual_9_sections(num: str, route_id: str, title: str, view_id: str, i
     doc = f"""# Manual da {tipo}: {title} (`/#{route_id}`)
 
 ## 1. Objetivo da Rota / Sub-rota
-Centralizar a operação da tela **{title}** (`/#{route_id}`){parent_clause} na arquitetura operacional do Revnaut Dental, assegurando governança clínica, rastreabilidade auditável e controle transacional.
+Centralizar a operação da tela **{title}** (`/#{route_id}`){parent_clause} na arquitetura operacional do RevNault Dental, assegurando governança clínica, rastreabilidade auditável e controle transacional.
 
 ---
 

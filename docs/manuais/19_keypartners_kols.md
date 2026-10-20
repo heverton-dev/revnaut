@@ -1,7 +1,7 @@
 # Manual da Sub-rota: KeyPartners • KOLs, Cirurgiões & Contratos de Consignação (`/#keypartners-kols`)
 
 ## 1. Objetivo da Rota / Sub-rota
-Centralizar a operação da tela **KeyPartners • KOLs, Cirurgiões & Contratos de Consignação** (`/#keypartners-kols`) (Sub-rota integrada ao módulo principal `#keypartners`) na arquitetura operacional do Revnaut Dental, assegurando governança clínica, rastreabilidade auditável e controle transacional.
+Centralizar a operação da tela **KeyPartners • KOLs, Cirurgiões & Contratos de Consignação** (`/#keypartners-kols`) (Sub-rota integrada ao módulo principal `#keypartners`) na arquitetura operacional do RevNault Dental, assegurando governança clínica, rastreabilidade auditável e controle transacional.
 
 ---
 

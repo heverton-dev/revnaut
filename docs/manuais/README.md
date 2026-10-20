@@ -1,6 +1,6 @@
-# Manuais Operacionais e Catálogo de Rotas & Sub-rotas • Revnaut Dental
+# Manuais Operacionais e Catálogo de Rotas & Sub-rotas • RevNault Dental
 
-Este diretório contém a documentação canônica, padronizada e sincronizada de todas as telas, rotas e sub-rotas operacionais da plataforma **Revnaut Dental Ops** (Revenue Operations, CRM B2B Industrial Odontológico, KeyPartners & DENTGO).
+Este diretório contém a documentação canônica, padronizada e sincronizada de todas as telas, rotas e sub-rotas operacionais da plataforma **RevNault Dental Ops** (Revenue Operations, CRM B2B Industrial Odontológico, KeyPartners & DENTGO).
 
 ## Estrutura Canônica dos Manuais (Seções Anatômicas Obrigatórias & Zero Emojis)
 Cada manual segue a estrutura anatômica estrita de governança (Lei #12 — *Anti-Docs Rot* e Lei #14 — *Zero Emojis*), cobrindo obrigatoriamente as 6 dimensões fundamentais de operação e governança (e estendida até 9 seções anatômicas auditadas por `G_MANUAIS_ROTAS.py`):

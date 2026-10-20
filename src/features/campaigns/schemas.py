@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Vertical Slice: Campaigns Schemas (RevOps Marketing & Atribuição de Mídia)
+Vertical Slice: Campaigns Schemas (RevNault Marketing & Atribuição de Mídia)
 """
 
 from __future__ import annotations
@@ -13,7 +13,7 @@ class CampaignCreate(BaseModel):
     channel: str = Field(default="Google Ads Search (GCLID)", description="Canal ou rede de tráfego")
     utm_source: str = Field(default="google", min_length=1)
     utm_medium: str = Field(default="cpc", min_length=1)
-    utm_campaign: str = Field(default="revops-camp", min_length=1)
+    utm_campaign: str = Field(default="revnault-camp", min_length=1)
     budget: float = Field(default=0.0, ge=0.0, description="Orçamento alocado em BRL")
     spend: float = Field(default=0.0, ge=0.0, description="Valor investido/consumido em BRL")
     revenue: float = Field(default=0.0, ge=0.0, description="Receita atribuída diretamente")

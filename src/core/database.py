@@ -658,6 +658,220 @@ CREATE TABLE IF NOT EXISTS market_intel_batch_ticks (
 """
 
 
+_ACCESS_ACCOUNT = "0f14ffff"
+_ACCESS_TS = "2026-10-20T19:00:00Z"
+
+_ACCESS_ROUTES = [
+    ("dashboard", "Visão do Dia", "Operação do Dia", None),
+    ("omnichannel", "Atendimento", "Operação do Dia", "chats"),
+    ("scheduling", "Agenda e Retornos", "Operação do Dia", None),
+    ("scoring", "Qualificação (ICP)", "Pipeline Comercial", None),
+    ("contacts", "Dentistas e Clínicas", "Pipeline Comercial", "crm_surgeons"),
+    ("deals", "Funil de Negociações", "Pipeline Comercial", None),
+    ("contracts", "Propostas e Contratos", "Pipeline Comercial", "documenso_lifecycle"),
+    ("imaging", "Exames e Diagnóstico 3D", "Pipeline Comercial", None),
+    ("marketing", "Campanhas e Indicações", "Pipeline Comercial", None),
+    ("dentgo", "Entregas Expressas", "Entrega e Pós-Venda", "orders"),
+    ("keypartners", "Consignação (Maletas)", "Entrega e Pós-Venda", "board"),
+    ("video_sos", "Chamadas e Vídeo", "Entrega e Pós-Venda", None),
+    ("support", "Suporte e Garantias", "Entrega e Pós-Venda", "anvisa_rma"),
+    ("intelligence", "Assistente Comercial", "Inteligência e Gestão", "copilot"),
+    ("market_intel", "Radar de Mercado", "Inteligência e Gestão", "signals"),
+    ("analytics", "Relatórios e Metas", "Inteligência e Gestão", "rls_studio"),
+    ("rbac", "Equipes e Acessos", "Inteligência e Gestão", "tree"),
+    ("settings", "Configurações", "Inteligência e Gestão", "vault"),
+]
+
+_ACCESS_FACILITIES = [
+    ("chats", "omnichannel", "Fila de Chats", 1),
+    ("contacts", "omnichannel", "Contatos", 2),
+    ("instances", "omnichannel", "Instâncias", 3),
+    ("crm_surgeons", "contacts", "Base de Cirurgiões", 1),
+    ("institutions_links", "contacts", "Clínicas e Vínculos", 2),
+    ("cfo_compliance", "contacts", "Auditor CFO 196", 3),
+    ("icp_scoring", "contacts", "Score ICP", 4),
+    ("documenso_lifecycle", "contracts", "Assinaturas Documenso", 1),
+    ("anvisa_catalog_pricing", "contracts", "Catálogo e Preços", 2),
+    ("r2_custody", "contracts", "Custódia R2", 3),
+    ("orders", "dentgo", "Despacho 45 min", 1),
+    ("hubs", "dentgo", "Hubs de Estoque", 2),
+    ("fefo", "dentgo", "Ofertas FEFO", 3),
+    ("split", "dentgo", "Repasses e Custos", 4),
+    ("board", "keypartners", "Board Cirúrgico", 1),
+    ("agreements", "keypartners", "Acordos", 2),
+    ("kol", "keypartners", "KOL e Speakers", 3),
+    ("loyalty", "keypartners", "Fidelidade", 4),
+    ("anvisa_rma", "support", "ANVISA e RMA", 1),
+    ("surgical_sos", "support", "SOS Mesa Cirúrgica", 2),
+    ("postop_b2c", "support", "Pós-operatório B2C", 3),
+    ("copilot", "intelligence", "Resumo de Reuniões", 1),
+    ("rag", "intelligence", "Assistente Cirúrgico", 2),
+    ("inventory", "intelligence", "Maletas Paradas", 3),
+    ("margin", "intelligence", "Margem Clínica", 4),
+    ("health_score", "intelligence", "Health Score", 5),
+    ("signals", "market_intel", "Sinais", 1),
+    ("competitors", "market_intel", "Concorrentes", 2),
+    ("opportunities", "market_intel", "Oportunidades", 3),
+    ("campaigns", "market_intel", "Disparos", 4),
+    ("rls_studio", "analytics", "Studio BI e RLS", 1),
+    ("text_to_sql", "analytics", "Text-to-SQL", 2),
+    ("tree", "rbac", "Estrutura de Equipes", 1),
+    ("permissions", "rbac", "Permissões", 2),
+    ("targets", "rbac", "Metas Comerciais", 3),
+    ("commissions", "rbac", "Comissionamento", 4),
+    ("vault", "settings", "Cofre Cifrado", 1),
+    ("erp", "settings", "ERP e Fiscal", 2),
+    ("webhooks", "settings", "Webhooks", 3),
+    ("users", "settings", "Usuários e Quarteto", 4),
+]
+
+_ACCESS_ROLE_GRANTS = {
+    "role-field": [
+        ("deals", 1, 0, []),
+        ("dentgo", 2, 0, []),
+        ("contacts", 3, 0, []),
+        ("keypartners", 4, 0, []),
+        ("video_sos", 5, 0, []),
+        ("intelligence", 6, 0, []),
+        ("market_intel", 7, 0, []),
+    ],
+    "role-inside": [
+        ("omnichannel", 1, 0, ["chats", "contacts", "instances"]),
+        ("scheduling", 2, 0, []),
+        ("deals", 3, 0, []),
+        ("scoring", 4, 0, []),
+        ("contacts", 5, 0, []),
+        ("contracts", 6, 0, []),
+        ("market_intel", 7, 0, []),
+    ],
+    "role-logistics": [
+        ("dentgo", 1, 1, ["orders", "hubs", "fefo", "split"]),
+        ("keypartners", 2, 1, ["board", "agreements", "kol", "loyalty"]),
+        ("support", 3, 1, ["anvisa_rma", "surgical_sos", "postop_b2c"]),
+        ("settings", 4, 1, ["vault", "erp", "webhooks", "users"]),
+    ],
+    "role-clinical": [
+        ("support", 1, 1, ["anvisa_rma", "surgical_sos", "postop_b2c"]),
+        ("video_sos", 2, 0, []),
+        ("imaging", 3, 0, []),
+        ("scheduling", 4, 0, []),
+        ("omnichannel", 5, 0, ["chats", "contacts", "instances"]),
+    ],
+    "role-manager": [
+        ("dashboard", 1, 0, []),
+        ("deals", 2, 0, []),
+        ("market_intel", 3, 1, ["signals", "competitors", "opportunities", "campaigns"]),
+        ("contacts", 4, 1, ["crm_surgeons", "institutions_links", "cfo_compliance", "icp_scoring"]),
+        ("keypartners", 5, 1, ["board", "agreements", "kol", "loyalty"]),
+        ("contracts", 6, 1, ["documenso_lifecycle", "anvisa_catalog_pricing", "r2_custody"]),
+        ("marketing", 7, 0, []),
+        ("rbac", 8, 1, ["tree", "permissions", "targets", "commissions"]),
+    ],
+    "role-ceo": [
+        ("dashboard", 1, 0, []),
+        ("omnichannel", 2, 1, ["chats", "contacts", "instances"]),
+        ("scheduling", 3, 0, []),
+        ("scoring", 4, 0, []),
+        ("contacts", 5, 1, ["crm_surgeons", "institutions_links", "cfo_compliance", "icp_scoring"]),
+        ("deals", 6, 0, []),
+        ("contracts", 7, 1, ["documenso_lifecycle", "anvisa_catalog_pricing", "r2_custody"]),
+        ("imaging", 8, 0, []),
+        ("marketing", 9, 0, []),
+        ("dentgo", 10, 1, ["orders", "hubs", "fefo", "split"]),
+        ("keypartners", 11, 1, ["board", "agreements", "kol", "loyalty"]),
+        ("video_sos", 12, 0, []),
+        ("support", 13, 1, ["anvisa_rma", "surgical_sos", "postop_b2c"]),
+        ("intelligence", 14, 1, ["copilot", "rag", "inventory", "margin", "health_score"]),
+        ("market_intel", 15, 1, ["signals", "competitors", "opportunities", "campaigns"]),
+        ("analytics", 16, 1, ["rls_studio", "text_to_sql"]),
+        ("rbac", 17, 1, ["tree", "permissions", "targets", "commissions"]),
+        ("settings", 18, 1, ["vault", "erp", "webhooks", "users"]),
+    ],
+    "role-access-admin": [
+        ("dashboard", 1, 0, []),
+        ("rbac", 2, 1, ["tree", "permissions", "targets", "commissions"]),
+        ("settings", 3, 1, ["users"]),
+        ("analytics", 4, 1, ["rls_studio"]),
+    ],
+}
+
+_ACCESS_ADMIN_EDITABLE = [
+    "role-field",
+    "role-inside",
+    "role-logistics",
+    "role-clinical",
+    "role-manager",
+]
+
+
+def _seed_granular_access(cur) -> None:
+    """Seed idempotente do catálogo e grants de navegação (fase 2)."""
+    cur.execute(
+        """
+        INSERT OR IGNORE INTO roles
+          (id, account_id, name, description, default_data_scope, is_admin, created_at)
+        VALUES
+          ('role-access-admin', ?,
+           'Admin de Acesso (Permissões)',
+           'Edita grants de cargos operacionais; nao altera Super Admin nem outro Admin de Acesso',
+           'team', 1, ?)
+        """,
+        (_ACCESS_ACCOUNT, _ACCESS_TS),
+    )
+    for role_id, grants in _ACCESS_ROLE_GRANTS.items():
+        cur.execute(
+            """
+            INSERT OR IGNORE INTO roles
+              (id, account_id, name, description, default_data_scope, is_admin, created_at)
+            VALUES (?, ?, ?, 'Seed catalog role', 'team', 0, ?)
+            """,
+            (role_id, _ACCESS_ACCOUNT, role_id, _ACCESS_TS),
+        )
+
+    for rid, label, group, dfac in _ACCESS_ROUTES:
+        cur.execute(
+            "INSERT OR IGNORE INTO access_catalog_routes (route_id, label, journey_group, default_facility) VALUES (?, ?, ?, ?)",
+            (rid, label, group, dfac),
+        )
+    for fid, rid, label, order in _ACCESS_FACILITIES:
+        cur.execute(
+            "INSERT OR IGNORE INTO access_catalog_facilities (facility_id, route_id, label, sort_order) VALUES (?, ?, ?, ?)",
+            (fid, rid, label, order),
+        )
+
+    for role_id, grants in _ACCESS_ROLE_GRANTS.items():
+        for route_id, priority, allow_sub, facilities in grants:
+            cur.execute(
+                """
+                INSERT OR IGNORE INTO role_route_grants
+                  (account_id, role_id, route_id, is_visible_menu, menu_priority, allow_submenus, created_at)
+                VALUES (?, ?, ?, 1, ?, ?, ?)
+                """,
+                (_ACCESS_ACCOUNT, role_id, route_id, priority, allow_sub, _ACCESS_TS),
+            )
+            for fac in facilities:
+                cur.execute(
+                    """
+                    INSERT OR IGNORE INTO role_facility_grants
+                      (account_id, role_id, route_id, facility_id, sort_order, created_at)
+                    SELECT ?, ?, ?, facility_id, sort_order, ?
+                      FROM access_catalog_facilities
+                     WHERE facility_id = ? AND route_id = ?
+                    """,
+                    (_ACCESS_ACCOUNT, role_id, route_id, _ACCESS_TS, fac, route_id),
+                )
+
+    for editable in _ACCESS_ADMIN_EDITABLE:
+        cur.execute(
+            """
+            INSERT OR IGNORE INTO access_admin_scopes
+              (account_id, admin_role_id, editable_role_id, created_at)
+            VALUES (?, 'role-access-admin', ?, ?)
+            """,
+            (_ACCESS_ACCOUNT, editable, _ACCESS_TS),
+        )
+
+
 def init_db() -> None:
     conn = get_connection()
     with conn:
@@ -881,6 +1095,68 @@ def init_db() -> None:
             role_id TEXT NOT NULL,
             permission_code TEXT NOT NULL,
             FOREIGN KEY (role_id) REFERENCES roles(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS access_catalog_routes (
+            route_id TEXT PRIMARY KEY,
+            label TEXT NOT NULL,
+            journey_group TEXT NOT NULL,
+            default_facility TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS access_catalog_facilities (
+            facility_id TEXT PRIMARY KEY,
+            route_id TEXT NOT NULL,
+            label TEXT NOT NULL,
+            sort_order INTEGER NOT NULL DEFAULT 999,
+            FOREIGN KEY (route_id) REFERENCES access_catalog_routes(route_id)
+        );
+
+        CREATE TABLE IF NOT EXISTS role_route_grants (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            account_id TEXT NOT NULL,
+            role_id TEXT NOT NULL,
+            route_id TEXT NOT NULL,
+            is_visible_menu INTEGER NOT NULL DEFAULT 1,
+            menu_priority INTEGER NOT NULL DEFAULT 999,
+            allow_submenus INTEGER NOT NULL DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(account_id, role_id, route_id),
+            FOREIGN KEY (role_id) REFERENCES roles(id),
+            FOREIGN KEY (route_id) REFERENCES access_catalog_routes(route_id)
+        );
+
+        CREATE TABLE IF NOT EXISTS role_facility_grants (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            account_id TEXT NOT NULL,
+            role_id TEXT NOT NULL,
+            route_id TEXT NOT NULL,
+            facility_id TEXT NOT NULL,
+            sort_order INTEGER NOT NULL DEFAULT 999,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(account_id, role_id, route_id, facility_id),
+            FOREIGN KEY (facility_id) REFERENCES access_catalog_facilities(facility_id)
+        );
+
+        CREATE TABLE IF NOT EXISTS access_admin_scopes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            account_id TEXT NOT NULL,
+            admin_role_id TEXT NOT NULL,
+            editable_role_id TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(account_id, admin_role_id, editable_role_id),
+            FOREIGN KEY (admin_role_id) REFERENCES roles(id),
+            FOREIGN KEY (editable_role_id) REFERENCES roles(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS access_audit_log (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            account_id TEXT NOT NULL,
+            actor_user_id TEXT NOT NULL,
+            action TEXT NOT NULL,
+            target_role_id TEXT,
+            payload_json TEXT,
+            created_at TEXT NOT NULL
         );
 
         CREATE TABLE IF NOT EXISTS sales_targets (
@@ -1957,7 +2233,7 @@ def init_db() -> None:
             deals_data = [
                 ("d-1", "0f14ffff", 1, 101, "Contrato Anual - AgroTech Global", 36000.0, "AgroTech Brasil", "Carlos Mendonça", "alta"),
                 ("d-2", "0f14ffff", 1, 101, "Expansão CRM - Logística Express", 18500.0, "LogExpress S/A", "Mariana Alencar", "media"),
-                ("d-3", "0f14ffff", 1, 102, "Implementação RevOps - Fintech Stark", 74000.0, "Stark Payments", "Rafael Bittencourt", "alta"),
+                ("d-3", "0f14ffff", 1, 102, "Implementação RevNault - Fintech Stark", 74000.0, "Stark Payments", "Rafael Bittencourt", "alta"),
                 ("d-4", "0f14ffff", 1, 102, "Migração Hubspot - Rede Varejo Mais", 42000.0, "Varejo Mais", "Juliana Frota", "baixa"),
                 ("d-5", "0f14ffff", 1, 103, "Plataforma Omnichannel - Grupo Alfa", 120000.0, "Grupo Alfa Hospitalar", "Dr. Roberto Silveira", "alta"),
                 ("d-6", "0f14ffff", 1, 103, "Licenciamento 50 Seats - EducarTech", 39000.0, "EducarTech Online", "Patrícia Diniz", "media"),
@@ -1982,7 +2258,7 @@ def init_db() -> None:
             cur.execute("INSERT INTO messages (conversation_id, sender, text) VALUES ('chat-1', 'user', 'Excelente Rafael! Podemos alinhar a homologação dos webhooks na sexta-feira?')")
             cur.execute("INSERT INTO messages (conversation_id, sender, text) VALUES ('chat-1', 'contact', 'Combinado, vou convidar nossa equipe de engenharia para o call.')")
 
-            cur.execute("INSERT INTO webhooks (account_id, name, url, event_type, secret) VALUES ('0f14ffff', 'Webhook ERP SAP', 'https://api.empresa.com.br/hooks/rvops', 'deal.stage_changed', 'whsec_rvops_2026_x89a')")
+            cur.execute("INSERT INTO webhooks (account_id, name, url, event_type, secret) VALUES ('0f14ffff', 'Webhook ERP SAP', 'https://api.empresa.com.br/hooks/revnault', 'deal.stage_changed', 'whsec_revnault_2026_x89a')")
 
         # Seed de Tickets se vazia
         cur.execute("SELECT COUNT(*) FROM tickets")
@@ -2044,7 +2320,7 @@ def init_db() -> None:
         cur.execute("SELECT COUNT(*) FROM campaigns")
         if cur.fetchone()[0] == 0:
             campaigns_data = [
-                ("camp-1", "0f14ffff", "RevOps Scaling Q4", "Google Ads Search (GCLID)", "google", "cpc", "revops-q4", 15000.0, 12400.0, 86000.0, 428, 34, "ativa"),
+                ("camp-1", "0f14ffff", "RevNault Scaling Q4", "Google Ads Search (GCLID)", "google", "cpc", "revnault-q4", 15000.0, 12400.0, 86000.0, 428, 34, "ativa"),
                 ("camp-2", "0f14ffff", "Outbound Enterprise Tech", "LinkedIn InMail & Cold Mail", "linkedin", "inmail", "outbound-enterprise", 8000.0, 7500.0, 54000.0, 182, 21, "ativa"),
                 ("camp-3", "0f14ffff", "Webinar Omnichannel 2026", "Meta CAPI / Instagram", "meta", "cpc", "webinar-omnichannel", 6000.0, 6000.0, 22000.0, 614, 18, "concluida")
             ]
@@ -2184,7 +2460,7 @@ def init_db() -> None:
             )
 
 
-        # Atualização canônica dos nomes dos pipelines para a Indústria Dental (RevOps Puro)
+        # Atualização canônica dos nomes dos pipelines para a Indústria Dental (RevNault Puro)
         cur.execute("UPDATE pipelines SET name = 'Cirurgiões & Venda Direta / Consignação de Caixas' WHERE id = 1")
         cur.execute("UPDATE pipelines SET name = 'Prospecção & SDR Outbound (Instituições & Clínicas)' WHERE id = 2")
         cur.execute("UPDATE pipelines SET name = 'Distribuidores & Contratos de Atacado' WHERE id = 3")
@@ -2289,6 +2565,25 @@ def init_db() -> None:
                 )
 
         cur.execute("UPDATE users SET is_superadmin = 0 WHERE email != ?", (superadmin_email,))
+
+        # Vincula role_id canônico quando ausente (permissionamento granular)
+        role_by_label = {
+            "Super Admin": "role-ceo",
+            "Diretoria / Administrador Geral": "role-ceo",
+            "Gerente Comercial": "role-manager",
+            "Consultor Externo (Campo)": "role-field",
+            "Consultor Interno (Atendimento)": "role-inside",
+            "Logística e Estoque (Expedição)": "role-logistics",
+            "Suporte Clínico e Pós-Venda": "role-clinical",
+            "Admin de Acesso (Permissões)": "role-access-admin",
+        }
+        for label, rid in role_by_label.items():
+            cur.execute(
+                "UPDATE users SET role_id = ? WHERE role = ? AND (role_id IS NULL OR role_id = '')",
+                (rid, label),
+            )
+
+        _seed_granular_access(cur)
 
         # Seed determinístico do estudo de demonstração DICOM/STL (HOMOLOG-15)
         cur.execute("SELECT id FROM imaging_studies WHERE id = 'study-demo-01'")

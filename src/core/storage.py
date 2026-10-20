@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Cloudflare R2 Object Storage Client — Revnaut Core (S3 API v4 compatible)
+Cloudflare R2 Object Storage Client — RevNault Core (S3 API v4 compatible)
 Particionamento multi-tenant determinístico, URLs pré-assinadas e blindagem de segurança.
 """
 

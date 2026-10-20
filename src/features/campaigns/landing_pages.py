@@ -318,7 +318,7 @@ def publish_landing_page(
     <footer class="cfo-compliance-footer" style="text-align: center; font-size: 0.8rem; color: #64748b; padding: 28px 16px; margin-top: 40px; border-top: 1px solid #e2e8f0; background: #f8fafc; font-family: Inter, system-ui, sans-serif;">
         <p style="margin: 0 0 6px 0; font-weight: 600; color: #334155;">Responsável Técnico: {cfo_name} — {cfo_cro}</p>
         <p style="margin: 0; line-height: 1.4;">Divulgação estritamente em conformidade com o Art. 43 do Código de Ética Odontológica e a Resolução CFO 196/2019. Resultados clínicos dependem de diagnóstico e anamnese individualizada.</p>
-        <p style="margin: 8px 0 0 0; font-size: 0.75rem; color: #94a3b8;">&copy; 2026 Revnaut Health Technologies. Todos os direitos reservados.</p>
+        <p style="margin: 8px 0 0 0; font-size: 0.75rem; color: #94a3b8;">&copy; 2026 RevNault Health Technologies. Todos os direitos reservados.</p>
     </footer>
     """
 
@@ -433,7 +433,7 @@ def render_landing_page_html(slug: str) -> Optional[str]:
     <footer class="cfo-compliance-footer" style="text-align: center; font-size: 0.8rem; color: #64748b; padding: 28px 16px; margin-top: 40px; border-top: 1px solid #e2e8f0; background: #f8fafc; font-family: Inter, system-ui, sans-serif;">
         <p style="margin: 0 0 6px 0; font-weight: 600; color: #334155;">Responsável Técnico: {cfo_name} — {cfo_cro}</p>
         <p style="margin: 0; line-height: 1.4;">Divulgação estritamente em conformidade com o Art. 43 do Código de Ética Odontológica e a Resolução CFO 196/2019. Resultados clínicos dependem de diagnóstico e anamnese individualizada.</p>
-        <p style="margin: 8px 0 0 0; font-size: 0.75rem; color: #94a3b8;">&copy; 2026 Revnaut Health Technologies. Todos os direitos reservados.</p>
+        <p style="margin: 8px 0 0 0; font-size: 0.75rem; color: #94a3b8;">&copy; 2026 RevNault Health Technologies. Todos os direitos reservados.</p>
     </footer>
     """
 
@@ -479,7 +479,7 @@ def render_landing_page_html(slug: str) -> Optional[str]:
     </script>
     """
 
-    body_content = lp.get("gjs_html") or "<h1>Revnaut Landing Page</h1>"
+    body_content = lp.get("gjs_html") or "<h1>RevNault Landing Page</h1>"
     if cfo_cro:
         body_content = body_content.replace("CRO-SP 00000", cfo_cro).replace("Dr. Consultor Clínico", cfo_name)
     if "cfo-compliance-footer" not in body_content:

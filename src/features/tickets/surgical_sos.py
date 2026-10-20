@@ -34,7 +34,7 @@ def trigger_surgical_sos(
         participant_name=customer_name,
     )
     lk_token = lk_token_data["token"] if isinstance(lk_token_data, dict) else str(lk_token_data)
-    livekit_room_url = f"https://meet.revops.local/room/{room_id}?token={lk_token}"
+    livekit_room_url = f"https://meet.revnault.local/room/{room_id}?token={lk_token}"
     title = f"SOS Mesa Cirúrgica - {customer_name} ({cro_uf})"
 
     conn = get_connection()

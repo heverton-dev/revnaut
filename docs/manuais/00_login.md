@@ -1,7 +1,7 @@
-# Manual da Rota: Acesso ao Sistema • Revnaut Dental (`/#login`)
+# Manual da Rota: Acesso ao Sistema • RevNault Dental (`/#login`)
 
 ## 1. Objetivo da Rota / Sub-rota
-Centralizar a operação da tela **Acesso ao Sistema • Revnaut Dental** (`/#login`) na arquitetura operacional do Revnaut Dental, assegurando governança clínica, rastreabilidade auditável e controle transacional.
+Centralizar a operação da tela **Acesso ao Sistema • RevNault Dental** (`/#login`) na arquitetura operacional do RevNault Dental, assegurando governança clínica, rastreabilidade auditável e controle transacional.
 
 ---
 
@@ -33,7 +33,7 @@ Centralizar a operação da tela **Acesso ao Sistema • Revnaut Dental** (`/#lo
 ---
 
 ## 5. Como o Usuário Realiza as Ações (Passo a Passo)
-1. Acesse o menu lateral de navegação e selecione **Acesso ao Sistema • Revnaut Dental**.
+1. Acesse o menu lateral de navegação e selecione **Acesso ao Sistema • RevNault Dental**.
 2. A visão `#login` é exibida com seus respectivos cartões de métricas e listagem principal.
 3. Utilize os filtros de topo ou campo de busca rápida para localizar o registro desejado.
 4. Clique nas ações operacionais de cada item ou nos botões principais da barra de ferramentas.
@@ -46,7 +46,7 @@ Centralizar a operação da tela **Acesso ao Sistema • Revnaut Dental** (`/#lo
 |---|---|---|---|
 | `Acesso Direto Super Admin (Entrar Sem Trava)` | `btn-primary dev-fast-fill` | `bypassLoginAsSuperAdmin();` | Dispara ação no controlador |
 | `Preencher Credenciais (@#Khen741963@# ou admin)` | `btn-primary dev-fast-fill` | `fillSuperAdminCredentials();` | Dispara ação no controlador |
-| `Entrar no Revnaut Dental` | `btn-primary` | `—` | Dispara ação no controlador |
+| `Entrar no RevNault Dental` | `btn-primary` | `—` | Dispara ação no controlador |
 | `Esqueci minha senha` | `link-action` | `event.preventDefault(); openForgotPasswordModal();` | Abre o modal correspondente (event.preventDefault) |
 
 ---

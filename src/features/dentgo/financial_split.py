@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Vertical Slice: DENTGO Financial Split & Marketplace Monetization Engine
-Cálculo e segregação transacional na fonte: Seller (Indústria/Dental), Courier (Last-mile) e Take-Rate REVNAULT.
+Cálculo e segregação transacional na fonte: Seller (Indústria/Dental), Courier (Last-mile) e Take-Rate RevNault.
 """
 
 from __future__ import annotations

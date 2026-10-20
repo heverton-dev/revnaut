@@ -48,21 +48,31 @@ export interface RouteConfig {
 
 export interface RouterProps {
   currentRoute: string;
-  onNavigate?: (route: any) => void;
+  initialFacility?: string;
+  onNavigate?: (route: string, facility?: string) => void;
 }
 
-export const AppRouter: React.FC<RouterProps> = ({ currentRoute, onNavigate }) => {
+export const AppRouter: React.FC<RouterProps> = ({ currentRoute, initialFacility, onNavigate }) => {
   switch (currentRoute) {
     case "deals":
-      return <DealsWorkspace onNavigate={onNavigate} />;
+      return (
+        <DealsWorkspace
+          onNavigate={(route, opts) => onNavigate && onNavigate(route, opts?.stage)}
+        />
+      );
     case "contacts":
-      return <ContactsCrmWorkspace />;
+      return <ContactsCrmWorkspace initialTab={initialFacility} />;
     case "keypartners":
-      return <ConsignmentSurgicalBoard />;
+      return <ConsignmentSurgicalBoard initialTab={initialFacility} />;
     case "dentgo":
-      return <DentgoExpressCockpit />;
+      return <DentgoExpressCockpit initialTab={initialFacility} />;
     case "omnichannel":
-      return <OmnichannelWorkspace onOpenSosVideo={() => onNavigate && onNavigate("video_sos")} />;
+      return (
+        <OmnichannelWorkspace
+          initialTab={initialFacility}
+          onOpenSosVideo={() => onNavigate && onNavigate("video_sos")}
+        />
+      );
     case "dashboard":
       return (
         <ExecutiveCockpitView
@@ -74,12 +84,13 @@ export const AppRouter: React.FC<RouterProps> = ({ currentRoute, onNavigate }) =
         <SupersetEmbeddedDashboard
           mode="bi_studio"
           title="Estúdio BI Superset RLS & Agente Analítico Text-to-SQL"
+          initialTab={initialFacility}
           onNavigate={(route) => onNavigate && onNavigate(route)}
         />
       );
     case "video_sos":
       return (
-        <div className="space-y-6 max-w-5xl mx-auto">
+        <div className="space-y-6 max-w-7xl mx-auto">
           <LiveKitDealRoomModal
             inline
             dealTitle="Suporte Emergencial SOS Mesa Cirúrgica"
@@ -88,28 +99,36 @@ export const AppRouter: React.FC<RouterProps> = ({ currentRoute, onNavigate }) =
         </div>
       );
     case "imaging":
-      return <DicomStl3DViewer />;
+      return (
+        <div className="space-y-6 max-w-7xl mx-auto">
+          <DicomStl3DViewer />
+        </div>
+      );
     case "contracts":
-      return <ContractsDocumensoWorkspace />;
+      return <ContractsDocumensoWorkspace initialTab={initialFacility} />;
     case "intelligence":
-      return <IntelligenceSuiteWorkspace />;
+      return <IntelligenceSuiteWorkspace initialTab={initialFacility} />;
     case "market_intel":
-      return <MarketIntelRadarWorkspace />;
+      return <MarketIntelRadarWorkspace initialTab={initialFacility as any} />;
     case "scheduling":
       return <CalcomReactivationWorkspace />;
     case "support":
-      return <SupportAnvisaWorkspace />;
+      return <SupportAnvisaWorkspace initialTab={initialFacility} />;
     case "scoring":
       return <IcpScoringDashboard />;
     case "marketing":
     case "campaigns":
       return <LandingPageBuilder />;
     case "rbac":
-      return <RbacHierarchyTree />;
+      return <RbacHierarchyTree initialTab={initialFacility} />;
     case "settings":
-      return <CredentialsVaultPage />;
+      return <CredentialsVaultPage initialTab={initialFacility} />;
     default:
-      return <DealsWorkspace onNavigate={onNavigate} />;
+      return (
+        <DealsWorkspace
+          onNavigate={(route, opts) => onNavigate && onNavigate(route, opts?.stage)}
+        />
+      );
   }
 };
 

@@ -3,6 +3,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { AppRouter } from "./router";
 import { LoginPage } from "@/features/auth/LoginPage";
+import { parseNavHash, setNavHash } from "@/lib/navHash";
 
 const VALID_ROUTES = new Set([
   "dashboard",
@@ -27,11 +28,16 @@ const VALID_ROUTES = new Set([
 
 function getInitialRouteFromHash(): string {
   if (typeof window === "undefined") return "deals";
-  const raw = window.location.hash.replace(/^#!?\/?/, "").split("?")[0].trim();
-  if (raw && VALID_ROUTES.has(raw)) {
-    return raw;
+  const { route } = parseNavHash(window.location.hash);
+  if (route && VALID_ROUTES.has(route)) {
+    return route;
   }
   return "deals";
+}
+
+function getInitialFacilityFromHash(): string | undefined {
+  if (typeof window === "undefined") return undefined;
+  return parseNavHash(window.location.hash).facility;
 }
 
 export function App() {
@@ -40,6 +46,9 @@ export function App() {
     return localStorage.getItem("revnaut_auth_token");
   });
   const [activeNav, setActiveNav] = React.useState<string>(getInitialRouteFromHash);
+  const [activeFacility, setActiveFacility] = React.useState<string | undefined>(
+    getInitialFacilityFromHash
+  );
   const [currentUserId, setCurrentUserId] = React.useState<string>(() => {
     if (typeof window === "undefined") return "usr-director-br";
     return (
@@ -81,8 +90,10 @@ export function App() {
 
   React.useEffect(() => {
     const onHashChange = () => {
-      const parsed = getInitialRouteFromHash();
+      const { route, facility } = parseNavHash(window.location.hash);
+      const parsed = route && VALID_ROUTES.has(route) ? route : "deals";
       setActiveNav((prev) => (prev !== parsed ? parsed : prev));
+      setActiveFacility((prev) => (prev !== facility ? facility : prev));
     };
     window.addEventListener("hashchange", onHashChange);
     window.addEventListener("popstate", onHashChange);
@@ -92,14 +103,10 @@ export function App() {
     };
   }, []);
 
-  const handleNavigate = React.useCallback((routeId: string) => {
+  const handleNavigate = React.useCallback((routeId: string, facility?: string) => {
     setActiveNav(routeId);
-    if (typeof window !== "undefined") {
-      const targetHash = `#!/${routeId}`;
-      if (window.location.hash !== targetHash) {
-        window.location.hash = targetHash;
-      }
-    }
+    setActiveFacility(facility);
+    setNavHash(routeId, facility);
   }, []);
 
   if (!authToken) {
@@ -109,13 +116,18 @@ export function App() {
   return (
     <AppShell
       activeNav={activeNav}
+      activeFacility={activeFacility}
       onNavigate={handleNavigate}
       currentUserId={currentUserId}
       onSelectUser={setCurrentUserId}
       onLogout={handleLogout}
     >
-      <ErrorBoundary key={activeNav} onReset={() => window.location.reload()}>
-        <AppRouter currentRoute={activeNav} onNavigate={handleNavigate} />
+      <ErrorBoundary key={`${activeNav}:${activeFacility ?? ""}`} onReset={() => window.location.reload()}>
+        <AppRouter
+          currentRoute={activeNav}
+          initialFacility={activeFacility}
+          onNavigate={handleNavigate}
+        />
       </ErrorBoundary>
     </AppShell>
   );

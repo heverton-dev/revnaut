@@ -1,7 +1,7 @@
 # Manual da Sub-rota: Pontuação • Critérios de Prescrição & Implantes/Mês (`/#scoring-icp`)
 
 ## 1. Objetivo da Rota / Sub-rota
-Centralizar a operação da tela **Pontuação • Critérios de Prescrição & Implantes/Mês** (`/#scoring-icp`) (Sub-rota integrada ao módulo principal `#scoring`) na arquitetura operacional do Revnaut Dental, assegurando governança clínica, rastreabilidade auditável e controle transacional.
+Centralizar a operação da tela **Pontuação • Critérios de Prescrição & Implantes/Mês** (`/#scoring-icp`) (Sub-rota integrada ao módulo principal `#scoring`) na arquitetura operacional do RevNault Dental, assegurando governança clínica, rastreabilidade auditável e controle transacional.
 
 ---
 

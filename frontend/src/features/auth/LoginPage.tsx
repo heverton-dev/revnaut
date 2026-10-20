@@ -54,7 +54,7 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
             <ShieldCheck className="h-6 w-6 text-brand-primary" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-text-main">
-            RevVault Enterprise
+            RevNault Enterprise
           </h1>
           <p className="text-xs text-text-secondary">
             Revenue Operations, Governança Cirúrgica & CRM Omnichannel
@@ -96,7 +96,7 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="consultor@revvault.com"
+                    placeholder="consultor@revnault.com"
                     className="pl-9 text-xs"
                     disabled={isLoading}
                   />
@@ -135,7 +135,7 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
                   <span>Autenticando sessão...</span>
                 ) : (
                   <>
-                    <span>Entrar no RevVault</span>
+                    <span>Entrar no RevNault</span>
                     <ArrowRight className="h-3.5 w-3.5" />
                   </>
                 )}
@@ -146,7 +146,7 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
 
         {/* Rodapé de Governança e Segurança */}
         <div className="text-center text-[11px] text-text-muted space-y-1">
-          <p>RevVault Enterprise v1.0.0 • SQLite WAL • OpenAPI 3.1</p>
+          <p>RevNault Enterprise v1.0.0 • SQLite WAL • OpenAPI 3.1</p>
           <p className="flex items-center justify-center gap-1">
             <CheckCircle2 className="h-3 w-3 text-status-success" />
             <span>Sessões assinadas com HMAC-SHA256 e rate limit anti-força bruta</span>

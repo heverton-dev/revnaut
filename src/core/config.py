@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Core Configuration — Revnaut VSA Monolith
+Core Configuration — RevNault VSA Monolith
 Centraliza configurações de ambiente e parâmetros canônicos do sistema.
 """
 
@@ -11,12 +11,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = BASE_DIR / "data"
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 def get_db_path() -> Path:
-    db_env = os.getenv("REVNAUT_DB_PATH") or os.getenv("RVOPS_DB_PATH")
+    db_env = os.getenv("REVNAULT_DB_PATH") or os.getenv("REVNAUT_DB_PATH") or os.getenv("RVOPS_DB_PATH")
     if db_env:
         p = Path(db_env)
         p.parent.mkdir(parents=True, exist_ok=True)
         return p
-    return DATA_DIR / "revnaut.db"
+    return DATA_DIR / "revnault.db"
 
 DB_PATH = get_db_path()
 

@@ -11,7 +11,7 @@
 ---
 
 ## 2. Propósito e Objetivo de Negócio
-O Cockpit Executivo RevOps consolida em uma única tela gerencial os principais indicadores vitais da operação comercial e clínica de implantes odontológicos:
+O Cockpit Executivo RevNault consolida em uma única tela gerencial os principais indicadores vitais da operação comercial e clínica de implantes odontológicos:
 1. **Pipeline de Vendas em Tempo Real:** Volume total negociado, contagem de oportunidades ativas, taxa de conversão e faturamento fechado ganho (MRR).
 2. **Eficiência de Aquisição e Mídia:** Monitoramento de ROAS das campanhas de tráfego, volume de leads qualificados gerados e Custo de Aquisição de Clientes (CAC).
 3. **Radar Preditivo Anti-Churn RFM:** Detecção algorítmica de cirurgiões dentistas em risco de interrupção de recompra de implantes (intervalo de recompra estourado).

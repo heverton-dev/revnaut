@@ -1,7 +1,7 @@
 # Manual da Rota: Estrutura Corporativa, Divisões & RBAC Setorial (`/#hierarchy`)
 
 ## 1. Objetivo da Rota / Sub-rota
-Centralizar a operação da tela **Estrutura Corporativa, Divisões & RBAC Setorial** (`/#hierarchy`) na arquitetura operacional do Revnaut Dental, assegurando governança clínica, rastreabilidade auditável e controle transacional.
+Centralizar a operação da tela **Estrutura Corporativa, Divisões & RBAC Setorial** (`/#hierarchy`) na arquitetura operacional do RevNault Dental, assegurando governança clínica, rastreabilidade auditável e controle transacional.
 
 ---
 

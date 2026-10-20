@@ -21,7 +21,7 @@ def mcp_studio():
     return {
         "mcp_version": "1.0.0",
         "server_name": "revnaut-mcp-studio",
-        "description": "Ferramentas executáveis nativas para o ecossistema Revnaut",
+        "description": "Ferramentas executáveis nativas para o ecossistema RevNault",
         "tools": [
             {
                 "name": "revnaut_criar_deal",
@@ -139,7 +139,7 @@ def user_guide(manual: str = Query("README.md", description="Nome do arquivo man
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Revnaut Dental Ops • Central de Manuais & Guia Operacional</title>
+  <title>RevNault Dental Ops • Central de Manuais & Guia Operacional</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="alternate icon" href="/favicon.ico">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -397,7 +397,7 @@ def user_guide(manual: str = Query("README.md", description="Nome do arquivo man
   <!-- Menu Lateral de Manuais -->
   <aside class="sidebar">
     <div class="sidebar-header">
-      <div class="brand-title">Revnaut Dental Ops</div>
+      <div class="brand-title">RevNault Dental Ops</div>
       <div class="brand-sub">Pilar IV • Central Viva de Manuais</div>
       <div class="search-box">
         <input type="text" class="search-input" id="search-manuals" placeholder="Filtrar manual..." oninput="filterManuals(this.value)">

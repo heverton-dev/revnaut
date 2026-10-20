@@ -52,7 +52,7 @@ def test_chatwoot_context_panel_query_endpoint_and_sidebar_module():
     assert data["agreement"]["available_credit"] == 35000.0
     assert any(k["serial_number"] == "KIT-CW-360-01" for k in data["consignments_in_field"])
 
-    js_module = Path("docs/reconstruct_rvops/05_reconstructed_app/js/modules/inbox-context-sidebar.js")
+    js_module = Path("docs/reconstruct_revnault/05_reconstructed_app/js/modules/inbox-context-sidebar.js")
     assert js_module.exists()
     content = js_module.read_text(encoding="utf-8")
     assert "fetchOmnichannelContext360" in content

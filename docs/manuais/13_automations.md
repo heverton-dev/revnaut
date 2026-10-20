@@ -1,7 +1,7 @@
 # Manual da Rota: Construtor de Fluxos de Automação Cirúrgica (`/#automations`)
 
 ## 1. Objetivo da Rota / Sub-rota
-Centralizar a operação da tela **Construtor de Fluxos de Automação Cirúrgica** (`/#automations`) na arquitetura operacional do Revnaut Dental, assegurando governança clínica, rastreabilidade auditável e controle transacional.
+Centralizar a operação da tela **Construtor de Fluxos de Automação Cirúrgica** (`/#automations`) na arquitetura operacional do RevNault Dental, assegurando governança clínica, rastreabilidade auditável e controle transacional.
 
 ---
 

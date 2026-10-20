@@ -149,7 +149,7 @@ def validate_safe_readonly_sql(sql_query: str) -> None:
 
 def natural_language_to_sql(nl_query: str, account_id: str = "0f14ffff") -> str:
     """
-    Mapeia perguntas analíticas em linguagem natural para consultas SQL analíticas sobre o schema do Revnault.
+    Mapeia perguntas analíticas em linguagem natural para consultas SQL analíticas sobre o schema do RevNault.
     Suporta deals, contacts, kp_consignment_kits, kp_custody_ledger, kp_surgical_orders, dentgo_orders,
     anvisa_rma_claims, clinical_procedure_margins, kp_surgical_health_scores, erp_fiscal_invoices e tasks.
     Extrai filtros de UF (SP, RJ, MG, PR, RS), agregações (SUM, COUNT, AVG) e cláusulas LIMIT.

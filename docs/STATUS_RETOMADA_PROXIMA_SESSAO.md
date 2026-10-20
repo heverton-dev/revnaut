@@ -1,7 +1,7 @@
-# Status de Retomada e Conclusao do Plano Mestre (RevNaut Dental Ops)
+# Status de Retomada e Conclusao do Plano Mestre (RevNault Dental Ops)
 
 **Data do Ponto de Conclusao:** 18/10/2026 01:15 BRT  
-**Repositorio GitHub:** `https://github.com/heverton-dev/revnaut`  
+**Repositorio GitHub:** `https://github.com/heverton-dev/revnault`  
 **Branch:** `main`  
 **Backend:** FastAPI 0.115+ + SQLAlchemy 2.0 Async + SQLite WAL / PostgreSQL 16 + Redis 7 Streams  
 **Frontend:** React 19 + TypeScript + Vite + Tailwind CSS + shadcn/ui + AppRouter 360  
@@ -12,7 +12,7 @@
 
 ## 1. Conclusao Integral do Plano Mestre de Implementacao Unificado (Tickets 00 a 42)
 
-Todos os 43 tickets de engenharia definidos no `docs/planos/PLANO_MESTRE_DE_IMPLEMENTACAO_UNIFICADO_REVANAULT.md` foram concluidos com arquitetura VSA (Vertical Slice Architecture), TDD estrito e zero stubs:
+Todos os 43 tickets de engenharia definidos no `docs/planos/PLANO_MESTRE_DE_IMPLEMENTACAO_UNIFICADO_RevNault.md` foram concluidos com arquitetura VSA (Vertical Slice Architecture), TDD estrito e zero stubs:
 
 - **Fase 0: Fundacao & Infraestrutura de Dados**
   - `[TICKET-00]`: SQLAlchemy 2.0 Async, Alembic, React 19/TS e tokens.css.

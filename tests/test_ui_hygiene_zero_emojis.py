@@ -31,7 +31,7 @@ def test_gate_ui_design_hygiene_proves_it_bites():
 
 def test_zero_emojis_in_frontend_app():
     """Verifica individualmente o index.html e arquivos do frontend quanto a emojis proibidos."""
-    frontend_dir = REPO_ROOT / "docs" / "reconstruct_rvops" / "05_reconstructed_app"
+    frontend_dir = REPO_ROOT / "docs" / "reconstruct_revnault" / "05_reconstructed_app"
     assert frontend_dir.exists()
 
     for file_ext in ("*.html", "*.js", "*.css"):

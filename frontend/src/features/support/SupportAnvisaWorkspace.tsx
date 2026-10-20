@@ -131,8 +131,14 @@ const FdiOdontogram: React.FC<FdiOdontogramProps> = ({ selected, onSelect }) => 
   );
 };
 
-export const SupportAnvisaWorkspace: React.FC = () => {
-  const [activeTab, setActiveTab] = React.useState<string>("anvisa_rma");
+export interface SupportAnvisaWorkspaceProps {
+  initialTab?: string;
+}
+
+export const SupportAnvisaWorkspace: React.FC<SupportAnvisaWorkspaceProps> = ({
+  initialTab = "anvisa_rma",
+}) => {
+  const [activeTab, setActiveTab] = React.useState<string>(initialTab);
   const [feedbackMsg, setFeedbackMsg] = React.useState<string | null>(null);
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
 
@@ -626,6 +632,7 @@ export const SupportAnvisaWorkspace: React.FC = () => {
       <Tabs
         activeTab={activeTab}
         onChange={setActiveTab}
+        hideOnDesktop
         tabs={[
           { id: "anvisa_rma", label: "Tecnovigilância ANVISA & Quarentena (RMA)", count: rmaClaims.length },
           { id: "surgical_sos", label: "SOS Mesa Cirúrgica & Despacho Emergencial" },

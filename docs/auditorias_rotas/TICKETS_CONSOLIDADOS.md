@@ -475,7 +475,7 @@
 #### TICKET-SOS-01 — Implementar Adicionar 2º Cirurgião Especialista  `[v2]`
 
 - **Status:** NÃO FEITO
-- **Evidência:** `LiveKitDealRoomModal.tsx` não tem convite/adição de 2º participante; o nome "Consultor Especialista Revnaut" é fixo no token.
+- **Evidência:** `LiveKitDealRoomModal.tsx` não tem convite/adição de 2º participante; o nome "Consultor Especialista RevNault" é fixo no token.
 - **O que fazer:** Adicionar adicionar 2º cirurgião especialista na interface da rota video_sos .
 - **Como fazer:** Integrar componente com o endpoint correspondente no backend.
 - **Onde fazer:** frontend/src/features/communications/LiveKitDealRoomModal.tsx

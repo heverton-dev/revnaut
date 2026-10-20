@@ -511,7 +511,7 @@ def render_referral_invite_html(referral_code: str) -> str:
     </div>
 
     <footer class="footer">
-        <p>KeyPartners & Revnaut Enterprise • Programa Member-Get-Member B2B</p>
+        <p>KeyPartners & RevNault Enterprise • Programa Member-Get-Member B2B</p>
         <p style="margin-top: 4px;">Em conformidade com a Resolução CFO 196/2019 e Código de Ética Odontológica.</p>
     </footer>
 

@@ -23,7 +23,7 @@ O modo ativo da rota (`mode="executive_cockpit"`) expõe exatamente 5 elementos 
 
 ## 3. Catálogo de Botões Faltantes (Gaps de Interação & UX)
 
-A auditoria factual identificou a ausência de 4 botões críticos para o fluxo de trabalho de RevOps:
+A auditoria factual identificou a ausência de 4 botões críticos para o fluxo de trabalho de RevNault:
 
 | Botão Faltante | Localização Sugerida na Tela | O Que Deveria Abrir / Fazer | Por Que Está Faltando (Impacto na Jornada) | Micro-Ticket Vinculado |
 | :--- | :--- | :--- | :--- | :--- |

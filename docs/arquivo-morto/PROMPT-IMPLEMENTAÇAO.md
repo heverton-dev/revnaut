@@ -2,8 +2,8 @@
 [ROLE: PRINCIPAL AIDD ARCHITECT & DETERMINISTIC FULL-STACK ENGINEER]
 
 1. MISSION & SOURCE OF TRUTH
-Execute complete end-to-end implementation of `PLANO_MESTRE_IMPLEMENTACAO_REVNAULT.md` from `[TICKET-00]` to `[TICKET-42]`.
-Unify REVNAULT Core + KeyPartners (surgical consignment/KOLs) + DENTGO (B2B same-day logistics) + Open-Source Engines (Mautic, Listmonk, GrapesJS, Evolution API v2, Chatwoot, LiveKit SFU/SIP, faster-whisper + pyannote.audio + LiteLLM, Documenso, Apache Superset, Windmill, Orthanc DICOM, PostgreSQL 16 + pgvector, Redis Streams, Cloudflare R2 S3).
+Execute complete end-to-end implementation of `PLANO_MESTRE_IMPLEMENTACAO_RevNault.md` from `[TICKET-00]` to `[TICKET-42]`.
+Unify RevNault Core + KeyPartners (surgical consignment/KOLs) + DENTGO (B2B same-day logistics) + Open-Source Engines (Mautic, Listmonk, GrapesJS, Evolution API v2, Chatwoot, LiveKit SFU/SIP, faster-whisper + pyannote.audio + LiteLLM, Documenso, Apache Superset, Windmill, Orthanc DICOM, PostgreSQL 16 + pgvector, Redis Streams, Cloudflare R2 S3).
 Zero shortcuts. Zero placeholders. Zero `TODO`s. Zero mock data in production paths. 100% deterministic, production-grade code.
 
 2. MANDATORY ARSENAL: SKILLS, PIPELINES & MCPs (USE TO THE EXTREME)
@@ -11,8 +11,8 @@ Before and during execution, load and enforce ALL repository assets:
 - SKILLS: Execute workflows in `.agents/skills/` & `.claude/skills/` (`aidd-spec`, `aidd-grill`, `aidd-tdd`, `aidd-tickets`, `team-handoff`) + `anti-slop-ui-architect` / Impeccable UI guardrails.
 - PIPELINES & RULES: Follow `.aidd/pipeline/phase_00_bootstrap` through `phase_04_audit_security`, `.aidd/HANDOFF_FORGE_PLANNER.json`, `.agents/rules/fluxo-revisao-manuais.md`, and `.agents/rules/output-chat.md`.
 - MCP SERVERS: Actively query all MCP tools declared in `.aidd/pipeline/*/mcp_config.json` for database inspection, docs, file ops, and verification.
-- BENCHMARK & DESIGN SYSTEM: Ground all UI in `docs/reconstruct_rvops/03_mobbin_benchmark/audit_heuristica.md`, `benchmark_references.json`, and `docs/reconstruct_rvops/04_design_system/tokens.css` & `tokens.json`.
-- API CONTRACTS: Enforce 100% parity with `docs/reconstruct_rvops/02_decompiled/api_contracts.ts` and `business_rules.md`.
+- BENCHMARK & DESIGN SYSTEM: Ground all UI in `docs/reconstruct_revnault/03_mobbin_benchmark/audit_heuristica.md`, `benchmark_references.json`, and `docs/reconstruct_revnault/04_design_system/tokens.css` & `tokens.json`.
+- API CONTRACTS: Enforce 100% parity with `docs/reconstruct_revnault/02_decompiled/api_contracts.ts` and `business_rules.md`.
 
 3. STRICT ARCHITECTURE & DESIGN SYSTEM FIRST GUARDRAILS
 - BACKEND: Python 3.12 + FastAPI + SQLAlchemy 2.0 (100% Async / `asyncpg`) + Alembic migrations + Pydantic v2 + Redis Streams consumer groups + deterministic workers.
@@ -24,7 +24,7 @@ Before and during execution, load and enforce ALL repository assets:
 For each micro-ticket `[TICKET-00]` -> `[TICKET-42]`, execute this exact atomic state machine:
 
   [STEP A: SPEC & GRILL]
-  - Read ticket scope, Target Files, DoD, and dependencies in `PLANO_MESTRE_IMPLEMENTACAO_REVNAULT.md`.
+  - Read ticket scope, Target Files, DoD, and dependencies in `PLANO_MESTRE_IMPLEMENTACAO_RevNault.md`.
   - Inspect existing target files, database models, and `api_contracts.ts`.
 
   [STEP B: STRICT TDD — RED PHASE]
@@ -45,7 +45,7 @@ For each micro-ticket `[TICKET-00]` -> `[TICKET-42]`, execute this exact atomic 
   - SELF-CORRECTION RULE: If ANY test, linter, typecheck, or contract check fails -> DO NOT SKIP, DO NOT MOCK AWAY, DO NOT WEAKEN ASSERTIONS. Diagnose root cause, patch code deterministically, and re-run Step D until 100% GREEN.
 
   [STEP E: LIVING DOCUMENTATION, COMMIT & PUSH]
-  - Update `PLANO_MESTRE_IMPLEMENTACAO_REVNAULT.md`: mark `[TICKET-XX]` as `[x] DONE`, log test count, coverage, and commit SHA.
+  - Update `PLANO_MESTRE_IMPLEMENTACAO_RevNault.md`: mark `[TICKET-XX]` as `[x] DONE`, log test count, coverage, and commit SHA.
   - Update `docs/STATUS_RETOMADA_PROXIMA_SESSAO.md` and corresponding module manual in `docs/manuais/` if applicable.
   - Stage, commit, and push atomically:
     `git add -A && git commit -m "feat(ticket-XX): <concise surgical description>" && git push`

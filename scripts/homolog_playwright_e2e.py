@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 STAGE 1 & STAGE 2 — Automated Playwright E2E, Multi-Viewport & Engine Utilization Harness
-Executes deep full-stack homologation of REVNAULT:
+Executes deep full-stack homologation of RevNault:
 1. Audits FastAPI (`src.main:app`) vs React 19 SPA (`frontend/src/` & `frontend/dist/`).
 2. Cross-references all backend endpoints across `src/features/**/router.py` against `frontend/src/**/*.tsx`
    to compute the exact Engine Utilization Ratio (%) across all 38 domain modules.
@@ -497,7 +497,7 @@ def run_playwright_audit(base_url: str) -> Dict[str, Any]:
 
 def main() -> int:
     print("=" * 80)
-    print("REVNAULT FULL-STACK E2E PLAYWRIGHT & ENGINE UTILIZATION HOMOLOGATION")
+    print("RevNault FULL-STACK E2E PLAYWRIGHT & ENGINE UTILIZATION HOMOLOGATION")
     print("=" * 80)
 
     # 1. Analyze Engine Utilization

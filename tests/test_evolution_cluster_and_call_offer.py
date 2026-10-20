@@ -98,7 +98,7 @@ def test_call_offer_webhook_triggers_sos_livekit_video_room():
 
     assert result["event"] == "CALL_OFFER"
     assert result["action"] == "SOS_VIDEO_LINK_SENT"
-    assert "https://meet.revops.local/room/sos-" in result["sos_call_link"]
+    assert "https://meet.revnault.local/room/sos-" in result["sos_call_link"]
     assert "urgência cirúrgica" in result["response_message"]
     assert result["phone"] == "5511999998888"
 

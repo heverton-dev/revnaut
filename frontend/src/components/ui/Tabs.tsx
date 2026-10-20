@@ -23,6 +23,11 @@ export interface TabsProps {
   className?: string;
   variant?: "underline" | "cards";
   columns?: 1 | 2 | 3 | 4 | 5 | 6;
+  /**
+   * Hybrid sidebar: hide these in-page tabs on lg+ when the module
+   * already has submenu children in AppShell. Always visible on mobile.
+   */
+  hideOnDesktop?: boolean;
 }
 
 export function Tabs({
@@ -32,7 +37,10 @@ export function Tabs({
   className,
   variant = "cards",
   columns,
+  hideOnDesktop = false,
 }: TabsProps) {
+  const responsiveClass = cn(className, hideOnDesktop && "lg:hidden");
+
   // Variante padrão canônica: cards com grid, ícone e badge
   if (variant === "cards") {
     const subTabItems: RouteSubTabItem[] = tabs.map((t) => ({
@@ -48,7 +56,7 @@ export function Tabs({
         tabs={subTabItems}
         activeTab={activeTab}
         onChange={onChange}
-        className={className}
+        className={responsiveClass}
         columns={columns}
       />
     );
@@ -59,7 +67,7 @@ export function Tabs({
     <div
       role="tablist"
       aria-orientation="horizontal"
-      className={cn("flex flex-wrap border-b border-border gap-1", className)}
+      className={cn("flex flex-wrap border-b border-border gap-1", responsiveClass)}
     >
       {tabs.map((tab) => {
         const isActive = tab.id === activeTab;

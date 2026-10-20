@@ -10,7 +10,7 @@
 ---
 
 ## 2. Propósito e Objetivo de Negócio
-A rota `dentgo` atua no ecossistema RevOps proporcionando aos operadores clínicos e comerciais:
+A rota `dentgo` atua no ecossistema RevNault proporcionando aos operadores clínicos e comerciais:
 1. Controle determinístico dos fluxos de entregas expressas (logística same-day 45min).
 2. Redução do tempo de atendimento e eliminação de processos analógicos na operação.
 3. Rastreabilidade ponta a ponta com persistência auditável no SQLite WAL.

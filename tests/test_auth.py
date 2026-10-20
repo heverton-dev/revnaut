@@ -13,7 +13,7 @@ from src.main import app
 client = TestClient(app, headers=bearer_headers())
 
 # Senha exclusiva dos testes (a senha semeada do Super Admin é considerada vazada)
-SUPERADMIN_TEST_PASSWORD = "Teste-Superadmin-Revnault-2026!"
+SUPERADMIN_TEST_PASSWORD = "Teste-Superadmin-RevNault-2026!"
 
 
 @pytest.fixture(autouse=True)

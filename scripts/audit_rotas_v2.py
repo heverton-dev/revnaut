@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Orquestrador Canônico v2 para Auditoria de Rotas (aidd-route-analyze).
-Audita todas as 17 rotas, sub-rotas, abas e sub-abas da aplicação RevOps,
+Audita todas as 17 rotas, sub-rotas, abas e sub-abas da aplicação RevNault,
 gera os 8 artefatos canônicos por rota em docs/auditorias_rotas/v2/<slug>/,
 valida os Quality Gates (G_ROUTE_DISPATCH, G_UI_IMPECCABLE, G_SECURITY_RLS, G_DOSSIER_COMPLETE, G_PDF_GENERATED),
 compila os relatórios em PDF diagramados via Playwright Chromium,
@@ -571,7 +571,7 @@ def generate_route_dossier_v2(slug: str, meta: dict):
 ---
 
 ## 2. Propósito e Objetivo de Negócio
-A rota `{slug}` atua no ecossistema RevOps proporcionando aos operadores clínicos e comerciais:
+A rota `{slug}` atua no ecossistema RevNault proporcionando aos operadores clínicos e comerciais:
 1. Controle determinístico dos fluxos de {meta["title"].lower()}.
 2. Redução do tempo de atendimento operacional e eliminação de processos analógicos em campo.
 3. Rastreabilidade regulatória ponta a ponta com persistência auditável em SQLite WAL.
@@ -688,7 +688,7 @@ A rota `{slug}` implementa uma fatia vertical bem delimitada, encapsulando compo
 ## 1. Especificação BDD (Gherkin)
 ```gherkin
 Funcionalidade: Operação da Rota {meta["title"]}
-  Como Usuário Autenticado da Plataforma RevOps
+  Como Usuário Autenticado da Plataforma RevNault
   Eu quero acessar a rota "/#!/{slug}"
   Para executar as rotinas operacionais com integridade e segurança
 

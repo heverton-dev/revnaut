@@ -10,7 +10,7 @@
 ---
 
 ## 2. Propósito e Objetivo de Negócio
-A rota `analytics` atua no ecossistema RevOps proporcionando aos operadores clínicos e comerciais:
+A rota `analytics` atua no ecossistema RevNault proporcionando aos operadores clínicos e comerciais:
 1. Controle determinístico dos fluxos de relatórios e metas (estúdio bi superset & text-to-sql).
 2. Redução do tempo de atendimento e eliminação de processos analógicos na operação.
 3. Rastreabilidade ponta a ponta com persistência auditável no SQLite WAL.

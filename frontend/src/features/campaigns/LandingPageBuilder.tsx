@@ -25,9 +25,9 @@ import {
   Wand2,
   Trash2,
   FlaskConical,
-  X,
 } from "lucide-react";
 import { QrCodeSvg } from "@/components/shared/QrCodeSvg";
+import { Dialog } from "@/components/ui/Dialog";
 import { RouteHeader } from "@/components/ui/RouteHeader";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -774,7 +774,7 @@ export const LandingPageBuilder: React.FC<LandingPageBuilderProps> = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6 max-w-7xl mx-auto">
       <RouteHeader
         title="Campanhas e Indicações"
         description="Criação de páginas para captação de clientes, réguas de automação e programa de indicações."
@@ -1693,19 +1693,14 @@ export const LandingPageBuilder: React.FC<LandingPageBuilderProps> = ({
         </div>
       )}
 
-      {/* TICKET-MKT-01: Modal de Teste A/B Split 50/50 */}
-      {showAbModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0">
-          <div className="bg-surface-card border border-border rounded-xl w-full max-w-2xl p-5 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-text-main">Ativar Teste A/B (Split 50/50)</h3>
-              <button type="button" onClick={() => setShowAbModal(false)} className="text-text-secondary hover:text-text-main">
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <p className="text-xs text-text-secondary">
-              O tráfego da landing page será dividido igualmente entre as variantes A e B. A variante com maior conversão será promovida automaticamente.
-            </p>
+      {/* TICKET-MKT-01: Modal de Teste A/B Split 50/50 Padronizado */}
+      <Dialog
+        isOpen={showAbModal}
+        onClose={() => setShowAbModal(false)}
+        size="form"
+        title="Ativar Teste A/B (Split 50/50)"
+        description="O tráfego da landing page será dividido igualmente entre as variantes A e B. A variante vencedora será promovida automaticamente."
+      >
             <div>
               <label className="block text-xs font-medium text-text-secondary mb-1">Nome do Experimento</label>
               <input
@@ -1732,7 +1727,7 @@ export const LandingPageBuilder: React.FC<LandingPageBuilderProps> = ({
                 />
               </div>
             </div>
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-2 pt-3 border-t border-border-subtle">
               <Button variant="outline" size="sm" onClick={() => setShowAbModal(false)}>Cancelar</Button>
               <Button
                 size="sm"
@@ -1744,9 +1739,7 @@ export const LandingPageBuilder: React.FC<LandingPageBuilderProps> = ({
                 Ativar Split 50/50
               </Button>
             </div>
-          </div>
-        </div>
-      )}
+      </Dialog>
     </div>
   );
 };

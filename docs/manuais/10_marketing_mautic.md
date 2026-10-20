@@ -1,7 +1,7 @@
 # Manual da Sub-rota: Marketing • Painel de Sincronização Mautic VPS (`/#marketing-mautic`)
 
 ## 1. Objetivo da Rota / Sub-rota
-Centralizar a operação da tela **Marketing • Painel de Sincronização Mautic VPS** (`/#marketing-mautic`) (Sub-rota integrada ao módulo principal `#marketing`) na arquitetura operacional do Revnaut Dental, assegurando governança clínica, rastreabilidade auditável e controle transacional.
+Centralizar a operação da tela **Marketing • Painel de Sincronização Mautic VPS** (`/#marketing-mautic`) (Sub-rota integrada ao módulo principal `#marketing`) na arquitetura operacional do RevNault Dental, assegurando governança clínica, rastreabilidade auditável e controle transacional.
 
 ---
 

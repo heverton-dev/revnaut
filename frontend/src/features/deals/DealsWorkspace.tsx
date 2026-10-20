@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/Badge";
 import { DataTable, Column } from "@/components/ui/DataTable";
 import { KanbanBoard, KanbanStage } from "@/components/ui/KanbanBoard";
 import { Dialog } from "@/components/ui/Dialog";
-import { Sheet } from "@/components/ui/Sheet";
+import { ModalTabBar } from "@/components/ui/ModalTabBar";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -123,6 +123,13 @@ export const DealsWorkspace: React.FC<DealsWorkspaceProps> = ({ currentUserId })
   const [dealActionError, setDealActionError] = React.useState<string | null>(null);
 
   const [selectedDeal, setSelectedDeal] = React.useState<Deal | null>(null);
+  const [dealModalTab, setDealModalTab] = React.useState<"overview" | "catalog" | "copilot" | "timeline">("overview");
+  const [tasksPage, setTasksPage] = React.useState<number>(1);
+  const [timelinePage, setTimelinePage] = React.useState<number>(1);
+  const [cartPage, setCartPage] = React.useState<number>(1);
+  const TASKS_PER_PAGE = 4;
+  const TIMELINE_PER_PAGE = 4;
+  const CART_PER_PAGE = 4;
   const [editTitle, setEditTitle] = React.useState<string>("");
   const [editValue, setEditValue] = React.useState<string>("");
   const [editPriority, setEditPriority] = React.useState<string>("media");
@@ -721,14 +728,14 @@ export const DealsWorkspace: React.FC<DealsWorkspaceProps> = ({ currentUserId })
     },
   ];
 
-  const pipelines = pipelinesQuery.data || [{ id: 1, name: "Funil Principal RevOps" }];
+  const pipelines = pipelinesQuery.data || [{ id: 1, name: "Funil Principal RevNault" }];
 
   return (
     <ErrorBoundary onReset={() => dealsQuery.refetch()}>
       <div className="space-y-6 max-w-7xl mx-auto">
         <RouteHeader
           title="Cockpit de Negócios & Consignação Cirúrgica"
-          description="Operação unificada RevOps + KeyPartners (Kits & ANVISA) + DENTGO (Logística Same-Day). Clique em um negócio para abrir o Dossiê e Aprovação de Crédito."
+          description="Operação unificada RevNault + KeyPartners (Kits & ANVISA) + DENTGO (Logística Same-Day). Clique em um negócio para abrir o Dossiê e Aprovação de Crédito."
           exportConfig={{
             format: exportFormat,
             onFormatChange: (fmt) => setExportFormat(fmt as "csv" | "parquet"),
@@ -874,7 +881,7 @@ export const DealsWorkspace: React.FC<DealsWorkspaceProps> = ({ currentUserId })
           />
         )}
 
-        <Dialog isOpen={isNewDealOpen} onClose={() => setIsNewDealOpen(false)} title="Nova Oportunidade Cirúrgica">
+        <Dialog isOpen={isNewDealOpen} onClose={() => setIsNewDealOpen(false)} title="Nova Oportunidade Cirúrgica" size="form">
           <form onSubmit={handleCreateDeal} className="space-y-3">
             <div>
               <label className="block text-xs font-medium text-text-secondary mb-1">Título *</label>
@@ -921,147 +928,439 @@ export const DealsWorkspace: React.FC<DealsWorkspaceProps> = ({ currentUserId })
           </form>
         </Dialog>
 
-        <Sheet
+        <Dialog
           isOpen={Boolean(selectedDeal)}
           onClose={() => setSelectedDeal(null)}
+          size="80vh"
           title={selectedDeal ? `Dossiê do Negócio #${selectedDeal.id}` : "Dossiê"}
           description={selectedDeal ? `${selectedDeal.company_name || (selectedDeal as any).company || ""} • ${selectedDeal.contact_name || ""}` : ""}
+          footer={
+            <div className="flex items-center justify-between w-full">
+              <span className="text-xs text-text-muted">
+                Governança RevNault • Negociação #{selectedDeal?.id}
+              </span>
+              <Button variant="secondary" size="sm" onClick={() => setSelectedDeal(null)}>
+                Fechar Dossiê
+              </Button>
+            </div>
+          }
         >
           {selectedDeal && (
-            <div className="space-y-5 text-xs">
-              <div className="p-3 rounded-lg bg-surface-bg border border-border space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold uppercase text-text-secondary">Governança de Estágio & Crédito</span>
-                  <Badge variant="navy">ID: {selectedDeal.id}</Badge>
-                </div>
-                <Select
-                  label="Mover Estágio no Funil (PUT /stage)"
-                  value={editStageId}
-                  onChange={(e) => handleMoveStage(e.target.value)}
-                  options={rawStages.map((s) => ({ value: String(s.id), label: s.name }))}
-                />
-                <Button
-                  type="button"
-                  variant="default"
-                  size="sm"
-                  onClick={() => handleQuickApproveDiscount()}
-                  disabled={savingDrawer}
-                  className="w-full gap-1.5"
-                >
-                  <BadgeCheck className="h-4 w-4" />
-                  Aprovação Rápida de Desconto (1-Clique)
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={handleApproveCredit}
-                  disabled={savingDrawer}
-                  className="w-full gap-1.5"
-                >
-                  <ShieldCheck className="h-4 w-4 text-status-success" />
-                  Aprovar Limite de Crédito para Consignação
-                </Button>
-              </div>
+            <div className="flex flex-col min-h-full text-xs pb-6">
+              {/* Barra de Abas Padronizada via ModalTabBar */}
+              <ModalTabBar
+                tabs={[
+                  { id: "overview", label: "Visão Geral", icon: <ShieldCheck className="h-4 w-4" /> },
+                  { id: "catalog", label: "Catálogo & Itens", count: cartLines.length, icon: <Package className="h-4 w-4" /> },
+                  { id: "copilot", label: "Tarefas & Copiloto", count: tasks.filter((t) => !t.completed).length, icon: <CheckSquare className="h-4 w-4" /> },
+                  { id: "timeline", label: "Linha do Tempo", count: timeline.length, icon: <Clock className="h-4 w-4" /> },
+                ]}
+                activeTab={dealModalTab}
+                onChange={(t) => setDealModalTab(t as any)}
+              />
 
-              {/* TICKET-DEALS-02: Catálogo Dental + Quantidade → Valor BRL */}
-              <div className="p-3 rounded-lg border border-border space-y-3">
-                <span className="font-semibold uppercase text-text-secondary flex items-center gap-1.5">
-                  <Package className="h-3.5 w-3.5" />
-                  Catálogo ANVISA & Cálculo de Valor
-                </span>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-end">
-                  <Select
-                    label="Produto / SKU"
-                    value={selectedSku}
-                    onChange={(e) => setSelectedSku(e.target.value)}
-                    options={[
-                      { value: "", label: "Selecione um SKU" },
-                      ...catalogProducts.map((p) => ({
-                        value: p.sku,
-                        label: `${p.sku} — ${p.name}`,
-                      })),
-                    ]}
-                  />
-                  <div>
-                    <label className="block text-text-secondary mb-1">Quantidade</label>
-                    <Input
-                      type="number"
-                      min="1"
-                      value={itemQty}
-                      onChange={(e) => setItemQty(e.target.value)}
-                    />
-                  </div>
-                  <Button type="button" variant="outline" size="sm" onClick={handleAddCartLine} disabled={!selectedSku}>
-                    Adicionar Item
-                  </Button>
-                </div>
-                {cartLines.length > 0 && (
-                  <div className="space-y-1">
-                    {cartLines.map((l) => (
-                      <div key={l.sku} className="flex items-center justify-between text-xs p-1.5 rounded bg-surface-bg">
-                        <span className="truncate">{l.qty}x {l.name}</span>
-                        <span className="font-semibold shrink-0">
-                          {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(l.qty * l.unitPrice)}
-                        </span>
-                      </div>
-                    ))}
-                    <div className="flex items-center justify-between pt-1 border-t border-border-subtle">
-                      <span className="font-semibold text-text-main">Total do Carrinho</span>
-                      <span className="font-bold text-brand-primary">
-                        {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(cartTotal)}
+              {/* ABA 1: Visão Geral, Edição & Governança */}
+              {dealModalTab === "overview" && (
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+                  {/* Coluna Esquerda: Edição dos Dados */}
+                  <div className="lg:col-span-7 space-y-4">
+                    <div className="p-4 rounded-xl border border-border bg-surface-card space-y-3 shadow-2xs">
+                      <span className="font-semibold uppercase text-text-secondary flex items-center justify-between">
+                        <span>Dados Comerciais da Oportunidade</span>
+                        <Badge variant="navy">ID: {selectedDeal.id}</Badge>
                       </span>
+
+                      <div>
+                        <label className="block text-text-secondary mb-1 font-medium">Título da Negociação</label>
+                        <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-text-secondary mb-1 font-medium">Valor Estimado (R$)</label>
+                          <Input type="number" value={editValue} onChange={(e) => setEditValue(e.target.value)} />
+                        </div>
+                        <Select
+                          label="Nível de Prioridade"
+                          value={editPriority}
+                          onChange={(e) => setEditPriority(e.target.value)}
+                          options={[
+                            { value: "alta", label: "Alta" },
+                            { value: "media", label: "Média" },
+                            { value: "baixa", label: "Baixa" },
+                          ]}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-text-secondary mb-1 font-medium">Previsão de Fechamento</label>
+                          <Input type="date" value={editCloseDate} onChange={(e) => setEditCloseDate(e.target.value)} />
+                        </div>
+                        <div>
+                          <label className="block text-text-secondary mb-1 font-medium">Nota de Auditoria</label>
+                          <Input value={editComment} onChange={(e) => setEditComment(e.target.value)} placeholder="Motivo da revisão..." />
+                        </div>
+                      </div>
+
+                      <Button type="button" size="sm" onClick={handleUpdateDealInline} disabled={savingDrawer} className="w-full gap-1.5 mt-2">
+                        <Save className="h-3.5 w-3.5" />
+                        {savingDrawer ? "Salvando..." : "Salvar Alterações da Oportunidade"}
+                      </Button>
                     </div>
-                    <Button type="button" size="sm" onClick={handleApplyCartToDealValue} disabled={savingDrawer} className="w-full">
-                      Atualizar Valor do Deal (BRL)
-                    </Button>
                   </div>
-                )}
-              </div>
 
-              {/* Ações Rápidas: PDF / DENTGO / LiveKit */}
-              <div className="p-3 rounded-lg border border-border space-y-3">
-                <span className="font-semibold uppercase text-text-secondary block">Ações Comerciais & Logísticas</span>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={handleGenerateProposalPdf}
-                  disabled={generatingPdf}
-                  className="w-full gap-1.5"
-                >
-                  <FileDown className="h-4 w-4 text-brand-primary" />
-                  {generatingPdf ? "Gerando Proposta..." : "Gerar Proposta Comercial PDF"}
-                </Button>
-                {showDentgoDispatch && (
-                  <Button
-                    type="button"
-                    variant="default"
-                    size="sm"
-                    onClick={handleDispatchDentgo}
-                    disabled={dispatching}
-                    className="w-full gap-1.5"
-                  >
-                    <Truck className="h-4 w-4" />
-                    {dispatching ? "Despachando..." : "Despachar com DENTGO (45 min)"}
-                  </Button>
-                )}
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setShowDealVideoModal(true)}
-                  className="w-full gap-1.5"
-                >
-                  <Video className="h-4 w-4 text-brand-primary" />
-                  Abrir Vídeo SOS / Sala LiveKit
-                </Button>
-              </div>
+                  {/* Coluna Direita: Governança & Ações Rápidas */}
+                  <div className="lg:col-span-5 space-y-4">
+                    {/* Bloco de Governança de Estágio */}
+                    <div className="p-4 rounded-xl bg-surface-bg border border-border space-y-3 shadow-2xs">
+                      <span className="font-semibold uppercase text-text-secondary block">
+                        Governança de Estágio & Crédito
+                      </span>
+                      <Select
+                        label="Mover Estágio no Funil"
+                        value={editStageId}
+                        onChange={(e) => handleMoveStage(e.target.value)}
+                        options={rawStages.map((s) => ({ value: String(s.id), label: s.name }))}
+                      />
+                      <div className="grid grid-cols-1 gap-2 pt-1">
+                        <Button
+                          type="button"
+                          variant="default"
+                          size="sm"
+                          onClick={() => handleQuickApproveDiscount()}
+                          disabled={savingDrawer}
+                          className="w-full gap-1.5"
+                        >
+                          <BadgeCheck className="h-4 w-4" />
+                          Aprovação Rápida de Desconto (1-Clique)
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          onClick={handleApproveCredit}
+                          disabled={savingDrawer}
+                          className="w-full gap-1.5"
+                        >
+                          <ShieldCheck className="h-4 w-4 text-status-success" />
+                          Aprovar Limite de Crédito
+                        </Button>
+                      </div>
+                    </div>
 
-              <div className="p-3 rounded-lg border border-border space-y-3">
-                <span className="font-semibold uppercase text-text-secondary block">Teleconsulta e Copiloto de Reunião</span>
-                <GranolaCopilotCard dealId={String(selectedDeal.id)} onApplySuccess={() => refetchDeals()} />
-              </div>
+                    {/* Bloco de Ações Comerciais Rápidas */}
+                    <div className="p-4 rounded-xl border border-border bg-surface-card space-y-2.5 shadow-2xs">
+                      <span className="font-semibold uppercase text-text-secondary block">
+                        Ações Comerciais & Logísticas
+                      </span>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={handleGenerateProposalPdf}
+                        disabled={generatingPdf}
+                        className="w-full gap-1.5"
+                      >
+                        <FileDown className="h-4 w-4 text-brand-primary" />
+                        {generatingPdf ? "Gerando Proposta..." : "Gerar Proposta Comercial PDF"}
+                      </Button>
+                      {showDentgoDispatch && (
+                        <Button
+                          type="button"
+                          variant="default"
+                          size="sm"
+                          onClick={handleDispatchDentgo}
+                          disabled={dispatching}
+                          className="w-full gap-1.5"
+                        >
+                          <Truck className="h-4 w-4" />
+                          {dispatching ? "Despachando..." : "Despachar com DENTGO (45 min)"}
+                        </Button>
+                      )}
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => setShowDealVideoModal(true)}
+                        className="w-full gap-1.5"
+                      >
+                        <Video className="h-4 w-4 text-brand-primary" />
+                        Abrir Vídeo SOS / Sala LiveKit
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ABA 2: Catálogo ANVISA & Itens */}
+              {dealModalTab === "catalog" && (
+                <div className="space-y-4">
+                  <div className="p-4 rounded-xl border border-border bg-surface-card space-y-4 shadow-2xs">
+                    <span className="font-semibold uppercase text-text-secondary flex items-center gap-1.5">
+                      <Package className="h-4 w-4 text-brand-primary" />
+                      Adicionar Produtos do Catálogo ANVISA
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+                      <div className="sm:col-span-7">
+                        <Select
+                          label="Produto / SKU Dental"
+                          value={selectedSku}
+                          onChange={(e) => setSelectedSku(e.target.value)}
+                          options={[
+                            { value: "", label: "Selecione um SKU" },
+                            ...catalogProducts.map((p) => ({
+                              value: p.sku,
+                              label: `${p.sku} — ${p.name}`,
+                            })),
+                          ]}
+                        />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className="block text-text-secondary mb-1 font-medium">Qtd</label>
+                        <Input
+                          type="number"
+                          min="1"
+                          value={itemQty}
+                          onChange={(e) => setItemQty(e.target.value)}
+                        />
+                      </div>
+                      <div className="sm:col-span-3">
+                        <Button type="button" variant="outline" size="sm" onClick={handleAddCartLine} disabled={!selectedSku} className="w-full">
+                          Adicionar Item
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Listagem de Itens e Resumo Paginado */}
+                  <div className="p-4 rounded-xl border border-border bg-surface-card space-y-3 shadow-2xs">
+                    <span className="font-semibold uppercase text-text-secondary flex items-center justify-between">
+                      <span>Itens Incluídos na Oportunidade ({cartLines.length})</span>
+                      {cartLines.length > CART_PER_PAGE && (
+                        <span className="text-text-muted text-[11px] font-mono">
+                          Pág. {cartPage}/{Math.ceil(cartLines.length / CART_PER_PAGE)}
+                        </span>
+                      )}
+                    </span>
+
+                    {cartLines.length === 0 ? (
+                      <div className="py-8 text-center text-text-muted border border-dashed border-border rounded-lg">
+                        Nenhum item adicionado ao carrinho desta negociação.
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <div className="divide-y divide-border-subtle rounded-lg border border-border overflow-hidden">
+                          {cartLines.slice((cartPage - 1) * CART_PER_PAGE, cartPage * CART_PER_PAGE).map((l) => (
+                            <div key={l.sku} className="flex items-center justify-between p-3 bg-surface-card hover:bg-surface-bg/50">
+                              <div className="min-w-0 pr-3">
+                                <span className="font-semibold text-text-main block truncate">{l.name}</span>
+                                <span className="text-[11px] text-text-secondary font-mono">SKU: {l.sku} • Qtd: {l.qty} un</span>
+                              </div>
+                              <span className="font-bold text-text-main font-mono shrink-0">
+                                {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(l.qty * l.unitPrice)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Paginação do Carrinho */}
+                        {Math.ceil(cartLines.length / CART_PER_PAGE) > 1 && (
+                          <div className="flex items-center justify-between pt-1 text-xs">
+                            <span className="text-text-muted text-[11px]">
+                              Mostrando {((cartPage - 1) * CART_PER_PAGE) + 1}–{Math.min(cartPage * CART_PER_PAGE, cartLines.length)} de {cartLines.length} itens
+                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                disabled={cartPage <= 1}
+                                onClick={() => setCartPage((p) => Math.max(1, p - 1))}
+                                className="h-6 px-2 text-[11px]"
+                              >
+                                Anterior
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                disabled={cartPage >= Math.ceil(cartLines.length / CART_PER_PAGE)}
+                                onClick={() => setCartPage((p) => Math.min(Math.ceil(cartLines.length / CART_PER_PAGE), p + 1))}
+                                className="h-6 px-2 text-[11px]"
+                              >
+                                Próxima
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-between p-3 rounded-lg bg-surface-bg border border-border-subtle mt-2">
+                          <span className="font-bold text-text-main text-sm">Valor Total do Pedido</span>
+                          <span className="font-extrabold text-base text-brand-primary font-mono">
+                            {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(cartTotal)}
+                          </span>
+                        </div>
+
+                        <Button type="button" size="sm" onClick={handleApplyCartToDealValue} disabled={savingDrawer} className="w-full mt-1">
+                          Atualizar Valor do Negócio com o Total do Carrinho
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* ABA 3: Tarefas Operacionais & Copiloto IA */}
+              {dealModalTab === "copilot" && (
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+                  {/* Checklist de Tarefas Paginado (Zero Scroll Vertical) */}
+                  <div className="lg:col-span-5 p-4 rounded-xl border border-border bg-surface-card space-y-3 shadow-2xs">
+                    <span className="font-semibold uppercase text-text-secondary flex items-center justify-between">
+                      <span>Tarefas Operacionais ({tasks.length})</span>
+                      {Math.ceil(tasks.length / TASKS_PER_PAGE) > 1 && (
+                        <span className="text-text-muted text-[11px] font-mono">
+                          Pág. {tasksPage}/{Math.ceil(tasks.length / TASKS_PER_PAGE)}
+                        </span>
+                      )}
+                    </span>
+                    <form onSubmit={handleCreateTask} className="flex gap-2">
+                      <Input value={newTaskTitle} onChange={(e) => setNewTaskTitle(e.target.value)} placeholder="Nova tarefa..." />
+                      <Button type="submit" size="sm" variant="outline" className="shrink-0">
+                        Adicionar
+                      </Button>
+                    </form>
+                    <div className="divide-y divide-border-subtle rounded-lg border border-border overflow-hidden">
+                      {tasks.length === 0 ? (
+                        <p className="text-text-muted py-6 text-center text-xs">Nenhuma tarefa pendente.</p>
+                      ) : (
+                        tasks.slice((tasksPage - 1) * TASKS_PER_PAGE, tasksPage * TASKS_PER_PAGE).map((t) => {
+                          const isDone = Boolean(t.completed);
+                          return (
+                            <button
+                              key={t.id}
+                              type="button"
+                              onClick={() => handleToggleTask(t)}
+                              className="w-full py-2.5 flex items-center justify-between text-left hover:bg-surface-bg px-2.5 transition bg-surface-card"
+                            >
+                              <div className="flex items-center gap-2 min-w-0 pr-2">
+                                {isDone ? <CheckSquare className="h-4 w-4 text-status-success shrink-0" /> : <Square className="h-4 w-4 text-text-muted shrink-0" />}
+                                <span className={isDone ? "line-through text-text-muted truncate text-xs" : "text-text-main truncate text-xs"}>{t.title}</span>
+                              </div>
+                              <Badge variant="secondary" className="text-[10px] shrink-0 font-mono">{t.due_date}</Badge>
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
+
+                    {/* Controles de Paginação de Tarefas */}
+                    {Math.ceil(tasks.length / TASKS_PER_PAGE) > 1 && (
+                      <div className="flex items-center justify-between pt-1 border-t border-border-subtle text-xs">
+                        <span className="text-text-muted text-[11px]">
+                          {tasks.filter((t) => !t.completed).length} pendentes
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            disabled={tasksPage <= 1}
+                            onClick={() => setTasksPage((p) => Math.max(1, p - 1))}
+                            className="h-6 px-2 text-[11px]"
+                          >
+                            Anterior
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            disabled={tasksPage >= Math.ceil(tasks.length / TASKS_PER_PAGE)}
+                            onClick={() => setTasksPage((p) => Math.min(Math.ceil(tasks.length / TASKS_PER_PAGE), p + 1))}
+                            className="h-6 px-2 text-[11px]"
+                          >
+                            Próxima
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Copiloto de IA */}
+                  <div className="lg:col-span-7 p-4 rounded-xl border border-border bg-surface-card space-y-3 shadow-2xs min-w-0">
+                    <span className="font-semibold uppercase text-text-secondary block">
+                      Copiloto IA & Transcrição de Reunião
+                    </span>
+                    <GranolaCopilotCard dealId={String(selectedDeal.id)} onApplySuccess={() => refetchDeals()} />
+                  </div>
+                </div>
+              )}
+
+              {/* ABA 4: Linha do Tempo Auditável Paginada (Zero Scroll Vertical) */}
+              {dealModalTab === "timeline" && (
+                <div className="p-4 rounded-xl border border-border bg-surface-card space-y-3 shadow-2xs">
+                  <div className="flex items-center justify-between pb-1 border-b border-border-subtle">
+                    <span className="font-semibold uppercase text-text-secondary flex items-center gap-1.5">
+                      <Clock className="h-4 w-4 text-brand-primary" />
+                      Histórico Auditável ({timeline.length} eventos)
+                    </span>
+                    {Math.ceil(timeline.length / TIMELINE_PER_PAGE) > 1 && (
+                      <span className="text-text-muted text-[11px] font-mono">
+                        Página {timelinePage} de {Math.ceil(timeline.length / TIMELINE_PER_PAGE)}
+                      </span>
+                    )}
+                  </div>
+
+                  {timeline.length === 0 ? (
+                    <p className="text-text-muted py-8 text-center text-xs">Nenhum evento registrado para este negócio.</p>
+                  ) : (
+                    <div className="space-y-2.5">
+                      {timeline.slice((timelinePage - 1) * TIMELINE_PER_PAGE, timelinePage * TIMELINE_PER_PAGE).map((ev, idx) => (
+                        <div key={ev.id ?? idx} className="p-3 rounded-lg bg-surface-bg border border-border-subtle hover:border-brand-primary/30 transition">
+                          <div className="flex justify-between items-center font-medium text-text-main mb-1">
+                            <span className="font-semibold text-xs">{ev.action || ev.event_type || "Evento"}</span>
+                            <span className="text-[10px] text-text-muted font-mono">{ev.created_at || ev.timestamp || ""}</span>
+                          </div>
+                          <p className="text-text-secondary text-xs">{ev.description || ev.details || ""}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Controles de Paginação da Linha do Tempo */}
+                  {Math.ceil(timeline.length / TIMELINE_PER_PAGE) > 1 && (
+                    <div className="flex items-center justify-between pt-2 border-t border-border-subtle text-xs">
+                      <span className="text-text-muted text-[11px]">
+                        Eventos {((timelinePage - 1) * TIMELINE_PER_PAGE) + 1}–{Math.min(timelinePage * TIMELINE_PER_PAGE, timeline.length)} de {timeline.length}
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={timelinePage <= 1}
+                          onClick={() => setTimelinePage((p) => Math.max(1, p - 1))}
+                          className="h-6 px-2 text-[11px]"
+                        >
+                          Anterior
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={timelinePage >= Math.ceil(timeline.length / TIMELINE_PER_PAGE)}
+                          onClick={() => setTimelinePage((p) => Math.min(Math.ceil(timeline.length / TIMELINE_PER_PAGE), p + 1))}
+                          className="h-6 px-2 text-[11px]"
+                        >
+                          Próxima
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Modal do LiveKit mantido */}
               <LiveKitDealRoomModal
                 isOpen={showDealVideoModal}
                 onClose={() => setShowDealVideoModal(false)}
@@ -1069,96 +1368,9 @@ export const DealsWorkspace: React.FC<DealsWorkspaceProps> = ({ currentUserId })
                 dealTitle={selectedDeal.title}
                 contactName={selectedDeal.contact_name}
               />
-
-              <div className="p-3 rounded-lg border border-border space-y-3">
-                <span className="font-semibold uppercase text-text-secondary block">Edição Inline da Oportunidade</span>
-                <div>
-                  <label className="block text-text-secondary mb-1">Título</label>
-                  <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="block text-text-secondary mb-1">Valor (R$)</label>
-                    <Input type="number" value={editValue} onChange={(e) => setEditValue(e.target.value)} />
-                  </div>
-                  <Select
-                    label="Prioridade"
-                    value={editPriority}
-                    onChange={(e) => setEditPriority(e.target.value)}
-                    options={[
-                      { value: "alta", label: "Alta" },
-                      { value: "media", label: "Média" },
-                      { value: "baixa", label: "Baixa" },
-                    ]}
-                  />
-                </div>
-                <div>
-                  <label className="block text-text-secondary mb-1">Previsão de Fechamento</label>
-                  <Input type="date" value={editCloseDate} onChange={(e) => setEditCloseDate(e.target.value)} />
-                </div>
-                <div>
-                  <label className="block text-text-secondary mb-1">Nota de Auditoria</label>
-                  <Input value={editComment} onChange={(e) => setEditComment(e.target.value)} placeholder="Motivo da revisão comercial..." />
-                </div>
-                <Button type="button" size="sm" onClick={handleUpdateDealInline} disabled={savingDrawer} className="w-full gap-1.5">
-                  <Save className="h-3.5 w-3.5" />
-                  {savingDrawer ? "Salvando..." : "Salvar Alterações Inline"}
-                </Button>
-              </div>
-
-              <div className="p-3 rounded-lg border border-border space-y-3">
-                <span className="font-semibold uppercase text-text-secondary block">Checklist de Tarefas Operacionais</span>
-                <form onSubmit={handleCreateTask} className="flex gap-2">
-                  <Input value={newTaskTitle} onChange={(e) => setNewTaskTitle(e.target.value)} placeholder="Nova tarefa..." />
-                  <Button type="submit" size="sm" variant="outline">
-                    Adicionar
-                  </Button>
-                </form>
-                <div className="divide-y divide-border-subtle max-h-40 overflow-y-auto">
-                  {tasks.slice(0, 8).map((t) => {
-                    const isDone = Boolean(t.completed);
-                    return (
-                      <button
-                        key={t.id}
-                        type="button"
-                        onClick={() => handleToggleTask(t)}
-                        className="w-full py-2 flex items-center justify-between text-left hover:bg-surface-bg px-1 rounded"
-                      >
-                        <div className="flex items-center gap-2 min-w-0">
-                          {isDone ? <CheckSquare className="h-4 w-4 text-status-success shrink-0" /> : <Square className="h-4 w-4 text-text-muted shrink-0" />}
-                          <span className={isDone ? "line-through text-text-muted truncate" : "text-text-main truncate"}>{t.title}</span>
-                        </div>
-                        <Badge variant="secondary" className="text-[10px] shrink-0">{t.due_date}</Badge>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="p-3 rounded-lg border border-border space-y-2">
-                <span className="font-semibold uppercase text-text-secondary flex items-center gap-1.5">
-                  <Clock className="h-3.5 w-3.5" />
-                  Linha do Tempo Auditável
-                </span>
-                {timeline.length === 0 ? (
-                  <p className="text-text-muted py-2">Nenhum evento registrado para este negócio.</p>
-                ) : (
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {timeline.map((ev, idx) => (
-                      <div key={ev.id ?? idx} className="p-2 rounded bg-surface-bg border border-border-subtle">
-                        <div className="flex justify-between font-medium text-text-main">
-                          <span>{ev.action || ev.event_type || "Evento"}</span>
-                          <span className="text-[10px] text-text-muted">{ev.created_at || ev.timestamp || ""}</span>
-                        </div>
-                        <p className="text-text-secondary mt-0.5">{ev.description || ev.details || ""}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
             </div>
           )}
-        </Sheet>
+        </Dialog>
       </div>
     </ErrorBoundary>
   );

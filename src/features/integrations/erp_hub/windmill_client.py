@@ -50,7 +50,7 @@ def _build_danfe_pdf_bytes(inv: Dict[str, Any]) -> bytes:
         f"Implantes e Componentes Proteticos Odontologicos - Registro ANVISA",
         f"VALOR TOTAL DA NOTA FISCAL: R$ {float(inv.get('total_invoice_value', 0.0)):.2f}",
         "--------------------------------------------------------------------------------",
-        "EMISSAO ELETRONICA HOMOLOGADA - SEFAZ / REVNAULT FISCAL HUB v4.0",
+        "EMISSAO ELETRONICA HOMOLOGADA - SEFAZ / RevNault FISCAL HUB v4.0",
     ]
     ops = []
     y = 750

@@ -197,8 +197,14 @@ const DeliverySignaturePad: React.FC<{
   );
 };
 
-export const DentgoExpressCockpit: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<string>("orders");
+export interface DentgoExpressCockpitProps {
+  initialTab?: string;
+}
+
+export const DentgoExpressCockpit: React.FC<DentgoExpressCockpitProps> = ({
+  initialTab = "orders",
+}) => {
+  const [activeTab, setActiveTab] = useState<string>(initialTab);
 
   // Tab 1: Orders
   // TICKET-DENTGO-02: Notificar Cirurgião por SMS
@@ -697,7 +703,7 @@ export const DentgoExpressCockpit: React.FC = () => {
   };
 
   return (
-    <div className="w-full space-y-6 font-sans text-text-main">
+    <div className="space-y-6 max-w-7xl mx-auto">
       <RouteHeader
         title="Entrega Rápida (45 min) • Logística e Despacho Cirúrgico"
         description="Despacho prioritário, busca de estoque mais próximo, ofertas de lotes e controle de entregas."
@@ -727,7 +733,7 @@ export const DentgoExpressCockpit: React.FC = () => {
       />
 
       {/* Tabs */}
-      <Tabs tabs={tabsConfig} activeTab={activeTab} onChange={setActiveTab} />
+      <Tabs tabs={tabsConfig} activeTab={activeTab} onChange={setActiveTab} hideOnDesktop />
 
       {/* TAB 1: Despacho Same-Day & 6 Estágios */}
       {activeTab === "orders" && (
@@ -1499,7 +1505,7 @@ export const DentgoExpressCockpit: React.FC = () => {
       {/* MODAL: Checkout Novo Pedido Emergencial */}
       {showCheckoutModal && (
         <div className="fixed inset-0 bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0 flex items-center justify-center p-4 z-50">
-          <div className="bg-surface-card border border-border rounded-xl max-w-lg w-full p-6 shadow-modal space-y-4">
+          <div className="bg-surface-card border border-border rounded-2xl max-w-2xl w-full p-5 sm:p-7 shadow-modal space-y-4 max-h-[85vh] overflow-y-auto animate-in fade-in-0 zoom-in-95">
             <div className="flex justify-between items-center pb-3 border-b border-border">
               <h3 className="text-base font-bold text-text-main">+ Novo Despacho Emergencial (Same-Day)</h3>
               <button onClick={() => setShowCheckoutModal(false)} className="text-text-secondary hover:text-text-main">
@@ -1636,7 +1642,7 @@ export const DentgoExpressCockpit: React.FC = () => {
       {/* MODAL: Novo Hub */}
       {showHubModal && (
         <div className="fixed inset-0 bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0 flex items-center justify-center p-4 z-50">
-          <div className="bg-surface-card border border-border rounded-xl max-w-md w-full p-6 shadow-modal space-y-4">
+          <div className="bg-surface-card border border-border rounded-2xl max-w-xl w-full p-5 sm:p-7 shadow-modal space-y-4 max-h-[85vh] overflow-y-auto animate-in fade-in-0 zoom-in-95">
             <div className="flex justify-between items-center pb-3 border-b border-border">
               <h3 className="text-base font-bold text-text-main">+ Cadastrar Hub Urbano</h3>
               <button onClick={() => setShowHubModal(false)} className="text-text-secondary hover:text-text-main">
@@ -1709,7 +1715,7 @@ export const DentgoExpressCockpit: React.FC = () => {
       {/* MODAL: Abastecer Estoque no Hub */}
       {showInventoryModal && (
         <div className="fixed inset-0 bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0 flex items-center justify-center p-4 z-50">
-          <div className="bg-surface-card border border-border rounded-xl max-w-md w-full p-6 shadow-modal space-y-4">
+          <div className="bg-surface-card border border-border rounded-2xl max-w-xl w-full p-5 sm:p-7 shadow-modal space-y-4 max-h-[85vh] overflow-y-auto animate-in fade-in-0 zoom-in-95">
             <div className="flex justify-between items-center pb-3 border-b border-border">
               <h3 className="text-base font-bold text-text-main">+ Abastecer Lote no Hub</h3>
               <button onClick={() => setShowInventoryModal(false)} className="text-text-secondary hover:text-text-main">
@@ -1816,7 +1822,7 @@ export const DentgoExpressCockpit: React.FC = () => {
       {/* MODAL: Reservar Flash Deal */}
       {selectedFefoDeal && (
         <div className="fixed inset-0 bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0 flex items-center justify-center p-4 z-50">
-          <div className="bg-surface-card border border-border rounded-xl max-w-md w-full p-6 shadow-modal space-y-4">
+          <div className="bg-surface-card border border-border rounded-2xl max-w-xl w-full p-5 sm:p-7 shadow-modal space-y-4 max-h-[85vh] overflow-y-auto animate-in fade-in-0 zoom-in-95">
             <div className="flex justify-between items-center pb-3 border-b border-border">
               <h3 className="text-base font-bold text-text-main">
                 Reservar Lote Flash Deal ({selectedFefoDeal.discount_percentage}% OFF)

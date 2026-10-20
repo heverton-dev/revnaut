@@ -264,7 +264,7 @@ def execute_wal_backup(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="SQLite WAL Checkpoint and R2/S3 Backup")
-    parser.add_argument("--db", default=os.getenv("SQLITE_PATH", "data/revnaut.db"), help="Caminho do arquivo SQLite")
+    parser.add_argument("--db", default=os.getenv("SQLITE_PATH", "data/revnault.db"), help="Caminho do arquivo SQLite")
     parser.add_argument("--bucket", default=os.getenv("R2_BUCKET_NAME", "revnaut-wal-backups"), help="Nome do bucket R2/S3")
     parser.add_argument("--output-dir", default=None, help="Diretorio local para salvar snapshot")
     parser.add_argument("--no-compress", action="store_true", help="Nao comprimir o snapshot com gzip")

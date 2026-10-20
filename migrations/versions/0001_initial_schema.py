@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Initial REVNAULT schema migration covering core and domain tables.
+"""Initial RevNault schema migration covering core and domain tables.
 
 Revision ID: 0001_initial_schema
 Revises: None

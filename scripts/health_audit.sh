@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# RevNaut Production Cluster Health & Hardening Audit Script
+# RevNault Production Cluster Health & Hardening Audit Script
 # Validação determinística de infraestrutura em produção (Docker / VPS / R2)
 # Conformidade estrita com a Lei #14 (Zero Emojis).
 # ==============================================================================
@@ -30,7 +30,7 @@ log_warn() {
 }
 
 echo "=============================================================================="
-echo "Iniciando Auditoria de Seguranca e Saude do Cluster RevNaut"
+echo "Iniciando Auditoria de Seguranca e Saude do Cluster RevNault"
 echo "Data/Hora UTC: $(date -u '+%Y-%m-%d %H:%M:%SZ')"
 echo "=============================================================================="
 

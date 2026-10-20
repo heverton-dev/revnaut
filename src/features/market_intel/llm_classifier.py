@@ -208,7 +208,7 @@ def build_tactical_summary(competitor_name: str, offers: List[Dict[str, Any]]) -
     if not offers:
         return (
             f"{competitor_name}: nenhuma oferta de preco detectada nesta captura. Manter monitoramento passivo "
-            "de lancamentos e conteudo clinico; reforcar com consultores o pacote de valor REVNAULT "
+            "de lancamentos e conteudo clinico; reforcar com consultores o pacote de valor RevNault "
             "(garantia ANVISA com rastreabilidade UDI, entrega DENTGO em 45 min e suporte cirurgico)."
         )
     top = max(offers, key=lambda o: (_discount_value(str(o.get("discount", "0%"))), -float(o.get("price", 0.0))))

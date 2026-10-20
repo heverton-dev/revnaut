@@ -6,7 +6,7 @@ import os
 ZONE_ID = os.environ.get("CLOUDFLARE_ZONE_ID", "")
 TOKEN = os.environ.get("CLOUDFLARE_API_TOKEN", "")
 VPS_IP = os.environ.get("VPS_HOST", "127.0.0.1")
-SUBDOMAINS = ["revnaut.vpsconexao.org", "rvops.vpsconexao.org"]
+SUBDOMAINS = ["revnault.vpsconexao.org"]
 
 def setup_dns():
     for sub in SUBDOMAINS:

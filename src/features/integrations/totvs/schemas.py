@@ -35,7 +35,7 @@ class TotvsOrderSC5(BaseModel):
     C5_CONDPAG: str = Field(default="001", description="Condição de pagamento no ERP")
     C5_VEND1: Optional[str] = Field(None, description="Código do consultor/vendedor responsável")
     C5_TOTAL: float = Field(..., gt=0, description="Valor total do pedido em R$")
-    deal_id: Optional[str] = Field(None, description="ID do negócio de origem no Revnaut")
+    deal_id: Optional[str] = Field(None, description="ID do negócio de origem no RevNault")
     idempotency_key: str = Field(..., description="Chave única de idempotência para evitar duplicidade")
     items: List[TotvsOrderItemSC6] = Field(..., min_length=1, description="Lista de itens do pedido (SC6)")
 

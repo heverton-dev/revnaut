@@ -4,7 +4,7 @@
 - **Rota Auditada:** `https://revnault.vpsconexao.org/#!/dashboard`
 - **Identificador / Slug:** `dashboard`
 - **Classificação:** Frontend SPA View (Single Page Application com Hashbang Router)
-- **Modo do Componente:** Cockpit Executivo RevOps (`mode="executive_cockpit"`)
+- **Modo do Componente:** Cockpit Executivo RevNault (`mode="executive_cockpit"`)
 - **Fatia Vertical de Frontend:** `frontend/src/features/bi/SupersetEmbeddedDashboard.tsx`
 - **Motores de Backend Vinculados:** `intelligence`, `deals`, `campaigns`, `storage R2`, `SQLite WAL`
 

@@ -36,7 +36,7 @@ def webhook_studio():
     <html lang="pt-BR">
     <head>
       <meta charset="UTF-8">
-      <title>Revnaut • Webhook Studio</title>
+      <title>RevNault • Webhook Studio</title>
       <link rel="icon" type="image/svg+xml" href="/favicon.svg">
       <link rel="alternate icon" href="/favicon.ico">
       <link rel="preconnect" href="https://fonts.googleapis.com">

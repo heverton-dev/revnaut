@@ -560,7 +560,7 @@ export const LiveKitDealRoomModal: React.FC<LiveKitDealRoomModalProps> = ({
         body: JSON.stringify({
           room_name: `deal-${selectedDealId}`,
           identity: "consultant_current",
-          name: "Consultor Especialista Revnaut",
+          name: "Consultor Especialista RevNault",
           deal_id: selectedDealId,
         }),
       });

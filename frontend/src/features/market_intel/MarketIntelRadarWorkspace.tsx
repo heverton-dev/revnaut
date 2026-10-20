@@ -442,7 +442,7 @@ export const MarketIntelRadarWorkspace: React.FC<MarketIntelRadarWorkspaceProps>
         </div>
       )}
 
-      <Tabs tabs={tabs} activeTab={activeTab} onChange={(id) => setActiveTab(id as TabId)} />
+      <Tabs tabs={tabs} activeTab={activeTab} onChange={(id) => setActiveTab(id as TabId)} hideOnDesktop />
 
       {activeTab === "signals" && (
         <div className="space-y-3">
@@ -811,6 +811,7 @@ export const MarketIntelRadarWorkspace: React.FC<MarketIntelRadarWorkspaceProps>
       <Dialog
         isOpen={showCompetitorModal}
         onClose={() => setShowCompetitorModal(false)}
+        size="form"
         title="Registrar concorrente na fila passiva"
         description="O domínio entra no lote noturno (01:00-05:00 UTC). Nenhuma coleta é executada agora."
       >

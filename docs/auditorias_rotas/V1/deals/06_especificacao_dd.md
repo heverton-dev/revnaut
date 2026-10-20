@@ -4,7 +4,7 @@
 
 ```gherkin
 Funcionalidade: Gestão do Funil de Negociações Cirúrgicas
-  Como Consultor Comercial ou Gestor de RevOps
+  Como Consultor Comercial ou Gestor de RevNault
   Eu quero visualizar e movimentar as oportunidades de venda de implantes
   Para acompanhar a evolução dos negócios desde a qualificação até o fechamento ganho
 

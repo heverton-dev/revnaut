@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { Select } from "@/components/ui/Select";
+import { Dialog } from "@/components/ui/Dialog";
 import {
   MessageSquare,
   Send,
@@ -20,7 +21,6 @@ import {
   Paperclip,
   QrCode,
   PhoneCall,
-  X,
   Briefcase,
   ArrowRightLeft,
 } from "lucide-react";
@@ -29,6 +29,7 @@ import { R2DirectUploader } from "@/components/shared/R2DirectUploader";
 
 export interface OmnichannelWorkspaceProps {
   onOpenSosVideo?: (croUf: string) => void;
+  initialTab?: string;
 }
 
 interface ConversationItem {
@@ -72,12 +73,15 @@ interface WhatsappInstance {
 
 export const OmnichannelWorkspace: React.FC<OmnichannelWorkspaceProps> = ({
   onOpenSosVideo,
+  initialTab,
 }) => {
   const queryClient = useQueryClient();
   const [selectedChatId, setSelectedChatId] = React.useState<string>("chat-1");
   const [selectedContactId, setSelectedContactId] = React.useState<number | null>(null);
   const [messageText, setMessageText] = React.useState<string>("");
-  const [activeTabCol1, setActiveTabCol1] = React.useState<"chats" | "contacts" | "instances">("chats");
+  const [activeTabCol1, setActiveTabCol1] = React.useState<"chats" | "contacts" | "instances">(
+    (initialTab as "chats" | "contacts" | "instances") || "chats"
+  );
   const [newInstanceName, setNewInstanceName] = React.useState<string>("");
   const [newInstancePhone, setNewInstancePhone] = React.useState<string>("");
   const [consultantId, setConsultantId] = React.useState<string>("usr-sp-01");
@@ -321,7 +325,7 @@ export const OmnichannelWorkspace: React.FC<OmnichannelWorkspaceProps> = ({
   );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6 max-w-7xl mx-auto">
       <RouteHeader
         title="Central Omnichannel & Shards Evolution API"
         description="Mensageria multicanal unificada com distribuição de carga entre shards Evolution API e contexto cirúrgico 360°."
@@ -775,59 +779,47 @@ export const OmnichannelWorkspace: React.FC<OmnichannelWorkspaceProps> = ({
         </div>
       </div>
 
-      {qrInstance && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0 p-4">
-          <Card className="w-full max-w-sm p-5 bg-surface-card border border-border space-y-3 shadow-xl">
-            <div className="flex items-center justify-between border-b border-border pb-2.5">
-              <h3 className="text-sm font-bold text-text-main">QR Code: {qrInstance.instance_name}</h3>
-              <button
-                type="button"
-                aria-label="Fechar QR Code"
-                onClick={() => setQrInstance(null)}
-                className="text-text-muted hover:text-text-main"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="flex justify-center">
-              {qrInstance.qr_code_base64 ? (
-                <img
-                  src={
-                    qrInstance.qr_code_base64.startsWith("data:")
-                      ? qrInstance.qr_code_base64
-                      : `data:image/png;base64,${qrInstance.qr_code_base64}`
-                  }
-                  alt={`QR Code da instância ${qrInstance.instance_name}`}
-                  className="w-56 h-56"
-                />
-              ) : (
-                <QrCodeSvg value={`evolution://pair/${qrInstance.instance_name}`} size={224} />
-              )}
-            </div>
-            <p className="text-[11px] text-text-secondary text-center">
-              WhatsApp &gt; Aparelhos conectados &gt; Conectar um aparelho e aponte a câmera para o código.
-            </p>
-          </Card>
+      {/* Modal QR Code Padronizado */}
+      <Dialog
+        isOpen={Boolean(qrInstance)}
+        onClose={() => setQrInstance(null)}
+        size="confirm"
+        title={`QR Code: ${qrInstance?.instance_name || ""}`}
+        description="Aponte a câmera no WhatsApp > Aparelhos conectados para parear a instância."
+      >
+        <div className="space-y-4">
+          <div className="flex justify-center p-3 bg-surface-bg rounded-xl border border-border-subtle">
+            {qrInstance?.qr_code_base64 ? (
+              <img
+                src={
+                  qrInstance.qr_code_base64.startsWith("data:")
+                    ? qrInstance.qr_code_base64
+                    : `data:image/png;base64,${qrInstance.qr_code_base64}`
+                }
+                alt={`QR Code da instância ${qrInstance.instance_name}`}
+                className="w-56 h-56"
+              />
+            ) : qrInstance ? (
+              <QrCodeSvg value={`evolution://pair/${qrInstance.instance_name}`} size={224} />
+            ) : null}
+          </div>
+          <div className="flex justify-end">
+            <Button variant="outline" size="sm" onClick={() => setQrInstance(null)}>
+              Fechar
+            </Button>
+          </div>
         </div>
-      )}
+      </Dialog>
 
-      {/* Modal / Criação de Instância WhatsApp */}
-      {showInstanceModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <Card className="w-full max-w-md p-5 bg-surface-card border border-border space-y-4 shadow-xl">
-            <div className="flex items-center justify-between border-b border-border pb-2.5">
-              <h3 className="text-sm font-bold text-text-main flex items-center gap-2">
-                <Smartphone className="h-4 w-4 text-brand-primary" />
-                Nova Instância Evolution API
-              </h3>
-              <button
-                onClick={() => setShowInstanceModal(false)}
-                className="text-text-muted hover:text-text-main text-sm"
-              >
-                X
-              </button>
-            </div>
-            <div className="space-y-3">
+      {/* Modal Criação de Instância WhatsApp Padronizado */}
+      <Dialog
+        isOpen={showInstanceModal}
+        onClose={() => setShowInstanceModal(false)}
+        size="form"
+        title="Nova Instância Evolution API"
+        description="Provisiona um container isolado para comunicação WhatsApp integrada."
+      >
+        <div className="space-y-3">
               <div>
                 <label className="text-xs font-semibold text-text-secondary block mb-1">
                   Nome da Instância (Slug Único)
@@ -861,27 +853,25 @@ export const OmnichannelWorkspace: React.FC<OmnichannelWorkspaceProps> = ({
                   className="text-xs"
                 />
               </div>
-            </div>
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowInstanceModal(false)}
-              >
-                Cancelar
-              </Button>
-              <Button
-                variant="default"
-                size="sm"
-                onClick={() => createInstanceMutation.mutate()}
-                disabled={!newInstanceName.trim() || createInstanceMutation.isPending}
-              >
-                {createInstanceMutation.isPending ? "Provisionando..." : "Provisionar Shard"}
-              </Button>
-            </div>
-          </Card>
         </div>
-      )}
+        <div className="flex items-center justify-end gap-2 pt-3 border-t border-border-subtle">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowInstanceModal(false)}
+          >
+            Cancelar
+          </Button>
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => createInstanceMutation.mutate()}
+            disabled={!newInstanceName.trim() || createInstanceMutation.isPending}
+          >
+            {createInstanceMutation.isPending ? "Provisionando..." : "Provisionar Shard"}
+          </Button>
+        </div>
+      </Dialog>
     </div>
   );
 };

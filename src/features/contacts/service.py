@@ -428,7 +428,7 @@ def get_contact_timeline(contact_id: int) -> List[Dict[str, Any]]:
                 "id": f"seed-4-{contact_id}",
                 "contact_id": contact_id,
                 "user_id": "system",
-                "author_name": "Motor de Scoring RevOps",
+                "author_name": "Motor de Scoring RevNault",
                 "action": "Cálculo ICP Score Concluído",
                 "old_value": "0 pts",
                 "new_value": f"{score} pts",

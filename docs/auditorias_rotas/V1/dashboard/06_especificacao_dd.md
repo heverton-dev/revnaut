@@ -3,8 +3,8 @@
 ## 1. Especificação BDD (Behavior-Driven Development) em Gherkin
 
 ```gherkin
-Funcionalidade: Cockpit Executivo RevOps e Indicadores Vitais da Carteira
-  Como Diretor Comercial ou Gestor de RevOps
+Funcionalidade: Cockpit Executivo RevNault e Indicadores Vitais da Carteira
+  Como Diretor Comercial ou Gestor de RevNault
   Eu quero acessar o dashboard consolidado
   Para monitorar a receita de vendas, ROAS de mídia e saúde da carteira de cirurgiões
 

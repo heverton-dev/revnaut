@@ -96,7 +96,7 @@ def test_quarteto_swagger_studio():
     res_openapi = client.get("/openapi.json")
     assert res_openapi.status_code == 200
     schema = res_openapi.json()
-    assert schema["info"]["title"] == "Revnaut Enterprise API & Engine"
+    assert schema["info"]["title"] == "RevNault Enterprise API & Engine"
 
 
 def test_quarteto_webhook_studio():
@@ -142,7 +142,7 @@ def test_frontend_and_assets_delivery():
     """Verifica entrega do frontend raiz e assets CSS/JS."""
     res_root = client.get("/")
     assert res_root.status_code == 200
-    assert "Revnaut Dental Ops" in res_root.text or "Revnaut" in res_root.text
+    assert "RevNault Dental Ops" in res_root.text or "RevNault" in res_root.text
 
 
     res_css = client.get("/css/tokens.css")
@@ -151,7 +151,7 @@ def test_frontend_and_assets_delivery():
 
     res_js = client.get("/js/app.js")
     assert res_js.status_code == 200
-    assert "window.RVOPS_DATA" in res_js.text
+    assert "window.REVNAULT_DATA" in res_js.text
 
 
 def test_tickets_api_crud():
@@ -382,7 +382,7 @@ def test_institutions_api_crud():
 
 
 def test_dental_specialized_pipelines():
-    """Valida se os funis de vendas estao especializados para a industria odontologica e revops puro."""
+    """Valida se os funis de vendas estao especializados para a industria odontologica e revnault puro."""
     conn = get_connection()
     cur = conn.cursor()
     cur.execute("SELECT name FROM pipelines ORDER BY id")

@@ -8,7 +8,7 @@ ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 ssh.connect(host, port=int(os.environ.get("VPS_PORT", 22)), username=os.environ.get("VPS_USER", "root"), password=password, timeout=10)
 
 cmd = """
-CID=$(docker ps -q -f name=rvops_app.1)
+CID=$(docker ps -q -f name=revnault_app.1)
 docker exec $CID grep -F "uvicorn.run" /app/run_server.py
 """
 stdin, stdout, stderr = ssh.exec_command(cmd)

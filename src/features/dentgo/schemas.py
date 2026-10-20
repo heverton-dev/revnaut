@@ -191,7 +191,7 @@ class ReplenishmentOrderResponse(BaseModel):
 
 
 class FinancialSplitRequest(BaseModel):
-    platform_take_rate_pct: float = Field(default=5.0, ge=1.0, le=30.0, description="Percentual de comissão da plataforma REVNAULT (ex: 5.0%)")
+    platform_take_rate_pct: float = Field(default=5.0, ge=1.0, le=30.0, description="Percentual de comissão da plataforma RevNault (ex: 5.0%)")
     payment_method: str = Field(default="PIX_INSTANT", description="Método de pagamento: PIX_INSTANT ou CORPORATE_CREDIT")
     agreement_id: Optional[str] = Field(default=None, description="ID do acordo KeyPartners para faturamento corporativo quinzenal")
     account_id: Optional[str] = Field(default="0f14ffff", description="ID da conta tenant")

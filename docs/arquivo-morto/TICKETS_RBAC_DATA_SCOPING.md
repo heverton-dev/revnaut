@@ -33,7 +33,7 @@
 
 ### [TICKET-04] Interface Visual de Organograma e Seletor de Visão de Equipe (UI)
 - **Descrição:** Adição da view `#hierarchy-view` no frontend (`index.html`), permitindo ao Tenant Admin visualizar a árvore corporativa e ao gestor alternar entre visão própria e de subordinados.
-- **Target Files:** `docs/reconstruct_rvops/05_reconstructed_app/index.html`, `tests/test_backend.py`
+- **Target Files:** `docs/reconstruct_revnault/05_reconstructed_app/index.html`, `tests/test_backend.py`
 - **Validation Command:** `python -m pytest tests/test_backend.py -q`
 - **Blocked by:** TICKET-03
 

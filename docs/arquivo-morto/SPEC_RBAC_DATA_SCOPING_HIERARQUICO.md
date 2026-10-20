@@ -10,9 +10,9 @@
 ## 1. Context & Explicit Non-Goals
 
 ### Context
-A plataforma Revnaut Dental Ops atende indústrias odontológicas de diversos portes (desde fabricantes enxutos como Plenum e Titaniumfix até multinacionais como Neodent, Straumann e SIN Implantes). A estrutura corporativa exige:
+A plataforma RevNault Dental Ops atende indústrias odontológicas de diversos portes (desde fabricantes enxutos como Plenum e Titaniumfix até multinacionais como Neodent, Straumann e SIN Implantes). A estrutura corporativa exige:
 - **Super Admin (User God):** Acesso mestre irrestrito à infraestrutura SaaS multi-tenant.
-- **Tenant Admin (RevOps Lead):** Arquiteto corporativo interno da empresa, responsável por criar Divisões (Business Units), Árvore de Equipes (Teams), Cargos (Roles) e convidar usuários.
+- **Tenant Admin (RevNault Lead):** Arquiteto corporativo interno da empresa, responsável por criar Divisões (Business Units), Árvore de Equipes (Teams), Cargos (Roles) e convidar usuários.
 - **Isolamento Hierárquico Aberto (Data Scoping):** Suporte a árvores organizacionais de profundidade arbitrária (`N` níveis) com restrição automática de visibilidade em nível de linha (*Row-Level Security / Territory Management*).
 - **Esteira de 4 Presets Progressivos ("Plug & Play"):** Templates prontos do setor odontológico que geram a estrutura organizacional inicial com 1 clique.
 
@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS teams (
 CREATE TABLE IF NOT EXISTS roles (
     id TEXT PRIMARY KEY,
     account_id TEXT NOT NULL,
-    name TEXT NOT NULL, -- Ex: 'Assessor Cirúrgico', 'Gerente Regional', 'RevOps Lead'
+    name TEXT NOT NULL, -- Ex: 'Assessor Cirúrgico', 'Gerente Regional', 'RevNault Lead'
     description TEXT,
     default_data_scope TEXT NOT NULL, -- 'self', 'team', 'subtree', 'business_unit', 'tenant_global'
     is_admin INTEGER DEFAULT 0,

@@ -1,7 +1,7 @@
 // -*- coding: utf-8 -*-
 /**
  * OmnichannelContextSidebar.tsx
- * Sidebar de Contexto 360° para Chatwoot & Central Omnichannel REVNAULT
+ * Sidebar de Contexto 360° para Chatwoot & Central Omnichannel RevNault
  * Inviolable Law #14: Zero Emojis. Strictly inline SVG icons.
  */
 

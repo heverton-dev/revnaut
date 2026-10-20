@@ -25,7 +25,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 MANUAIS_DIR = REPO_ROOT / "docs" / "manuais"
-INDEX_HTML = REPO_ROOT / "docs" / "reconstruct_rvops" / "05_reconstructed_app" / "index.html"
+INDEX_HTML = REPO_ROOT / "docs" / "reconstruct_revnault" / "05_reconstructed_app" / "index.html"
 
 MANDATORY_SECTIONS = [
     (r"##\s*1\.\s*Objetivo", "1. Objetivo da Rota / Sub-rota"),
@@ -180,7 +180,7 @@ def generate_manual_content(meta: RouteMetadata) -> str:
     content = f"""# Manual da {tipo_rota}: {meta.title} (`/#{meta.route_id}`)
 
 ## 1. Objetivo da Rota / Sub-rota
-Centralizar a operação da tela **{meta.title}** (`/#{meta.route_id}`){parent_note} dentro da arquitetura operacional do Revnaut Dental, assegurando governança estrita, rastreabilidade auditável e controle transacional.
+Centralizar a operação da tela **{meta.title}** (`/#{meta.route_id}`){parent_note} dentro da arquitetura operacional do RevNault Dental, assegurando governança estrita, rastreabilidade auditável e controle transacional.
 
 ---
 

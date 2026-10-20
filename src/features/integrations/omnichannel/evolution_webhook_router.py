@@ -42,7 +42,7 @@ def handle_evolution_event(payload: Dict[str, Any], account_id: str = "0f14ffff"
                 participant_name=phone or "Dr. Cirurgião",
             )
             lk_token = lk_token_data["token"] if isinstance(lk_token_data, dict) else str(lk_token_data)
-            sos_call_link = f"https://meet.revops.local/room/{room_name}?token={lk_token}"
+            sos_call_link = f"https://meet.revnault.local/room/{room_name}?token={lk_token}"
             response_msg = (
                 f"Olá! Identificamos sua chamada de urgência cirúrgica. "
                 f"Para suporte audiovisual imediato com nosso especialista e gravação do caso com IA, "

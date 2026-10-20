@@ -112,7 +112,7 @@ def get_stored_file(file_key: str, download: Optional[bool] = Query(False)):
             elif ext == ".csv":
                 content = b"col1,col2,col3\nval1,val2,val3\n"
             elif ext == ".html":
-                content = b"<!DOCTYPE html><html lang=\"pt-BR\"><head><meta charset=\"UTF-8\"><title>Revnaut Document</title></head><body><h1>Revnaut Document</h1></body></html>"
+                content = b"<!DOCTYPE html><html lang=\"pt-BR\"><head><meta charset=\"UTF-8\"><title>RevNault Document</title></head><body><h1>RevNault Document</h1></body></html>"
             elif ext in [".png", ".jpg", ".jpeg"]:
                 content = b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15c4\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82"
             elif ext in [".webm", ".mp4"]:

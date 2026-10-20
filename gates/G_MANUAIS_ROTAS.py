@@ -44,7 +44,7 @@ def scan(repo_root: Path) -> GateResult:
     repo_root = Path(repo_root)
     errors: list[str] = []
 
-    index_html = repo_root / "docs" / "reconstruct_rvops" / "05_reconstructed_app" / "index.html"
+    index_html = repo_root / "docs" / "reconstruct_revnault" / "05_reconstructed_app" / "index.html"
     manuais_dir = repo_root / "docs" / "manuais"
 
     if not manuais_dir.exists():

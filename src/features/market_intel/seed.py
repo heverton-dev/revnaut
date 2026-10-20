@@ -167,7 +167,7 @@ def seed_market_intel(conn: sqlite3.Connection, account_id: str = SEED_ACCOUNT_I
     cur = conn.cursor()
     acc = cur.execute("SELECT 1 FROM accounts WHERE id = ?", (account_id,)).fetchone()
     if not acc:
-        cur.execute("INSERT OR IGNORE INTO accounts (id, name) VALUES (?, ?)", (account_id, "Revnault Global Dental Group"))
+        cur.execute("INSERT OR IGNORE INTO accounts (id, name) VALUES (?, ?)", (account_id, "RevNault Global Dental Group"))
 
     for pid, sku, name, category, anvisa, platform, diameter, length, torque, price in MARKET_INTEL_CATALOG:
         cur.execute(

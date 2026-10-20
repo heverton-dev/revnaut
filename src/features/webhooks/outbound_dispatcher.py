@@ -106,7 +106,7 @@ def compute_hmac_signature(secret: str, payload_bytes: bytes) -> str:
 
 
 def verify_hmac_signature(secret: str, payload_bytes: bytes, signature_header: str) -> bool:
-    """Verifica se o cabeçalho X-Revnault-Signature bate com o HMAC-SHA256 do payload."""
+    """Verifica se o cabeçalho X-RevNault-Signature bate com o HMAC-SHA256 do payload."""
     expected = compute_hmac_signature(secret, payload_bytes)
     return hmac.compare_digest(expected, signature_header)
 
@@ -333,10 +333,10 @@ class OutboundWebhookDispatcher:
                 data=body_bytes,
                 headers={
                     "Content-Type": "application/json",
-                    "User-Agent": "Revnault-Webhook-Dispatcher/1.0",
-                    "X-Revnault-Signature": signature_header,
-                    "X-Revnault-Event": event_name,
-                    "X-Revnault-Delivery": delivery_id,
+                    "User-Agent": "RevNault-Webhook-Dispatcher/1.0",
+                    "X-RevNault-Signature": signature_header,
+                    "X-RevNault-Event": event_name,
+                    "X-RevNault-Delivery": delivery_id,
                 },
                 method="POST"
             )

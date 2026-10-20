@@ -1,4 +1,4 @@
-# Segurança Operacional da API Revnault
+# Segurança Operacional da API RevNault
 
 ## 1. Autenticação obrigatória
 
@@ -14,7 +14,7 @@ Rotas públicas por desenho (lista fechada em `PUBLIC_ROUTES`):
 | POST | `/api/v1/campaigns/referral/register` (cadastro por link de indicação) |
 
 Regras adicionais:
-- Cookie de sessão `revnaut_session` (HttpOnly, Secure, SameSite=Lax, `Path=/api/v1`) vale apenas para GET/HEAD, para arquivos abertos em `<img>`, `<audio>` e downloads. Métodos que alteram dados exigem o header Bearer.
+- Cookie de sessão `revnault_session` (HttpOnly, Secure, SameSite=Lax, `Path=/api/v1`) vale apenas para GET/HEAD, para arquivos abertos em `<img>`, `<audio>` e downloads. Métodos que alteram dados exigem o header Bearer.
 - O tenant é sempre o do usuário autenticado. `account_id` em query, header `X-Account-ID` ou corpo JSON de outro tenant retorna 403.
 - `X-User-Id` só troca a identidade quando o usuário autenticado é Super Admin (seletor de usuário).
 - CORS com credenciais aceita apenas as origens de `CORS_ALLOWED_ORIGINS`.
@@ -35,14 +35,14 @@ Sem o segredo configurado, a chamada do provedor é recusada com 401. Os botões
 
 - Armazenamento em PBKDF2-SHA256 com sal (600000 iterações). Hashes SHA-256 antigos são aceitos uma vez e regravados no próximo login.
 - Mínimo de 12 caracteres. Senhas padrão ou vazadas são recusadas na troca.
-- Em produção (`REVNAUT_ENV=production`), contas que ainda usam senha padrão ou vazada não conseguem entrar até redefinir a senha.
+- Em produção (`REVNAULT_ENV=production`), contas que ainda usam senha padrão ou vazada não conseguem entrar até redefinir a senha.
 - O `init_db()` não regrava mais senhas nem status dos usuários a cada inicialização.
 - `forgot-password` responde sempre a mesma mensagem e envia o link por e-mail (Listmonk transacional, template `LISTMONK_PASSWORD_RESET_TEMPLATE_ID`). O token é de uso único e vale 60 minutos.
 
 Troca de senha do Super Admin pelo servidor (a senha é digitada sem aparecer na tela):
 
 ```bash
-docker exec -it $(docker ps -q -f name=rvops_app | head -1) python -m src.features.auth.set_password_cli <e-mail>
+docker exec -it $(docker ps -q -f name=revnault_app | head -1) python -m src.features.auth.set_password_cli <e-mail>
 ```
 
 Depois de entrar, o Super Admin redefine a senha dos demais usuários pela tela de usuários.
@@ -52,5 +52,5 @@ Depois de entrar, o Super Admin redefine a senha dos demais usuários pela tela 
 - `SESSION_SECRET_KEY` assina sessões e links de recuperação. `VAULT_SECRET_KEY` cifra o cofre de credenciais e os segredos dos webhooks de saída.
 - Em produção o app não sobe com chaves padrão ou com menos de 32 caracteres.
 - Na inicialização, `rotate_vault_encryption` re-cifra (idempotente) os dados do cofre gravados com a chave legada.
-- `scripts/deploy_vps.py` lê os segredos do `.env` local (fora do git) e grava `/opt/rvops/.env.secrets` (permissão 600) na VPS, carregado antes do `docker stack deploy`.
-- O banco de produção vive em `/opt/rvops/data` na VPS. Os bancos locais (`data/*.db`) não são mais enviados no deploy. Use `python scripts/deploy_vps.py --seed-database` apenas para montar um servidor novo, ciente de que substitui o banco remoto.
+- `scripts/deploy_vps.py` lê os segredos do `.env` local (fora do git) e grava `/opt/revnault/.env.secrets` (permissão 600) na VPS, carregado antes do `docker stack deploy`.
+- O banco de produção vive em `/opt/revnault/data` na VPS. Os bancos locais (`data/*.db`) não são mais enviados no deploy. Use `python scripts/deploy_vps.py --seed-database` apenas para montar um servidor novo, ciente de que substitui o banco remoto.

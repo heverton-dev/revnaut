@@ -1,7 +1,7 @@
 # Manual da Rota: Funil Comercial & Gestão de Pipelines Odontológicos (`/#deals`)
 
 ## 1. Objetivo da Rota / Sub-rota
-Centralizar a operação da tela **Funil Comercial & Gestão de Pipelines Odontológicos** (`/#deals`) na arquitetura operacional do Revnaut Dental, assegurando governança clínica, rastreabilidade auditável e controle transacional.
+Centralizar a operação da tela **Funil Comercial & Gestão de Pipelines Odontológicos** (`/#deals`) na arquitetura operacional do RevNault Dental, assegurando governança clínica, rastreabilidade auditável e controle transacional.
 
 ---
 

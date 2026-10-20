@@ -1,48 +1,36 @@
 import * as React from "react";
 import {
-  BarChart3,
-  Users,
-  Briefcase,
-  MessageSquare,
-  Package,
-  Truck,
-  ShieldCheck,
-  LifeBuoy,
-  Settings,
   Search,
   Bell,
   CheckCircle,
-  Video,
-  FileCheck2,
-  Database,
-  Calendar,
-  Sparkles,
   Command,
   Menu,
   X,
-  Target,
-  Megaphone,
-  ScanLine,
   PanelLeftClose,
   PanelLeftOpen,
   ArrowRight,
   LogOut,
   AlertCircle,
-  Radar,
+  ChevronRight,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { cn } from "@/lib/utils";
-import { getActiveUserId, setActiveUserId, ToastPayload } from "@/lib/api";
+import { getActiveUserId, setActiveUserId, ToastPayload, dispatchToast } from "@/lib/api";
 import { NotificationCenter } from "@/components/layout/NotificationCenter";
+import {
+  ROLE_WORKSPACES,
+  ROLE_ID_TO_WORKSPACE,
+  resolveRoleConfig,
+  buildNavSections,
+  flattenNavItems,
+  type NavItem,
+  type RoleWorkspaceConfig,
+} from "@/components/layout/navConfig";
+import { setNavHash } from "@/lib/navHash";
+import { accessMeToRoleConfig, fetchAccessMe, type AccessMeResponse } from "@/lib/accessApi";
 
-export interface NavItem {
-  id: string;
-  label: string;
-  icon: React.ElementType;
-  badge?: string;
-  scope?: "field" | "inside" | "all";
-  shortcut?: string;
-}
+export type { NavItem, RoleWorkspaceConfig };
+export { ROLE_WORKSPACES, resolveRoleConfig };
 
 export interface AuthUserItem {
   id: string;
@@ -52,73 +40,14 @@ export interface AuthUserItem {
   account_id?: string;
   team_id?: string | null;
   is_superadmin?: boolean | number;
-}
-
-export interface RoleWorkspaceConfig {
-  roleKey: string;
-  displayName: string;
-  visibleRoutes: string[];
-  defaultLandingRoute: string;
-}
-
-export const ROLE_WORKSPACES: Record<string, RoleWorkspaceConfig> = {
-  field_sales: {
-    roleKey: "field_sales",
-    displayName: "Consultor Externo (Campo)",
-    visibleRoutes: ["deals", "contacts", "keypartners", "dentgo", "video_sos", "intelligence", "market_intel"],
-    defaultLandingRoute: "deals",
-  },
-  inside_sales: {
-    roleKey: "inside_sales",
-    displayName: "Consultor Interno (Atendimento)",
-    visibleRoutes: ["omnichannel", "deals", "contacts", "contracts", "scoring", "scheduling", "market_intel"],
-    defaultLandingRoute: "omnichannel",
-  },
-  logistics: {
-    roleKey: "logistics",
-    displayName: "Logística e Estoque (Expedição)",
-    visibleRoutes: ["dentgo", "keypartners", "support", "settings"],
-    defaultLandingRoute: "dentgo",
-  },
-  clinical_support: {
-    roleKey: "clinical_support",
-    displayName: "Suporte Clínico e Pós-Venda",
-    visibleRoutes: ["support", "video_sos", "imaging", "omnichannel", "scheduling"],
-    defaultLandingRoute: "support",
-  },
-  sales_manager: {
-    roleKey: "sales_manager",
-    displayName: "Gerente Comercial",
-    visibleRoutes: ["dashboard", "deals", "contacts", "keypartners", "contracts", "rbac", "marketing", "market_intel"],
-    defaultLandingRoute: "dashboard",
-  },
-  superadmin: {
-    roleKey: "superadmin",
-    displayName: "Diretoria / Administrador Geral",
-    visibleRoutes: [
-      "dashboard", "deals", "contacts", "omnichannel", "scoring", "marketing",
-      "keypartners", "dentgo", "contracts", "video_sos", "imaging",
-      "intelligence", "market_intel", "analytics", "scheduling", "support", "rbac", "settings"
-    ],
-    defaultLandingRoute: "dashboard",
-  },
-};
-
-export function resolveRoleConfig(roleString?: string): RoleWorkspaceConfig {
-  const s = (roleString || "").toLowerCase();
-  if (s.includes("campo") || s.includes("field") || s.includes("externo")) return ROLE_WORKSPACES.field_sales;
-  if (s.includes("inside") || s.includes("atendimento") || s.includes("interno")) return ROLE_WORKSPACES.inside_sales;
-  if (s.includes("log") || s.includes("estoque") || s.includes("expedição") || s.includes("expedicao")) return ROLE_WORKSPACES.logistics;
-  if (s.includes("clínico") || s.includes("clinico") || s.includes("suporte") || s.includes("pós") || s.includes("pos")) return ROLE_WORKSPACES.clinical_support;
-  if (s.includes("gerente") || s.includes("manager")) return ROLE_WORKSPACES.sales_manager;
-  if (s.includes("admin") || s.includes("diretor") || s.includes("super")) return ROLE_WORKSPACES.superadmin;
-  return ROLE_WORKSPACES.superadmin;
+  role_id?: string;
 }
 
 export interface AppShellProps {
   children: React.ReactNode;
   activeNav?: string;
-  onNavigate?: (id: string) => void;
+  activeFacility?: string;
+  onNavigate?: (id: string, facility?: string) => void;
   userRole?: string;
   userName?: string;
   accountName?: string;
@@ -130,8 +59,9 @@ export interface AppShellProps {
 export function AppShell({
   children,
   activeNav = "deals",
+  activeFacility,
   onNavigate,
-  userRole = "Super Admin (Dual Field/Inside)",
+  userRole = "Super Admin",
   userName = "Heverton Eduardo Peres",
   accountName = "Sales Rocket",
   currentUserId: propUserId,
@@ -144,11 +74,13 @@ export function AppShell({
   const [isCompactSidebar, setIsCompactSidebar] = React.useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = React.useState(false);
   const [unreadNotifCount, setUnreadNotifCount] = React.useState(0);
+  const [expandedGroups, setExpandedGroups] = React.useState<Record<string, boolean>>({});
 
   const [selectedUserId, setSelectedUserId] = React.useState<string>(
     propUserId || getActiveUserId()
   );
   const [currentUserProfile, setCurrentUserProfile] = React.useState<AuthUserItem | null>(null);
+  const [accessMe, setAccessMe] = React.useState<AccessMeResponse | null>(null);
   const [availableUsers, setAvailableUsers] = React.useState<AuthUserItem[]>([]);
   const [toasts, setToasts] = React.useState<(ToastPayload & { id: string })[]>([]);
   const [healthStatus, setHealthStatus] = React.useState<{
@@ -221,12 +153,31 @@ export function AppShell({
     ])
       .then(([meData, usersData]) => {
         if (!active) return;
-        if (meData && meData.id) {
-          setCurrentUserProfile(meData);
-        }
         if (Array.isArray(usersData) && usersData.length > 0) {
           setAvailableUsers(usersData);
+          // Simulated profile from the user list wins — /auth/me may fall back to the
+          // session owner when X-User-Id impersonation is denied or incomplete.
+          const match = usersData.find((u: AuthUserItem) => u.id === selectedUserId);
+          if (match) {
+            setCurrentUserProfile(match);
+          }
         }
+        // Only trust /auth/me when it matches the selected identity
+        if (meData && meData.id && meData.id === selectedUserId && !usersData?.find?.((u: AuthUserItem) => u.id === selectedUserId)) {
+          setCurrentUserProfile(meData);
+        }
+        // Phase 3: grants from DB (falls back to navConfig if API unavailable)
+        return fetchAccessMe().then((access) => {
+          if (!active) return;
+          if (access && access.user_id && access.user_id === selectedUserId) {
+            setAccessMe(access);
+          } else if (access && access.user_id && access.user_id !== selectedUserId) {
+            // identity mismatch — keep last or clear so seed config is used
+            setAccessMe(null);
+          } else {
+            setAccessMe(null);
+          }
+        });
       })
       .catch(() => {});
     return () => {
@@ -240,83 +191,97 @@ export function AppShell({
   const displayUserRole = currentUserProfile?.role || userRole;
 
   const currentRoleConfig = React.useMemo(() => {
-    return resolveRoleConfig(currentUserProfile?.role || userRole);
-  }, [currentUserProfile?.role, userRole]);
+    // Prefer DB grants (phase 3); fall back to navConfig seed by role_id/label
+    if (accessMe && accessMe.routes.length > 0 && accessMe.user_id === selectedUserId) {
+      return accessMeToRoleConfig(accessMe);
+    }
+    return resolveRoleConfig(
+      currentUserProfile?.role || userRole,
+      currentUserProfile?.role_id ?? null
+    );
+  }, [
+    accessMe,
+    selectedUserId,
+    currentUserProfile?.role,
+    currentUserProfile?.role_id,
+    userRole,
+  ]);
 
-  const rawNavSections: { title: string; items: NavItem[] }[] = [
-    {
-      title: "Vendas e Atendimento",
-      items: [
-        { id: "dashboard", label: "Visão do Dia", icon: BarChart3, shortcut: "1" },
-        { id: "deals", label: "Negociações (Funil)", icon: Briefcase, badge: "Ativo", shortcut: "D" },
-        { id: "contacts", label: "Dentistas e Clínicas", icon: Users, shortcut: "C" },
-        { id: "scoring", label: "Qualificação de Clientes", icon: Target, shortcut: "S" },
-        { id: "marketing", label: "Campanhas e Indicações", icon: Megaphone, shortcut: "M" },
-        { id: "omnichannel", label: "Atendimento WhatsApp", icon: MessageSquare, badge: "3", shortcut: "O" },
-      ],
-    },
-    {
-      title: "Consignação e Logística",
-      items: [
-        { id: "keypartners", label: "Malas em Consignação", icon: Package, badge: "ANVISA", shortcut: "K" },
-        { id: "dentgo", label: "Entregas Expressas", icon: Truck, badge: "45min", shortcut: "G" },
-        { id: "video_sos", label: "Chamadas e Vídeo", icon: Video, shortcut: "V" },
-        { id: "contracts", label: "Propostas e Contratos", icon: FileCheck2, shortcut: "T" },
-        { id: "imaging", label: "Exames 3D e Tomografias", icon: ScanLine, shortcut: "P" },
-      ],
-    },
-    {
-      title: "Gestão e Suporte",
-      items: [
-        { id: "intelligence", label: "Assistente Comercial", icon: Sparkles, shortcut: "I" },
-        { id: "market_intel", label: "Radar de Mercado e Concorrência", icon: Radar, shortcut: "N" },
-        { id: "analytics", label: "Relatórios e Metas", icon: Database, shortcut: "B" },
-        { id: "scheduling", label: "Retorno de Pacientes", icon: Calendar, shortcut: "R" },
-        { id: "support", label: "Suporte Clínico e Garantias", icon: LifeBuoy, shortcut: "A" },
-        { id: "rbac", label: "Equipes e Acessos", icon: ShieldCheck, shortcut: "H" },
-        { id: "settings", label: "Configurações e Notas Fiscais", icon: Settings, shortcut: "E" },
-      ],
-    },
-  ];
+  /** Only Diretoria/Superadmin may expand beyond their workspace routes. */
+  const canSeeAllModules = currentRoleConfig.roleKey === "superadmin";
+
+  // Hard RBAC: non-admin roles can never keep "all modules" mode
+  React.useEffect(() => {
+    if (!canSeeAllModules && showAllModules) {
+      setShowAllModules(false);
+    }
+  }, [canSeeAllModules, showAllModules]);
+
+  /**
+   * Route guard: deep-link / hash / profile-switch outside the role workspace
+   * is redirected to the role landing. Menu hide alone is not enough.
+   */
+  React.useEffect(() => {
+    if (!activeNav) return;
+    const allowed = new Set(currentRoleConfig.visibleRoutes);
+    if (allowed.has(activeNav)) return;
+
+    const landing = currentRoleConfig.defaultLandingRoute;
+    const facility = currentRoleConfig.defaultFacility;
+    const nextHash = facility ? `#!/${landing}?f=${facility}` : `#!/${landing}`;
+    if (typeof window !== "undefined" && window.location.hash !== nextHash) {
+      window.location.hash = nextHash;
+    }
+    if (onNavigate) {
+      onNavigate(landing, facility);
+    }
+    dispatchToast({
+      type: "warning",
+      title: "Acesso restrito",
+      message: `Este módulo não está liberado para ${currentRoleConfig.displayName}.`,
+    });
+  }, [activeNav, currentRoleConfig, onNavigate]);
 
   const navSections = React.useMemo(() => {
-    if (showAllModules) return rawNavSections;
+    // Non-admin: never honor showAllModules — hard RBAC filter only
+    const effectiveShowAll = canSeeAllModules && showAllModules;
+    const built = buildNavSections(currentRoleConfig, effectiveShowAll);
+    if (built.length === 0 || built.every((s) => s.items.length === 0)) {
+      return buildNavSections(
+        ROLE_ID_TO_WORKSPACE["role-field"] ?? ROLE_WORKSPACES.field_sales,
+        false
+      );
+    }
+    return built;
+  }, [currentRoleConfig, showAllModules, canSeeAllModules]);
+
+  const allNavItems = React.useMemo(() => flattenNavItems(navSections), [navSections]);
+
+  const quickCommands = React.useMemo(() => {
     const allowed = new Set(currentRoleConfig.visibleRoutes);
-    return rawNavSections
-      .map((sec) => ({
-        ...sec,
-        items: sec.items.filter((item) => allowed.has(item.id)),
-      }))
-      .filter((sec) => sec.items.length > 0);
-  }, [showAllModules, currentRoleConfig]);
-
-  const allNavItems = React.useMemo(
-    () => rawNavSections.flatMap((sec) => sec.items.map((item) => ({ ...item, section: sec.title }))),
-    []
-  );
-
-  const quickCommands = React.useMemo(
-    () => [
+    const all = [
       { id: "deals", label: "Criar Nova Negociação", section: "Ação Rápida", shortcut: "D" },
       { id: "contacts", label: "Cadastrar Dentista ou Clínica", section: "Ação Rápida", shortcut: "C" },
-      { id: "dentgo", label: "Solicitar Entrega Rápida (45 min)", section: "Ação Rápida", shortcut: "G" },
+      { id: "dentgo", label: "Solicitar Entrega Rápida (45 min)", section: "Ação Rápida", shortcut: "G", facility: "orders" },
       { id: "keypartners", label: "Consultar Maletas em Consignação", section: "Ação Rápida", shortcut: "K" },
       { id: "contracts", label: "Gerar Proposta Comercial ou Contrato", section: "Ação Rápida", shortcut: "T" },
       { id: "support", label: "Abrir Chamado Pós-Cirúrgico", section: "Ação Rápida", shortcut: "A" },
       { id: "analytics", label: "Consultar Relatórios e Indicadores", section: "Ação Rápida", shortcut: "B" },
       { id: "logout", label: "Encerrar Sessão (Logout)", section: "Sessão & Conta", shortcut: "Q" },
-    ],
-    []
-  );
+    ];
+    if (canSeeAllModules) return all;
+    return all.filter((c) => c.id === "logout" || allowed.has(c.id));
+  }, [currentRoleConfig, canSeeAllModules]);
 
   const filteredCommandItems = React.useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     const combined = [
       ...allNavItems.map((it) => ({
         id: it.id,
+        facility: it.facility,
         label: `Ir para: ${it.label}`,
         section: it.section,
-        shortcut: it.shortcut || "",
+        shortcut: "",
       })),
       ...quickCommands,
     ];
@@ -329,7 +294,41 @@ export function AppShell({
     );
   }, [allNavItems, quickCommands, searchQuery]);
 
-  const handleSelectNav = (routeId: string) => {
+  // Accordion: expand only the group of the active route when it CHANGES.
+  // Never force-reopen if the user collapsed the same submenu.
+  const lastActiveNavKeyRef = React.useRef<string | null>(null);
+  React.useEffect(() => {
+    const key = `${activeNav}|${activeFacility ?? ""}`;
+    if (lastActiveNavKeyRef.current === key) return;
+    lastActiveNavKeyRef.current = key;
+
+    let parentId: string | null = null;
+    for (const sec of navSections) {
+      for (const item of sec.items) {
+        if (!item.children?.length) continue;
+        const hit = item.children.some(
+          (c) => c.id === activeNav && (c.facility === activeFacility || (!activeFacility && c === item.children?.[0]))
+        );
+        if (hit || item.id === activeNav) {
+          parentId = item.id;
+          break;
+        }
+      }
+      if (parentId) break;
+    }
+
+    // Accordion: only one submenu open
+    setExpandedGroups((prev) => {
+      const next: Record<string, boolean> = {};
+      if (parentId) next[parentId] = true;
+      const same =
+        Object.keys(prev).length === Object.keys(next).length &&
+        Object.keys(next).every((k) => prev[k] === next[k]);
+      return same ? prev : next;
+    });
+  }, [activeNav, activeFacility, navSections]);
+
+  const handleSelectNav = (routeId: string, facility?: string) => {
     if (routeId === "logout") {
       setIsMobileDrawerOpen(false);
       setIsCommandOpen(false);
@@ -337,16 +336,32 @@ export function AppShell({
       if (onLogout) onLogout();
       return;
     }
-    const nextHash = `#!/${routeId}`;
-    if (typeof window !== "undefined" && window.location.hash !== nextHash) {
-      window.location.hash = nextHash;
+    // Client-side guard even if command palette / cross-link tries a blocked route
+    if (!currentRoleConfig.visibleRoutes.includes(routeId)) {
+      dispatchToast({
+        type: "warning",
+        title: "Acesso restrito",
+        message: `Este módulo não está liberado para ${currentRoleConfig.displayName}.`,
+      });
+      return;
     }
+    setNavHash(routeId, facility);
     if (onNavigate) {
-      onNavigate(routeId);
+      onNavigate(routeId, facility);
     }
     setIsMobileDrawerOpen(false);
     setIsCommandOpen(false);
     setSearchQuery("");
+  };
+
+  /** Pure expand/collapse. Accordion: opening one closes the others. */
+  const toggleGroup = (itemId: string) => {
+    setExpandedGroups((prev) => {
+      const isOpen = prev[itemId] === true;
+      if (isOpen) return { ...prev, [itemId]: false };
+      const next: Record<string, boolean> = { [itemId]: true };
+      return next;
+    });
   };
 
   const handleUserChange = (newUserId: string) => {
@@ -355,9 +370,11 @@ export function AppShell({
     const targetUser = availableUsers.find((u) => u.id === newUserId);
     if (targetUser) {
       setCurrentUserProfile(targetUser);
-      const newRole = resolveRoleConfig(targetUser.role);
-      if (!showAllModules && !newRole.visibleRoutes.includes(activeNav)) {
-        handleSelectNav(newRole.defaultLandingRoute);
+      // Profile switch always re-applies hard RBAC focus (no leftover "all modules")
+      setShowAllModules(false);
+      const newRole = resolveRoleConfig(targetUser.role, targetUser.role_id ?? null);
+      if (!newRole.visibleRoutes.includes(activeNav)) {
+        handleSelectNav(newRole.defaultLandingRoute, newRole.defaultFacility);
       }
     }
     if (onSelectUser) {
@@ -396,7 +413,7 @@ export function AppShell({
                 </div>
                 {!isCompactSidebar && (
                   <div className="flex flex-col min-w-0">
-                    <span className="font-bold text-sm tracking-wide text-white truncate">REVNAULT</span>
+                    <span className="font-bold text-sm tracking-wide text-white truncate">RevNault</span>
                     <span className="text-[10px] text-text-muted uppercase tracking-wider truncate">
                       {accountName}
                     </span>
@@ -442,44 +459,104 @@ export function AppShell({
                   <div className="space-y-1">
                     {sec.items.map((item) => {
                       const Icon = item.icon;
+                      const hasChildren = Boolean(item.children?.length);
+                      const isExpanded = hasChildren && expandedGroups[item.id] === true;
                       const isActive = activeNav === item.id;
+
                       return (
-                        <button
-                          key={item.id}
-                          type="button"
-                          title={item.label}
-                          onClick={() => handleSelectNav(item.id)}
-                          className={cn(
-                            "rounded-md text-xs font-medium transition-colors flex items-center",
-                            isCompactSidebar
-                              ? "w-10 h-10 mx-auto justify-center p-0"
-                              : "w-full justify-between px-2.5 py-2 text-left",
-                            isActive
-                              ? "bg-brand-primary text-white shadow-sm"
-                              : "text-white/70 hover:text-white hover:bg-surface-sidebar-hover"
-                          )}
-                        >
-                          <div className={cn("flex items-center min-w-0", isCompactSidebar ? "justify-center" : "gap-2.5")}>
-                            <Icon className="h-4 w-4 shrink-0 stroke-[1.8]" />
-                            {!isCompactSidebar && (
-                              <span className="truncate">
-                                {item.label}
+                        <div key={`${item.id}-${item.label}`}>
+                          <button
+                            type="button"
+                            title={item.label}
+                            onClick={() => {
+                              if (hasChildren) {
+                                // Expand/collapse only — never force navigate when closing
+                                if (isExpanded) {
+                                  toggleGroup(item.id);
+                                  return;
+                                }
+                                toggleGroup(item.id);
+                                // Opening from another route: land on first subdestination
+                                if (!isActive) {
+                                  handleSelectNav(item.id, item.children?.[0]?.facility);
+                                }
+                                return;
+                              }
+                              handleSelectNav(item.id, undefined);
+                            }}
+                            className={cn(
+                              "rounded-md text-xs font-medium transition-colors flex items-center",
+                              isCompactSidebar
+                                ? "w-10 h-10 mx-auto justify-center p-0"
+                                : "w-full justify-between px-2.5 py-2 text-left",
+                              isActive
+                                ? "bg-brand-primary text-white shadow-sm"
+                                : "text-white/70 hover:text-white hover:bg-surface-sidebar-hover"
+                            )}
+                          >
+                            <div className={cn("flex items-center min-w-0", isCompactSidebar ? "justify-center" : "gap-2.5")}>
+                              <Icon className="h-4 w-4 shrink-0 stroke-[1.8]" />
+                              {!isCompactSidebar && <span className="truncate">{item.label}</span>}
+                            </div>
+                            {!isCompactSidebar && hasChildren && (
+                              <ChevronRight
+                                className={cn(
+                                  "h-3.5 w-3.5 shrink-0 transition-transform",
+                                  isExpanded && "rotate-90"
+                                )}
+                              />
+                            )}
+                            {!isCompactSidebar && !hasChildren && item.badge && (
+                              <span
+                                className={cn(
+                                  "text-[10px] px-1.5 py-0.5 rounded-full font-semibold shrink-0 whitespace-nowrap",
+                                  isActive ? "bg-white/20 text-white" : "bg-white/10 text-white/80"
+                                )}
+                              >
+                                {item.badge}
                               </span>
                             )}
-                          </div>
-                          {!isCompactSidebar && item.badge && (
-                            <span
+                          </button>
+                          {hasChildren && isExpanded && (
+                            <div
                               className={cn(
-                                "text-[10px] px-1.5 py-0.5 rounded-full font-semibold shrink-0 whitespace-nowrap",
-                                isActive
-                                  ? "bg-white/20 text-white"
-                                  : "bg-white/10 text-white/80"
+                                isCompactSidebar
+                                  ? "mt-0.5 space-y-0.5"
+                                  : "ml-5 mt-0.5 space-y-0.5 border-l border-white/10 pl-2"
                               )}
                             >
-                              {item.badge}
-                            </span>
+                              {(item.children ?? []).map((child) => {
+                                const ChildIcon = child.icon;
+                                const childActive =
+                                  activeNav === child.id &&
+                                  (child.facility === activeFacility ||
+                                    (!activeFacility && child === item.children?.[0]));
+                                return (
+                                  <button
+                                    key={`${child.id}-${child.facility ?? "root"}-${child.label}`}
+                                    type="button"
+                                    title={child.label}
+                                    aria-label={child.label}
+                                    aria-current={childActive ? "page" : undefined}
+                                    onClick={() => handleSelectNav(child.id, child.facility)}
+                                    className={cn(
+                                      "rounded-md text-[11px] font-medium transition-colors flex items-center",
+                                      isCompactSidebar
+                                        ? "w-10 h-8 mx-auto justify-center p-0"
+                                        : "w-full gap-2 px-2 py-1.5 text-left",
+                                      childActive
+                                        ? "bg-white/15 text-white"
+                                        : "text-white/55 hover:text-white hover:bg-white/10"
+                                    )}
+                                  >
+                                    <ChildIcon className="h-3.5 w-3.5 shrink-0 stroke-[1.8]" />
+                                    {!isCompactSidebar && <span className="truncate">{child.label}</span>}
+                                  </button>
+                                );
+                              })}
+                            </div>
                           )}
-                        </button>
+                        </div>
                       );
                     })}
                   </div>
@@ -490,26 +567,6 @@ export function AppShell({
 
           {/* Footer do Usuário e Seletor de Perfil na Sidebar */}
           <div className={cn("border-t border-white/10 shrink-0 space-y-2", isCompactSidebar ? "p-2" : "p-2.5")}>
-            {/* Botão de Toggle da Sidebar no Rodapé (sem sobrepor logo ou dados) */}
-            <button
-              type="button"
-              onClick={() => setIsCompactSidebar((prev) => !prev)}
-              className={cn(
-                "hidden lg:flex items-center rounded-md text-white/60 hover:text-white hover:bg-white/10 transition-colors text-xs font-medium cursor-pointer",
-                isCompactSidebar ? "w-10 h-10 mx-auto justify-center p-0" : "w-full justify-between px-2.5 py-1.5"
-              )}
-              title={isCompactSidebar ? "Expandir menu lateral" : "Recolher menu lateral"}
-              aria-label={isCompactSidebar ? "Expandir menu lateral" : "Recolher menu lateral"}
-            >
-              <div className={cn("flex items-center min-w-0", isCompactSidebar ? "justify-center" : "gap-2")}>
-                {isCompactSidebar ? (
-                  <PanelLeftOpen className="h-4 w-4 shrink-0 text-white/70" />
-                ) : (
-                  <PanelLeftClose className="h-4 w-4 shrink-0 text-white/70" />
-                )}
-                {!isCompactSidebar && <span className="truncate">Recolher menu lateral</span>}
-              </div>
-            </button>
             <div className={cn("flex items-center rounded-md bg-white/5", isCompactSidebar ? "w-10 h-10 mx-auto justify-center p-0" : "justify-between gap-1.5 px-2 py-1.5")}>
               <div className={cn("flex items-center min-w-0", isCompactSidebar ? "justify-center" : "gap-2 flex-1")}>
                 <Avatar
@@ -524,17 +581,7 @@ export function AppShell({
                   </div>
                 )}
               </div>
-              {onLogout && (
-                <button
-                  type="button"
-                  onClick={onLogout}
-                  title="Sair da Aplicação (Logout)"
-                  aria-label="Sair da aplicação"
-                  className="p-1.5 rounded text-white/60 hover:text-status-danger hover:bg-white/10 transition-colors shrink-0 cursor-pointer"
-                >
-                  <LogOut className="h-3.5 w-3.5" />
-                </button>
-              )}
+
             </div>
 
             {!isCompactSidebar && availableUsers.length > 0 && (
@@ -557,13 +604,15 @@ export function AppShell({
                   </select>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => setShowAllModules((prev) => !prev)}
-                  className="w-full text-center py-1 text-[10px] text-white/60 hover:text-white transition-colors border border-white/10 rounded bg-white/5"
-                >
-                  {showAllModules ? "Modo Focado no Cargo" : "Mostrar todos os módulos (17)"}
-                </button>
+                {canSeeAllModules && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAllModules((prev) => !prev)}
+                    className="w-full text-center py-1 text-[10px] text-white/60 hover:text-white transition-colors border border-white/10 rounded bg-white/5"
+                  >
+                    {showAllModules ? "Modo Focado no Cargo" : "Mostrar todos os módulos (18)"}
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -618,19 +667,21 @@ export function AppShell({
 
           {/* Ações Rápidas do Topbar */}
           <div className="flex items-center gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={() => setShowAllModules((prev) => !prev)}
-              className={cn(
-                "hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium border transition-colors cursor-pointer",
-                showAllModules
-                  ? "bg-brand-primary text-white border-brand-primary"
-                  : "bg-surface-bg text-text-secondary border-border hover:text-text-main"
-              )}
-              title="Alternar entre visualização filtrada por cargo e visualização de todos os 17 módulos"
-            >
-              {showAllModules ? "Modo Visão Completa (Admin)" : "Modo Focado no Cargo"}
-            </button>
+            {canSeeAllModules && (
+              <button
+                type="button"
+                onClick={() => setShowAllModules((prev) => !prev)}
+                className={cn(
+                  "hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium border transition-colors cursor-pointer",
+                  showAllModules
+                    ? "bg-brand-primary text-white border-brand-primary"
+                    : "bg-surface-bg text-text-secondary border-border hover:text-text-main"
+                )}
+                title="Somente Diretoria: alternar entre workspace do cargo e todos os módulos"
+              >
+                {showAllModules ? "Visão Completa" : "Focado no Cargo"}
+              </button>
+            )}
 
             <div
               className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-full bg-status-success-subtle text-status-success text-[11px] sm:text-xs font-medium border border-status-success/20 whitespace-nowrap shrink-0"
@@ -662,15 +713,19 @@ export function AppShell({
                 )}
               </button>
 
-              <NotificationCenter
-                currentRoleKey={currentRoleConfig.roleKey}
-                roleDisplayName={currentRoleConfig.displayName}
-                isOpen={isNotificationsOpen}
-                onClose={() => setIsNotificationsOpen(false)}
-                onNavigate={(routeId) => handleSelectNav(routeId)}
-                onUnreadCountChange={setUnreadNotifCount}
-              />
             </div>
+
+            {onLogout && (
+              <button
+                type="button"
+                onClick={onLogout}
+                title="Sair da Aplicação (Logout)"
+                aria-label="Sair da aplicação"
+                className="p-2 rounded-md text-text-secondary hover:text-status-danger hover:bg-surface-bg transition-colors shrink-0 cursor-pointer"
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
+            )}
           </div>
         </header>
 
@@ -679,6 +734,16 @@ export function AppShell({
           {children}
         </main>
       </div>
+
+      {/* Central de Notificações Canônica na Raiz (desfoca e sobrepõe tela inteira, inclusive a sidebar lateral) */}
+      <NotificationCenter
+        currentRoleKey={currentRoleConfig.roleKey}
+        roleDisplayName={currentRoleConfig.displayName}
+        isOpen={isNotificationsOpen}
+        onClose={() => setIsNotificationsOpen(false)}
+        onNavigate={(routeId) => handleSelectNav(routeId)}
+        onUnreadCountChange={setUnreadNotifCount}
+      />
 
       {/* Modal Command Palette Funcional (Cmd+K) */}
       {isCommandOpen && (
@@ -729,7 +794,7 @@ export function AppShell({
                   <button
                     key={`${cmd.id}-${idx}`}
                     type="button"
-                    onClick={() => handleSelectNav(cmd.id)}
+                    onClick={() => handleSelectNav(cmd.id, "facility" in cmd ? cmd.facility : undefined)}
                     className="w-full px-2.5 py-2 hover:bg-surface-bg rounded-md cursor-pointer flex justify-between items-center text-left transition-colors group"
                   >
                     <div className="flex flex-col min-w-0">

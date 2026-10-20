@@ -1,7 +1,7 @@
 # Manual da Rota: Campanhas de Marketing & Eventos CIOSP (`/#marketing`)
 
 ## 1. Objetivo da Rota / Sub-rota
-Centralizar a operação da tela **Campanhas de Marketing & Eventos CIOSP** (`/#marketing`) na arquitetura operacional do Revnaut Dental, assegurando governança clínica, rastreabilidade auditável e controle transacional.
+Centralizar a operação da tela **Campanhas de Marketing & Eventos CIOSP** (`/#marketing`) na arquitetura operacional do RevNault Dental, assegurando governança clínica, rastreabilidade auditável e controle transacional.
 
 ---
 

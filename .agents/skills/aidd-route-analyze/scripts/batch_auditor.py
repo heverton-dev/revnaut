@@ -442,7 +442,7 @@ def generate_route_dossier(slug: str, meta: dict):
 ---
 
 ## 2. Propósito e Objetivo de Negócio
-A rota `{slug}` atua no ecossistema RevOps proporcionando aos operadores clínicos e comerciais:
+A rota `{slug}` atua no ecossistema RevNault proporcionando aos operadores clínicos e comerciais:
 1. Controle determinístico dos fluxos de {meta["title"].lower()}.
 2. Redução do tempo de atendimento e eliminação de processos analógicos na operação.
 3. Rastreabilidade ponta a ponta com persistência auditável no SQLite WAL.
@@ -557,7 +557,7 @@ A rota `{slug}` implementa uma fatia vertical bem delimitada, encapsulando compo
 ## 1. Especificação BDD (Gherkin)
 ```gherkin
 Funcionalidade: Operação da Rota {meta["title"]}
-  Como Usuário Autenticado da Plataforma RevOps
+  Como Usuário Autenticado da Plataforma RevNault
   Eu quero acessar a rota "/#!/{slug}"
   Para executar as rotinas operacionais com integridade e segurança
 

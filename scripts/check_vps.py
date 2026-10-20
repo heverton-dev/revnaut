@@ -16,7 +16,7 @@ ssh.connect(
     password=os.getenv("VPS_PASSWORD"),
     timeout=10,
 )
-stdin, stdout, stderr = ssh.exec_command("docker service ls | grep rvops ; echo '---' ; docker ps --filter name=rvops | head -n 10")
+stdin, stdout, stderr = ssh.exec_command("docker service ls | grep revnault ; echo '---' ; docker ps --filter name=revnault | head -n 10")
 print(stdout.read().decode())
 err = stderr.read().decode()
 if err:

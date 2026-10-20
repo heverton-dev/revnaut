@@ -19,7 +19,7 @@ VPS_HOST = os.environ.get("VPS_HOST", "127.0.0.1")
 VPS_PORT = int(os.environ.get("VPS_PORT", 22))
 VPS_USER = os.environ.get("VPS_USER", "root")
 VPS_PASS = os.environ.get("VPS_PASSWORD", "")
-REMOTE_DIR = "/opt/rvops"
+REMOTE_DIR = "/opt/revnault"
 REMOTE_SECRETS_FILE = f"{REMOTE_DIR}/.env.secrets"
 
 # Segredos de runtime enviados à VPS (lidos do .env local, nunca versionado nem impresso)
@@ -86,7 +86,7 @@ def make_tarball(source_dir: Path, output_filename: str, include_databases: bool
         if frontend_dist.exists():
             tar.add(str(frontend_dist), arcname="static")
         else:
-            static_src = source_dir / "docs" / "reconstruct_rvops" / "05_reconstructed_app"
+            static_src = source_dir / "docs" / "reconstruct_revnault" / "05_reconstructed_app"
             if static_src.exists():
                 tar.add(str(static_src), arcname="static")
 
@@ -146,8 +146,8 @@ def deploy(include_databases: bool = False):
 
         print("[4/5] Descompactando e compilando imagem Docker na VPS...")
         import time
-        version_tag = f"rvops_app:v{int(time.time())}"
-        cmd_build = f"cd {REMOTE_DIR} && rm -f data/*.db-wal data/*.db-shm && tar -xzf deploy.tar.gz && cp -f data/revnaut.db data/rvops.db 2>/dev/null || true && docker build -t {version_tag} . && docker tag {version_tag} rvops_app:latest"
+        version_tag = f"revnault_app:v{int(time.time())}"
+        cmd_build = f"cd {REMOTE_DIR} && rm -f data/*.db-wal data/*.db-shm && tar -xzf deploy.tar.gz && docker build -t {version_tag} . && docker tag {version_tag} revnault_app:latest"
         stdin, stdout, stderr = ssh.exec_command(cmd_build)
         exit_status = stdout.channel.recv_exit_status()
         out_build = stdout.read().decode('utf-8')
@@ -160,7 +160,7 @@ def deploy(include_databases: bool = False):
             return False
 
         print("[5/5] Disparando Docker Stack Deploy com Traefik SSL...")
-        cmd_deploy = f"cd {REMOTE_DIR} && sed -i 's|image: rvops_app:.*|image: {version_tag}|' docker-stack.yml && set -a && . {REMOTE_SECRETS_FILE} && set +a && docker stack deploy -c docker-stack.yml rvops && docker service update --image {version_tag} --force rvops_app && docker service update --image {version_tag} --force rvops_worker"
+        cmd_deploy = f"cd {REMOTE_DIR} && sed -i 's|image: revnault_app:.*|image: {version_tag}|' docker-stack.yml && set -a && . {REMOTE_SECRETS_FILE} && set +a && docker stack deploy -c docker-stack.yml revnault && docker service update --image {version_tag} --force revnault_app && docker service update --image {version_tag} --force revnault_worker"
         stdin, stdout, stderr = ssh.exec_command(cmd_deploy)
         deploy_exit_status = stdout.channel.recv_exit_status()
         out_deploy = stdout.read().decode('utf-8')

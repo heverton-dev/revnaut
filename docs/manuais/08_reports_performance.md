@@ -1,7 +1,7 @@
 # Manual da Sub-rota: Relatórios • Performance por Consultor Cirúrgico (`/#reports-performance`)
 
 ## 1. Objetivo da Rota / Sub-rota
-Centralizar a operação da tela **Relatórios • Performance por Consultor Cirúrgico** (`/#reports-performance`) (Sub-rota integrada ao módulo principal `#reports`) na arquitetura operacional do Revnaut Dental, assegurando governança clínica, rastreabilidade auditável e controle transacional.
+Centralizar a operação da tela **Relatórios • Performance por Consultor Cirúrgico** (`/#reports-performance`) (Sub-rota integrada ao módulo principal `#reports`) na arquitetura operacional do RevNault Dental, assegurando governança clínica, rastreabilidade auditável e controle transacional.
 
 ---
 

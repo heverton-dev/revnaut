@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Redis Streams Event Bus & Deterministic Consumer Pools — Revnaut Core
+Redis Streams Event Bus & Deterministic Consumer Pools — RevNault Core
 Canal assíncrono para integração desacoplada entre CRM, KeyPartners, DENTGO e Webhooks.
 """
 

@@ -1,7 +1,7 @@
-# PLANO DE MICRO-TICKETS CIRÚRGICOS DE HOMOLOGAÇÃO E2E, EXPOSIÇÃO TOTAL DOS MOTORES (100%) & REDESIGN UI/UX CORPORATIVO B2B — REVNAULT
+# PLANO DE MICRO-TICKETS CIRÚRGICOS DE HOMOLOGAÇÃO E2E, EXPOSIÇÃO TOTAL DOS MOTORES (100%) & REDESIGN UI/UX CORPORATIVO B2B — RevNault
 
 > **Objetivo:** Erradicar 100% das "Cascas Cosméticas", elevar a **Taxa de Aproveitamento dos Motores do Backend de `12,11%` para `100%`** (expondo todos os 38 sub-domínios na UI), eliminar os 15/17 overflows mobile (`375x812`) e entregar uma experiência B2B Enterprise Tier-1 (padrão Linear / Stripe / Salesforce Health Cloud) com conformidade estrita às Leis Invioláveis (#5 Zero Stubs, #11 Stack Canônica, #14 Zero Emojis / Tokens CSS Estritos).
-> **Referência Forense:** [`RELATORIO_HOMOLOGACAO_PROFUNDA_E2E_REVNAULT.md`](file:///C:/Users/trcnologia/Desktop/_inbox/proj_revops/RELATORIO_HOMOLOGACAO_PROFUNDA_E2E_REVNAULT.md) e [`docs/homolog_e2e_playwright_report.json`](file:///C:/Users/trcnologia/Desktop/_inbox/proj_revops/docs/homolog_e2e_playwright_report.json).
+> **Referência Forense:** [`RELATORIO_HOMOLOGACAO_PROFUNDA_E2E_RevNault.md`](file:///C:/Users/trcnologia/Desktop/_inbox/proj_revops/RELATORIO_HOMOLOGACAO_PROFUNDA_E2E_RevNault.md) e [`docs/homolog_e2e_playwright_report.json`](file:///C:/Users/trcnologia/Desktop/_inbox/proj_revops/docs/homolog_e2e_playwright_report.json).
 
 ---
 

@@ -1,7 +1,7 @@
 # Manual da Sub-rota: DENTGO • Rastreabilidade FEFO & Separação de Lotes (`/#dentgo-fefo`)
 
 ## 1. Objetivo da Rota / Sub-rota
-Centralizar a operação da tela **DENTGO • Rastreabilidade FEFO & Separação de Lotes** (`/#dentgo-fefo`) (Sub-rota integrada ao módulo principal `#dentgo`) na arquitetura operacional do Revnaut Dental, assegurando governança clínica, rastreabilidade auditável e controle transacional.
+Centralizar a operação da tela **DENTGO • Rastreabilidade FEFO & Separação de Lotes** (`/#dentgo-fefo`) (Sub-rota integrada ao módulo principal `#dentgo`) na arquitetura operacional do RevNault Dental, assegurando governança clínica, rastreabilidade auditável e controle transacional.
 
 ---
 

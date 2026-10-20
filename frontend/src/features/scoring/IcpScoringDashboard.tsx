@@ -9,7 +9,6 @@ import {
   Trash2,
   Edit2,
   Zap,
-  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { RouteHeader } from "@/components/ui/RouteHeader";
@@ -19,6 +18,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import { Dialog } from "@/components/ui/Dialog";
 
 export interface ScoringRule {
   id: string;
@@ -270,7 +270,7 @@ export const IcpScoringDashboard: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="space-y-4 max-w-6xl mx-auto">
+      <div className="space-y-6 max-w-7xl mx-auto">
         <Card className="p-6 border-border">
           <Skeleton className="h-6 w-64 mb-4" />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -303,7 +303,7 @@ export const IcpScoringDashboard: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
+    <div className="space-y-6 max-w-7xl mx-auto">
       <RouteHeader
         title="Classificação de Potencial de Clientes & Prioridades"
         description="Pontuação automática por volume cirúrgico, especialidade e engajamento com encaminhamento automático (Prioridade Alta ≥ 80 pts)."
@@ -606,25 +606,15 @@ export const IcpScoringDashboard: React.FC = () => {
         </Card>
       )}
 
-      {/* Modal Criar / Editar Regra */}
-      {showRuleModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <Card className="w-full max-w-md p-5 bg-surface-card border border-border space-y-4 shadow-xl">
-            <div className="flex items-center justify-between border-b border-border pb-2.5">
-              <h3 className="text-sm font-bold text-text-main flex items-center gap-2">
-                <Sliders className="h-4 w-4 text-brand-primary" />
-                {editingRuleId ? "Editar Regra de Pontuação (PUT)" : "Nova Regra de Pontuação ICP (POST)"}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setShowRuleModal(false)}
-                className="text-text-muted hover:text-text-main p-1"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveRule} className="space-y-3 text-xs">
+      {/* Modal Criar / Editar Regra Padronizado */}
+      <Dialog
+        isOpen={showRuleModal}
+        onClose={() => setShowRuleModal(false)}
+        size="form"
+        title={editingRuleId ? "Editar Regra de Pontuação (PUT)" : "Nova Regra de Pontuação ICP (POST)"}
+        description="Defina a ponderação do score preditivo de acordo com critérios operacionais e comportamentais."
+      >
+        <form onSubmit={handleSaveRule} className="space-y-3 text-xs">
               <div>
                 <label className="font-semibold text-text-secondary block mb-1">Nome do Critério</label>
                 <Input
@@ -718,10 +708,8 @@ export const IcpScoringDashboard: React.FC = () => {
                     : "Criar Regra (POST)"}
                 </Button>
               </div>
-            </form>
-          </Card>
-        </div>
-      )}
+        </form>
+      </Dialog>
     </div>
   );
 };
