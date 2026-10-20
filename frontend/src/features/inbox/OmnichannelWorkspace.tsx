@@ -207,32 +207,24 @@ export const OmnichannelWorkspace: React.FC<OmnichannelWorkspaceProps> = ({
   const activeContact = (Array.isArray(contacts) ? contacts : []).find((c) => c.id === selectedContactId) || contacts[0];
   const activeConversation = (Array.isArray(conversations) ? conversations : []).find((c) => c.id === selectedChatId) || conversations[0];
 
-  const uploadMedia = async (blob: Blob, filename: string): Promise<string> => {
-    const presign = await fetch("/api/v1/storage/presign-upload", {
+  const uploadMedia = async (blob: Blob, filename: string, folder: "voice" | "attachments"): Promise<string> => {
+    const safeName = filename.replace(/[^A-Za-z0-9._-]/g, "_");
+    const key = `0f14ffff/inbox/${folder}/${selectedChatId || "sem-conversa"}/${Date.now()}-${safeName}`;
+    const res = await fetch(`/api/v1/storage/upload-direct/${key}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "X-Account-ID": "0f14ffff" },
-      body: JSON.stringify({
-        filename,
-        module: "media",
-        content_type: blob.type || "application/octet-stream",
-      }),
-    });
-    if (!presign.ok) throw new Error("Falha ao obter autorização de upload");
-    const { upload_url, key } = await presign.json();
-    const put = await fetch(upload_url, {
-      method: "PUT",
-      headers: { "Content-Type": blob.type || "application/octet-stream" },
+      headers: { "Content-Type": blob.type || "application/octet-stream", "X-Account-ID": "0f14ffff" },
       body: blob,
     });
-    if (!put.ok) throw new Error("Falha no upload do arquivo");
-    return key as string;
+    if (!res.ok) throw new Error("Falha no upload do arquivo");
+    const data = await res.json();
+    return (data.key as string) || key;
   };
 
-  const sendMediaMessage = async (blob: Blob, filename: string, label: string) => {
+  const sendMediaMessage = async (blob: Blob, filename: string, label: string, folder: "voice" | "attachments") => {
     setComposerError(null);
     setUploadingMedia(true);
     try {
-      const key = await uploadMedia(blob, filename);
+      const key = await uploadMedia(blob, filename, folder);
       sendMessageMutation.mutate(`${label}: /api/v1/storage/files/${key}`);
     } catch (err: any) {
       setComposerError(err.message || "Falha ao enviar mídia");
@@ -259,7 +251,7 @@ export const OmnichannelWorkspace: React.FC<OmnichannelWorkspaceProps> = ({
         setRecording(false);
         const blob = new Blob(chunksRef.current, { type: recorder.mimeType || "audio/webm" });
         const ext = blob.type.includes("ogg") ? "ogg" : "webm";
-        void sendMediaMessage(blob, `nota-de-voz-${Date.now()}.${ext}`, "Nota de voz");
+        void sendMediaMessage(blob, `nota-de-voz-${Date.now()}.${ext}`, "Nota de voz", "voice");
       };
       recorderRef.current = recorder;
       recorder.start();
@@ -273,31 +265,37 @@ export const OmnichannelWorkspace: React.FC<OmnichannelWorkspaceProps> = ({
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
-    void sendMediaMessage(file, file.name, `Anexo (${file.name})`);
+    void sendMediaMessage(file, file.name, `Anexo (${file.name})`, "attachments");
   };
 
   const handleSimulateCallOffer = async (inst: WhatsappInstance) => {
     setCallFeedback(null);
     try {
-      const res = await fetch("/api/v1/webhooks/evolution", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          event: "CALL_OFFER",
-          instance: inst.instance_name,
-          data: {
-            id: `call-${Date.now()}`,
-            from: `${(inst.phone_number || "5511999998888").replace(/\D/g, "")}@s.whatsapp.net`,
-            isVideo: true,
-            status: "offer",
-          },
-        }),
+      const body = JSON.stringify({
+        event: "CALL_OFFER",
+        instance: inst.instance_name,
+        data: {
+          id: `call-${Date.now()}`,
+          from: `${(inst.phone_number || "5511999998888").replace(/\D/g, "")}@s.whatsapp.net`,
+          isVideo: true,
+          status: "offer",
+        },
       });
+      const post = (url: string) =>
+        fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body });
+      // Webhook público exige HMAC da Evolution (o navegador não detém o segredo);
+      // em 401 a simulação usa o endpoint interno de eventos Evolution.
+      let res = await post("/api/v1/webhooks/evolution");
+      let route = "/api/v1/webhooks/evolution";
+      if (res.status === 401) {
+        res = await post("/api/v1/omnichannel/webhook/evolution");
+        route = "/api/v1/omnichannel/webhook/evolution (simulação interna sem HMAC)";
+      }
       const data = await res.json().catch(() => ({}));
       setCallFeedback(
         res.ok
-          ? `CALL_OFFER enviado para ${inst.instance_name}.`
-          : `Webhook respondeu ${res.status}: ${typeof data.detail === "string" ? data.detail : "verifique a assinatura HMAC"}`,
+          ? `CALL_OFFER processado via ${route}. Sala SOS: ${data.sos_call_link || data.room_name || "criada"}`
+          : `Webhook respondeu ${res.status}: ${typeof data.detail === "string" ? data.detail : "falha no processamento"}`,
       );
     } catch (err: any) {
       setCallFeedback(`Erro: ${err.message}`);

@@ -70,6 +70,11 @@ export const DentgoRadarMap: React.FC<DentgoRadarMapProps> = ({ hubs, orders, cl
       .map((o) => {
         const hp = hubPoints.find((p) => p.hub.id === o.hub_id) || hubPoints[0];
         if (!hp) return null;
+        if (Number.isFinite(o.delivery_lat) && Number.isFinite(o.delivery_lng)) {
+          const dest = project(o.delivery_lat as number, o.delivery_lng as number);
+          return { order: o, hubX: hp.x, hubY: hp.y, x: dest.x, y: dest.y };
+        }
+        // Sem coordenadas no pedido: posiciona pela distância real com ângulo determinístico
         const ang = hashAngle(o.id);
         const dist = Math.max(0.5, o.distance_km) * pxPerKm;
         return { order: o, hubX: hp.x, hubY: hp.y, x: hp.x + Math.cos(ang) * dist, y: hp.y + Math.sin(ang) * dist };

@@ -63,6 +63,7 @@ def register_kit(payload: ConsignmentKitCreate):
 
 
 @router.post("/agreements/{agreement_id}/dispatch", response_model=CustodyDispatchResponse, summary="Efetuar remessa de custódia com auditoria de limite e validade ANVISA")
+@router.post("/agreements/{agreement_id}/dispatch-custody", response_model=CustodyDispatchResponse, summary="Remeter lotes para custódia da clínica (auditoria de limite, quarentena e validade ANVISA)")
 def dispatch_custody(agreement_id: str, payload: CustodyDispatchRequest):
     try:
         items_dict = [it.model_dump() for it in payload.items]

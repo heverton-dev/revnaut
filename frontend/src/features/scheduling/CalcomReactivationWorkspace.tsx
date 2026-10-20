@@ -173,10 +173,13 @@ export const CalcomReactivationWorkspace: React.FC = () => {
     return keys;
   }, [bookings]);
 
+  // Confirma o booking Cal.com para o horário escolhido na grade visual
+  const handleSimulateBooking = (slotStart: Date) => handleSimulateBookingWebhook(undefined, slotStart);
+
   const handlePickSlot = (day: Date, hour: number) => {
     const start = new Date(day);
     start.setHours(hour, 0, 0, 0);
-    void handleSimulateBookingWebhook(undefined, start);
+    void handleSimulateBooking(start);
   };
 
   const handleSimulateBookingWebhook = async (sched?: ReactivationScheduleItem, slotStart?: Date) => {

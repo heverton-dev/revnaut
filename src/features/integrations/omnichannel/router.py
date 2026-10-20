@@ -5,7 +5,7 @@ Valida assinatura HMAC SHA-256 e sincroniza dados em tempo real.
 """
 
 import json
-from typing import List, Optional
+from typing import List, Optional, Union
 from fastapi import APIRouter, Request, Header, HTTPException, status
 from src.features.integrations.omnichannel.schemas import (
     OmnichannelWebhookResponse, WhatsappInstanceCreate,
@@ -20,7 +20,7 @@ from src.features.integrations.omnichannel import chatwoot_bridge
 router = APIRouter(tags=["Integrações • Omnichannel & Webhooks"])
 
 
-@router.post("/api/v1/webhooks/evolution", response_model=OmnichannelWebhookResponse, summary="Webhook Evolution API v2 (WhatsApp Inbound)")
+@router.post("/api/v1/webhooks/evolution", response_model=Union[OmnichannelWebhookResponse, EvolutionWebhookResponse], summary="Webhook Evolution API v2 (WhatsApp Inbound e CALL_OFFER)")
 async def evolution_webhook(
     request: Request,
     x_evolution_signature: Optional[str] = Header(None, alias="X-Evolution-Signature"),
@@ -39,6 +39,9 @@ async def evolution_webhook(
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="Payload JSON malformado.")
 
+    event_upper = str(payload.get("event", "")).upper()
+    if "CALL_OFFER" in event_upper or "CALL.OFFER" in event_upper:
+        return evolution_webhook_router.handle_evolution_event(payload)
     return service.process_evolution_webhook(payload)
 
 

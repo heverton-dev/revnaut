@@ -25,6 +25,8 @@ export interface DentgoExpressOrder {
   hub_id: string;
   customer_cro_uf: string;
   delivery_address: string;
+  delivery_lat?: number;
+  delivery_lng?: number;
   distance_km: number;
   estimated_eta_minutes: number;
   subtotal: number;
@@ -449,12 +451,11 @@ export const DentgoExpressCockpit: React.FC = () => {
         voucher_code: voucher || undefined,
         account_id: "0f14ffff",
       });
-      const post = (path: string) =>
-        fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body });
-      let res = await post("/api/v1/dentgo/orders/express");
-      if (res.status === 404 || res.status === 405) {
-        res = await post("/api/v1/dentgo/orders/checkout");
-      }
+      const res = await fetch("/api/v1/dentgo/orders/express", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body,
+      });
       if (res.ok) {
         setShowCheckoutModal(false);
         setCartItems([]);

@@ -175,6 +175,7 @@ export const DealsWorkspace: React.FC<DealsWorkspaceProps> = ({ currentUserId })
       };
     },
   });
+  const refetchDeals = () => dealsQuery.refetch();
 
   React.useEffect(() => {
     let cancelled = false;
@@ -939,7 +940,7 @@ export const DealsWorkspace: React.FC<DealsWorkspaceProps> = ({ currentUserId })
 
               <div className="p-3 rounded-lg border border-border space-y-3">
                 <span className="font-semibold uppercase text-text-secondary block">Teleconsulta e Copiloto de Reunião</span>
-                <GranolaCopilotCard dealId={String(selectedDeal.id)} onApplySuccess={() => dealsQuery.refetch()} />
+                <GranolaCopilotCard dealId={String(selectedDeal.id)} onApplySuccess={() => refetchDeals()} />
               </div>
               <LiveKitDealRoomModal
                 isOpen={showDealVideoModal}

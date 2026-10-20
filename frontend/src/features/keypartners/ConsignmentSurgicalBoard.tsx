@@ -143,8 +143,21 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
   const [dispatchProductId, setDispatchProductId] = useState<string>("IMP-CM-4311");
   const [dispatchBatch, setDispatchBatch] = useState<string>("LOTE-2026-X1");
   const [dispatchQty, setDispatchQty] = useState<number>(10);
-  const [dispatchSealCode, setDispatchSealCode] = useState<string>("LACRE-CUSTODIA-001");
-  const [dispatchLots, setDispatchLots] = useState<Array<{ product_id: string; batch_number: string; quantity: number }>>([]);
+  const [dispatchProductName, setDispatchProductName] = useState<string>("Implante Cone Morse 4.3x11mm");
+  const [dispatchAnvisa, setDispatchAnvisa] = useState<string>("ANVISA-80123456789");
+  const [dispatchUnitValue, setDispatchUnitValue] = useState<number>(450.0);
+  const [dispatchExpiry, setDispatchExpiry] = useState<string>("2028-12-31");
+  const [dispatchLots, setDispatchLots] = useState<
+    Array<{
+      product_id: string;
+      product_name: string;
+      anvisa_reg: string;
+      batch_number: string;
+      quantity: number;
+      unit_value: number;
+      sterilization_expiry_date: string;
+    }>
+  >([]);
   const [dispatchingCustody, setDispatchingCustody] = useState<boolean>(false);
   const [dispatchCustodyFeedback, setDispatchCustodyFeedback] = useState<string | null>(null);
   const [loadingCustody, setLoadingCustody] = useState<boolean>(false);
@@ -562,20 +575,24 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
     }
   };
 
+  const buildDispatchLot = () => ({
+    product_id: dispatchProductId.trim(),
+    product_name: dispatchProductName.trim(),
+    anvisa_reg: dispatchAnvisa.trim(),
+    batch_number: dispatchBatch.trim(),
+    quantity: Math.max(1, Number(dispatchQty) || 1),
+    unit_value: Math.max(0, Number(dispatchUnitValue) || 0),
+    sterilization_expiry_date: dispatchExpiry,
+  });
+
   const handleAddDispatchLot = () => {
-    if (!dispatchProductId.trim() || !dispatchBatch.trim() || dispatchQty < 1) return;
-    setDispatchLots((prev) => [
-      ...prev,
-      { product_id: dispatchProductId.trim(), batch_number: dispatchBatch.trim(), quantity: Number(dispatchQty) },
-    ]);
+    if (!dispatchProductId.trim() || !dispatchBatch.trim() || !dispatchAnvisa.trim() || dispatchQty < 1) return;
+    setDispatchLots((prev) => [...prev, buildDispatchLot()]);
   };
 
   const handleDispatchCustody = async () => {
     if (!selectedCustodyAgreementId) return;
-    const lots =
-      dispatchLots.length > 0
-        ? dispatchLots
-        : [{ product_id: dispatchProductId.trim(), batch_number: dispatchBatch.trim(), quantity: Number(dispatchQty) }];
+    const lots = dispatchLots.length > 0 ? dispatchLots : [buildDispatchLot()];
     setDispatchingCustody(true);
     setDispatchCustodyFeedback(null);
     try {
@@ -584,13 +601,14 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ lots, seal_code: dispatchSealCode, account_id: "0f14ffff" }),
+          body: JSON.stringify({ items: lots, account_id: "0f14ffff" }),
         },
       );
       if (res.ok) {
         setShowDispatchCustodyModal(false);
         setDispatchLots([]);
         fetchCustodySummary(selectedCustodyAgreementId);
+        fetchAgreements();
       } else {
         const err = await res.json().catch(() => ({}));
         setDispatchCustodyFeedback(
@@ -1925,13 +1943,53 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
                 </div>
               </div>
               <div>
-                <label className="text-text-secondary block mb-1">Lote:</label>
+                <label className="text-text-secondary block mb-1">Descrição do produto:</label>
                 <input
                   type="text"
-                  value={dispatchBatch}
-                  onChange={(e) => setDispatchBatch(e.target.value)}
-                  className="w-full rounded-lg border border-border bg-surface-bg p-2 text-text-main font-mono"
+                  value={dispatchProductName}
+                  onChange={(e) => setDispatchProductName(e.target.value)}
+                  className="w-full rounded-lg border border-border bg-surface-bg p-2 text-text-main"
                 />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-text-secondary block mb-1">Lote:</label>
+                  <input
+                    type="text"
+                    value={dispatchBatch}
+                    onChange={(e) => setDispatchBatch(e.target.value)}
+                    className="w-full rounded-lg border border-border bg-surface-bg p-2 text-text-main font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="text-text-secondary block mb-1">Registro ANVISA:</label>
+                  <input
+                    type="text"
+                    value={dispatchAnvisa}
+                    onChange={(e) => setDispatchAnvisa(e.target.value)}
+                    className="w-full rounded-lg border border-border bg-surface-bg p-2 text-text-main font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="text-text-secondary block mb-1">Valor unitário (R$):</label>
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={dispatchUnitValue}
+                    onChange={(e) => setDispatchUnitValue(Number(e.target.value))}
+                    className="w-full rounded-lg border border-border bg-surface-bg p-2 text-text-main font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="text-text-secondary block mb-1">Validade esterilização:</label>
+                  <input
+                    type="date"
+                    value={dispatchExpiry}
+                    onChange={(e) => setDispatchExpiry(e.target.value)}
+                    className="w-full rounded-lg border border-border bg-surface-bg p-2 text-text-main font-mono"
+                  />
+                </div>
               </div>
               <Button type="button" size="sm" variant="outline" onClick={handleAddDispatchLot} className="w-full gap-1.5">
                 <Plus className="w-3.5 h-3.5" />
@@ -1942,7 +2000,7 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
                   {dispatchLots.map((l, i) => (
                     <li key={`${l.batch_number}-${i}`} className="flex items-center justify-between p-2 font-mono">
                       <span>
-                        {l.product_id} / {l.batch_number} x {l.quantity}
+                        {l.product_id} / {l.batch_number} x {l.quantity} (R$ {(l.unit_value * l.quantity).toFixed(2)})
                       </span>
                       <button
                         type="button"
@@ -1955,15 +2013,6 @@ export const ConsignmentSurgicalBoard: React.FC = () => {
                   ))}
                 </ul>
               )}
-              <div>
-                <label className="text-text-secondary block mb-1">Lacre da Maleta:</label>
-                <input
-                  type="text"
-                  value={dispatchSealCode}
-                  onChange={(e) => setDispatchSealCode(e.target.value)}
-                  className="w-full rounded-lg border border-border bg-surface-bg p-2 text-text-main font-mono"
-                />
-              </div>
               {dispatchCustodyFeedback && <p className="text-status-danger">{dispatchCustodyFeedback}</p>}
             </div>
             <div className="flex justify-end gap-2 pt-2 border-t border-border">

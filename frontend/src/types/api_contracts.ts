@@ -831,6 +831,7 @@ export const API_V1_ROUTES = [
   '/api/v1/keypartners/agreements',
   '/api/v1/keypartners/agreements/{agreement_id}/custody-summary',
   '/api/v1/keypartners/agreements/{agreement_id}/dispatch',
+  '/api/v1/keypartners/agreements/{agreement_id}/dispatch-custody',
   '/api/v1/keypartners/consignments/{kit_serial}/trigger-dentgo-pickup',
   '/api/v1/keypartners/kits',
   '/api/v1/keypartners/kol-contracts',
