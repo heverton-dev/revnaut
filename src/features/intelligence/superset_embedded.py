@@ -7,6 +7,7 @@ Geração determinística de tokens com cláusulas RLS baseadas no RBAC e export
 from __future__ import annotations
 import csv
 import io
+import re
 import time
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
@@ -17,11 +18,43 @@ from src.core.security import get_user_context, DataScopeEnum
 from src.core.storage import R2StorageClient
 
 
+_SAFE_IDENTIFIER = re.compile(r"^[A-Za-z0-9_\-]{1,64}$")
+_SCOPED_COLUMNS = ("owner_id", "field_owner_id", "inside_owner_id", "team_id", "business_unit_id")
+
+
+def _safe_id(value: str, label: str) -> str:
+    """Valida identificadores antes de qualquer interpolação em cláusula SQL/JWT."""
+    if not isinstance(value, str) or not _SAFE_IDENTIFIER.match(value):
+        raise ValueError(f"Identificador inválido para {label}.")
+    return value
+
+
+def build_table_rls_clause(conn, table: str, user_id: str, account_id: str) -> str:
+    """
+    RLS aplicável a uma tabela específica. Se o escopo do usuário exige colunas que a tabela não
+    possui (ex.: consultor SELF em tabela só com account_id), nega em vez de ampliar ao tenant.
+    """
+    clause = build_superset_rls_clause(conn, user_id=user_id, account_id=account_id)
+    if clause == "1=1" or clause == f"account_id = '{account_id}'":
+        return clause
+    columns = {r[1] for r in conn.execute(f"PRAGMA table_info({_safe_id(table, 'table')})")}
+    if not columns:
+        return clause
+    missing = [c for c in _SCOPED_COLUMNS if re.search(rf"\b{c}\b", clause) and c not in columns]
+    if missing:
+        raise PermissionError(
+            f"O escopo de dados do usuário não pode ser aplicado ao dataset '{table}'."
+        )
+    return clause
+
+
 def build_superset_rls_clause(conn, user_id: str, account_id: str = "0f14ffff") -> str:
     """
     Constrói a cláusula SQL estrita de Row-Level Security (RLS) injetada no token JWT do Apache Superset,
     garantindo isolamento hermético dos dados conforme a árvore hierárquica do RBAC.
     """
+    _safe_id(user_id, "user_id")
+    _safe_id(account_id, "account_id")
     user_ctx = get_user_context(conn, user_id, account_id)
     if not user_ctx:
         return f"account_id = '{account_id}' AND owner_id = '{user_id}'"
@@ -50,7 +83,7 @@ def build_superset_rls_clause(conn, user_id: str, account_id: str = "0f14ffff") 
                 f"account_id = '{account_id}' AND "
                 f"(owner_id = '{user_id}' OR field_owner_id = '{user_id}' OR inside_owner_id = '{user_id}')"
             )
-        return f"account_id = '{account_id}' AND team_id = '{user_ctx.team_id}'"
+        return f"account_id = '{account_id}' AND team_id = '{_safe_id(user_ctx.team_id, 'team_id')}'"
 
     # 5. Gestor de Subárvore Recursiva (Distrital)
     if scope == DataScopeEnum.SUBTREE:
@@ -73,13 +106,13 @@ def build_superset_rls_clause(conn, user_id: str, account_id: str = "0f14ffff") 
         sub_teams = [r[0] for r in cur.fetchall()]
         if not sub_teams:
             sub_teams = [user_ctx.team_id]
-        teams_str = ", ".join(f"'{t}'" for t in sub_teams)
+        teams_str = ", ".join(f"'{_safe_id(t, 'team_id')}'" for t in sub_teams)
         return f"account_id = '{account_id}' AND team_id IN ({teams_str})"
 
     # 6. Unidade de Negócio (Business Unit)
     if scope == DataScopeEnum.BUSINESS_UNIT:
         if user_ctx.business_unit_id:
-            return f"account_id = '{account_id}' AND business_unit_id = '{user_ctx.business_unit_id}'"
+            return f"account_id = '{account_id}' AND business_unit_id = '{_safe_id(user_ctx.business_unit_id, 'business_unit_id')}'"
         return f"account_id = '{account_id}' AND owner_id = '{user_id}'"
 
     return f"account_id = '{account_id}'"
@@ -152,38 +185,32 @@ def export_analytics_dataset(
     account_id: str = "0f14ffff"
 ) -> Dict[str, Any]:
     """
-    Exporta datasets analíticos em CSV ou Parquet para o Cloudflare R2 com respeito ao RLS.
+    Exporta datasets analíticos em CSV para o Cloudflare R2 com respeito ao RLS.
     """
+    if (format or "csv").lower().strip() != "csv":
+        raise ValueError("Formato de exportação não suportado: apenas csv.")
     init_db()
     conn = get_connection()
     try:
-        rls_clause = build_superset_rls_clause(conn, user_id=user_id, account_id=account_id)
         cur = conn.cursor()
 
         rows: List[Dict[str, Any]] = []
 
-        if dataset_name == "deals_funnel":
-            cur.execute(f"SELECT * FROM deals WHERE {rls_clause} ORDER BY created_at DESC LIMIT 500")
-            rows = [dict(r) for r in cur.fetchall()]
-        elif dataset_name == "consignment_turnover":
-            # Para kp_custody_ledger, se a cláusula filtrar por owner_id que não existe na tabela, restringe por account_id
-            safe_clause = f"account_id = '{account_id}'" if "owner_id" in rls_clause else rls_clause
-            cur.execute(f"SELECT * FROM kp_custody_ledger WHERE {safe_clause} ORDER BY created_at DESC LIMIT 500")
-            rows = [dict(r) for r in cur.fetchall()]
-        elif dataset_name == "dentgo_deliveries":
-            safe_clause = f"account_id = '{account_id}'" if "owner_id" in rls_clause else rls_clause
-            cur.execute(f"SELECT * FROM dentgo_orders WHERE {safe_clause} ORDER BY created_at DESC LIMIT 500")
-            rows = [dict(r) for r in cur.fetchall()]
-        elif dataset_name == "anvisa_rma":
-            safe_clause = f"account_id = '{account_id}'" if "owner_id" in rls_clause else rls_clause
-            cur.execute(f"SELECT * FROM anvisa_rma_claims WHERE {safe_clause} ORDER BY created_at DESC LIMIT 500")
-            rows = [dict(r) for r in cur.fetchall()]
-        else:
-            cur.execute(f"SELECT * FROM deals WHERE {rls_clause} LIMIT 100")
-            rows = [dict(r) for r in cur.fetchall()]
+        dataset_tables = {
+            "deals_funnel": "deals",
+            "consignment_turnover": "kp_custody_ledger",
+            "dentgo_deliveries": "dentgo_orders",
+            "anvisa_rma": "anvisa_rma_claims",
+        }
+        table = dataset_tables.get(dataset_name, "deals")
+        rls_clause = build_table_rls_clause(conn, table, user_id=user_id, account_id=account_id)
+        limit = 100 if dataset_name not in dataset_tables else 500
+        order = "" if dataset_name not in dataset_tables else " ORDER BY created_at DESC"
+        cur.execute(f"SELECT * FROM {table} WHERE {rls_clause}{order} LIMIT {limit}")
+        rows = [dict(r) for r in cur.fetchall()]
 
         timestamp_str = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-        r2_key = f"datasets/{account_id}/{dataset_name}_{timestamp_str}.{format}"
+        r2_key = f"datasets/{account_id}/{dataset_name}_{timestamp_str}.csv"
 
         # Gera representação em texto/bytes e envia ao Cloudflare R2
         output_buffer = io.StringIO()
@@ -196,12 +223,7 @@ def export_analytics_dataset(
             output_buffer.write("id,account_id,created_at\n")
 
         raw_bytes = output_buffer.getvalue().encode("utf-8")
-        fmt_lower = (format or "csv").lower().strip()
-        mime_type = (
-            "application/vnd.apache.parquet"
-            if fmt_lower == "parquet"
-            else "text/csv"
-        )
+        mime_type = "text/csv"
         storage = R2StorageClient()
         download_url = storage.upload_bytes(
             key=r2_key,

@@ -4,6 +4,7 @@ Tests for dynamic natural language to SQL parsing across 11 tables, UF filters, 
 """
 
 import pytest
+from src.core.database import get_connection
 from src.features.intelligence.text_to_sql_agent import (
     natural_language_to_sql,
     execute_analytical_query,
@@ -34,6 +35,17 @@ def test_text_to_sql_across_all_tables():
 
 
 def test_text_to_sql_execution_end_to_end():
+    # DASH4-03: usuário inexistente não recebe mais dados do tenant inteiro; semeia um diretor real
+    conn = get_connection()
+    try:
+        conn.execute(
+            "INSERT OR REPLACE INTO users (id, account_id, name, email, role, custom_data_scope, "
+            "is_active, is_superadmin) VALUES ('usr-sql-director', '0f14ffff', 'Diretor SQL', "
+            "'sql.director@revnault.com', 'Diretor Geral', 'tenant_global', 1, 0)"
+        )
+        conn.commit()
+    finally:
+        conn.close()
     res = execute_analytical_query(
         natural_language_query="Qual a soma do faturamento fiscal por cfop?",
         user_id="usr-sql-director",

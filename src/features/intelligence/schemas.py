@@ -236,10 +236,10 @@ class CatalogRagQueryResponse(BaseModel):
 
 
 class SupersetGuestTokenRequest(BaseModel):
-    user_id: str = Field(..., description="ID do usuário solicitante (para RLS automático)")
+    user_id: Optional[str] = Field(default=None, description="Opcional: só superadmin pode agir em nome de outro usuário; omitido usa a sessão")
     dashboard_id: str = Field(..., description="ID ou UUID do dashboard no Superset")
     dashboard_type: Optional[str] = Field(default="industry_consignment", description="Tipo de painel: industry_consignment | clinic_chair | dentgo_sla")
-    account_id: Optional[str] = Field(default="0f14ffff", description="ID do tenant")
+    account_id: Optional[str] = Field(default=None, description="Opcional: se informado, deve ser o tenant da sessão")
 
 
 class SupersetGuestTokenResponse(BaseModel):
@@ -256,9 +256,9 @@ class SupersetGuestTokenResponse(BaseModel):
 
 class AnalyticsDatasetExportRequest(BaseModel):
     dataset_name: str = Field(..., description="Nome do dataset: deals_funnel | consignment_turnover | dentgo_deliveries | anvisa_rma")
-    user_id: str = Field(..., description="ID do usuário solicitante")
-    format: Optional[str] = Field(default="csv", pattern="^(csv|parquet)$", description="Formato de saída: csv | parquet")
-    account_id: Optional[str] = Field(default="0f14ffff", description="ID do tenant")
+    user_id: Optional[str] = Field(default=None, description="Opcional: só superadmin pode agir em nome de outro usuário; omitido usa a sessão")
+    format: Optional[str] = Field(default="csv", pattern="^csv$", description="Formato de saída: csv")
+    account_id: Optional[str] = Field(default=None, description="Opcional: se informado, deve ser o tenant da sessão")
 
 
 class AnalyticsDatasetExportResponse(BaseModel):
@@ -275,8 +275,8 @@ class AnalyticsDatasetExportResponse(BaseModel):
 class TextToSqlExecuteRequest(BaseModel):
     natural_language_query: Optional[str] = Field(None, description="Pergunta analítica em português (ex: Total faturado por regional)")
     raw_sql: Optional[str] = Field(None, description="Consulta SQL customizada gerada ou validada")
-    user_id: str = Field(..., description="ID do usuário para injeção estrita de escopo RBAC/RLS")
-    account_id: Optional[str] = Field(default="0f14ffff", description="ID do tenant")
+    user_id: Optional[str] = Field(default=None, description="Opcional: só superadmin pode agir em nome de outro usuário; omitido usa a sessão")
+    account_id: Optional[str] = Field(default=None, description="Opcional: se informado, deve ser o tenant da sessão")
 
 
 class TextToSqlExecuteResponse(BaseModel):

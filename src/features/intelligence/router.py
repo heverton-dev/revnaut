@@ -5,6 +5,7 @@ Endpoints para Grafo Clínico KOL, Vínculos N:N e Radar Anti-Churn Odontológic
 """
 
 from __future__ import annotations
+import logging
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
@@ -198,6 +199,34 @@ def query_catalog_rag(payload: CatalogRagQueryRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+_log = logging.getLogger(__name__)
+
+
+def _resolve_bi_actor(
+    payload_user_id: Optional[str],
+    payload_account_id: Optional[str],
+    current_user: UserProfileOut,
+) -> tuple[str, str]:
+    """
+    DASH4-01/02: identidade e tenant do BI vêm da sessão assinada. user_id diferente do da sessão
+    só é aceito para superadmin (impersonação); o tenant nunca é trocado pelo corpo da requisição.
+    """
+    if payload_account_id and payload_account_id != current_user.account_id:
+        raise HTTPException(status_code=403, detail="Tenant diferente do tenant da sessão.")
+    if payload_user_id and payload_user_id != current_user.id and not current_user.is_superadmin:
+        raise HTTPException(status_code=403, detail="Não é permitido agir em nome de outro usuário.")
+    return payload_user_id or current_user.id, current_user.account_id
+
+
+def _bi_http_error(exc: Exception) -> HTTPException:
+    if isinstance(exc, PermissionError):
+        return HTTPException(status_code=403, detail=str(exc))
+    if isinstance(exc, ValueError):
+        return HTTPException(status_code=400, detail=str(exc))
+    _log.exception("Falha no endpoint BI de inteligência")
+    return HTTPException(status_code=500, detail="Erro interno ao processar a requisição BI.")
+
+
 @router.post(
     "/bi/guest-token",
     response_model=SupersetGuestTokenResponse,
@@ -207,16 +236,16 @@ def get_superset_guest_token(
     payload: SupersetGuestTokenRequest,
     current_user: UserProfileOut = Depends(get_current_user)
 ):
-    # TICKET-DASH-04: RLS do Guest Token sempre herda o tenant do usuário autenticado
+    user_id, account_id = _resolve_bi_actor(payload.user_id, payload.account_id, current_user)
     try:
         return superset_embedded.generate_superset_guest_token(
-            user_id=payload.user_id or current_user.id,
+            user_id=user_id,
             dashboard_id=payload.dashboard_id,
             dashboard_type=payload.dashboard_type or "industry_consignment",
-            account_id=current_user.account_id
+            account_id=account_id
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise _bi_http_error(e)
 
 
 @router.post(
@@ -224,16 +253,20 @@ def get_superset_guest_token(
     response_model=AnalyticsDatasetExportResponse,
     summary="Exportar dataset analítico para Cloudflare R2 com RLS"
 )
-def export_dataset(payload: AnalyticsDatasetExportRequest):
+def export_dataset(
+    payload: AnalyticsDatasetExportRequest,
+    current_user: UserProfileOut = Depends(get_current_user)
+):
+    user_id, account_id = _resolve_bi_actor(payload.user_id, payload.account_id, current_user)
     try:
         return superset_embedded.export_analytics_dataset(
             dataset_name=payload.dataset_name,
-            user_id=payload.user_id,
+            user_id=user_id,
             format=payload.format or "csv",
-            account_id=payload.account_id or "0f14ffff"
+            account_id=account_id
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise _bi_http_error(e)
 
 
 @router.post(
@@ -241,18 +274,20 @@ def export_dataset(payload: AnalyticsDatasetExportRequest):
     response_model=TextToSqlExecuteResponse,
     summary="Executar consulta analítica Text-to-SQL com proteção AST e RLS"
 )
-def execute_text_to_sql(payload: TextToSqlExecuteRequest):
+def execute_text_to_sql(
+    payload: TextToSqlExecuteRequest,
+    current_user: UserProfileOut = Depends(get_current_user)
+):
+    user_id, account_id = _resolve_bi_actor(payload.user_id, payload.account_id, current_user)
     try:
         return text_to_sql_agent.execute_analytical_query(
             natural_language_query=payload.natural_language_query,
             raw_sql=payload.raw_sql,
-            user_id=payload.user_id,
-            account_id=payload.account_id or "0f14ffff"
+            user_id=user_id,
+            account_id=account_id
         )
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise _bi_http_error(e)
 
 
 @router.post(

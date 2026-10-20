@@ -11,7 +11,7 @@ import time
 from typing import Any, Dict, List, Optional
 from src.core.database import get_connection, init_db
 from src.core.vector_store import compute_semantic_embedding, cosine_similarity
-from src.features.intelligence.superset_embedded import build_superset_rls_clause
+from src.features.intelligence.superset_embedded import build_superset_rls_clause, build_table_rls_clause
 
 FORBIDDEN_KEYWORDS = {
     "drop", "delete", "update", "insert", "alter", "grant", "revoke",
@@ -379,16 +379,15 @@ def execute_analytical_query(
     try:
         rls_clause = build_superset_rls_clause(conn, user_id=user_id, account_id=account_id)
 
+        # DASH4-03: tabelas que não expressam o escopo do usuário (só account_id) são negadas,
+        # nunca ampliadas ao tenant inteiro.
+        referenced = set(re.findall(r"\b(?:from|join)\s+([A-Za-z_][A-Za-z0-9_]*)", sql_base, flags=re.IGNORECASE))
+        for table in referenced:
+            build_table_rls_clause(conn, table, user_id=user_id, account_id=account_id)
+
         # Ajuste seguro de alias: se a query tiver joins com alias 'd.', adapta a cláusula
         if "FROM deals d" in sql_base or "from deals d" in sql_base:
             adapted_rls = rls_clause.replace("account_id =", "d.account_id =").replace("owner_id =", "d.owner_id =").replace("team_id =", "d.team_id =")
-        elif any(tbl in sql_base for tbl in [
-            "FROM kp_custody_ledger", "FROM dentgo_orders", "FROM anvisa_rma_claims",
-            "FROM kp_consignment_kits", "FROM kp_surgical_orders", "FROM clinical_procedure_margins",
-            "FROM kp_surgical_health_scores", "FROM erp_fiscal_invoices"
-        ]):
-            # Tabelas operacionais indexadas por account_id
-            adapted_rls = f"account_id = '{account_id}'" if ("owner_id" in rls_clause or "team_id" in rls_clause) else rls_clause
         else:
             adapted_rls = rls_clause
 
