@@ -231,6 +231,9 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
   // Abas de navegação executiva abaixo dos KPIs (Feedback: Radar, Ecossistema, Funil)
   const [executiveCockpitTab, setExecutiveCockpitTab] = useState<"radar" | "ecosystem" | "funnel">("radar");
 
+  // Modal de Vínculos da Instituição Selecionada (Feedback 3)
+  const [selectedInstitutionForLinks, setSelectedInstitutionForLinks] = useState<any | null>(null);
+
   // Drawer Lateral Dossiê 360° do Cliente / Cirurgião no Radar Anti-Churn (Feedback 8)
   const [selectedContactForDrawer, setSelectedContactForDrawer] = useState<ChurnRiskItem | null>(null);
   const [contactDrawerProfile, setContactDrawerProfile] = useState<any>(null);
@@ -613,27 +616,13 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-text-main">
-              {title || "Cockpit Executivo RevOps & Inteligência de Carteira"}
+              {title || "Cockpit Executivo & Inteligência de Carteira"}
             </h1>
             <p className="text-xs sm:text-sm text-text-secondary mt-1">
               Visão consolidada em tempo real de Pipeline Comercial, ROAS de Campanhas, Radar Anti-Churn RFM e Grafo Clínico KOL.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => {
-                fetchExecutiveCockpit();
-                fetchGuestToken();
-              }}
-              disabled={loadingExecutive}
-              className="h-8 w-8 p-0 flex items-center justify-center shrink-0"
-              title="Atualizar Cockpit"
-              aria-label="Atualizar Cockpit"
-            >
-              <RefreshCw className={`h-3.5 w-3.5 ${loadingExecutive ? "animate-spin" : ""}`} />
-            </Button>
             <div className="flex items-center gap-1.5">
               <label className="text-[11px] font-semibold uppercase text-text-secondary" htmlFor="snapshot-format">
                 Formato
@@ -659,6 +648,20 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
               aria-label={exporting ? "Exportando Snapshot R2..." : "Exportar Snapshot R2"}
             >
               <Download className={`h-3.5 w-3.5 ${exporting ? "animate-bounce" : ""}`} />
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                fetchExecutiveCockpit();
+                fetchGuestToken();
+              }}
+              disabled={loadingExecutive}
+              className="h-8 w-8 p-0 flex items-center justify-center shrink-0"
+              title="Atualizar Cockpit"
+              aria-label="Atualizar Cockpit"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${loadingExecutive ? "animate-spin" : ""}`} />
             </Button>
           </div>
         </div>
@@ -1033,14 +1036,26 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
                       return (
                         <div
                           key={node.id}
-                          className="py-3 px-2 hover:bg-surface-bg rounded-md transition-colors flex items-center justify-between text-xs gap-3"
+                          onClick={() => setSelectedInstitutionForLinks(node)}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              setSelectedInstitutionForLinks(node);
+                            }
+                          }}
+                          className="py-3 px-2 hover:bg-surface-bg rounded-md transition-colors flex items-center justify-between text-xs gap-3 cursor-pointer group"
+                          title="Clique para abrir os vínculos associados a esta instituição"
                         >
                           <div className="flex items-center gap-3 min-w-0">
-                            <div className="p-2 rounded-md bg-surface-bg border border-border-subtle text-brand-primary shrink-0">
+                            <div className="p-2 rounded-md bg-surface-bg border border-border-subtle text-brand-primary shrink-0 group-hover:border-brand-primary/50">
                               <IconComp className="h-4 w-4" />
                             </div>
                             <div className="min-w-0">
-                              <p className="font-semibold text-text-main text-xs truncate">{node.label}</p>
+                              <p className="font-semibold text-text-main text-xs truncate group-hover:text-brand-primary transition-colors">
+                                {node.label}
+                              </p>
                               <div className="flex items-center gap-1.5 text-[11px] text-text-secondary mt-0.5">
                                 <span className="truncate">{locationText}</span>
                                 <span className="text-text-muted">•</span>
@@ -1314,7 +1329,11 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
                       return (
                         <div
                           key={node.id}
-                          className="p-3 rounded-lg border border-border-subtle bg-surface-card hover:bg-surface-bg/80 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs"
+                          onClick={() => setSelectedInstitutionForLinks(node)}
+                          role="button"
+                          tabIndex={0}
+                          className="p-3 rounded-lg border border-border-subtle bg-surface-card hover:bg-surface-bg/80 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs cursor-pointer group"
+                          title="Clique para abrir os vínculos desta instituição"
                         >
                           <div className="flex items-center gap-3 min-w-0">
                             <div className="p-2 rounded-md bg-surface-bg border border-border-subtle text-brand-primary shrink-0">
@@ -1479,6 +1498,85 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
               </div>
             )}
           </div>
+        </Dialog>
+
+        {/* Modal de Vínculos associados à Instituição Selecionada (Feedback 3) */}
+        <Dialog
+          isOpen={Boolean(selectedInstitutionForLinks)}
+          onClose={() => setSelectedInstitutionForLinks(null)}
+          title={selectedInstitutionForLinks ? `Vínculos da Instituição • ${selectedInstitutionForLinks.label}` : "Vínculos da Instituição"}
+          description={
+            selectedInstitutionForLinks
+              ? `${selectedInstitutionForLinks.metadata?.city ? `${selectedInstitutionForLinks.metadata.city}${selectedInstitutionForLinks.metadata.state ? `, ${selectedInstitutionForLinks.metadata.state}` : ""}` : "Polo Nacional"} • Relações mapeadas no Grafo Clínico KOL`
+              : ""
+          }
+          className="max-w-2xl"
+        >
+          {selectedInstitutionForLinks && (() => {
+            const nodeEdges = (clinicalGraph?.edges || []).filter(
+              (e) => e.source === selectedInstitutionForLinks.id || e.target === selectedInstitutionForLinks.id
+            );
+            return (
+              <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+                <div className="p-3 rounded-lg bg-surface-bg border border-border-subtle flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <Building2 className="h-4 w-4 text-brand-primary shrink-0" />
+                    <div className="min-w-0">
+                      <p className="font-semibold text-text-main truncate">{selectedInstitutionForLinks.label}</p>
+                      <p className="text-[11px] text-text-secondary truncate">
+                        {selectedInstitutionForLinks.metadata?.specialty || "Ecossistema Clínico & Cirúrgico"}
+                      </p>
+                    </div>
+                  </div>
+                  <Badge variant="navy" className="text-[10px] shrink-0 font-semibold">
+                    {nodeEdges.length} {nodeEdges.length === 1 ? "vínculo ativo" : "vínculos ativos"}
+                  </Badge>
+                </div>
+
+                <div className="space-y-2">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-text-secondary">
+                    Cirurgiões e Especialistas Conectados
+                  </h4>
+                  {nodeEdges.length === 0 ? (
+                    <div className="p-6 text-center text-xs text-text-muted bg-surface-bg rounded-lg border border-border-subtle">
+                      Nenhum vínculo direto associado a esta instituição no snapshot atual.
+                    </div>
+                  ) : (
+                    nodeEdges.map((edge, idx) => {
+                      const details = getCommercialEdgeDetails(edge);
+                      const isSource = edge.source === selectedInstitutionForLinks.id;
+                      const partnerName = isSource ? details.targetName : details.sourceName;
+                      return (
+                        <div
+                          key={`inst-edge-${idx}`}
+                          className="p-3 rounded-lg border border-border-subtle bg-surface-card hover:bg-surface-bg/80 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs"
+                        >
+                          <div className="space-y-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-text-main truncate">
+                                {partnerName}
+                              </span>
+                              <Badge variant={details.roleBadgeVariant} className="text-[10px] shrink-0">
+                                {details.commercialRole}
+                              </Badge>
+                            </div>
+                            <p className="text-[11px] text-text-secondary truncate">
+                              Vínculo: {edge.relationship || edge.label || "Parceria Institucional"}
+                            </p>
+                          </div>
+                          {details.isKol && (
+                            <Badge variant="success" className="text-[10px] shrink-0 self-start sm:self-center">
+                              Speaker KOL
+                            </Badge>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            );
+          })()}
         </Dialog>
 
         {/* Feedback 8: Drawer Lateral (Sheet) Dossiê 360° do Cliente / Cirurgião (estilo Kanban) */}
