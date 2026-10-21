@@ -1,4 +1,4 @@
-﻿"""Remove the studio backdrop from product and kit renders, deterministically.
+"""Remove the studio backdrop from product and kit renders, deterministically.
 
 Usage: python -I tools/cutout.py   (run from redesign-conexao/)
 Downloads every product/kit render referenced by the pages into data/img-src/,

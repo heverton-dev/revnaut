@@ -53,7 +53,7 @@
 .ref-link{display:inline-flex;margin-top:14px}
 .flow{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--el-gap);counter-reset:f}
 .flow .rt-card{counter-increment:f}
-.flow .rt-card::before{content:"0" counter(f);display:block;font-size:12px;font-weight:600;color:var(--launch-orange);margin-bottom:10px}
+.flow .rt-card::before{content:"0" counter(f);display:block;font-size:12px;font-weight:600;color:var(--brand-gold);margin-bottom:10px}
 .pages-list{display:grid;grid-template-columns:repeat(2,1fr);gap:0 56px}
 .pages-list a{display:flex;justify-content:space-between;gap:16px;padding:14px 0;border-bottom:1px solid var(--control-gray);font-size:17px}
 .pages-list a:hover{color:var(--link-blue)}
@@ -206,7 +206,7 @@
       <div class="rt-head">
         <span class="launch">04 · Paleta de cores</span>
         <h2 class="display-2">Neutra, para o produto brilhar.</h2>
-        <p>Neutros frios para as superfícies e um único azul de ação. Laranja só em rótulos de lançamento.</p>
+        <p>Neutros frios para as superfícies, o Azul Conexão para ação e o dourado da marca só em rótulos e detalhes.</p>
       </div>
       <div class="rt-grid c4">
         <div class="sw"><div class="sw-chip" style="background:#ffffff;box-shadow:inset 0 -1px 0 #e6e6e8">Fundo</div><div class="sw-body"><b>Gallery White</b><code>#FFFFFF</code><p>Fundo principal de todas as páginas.</p></div></div>
@@ -215,15 +215,17 @@
         <div class="sw"><div class="sw-chip" style="background:#e6e6e8">Linhas</div><div class="sw-body"><b>Control Gray</b><code>#E6E6E8</code><p>Divisores e bordas discretas.</p></div></div>
         <div class="sw"><div class="sw-chip" style="background:#1d1d1f;color:#fff">Texto</div><div class="sw-body"><b>Ink</b><code>#1D1D1F</code><p>Títulos e texto principal.</p></div></div>
         <div class="sw"><div class="sw-chip" style="background:#707070;color:#fff">Texto 2</div><div class="sw-body"><b>Slate</b><code>#707070</code><p>Texto de apoio e descrições.</p></div></div>
-        <div class="sw"><div class="sw-chip" style="background:#0071e3;color:#fff">Ação</div><div class="sw-body"><b>Action Blue</b><code>#0071E3</code><p>Botões primários, como "Falar com consultor".</p></div></div>
-        <div class="sw"><div class="sw-chip" style="background:#0066cc;color:#fff">Link</div><div class="sw-body"><b>Link Blue</b><code>#0066CC</code><p>Links de texto com seta.</p></div></div>
-        <div class="sw"><div class="sw-chip" style="background:#b64400;color:#fff">Destaque</div><div class="sw-body"><b>Launch Orange</b><code>#B64400</code><p>Rótulos pequenos de lançamento e etapa.</p></div></div>
+        <div class="sw"><div class="sw-chip" style="background:#034c8c;color:#fff">Ação e link</div><div class="sw-body"><b>Azul Conexão</b><code>#034C8C</code><p>Cor primária do manual. Botões, links e estados ativos.</p></div></div>
+        <div class="sw"><div class="sw-chip" style="background:#023a6b;color:#fff">Hover</div><div class="sw-body"><b>Azul Conexão escuro</b><code>#023A6B</code><p>Botão primário ao passar o mouse.</p></div></div>
+        <div class="sw"><div class="sw-chip" style="background:#c9a655;color:#0d0d0d">Accent</div><div class="sw-body"><b>Dourado</b><code>#C9A655</code><p>Accent do manual, máximo de 5% da peça. Nunca com texto branco.</p></div></div>
+        <div class="sw"><div class="sw-chip" style="background:#8a6b1f;color:#fff">Rótulo</div><div class="sw-body"><b>Dourado de texto</b><code>#8A6B1F</code><p>Derivado do dourado para rótulos de 12 px. Fora do manual: pendente de aprovação.</p></div></div>
       </div>
       <div class="note" style="margin-top:var(--el-gap)">
         <h3>Regra de uso</h3>
         <ul>
           <li>Cor de marca não pinta superfícies. O azul aparece somente onde há ação.</li>
-          <li>Texto sobre branco usa Ink ou Slate. O laranja é usado em corpo pequeno e passa de 4,5:1 sobre branco.</li>
+          <li>O dourado do manual (#C9A655) tem 2,3:1 sobre branco e não serve para texto pequeno. Os rótulos usam o tom derivado #8A6B1F, com 5,0:1.</li>
+          <li>O Azul Claro #508BBF não é usado como texto, conforme o manual (proibido abaixo de 18 pt sobre branco).</li>
           <li>Os tokens ficam em <code>site.css</code> (variáveis <code>:root</code>), então uma mudança de marca é feita em um único lugar.</li>
         </ul>
       </div>
@@ -244,7 +246,7 @@
         <div class="type-row"><div class="meta"><b>Destaque</b>40 px · peso 600</div><div class="sample" style="font-size:28px;font-weight:600;line-height:1.1">Kits cirúrgicos e protéticos</div></div>
         <div class="type-row"><div class="meta"><b>Lede</b>21 px · peso 400</div><div class="sample" style="font-size:21px;letter-spacing:.231px">Implantes e componentes nacionais de alta precisão.</div></div>
         <div class="type-row"><div class="meta"><b>Corpo</b>17 px · peso 400</div><div class="sample">Espiras de alto poder de corte e compactação óssea.</div></div>
-        <div class="type-row"><div class="meta"><b>Rótulo</b>12 px · peso 600</div><div class="sample" style="font-size:12px;font-weight:600;color:var(--launch-orange)">LINHA FLEX GOLD</div></div>
+        <div class="type-row"><div class="meta"><b>Rótulo</b>12 px · peso 600</div><div class="sample" style="font-size:12px;font-weight:600;color:var(--brand-gold)">LINHA FLEX GOLD</div></div>
       </div>
       <div class="rt-grid c3" style="margin-top:56px">
         <div class="rt-card"><h3>Cantos</h3><p>Cartões com raio de 28 px, links de 10 px e botões em pílula. Suavidade que contrasta com a precisão do metal.</p></div>
@@ -271,6 +273,7 @@
           <tr><td>Modelo 3D procedural</td><td>Vídeo ou animação gravada</td><td>Gerado por código (three.js), leve e ajustável por diâmetro e comprimento. Há foto de reserva quando não há WebGL.</td></tr>
           <tr><td>Site estático</td><td>Reconstruir em WordPress ou CMS</td><td>Mais rápido para aprovar e publicar. O conteúdo vem de um catálogo estruturado e as páginas são geradas por script.</td></tr>
           <tr><td>Uma cor de ação</td><td>Paleta multicolor por linha de produto</td><td>As dez linhas ficam comparáveis entre si e a navegação não depende de código de cor.</td></tr>
+          <tr><td>Cores do manual da marca</td><td>Azul genérico e laranja de referência</td><td>Azul Conexão #034C8C em ações e dourado da marca como accent, respeitando o limite de 5% e as regras de contraste do manual.</td></tr>
           <tr><td>Filtros por tipo de conexão</td><td>Lista única de produtos</td><td>Cone Morse, Hexágono e Casos complexos são o critério real de escolha do clínico.</td></tr>
           <tr><td>Ícones vetoriais, sem emojis</td><td>Emojis e ícones de fonte</td><td>Traço consistente, nítido em qualquer tela e sem variação entre sistemas.</td></tr>
         </tbody>

@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "redesign-conexao",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "5178", "--bind", "127.0.0.1", "--directory", "redesign-conexao"],
+      "port": 5178
+    },
+    {
+      "name": "redesign-site-conexao",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "5179", "--bind", "127.0.0.1", "--directory", "C:\\Users\\trcnologia\\Desktop\\redesign-site-conexao"],
+      "port": 5179
+    }
+  ]
+}

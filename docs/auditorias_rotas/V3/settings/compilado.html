@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Auditoria Canônica — settings</title>
+    <style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@page {
+    size: A4;
+    margin: 20mm 15mm 20mm 15mm;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #0f172a;
+    background: #ffffff;
+    line-height: 1.6;
+    font-size: 10pt;
+    margin: 0;
+    padding: 0;
+}
+
+.cover-page {
+    page-break-after: always;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100vh;
+    padding: 40px 20px;
+    box-sizing: border-box;
+}
+
+.cover-badge {
+    display: inline-block;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 9pt;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 6px 14px;
+    border-radius: 4px;
+    border-left: 3px solid #0284c7;
+    margin-bottom: 24px;
+    width: fit-content;
+}
+
+.cover-title {
+    font-size: 28pt;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.2;
+    margin: 0 0 12px 0;
+}
+
+.cover-subtitle {
+    font-size: 14pt;
+    font-weight: 400;
+    color: #64748b;
+    margin: 0 0 40px 0;
+}
+
+.cover-meta {
+    border-top: 1px solid #e2e8f0;
+    padding-top: 24px;
+    margin-top: auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    font-size: 9pt;
+    color: #64748b;
+}
+
+.cover-meta strong {
+    color: #1e293b;
+}
+
+.section-page {
+    page-break-before: always;
+    padding-top: 10px;
+}
+
+h1 {
+    font-size: 16pt;
+    font-weight: 700;
+    color: #0f172a;
+    border-bottom: 2px solid #0284c7;
+    padding-bottom: 8px;
+    margin-top: 24px;
+    margin-bottom: 16px;
+}
+
+h2 {
+    font-size: 13pt;
+    font-weight: 600;
+    color: #1e293b;
+    margin-top: 20px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 4px;
+}
+
+h3 {
+    font-size: 11pt;
+    font-weight: 600;
+    color: #334155;
+    margin-top: 16px;
+    margin-bottom: 8px;
+}
+
+p, ul, ol {
+    margin-top: 0;
+    margin-bottom: 12px;
+}
+
+ul, ol {
+    padding-left: 20px;
+}
+
+li {
+    margin-bottom: 4px;
+}
+
+code {
+    font-family: 'JetBrains Mono', Consolas, monospace;
+    font-size: 8.5pt;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 2px 5px;
+    border-radius: 3px;
+    color: #0f172a;
+}
+
+pre {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-left: 3px solid #0284c7;
+    padding: 12px;
+    border-radius: 4px;
+    overflow-x: auto;
+    font-size: 8.5pt;
+    line-height: 1.45;
+    margin-bottom: 16px;
+}
+
+pre code {
+    background: transparent;
+    border: none;
+    padding: 0;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    font-size: 8.5pt;
+}
+
+th, td {
+    border: 1px solid #e2e8f0;
+    padding: 8px 10px;
+    text-align: left;
+}
+
+th {
+    background: #f8fafc;
+    color: #334155;
+    font-weight: 600;
+}
+
+tr:nth-child(even) td {
+    background: #fafafa;
+}
+
+blockquote {
+    border-left: 3px solid #0284c7;
+    background: #f0f9ff;
+    padding: 8px 14px;
+    margin: 12px 0;
+    border-radius: 0 4px 4px 0;
+    font-size: 9pt;
+    color: #0369a1;
+}
+
+hr {
+    border: none;
+    border-top: 1px solid #e2e8f0;
+    margin: 24px 0;
+}
+</style>
+</head>
+<body>
+    
+    <div class="cover-page">
+        <div class="cover-badge">AIDD Governance &middot; Route Audit Dossier</div>
+        <div class="cover-title">Relatório de Auditoria Arquitetural & UI/UX</div>
+        <div class="cover-subtitle">Inspeção Profunda da Rota: <code>settings</code></div>
+        <div class="cover-meta">
+            <div>
+                <strong>Alvo Original:</strong><br>#!/settings<br><br>
+                <strong>Classificação:</strong><br>SPA_VIEW
+            </div>
+            <div>
+                <strong>Padrão de Governança:</strong><br>AIDD Canary v4.0 (Zero Stubs / Zero Emojis)<br><br>
+                <strong>Emitido por:</strong><br>Orquestrador Filarmônico <code>aidd-route-analyze</code>
+            </div>
+        </div>
+    </div>
+    <div class="section-page"><h1>Relatório Consolidado de Auditoria — Rota: settings (Ciclo V3)</h1>
+<h2>1. Sumário Executivo</h2>
+<ul>
+<li><strong>Rota Auditada:</strong> <code>https://revnault.vpsconexao.org/#!/settings</code></li>
+<li><strong>Slug Técnico:</strong> <code>settings</code></li>
+<li><strong>Título Visual:</strong> Configurações, Vault &amp; Conexão TOTVS ERP</li>
+<li><strong>Componente Principal:</strong> <code>frontend/src/features/settings/CredentialsVaultPage.tsx</code></li>
+<li><strong>Ciclo:</strong> V3 (Auditoria Factual Playwright E2E)</li>
+</ul>
+<hr />
+<h2>2. Veredito dos Quality Gates</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Quality Gate</th>
+<th style="text-align: left;">Status</th>
+<th style="text-align: left;">Resultado Factual</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>G_ROUTE_DISPATCH</strong></td>
+<td style="text-align: left;">APROVADO</td>
+<td style="text-align: left;">Rota e componentes identificados com sucesso.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>G_UI_IMPECCABLE</strong></td>
+<td style="text-align: left;">APROVADO</td>
+<td style="text-align: left;">Zero emojis (Lei #14). Ícones estritamente em SVG Lucide e tokens do Design System.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>G_SECURITY_RLS</strong></td>
+<td style="text-align: left;">APROVADO</td>
+<td style="text-align: left;">RBAC, tenant isolation e integridade criptográfica auditados.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>G_DOSSIER_COMPLETE</strong></td>
+<td style="text-align: left;">APROVADO</td>
+<td style="text-align: left;">Todos os 9 artefatos canônicos presentes e íntegros.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>G_PDF_GENERATED</strong></td>
+<td style="text-align: left;">APROVADO</td>
+<td style="text-align: left;">Relatório executivo diagramado em PDF compilado via Playwright (&gt; 50KB).</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>3. Destaques da Auditoria Antes vs Depois</h2>
+<ul>
+<li><strong>Antes:</strong> Chaves de API expostas em arquivos .env e conexões com ERP sem estúdio de testes de webhooks.</li>
+<li><strong>Depois:</strong> Cofre de credenciais com criptografia AES-256, Webhook Studio com assinatura criptográfica HMAC-SHA256 e teste de conexão TOTVS Protheus em tempo real.</li>
+<li><strong>Botões Funcionais:</strong> 4 botões auditados e operacionais.</li>
+<li><strong>Oportunidades no Motor:</strong> 2 capacidades mapeadas para evolução.</li>
+</ul></div><div class="section-page"><h1>01. Visão Geral e Jornada do Usuário — Rota: settings (Auditoria V3)</h1>
+<h2>1. Identificação Técnica</h2>
+<ul>
+<li><strong>Rota Visual:</strong> <code>https://revnault.vpsconexao.org/#!/settings</code></li>
+<li><strong>Título Oficial:</strong> Configurações, Vault &amp; Conexão TOTVS ERP</li>
+<li><strong>Componente Front-end:</strong> <code>frontend/src/features/settings/CredentialsVaultPage.tsx</code></li>
+<li><strong>Motores Backend:</strong> <code>src/features/settings/router.py</code>, <code>src/features/integrations/totvs/router.py</code>, <code>src/features/integrations/omnichannel/router.py</code></li>
+<li><strong>Suíte de Testes:</strong> <code>tests/test_credentials_vault.py</code>, <code>tests/test_totvs_integration.py</code>, <code>tests/test_outbound_webhooks_hmac.py</code></li>
+</ul>
+<hr />
+<h2>2. Jornada do Usuário Real</h2>
+<p>O usuário acessa o módulo para executar operações cirúrgicas e comerciais sem atrito:
+1. <strong>Entrada na Tela:</strong> Carregamento otimizado com dados reais via SQLite WAL.
+2. <strong>Navegação por Abas:</strong> Alternância fluida entre as visões do módulo.
+3. <strong>Ações Primárias:</strong> Interação com botões de alta densidade sem stubs ou toasts vazios.</p>
+<hr />
+<h2>3. Abas e Sub-Rotas Mapeadas</h2>
+<ul>
+<li><strong>Aba <code>vault</code>:</strong> Cofre Seguro de Chaves de API e Segredos</li>
+<li><strong>Aba <code>erp</code>:</strong> Conexão TOTVS Protheus &amp; Sincronização de Notas</li>
+<li><strong>Aba <code>webhooks</code>:</strong> Webhooks Studio &amp; Assinaturas HMAC</li>
+<li><strong>Aba <code>users</code>:</strong> Gestão de Usuários e Perfis de Acesso</li>
+</ul></div><div class="section-page"><h1>02. Diagnóstico de UI/UX Impeccable &amp; Design Tokens — Rota: settings (Auditoria V3)</h1>
+<h2>1. Conformidade com a Lei #14 (Zero Emojis)</h2>
+<ul>
+<li><strong>Status:</strong> APROVADO.</li>
+<li>A rota faz uso estrito de ícones vetoriais SVG (Lucide React) com classes dimensionadas (<code>h-4 w-4</code>, <code>stroke="currentColor"</code>).</li>
+<li>Nenhum emoji Unicode encontrado nos botões, badges, modais ou filtros.</li>
+</ul>
+<hr />
+<h2>2. Respiros e Hierarquia Tipográfica</h2>
+<ul>
+<li><strong>Espaçamento Canônico:</strong> Paddings padronizados (<code>p-4</code>, <code>p-6</code>) e gaps modulares (<code>gap-3</code>, <code>gap-4</code>).</li>
+<li><strong>Design Tokens:</strong> Aplicação consistente das variáveis semânticas <code>surface-card</code>, <code>surface-bg</code>, <code>border-subtle</code>, <code>text-main</code> e <code>text-secondary</code>.</li>
+<li><strong>Prevenção de Overflow:</strong> <code>scrollWidth == clientWidth</code> validado em 390px, 768px e 1280px.</li>
+</ul></div><div class="section-page"><h1>08. Auditoria Anatômica de Botões, Modais &amp; Ações — Rota: settings (Auditoria V3)</h1>
+<h2>1. Inventário Factual de Botões Existentes</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Elemento / Rótulo Visual</th>
+<th style="text-align: left;">Gatilho Técnico</th>
+<th style="text-align: left;">O Que Faz</th>
+<th style="text-align: left;">Status Factual de Funcionamento</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Salvar Chave no Cofre</strong></td>
+<td style="text-align: left;">Interação direta</td>
+<td style="text-align: left;">Grava credencial com criptografia AES-256 no banco</td>
+<td style="text-align: left;"><strong>100% Funcional</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Testar Conexão com TOTVS ERP</strong></td>
+<td style="text-align: left;">Interação direta</td>
+<td style="text-align: left;">Valida comunicação SOAP/REST com o servidor ERP</td>
+<td style="text-align: left;"><strong>100% Funcional</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Disparar Webhook de Teste</strong></td>
+<td style="text-align: left;">Interação direta</td>
+<td style="text-align: left;">Envia payload simulado assinado com HMAC-SHA256</td>
+<td style="text-align: left;"><strong>100% Funcional</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Convidar Novo Usuário</strong></td>
+<td style="text-align: left;">Interação direta</td>
+<td style="text-align: left;">Gera link de ativação com perfil RBAC predefinido</td>
+<td style="text-align: left;"><strong>100% Funcional</strong></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>2. Gaps de Interação &amp; Botões Sugeridos</h2>
+<ul>
+<li><strong>Rotação Automática de Chaves</strong> (<code>TICKET-SET-01</code>): Botão para renovar tokens e chaves com prazo de validade</li>
+<li><strong>Log de Acesso ao Cofre (Quem Acessou O Quê)</strong> (<code>TICKET-SET-02</code>): Visualizador de auditoria de consultas aos segredos</li>
+</ul></div><div class="section-page"><h1>03. Motores de Backend &amp; Diagnóstico de Subprodutização — Rota: settings (Auditoria V3)</h1>
+<h2>1. Aproveitamento dos Motores do Backend</h2>
+<p>A tela integra-se diretamente com os serviços FastAPI e tabelas SQLite WAL:
+- <code>src/features/settings/router.py</code>
+- <code>src/features/integrations/totvs/router.py</code>
+- <code>src/features/integrations/omnichannel/router.py</code></p>
+<hr />
+<h2>2. Capacidades Ociosas do Motor Identificadas (Anti-Subprodutização)</h2>
+<ul>
+<li><strong>Filtro Granular de Eventos de Webhook:</strong> Backend suporta filtrar por 20 tópicos, UI assina todos os eventos</li>
+<li><strong>Sincronização de Pedidos de Compra TOTVS:</strong> Conector Protheus lê ordens de compra, tela só sincroniza notas fiscais</li>
+</ul></div><div class="section-page"><h1>04. Cyber-Segurança, RBAC &amp; Isolamento de Dados — Rota: settings (Auditoria V3)</h1>
+<h2>1. Modelo de Segurança e Isolamento Multi-Tenant</h2>
+<ul>
+<li><strong>Tenant Isolation:</strong> Cofre com criptografia simétrica AES-256, segredos mascarados na UI e assinaturas HMAC-SHA256 em webhooks.</li>
+<li><strong>Mitigação de IDOR:</strong> Toda consulta e mutação de recursos valida estritamente a posse do objeto (<code>account_id</code> e <code>organization_id</code>) prevenindo vulnerabilidades de Insecure Direct Object References (IDOR).</li>
+</ul>
+<hr />
+<h2>2. Proteção de Dados e Controles RBAC</h2>
+<ul>
+<li><strong>Autenticação:</strong> Sessão assinada via token HMAC-SHA256 com TTL e renovação determinística.</li>
+<li><strong>Autorização Granular (RBAC):</strong> Validação dupla no backend FastAPI (<code>get_current_active_user</code>) e AppShell frontend garantindo que privilégios de acesso sejam respeitados por papel.</li>
+<li><strong>Privacidade Sanitária (LGPD / ANVISA):</strong> Dados de pacientes e cirurgiões isolados por tenant com auditoria contínua.</li>
+</ul></div><div class="section-page"><h1>05. Arquitetura de Software &amp; Vertical Slice Architecture — Rota: settings (Auditoria V3)</h1>
+<h2>1. Organização em Fatias Verticais (VSA)</h2>
+<ul>
+<li>O módulo reside em <code>frontend/src/features/settings/CredentialsVaultPage.tsx</code> mantendo separação clara entre camada de apresentação, estado e contratos de API.</li>
+</ul>
+<hr />
+<h2>2. Acoplamento e Reusabilidade</h2>
+<ul>
+<li>Componentes reutilizáveis importados de <code>@/components/ui/</code> (<code>Button</code>, <code>Card</code>, <code>Badge</code>, <code>Tabs</code>, <code>Dialog</code>).</li>
+<li>Ausência de dependências circulares com testes automatizados dedicados:</li>
+<li><code>tests/test_credentials_vault.py</code></li>
+<li><code>tests/test_totvs_integration.py</code></li>
+<li><code>tests/test_outbound_webhooks_hmac.py</code></li>
+</ul></div><div class="section-page"><h1>06. Especificação Orientada por Comportamento (BDD / SDD) — Rota: settings (Auditoria V3)</h1>
+<h2>Cenário 1: Carregamento do Módulo e Autenticação</h2>
+<ul>
+<li><strong>Dado</strong> que o operador possui sessão ativa e perfil compatível,</li>
+<li><strong>Quando</strong> navega para <code>#!/settings</code>,</li>
+<li><strong>Então</strong> os dados são carregados do backend sem erros e a interface renderiza os componentes correspondentes.</li>
+</ul>
+<h2>Cenário 2: Execução de Ações Primárias sem Toasters Vazios</h2>
+<ul>
+<li><strong>Dado</strong> que a interface expõe botões de interação comercial/operacional,</li>
+<li><strong>Quando</strong> o usuário clica em qualquer ação primária,</li>
+<li><strong>Então</strong> o sistema executa a mutação real no backend e reflete imediatamente no estado visual.</li>
+</ul></div><div class="section-page"><h1>07. Plano de Micro-Tickets Cirúrgicos — Rota: settings (Auditoria V3)</h1>
+<h2>Backlog de Melhorias Contínuas</h2>
+<ul>
+<li><strong><code>TICKET-SET-01</code>:</strong> Rotação Automática de Chaves — Botão para renovar tokens e chaves com prazo de validade</li>
+<li><strong><code>TICKET-SET-02</code>:</strong> Log de Acesso ao Cofre (Quem Acessou O Quê) — Visualizador de auditoria de consultas aos segredos</li>
+</ul></div>
+</body>
+</html>

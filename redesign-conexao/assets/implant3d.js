@@ -205,7 +205,7 @@ export function mountAssembly(host, { d = 4, L = 11.5, pitch = 0.8, leads = 2 } 
   bone.position.y = -(L + 3) / 2;
   const gum = new THREE.Mesh(new THREE.BoxGeometry(15, 1.5, 9), M.gum);
   gum.position.y = 0.75;
-  const ring = new THREE.Mesh(new THREE.TorusGeometry(2.6, 0.06, 12, 96), new THREE.MeshBasicMaterial({ color: 0x0071e3, transparent: true, opacity: 0 }));
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(2.6, 0.06, 12, 96), new THREE.MeshBasicMaterial({ color: 0x034c8c, transparent: true, opacity: 0 }));
   ring.rotation.x = Math.PI / 2;
   const shadow = contactShadow();
   shadow.scale.set(26, 16, 1);
