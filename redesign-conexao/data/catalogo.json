@@ -1,0 +1,2057 @@
+{
+ "cone-morse-slim": {
+  "kind": "implant",
+  "lede": "Ideal para espaços estreitos, sua plataforma protética CM que garante estabilidade e precisão",
+  "tech": {
+   "name": "Titânio Hard®",
+   "spec": "955(MPa) 73% +resistente"
+  },
+  "features": [
+   "Macro estrutura cilíndrica",
+   "Dupla rosca com ápice ativo, quatro fresados",
+   "Rosca Interna: M 1.6"
+  ],
+  "torque": "45 N.cm",
+  "leaflet_label": "Lâmina Cone Morse Slim®",
+  "dimensions": [
+   {
+    "d": "2.9",
+    "lengths": [
+     "10mm",
+     "11.5mm",
+     "13mm",
+     "15mm"
+    ]
+   }
+  ],
+  "benefits_raw": [],
+  "indications": [
+   "Os implantes Slim ⌀2,9 destinam-se a substituir um incisivo lateral na maxila e/ou incisivo central ou lateral na mandíbula",
+   "Protocolo convencional e carga imediata",
+   "Os implantes Slim ⌀2,9 são indicados para restaurações unitárias."
+  ],
+  "drill": null,
+  "title": "Cone Morse SLIM®",
+  "source": "https://www.conexao.com.br/produto/cone-morse-slim/",
+  "image": "https://www.conexao.com.br/wp-content/uploads/2025/07/Cone-Morse-SLIM®.webp",
+  "gallery": [],
+  "drill_images": [
+   "https://www.conexao.com.br/wp-content/uploads/2025/07/FRESAGEM-Cone-Morse-Slim-2-9mm-PT.jpg"
+  ],
+  "pdfs": [
+   "https://www.conexao.com.br/wp-content/uploads/2025/09/CM-SLIM.pdf"
+  ]
+ },
+ "conect-ar-hexagono-interno": {
+  "kind": "implant",
+  "lede": "Desempenho confiável e preciso, com tecnologia que garante estabilidade em cada procedimento odontológico!",
+  "tech": {
+   "name": "Titânio Hard®",
+   "spec": "955(MPa) 73% +resistente"
+  },
+  "features": [
+   "Macro estrutura cilíndrica",
+   "Dupla rosca com ápice ativo, quatro fresados",
+   "Bioplatform® (tipo switch)",
+   "Rosca Interna: M 1.8"
+  ],
+  "torque": "60 N.cm",
+  "leaflet_label": "Lâmina Conect AR HI®",
+  "dimensions": [
+   {
+    "d": "3.75",
+    "lengths": [
+     "10mm",
+     "11.5mm",
+     "13mm",
+     "15mm"
+    ]
+   },
+   {
+    "d": "4.0",
+    "lengths": [
+     "10mm",
+     "11.5mm",
+     "13mm",
+     "15mm"
+    ]
+   },
+   {
+    "d": "5.0",
+    "lengths": [
+     "10mm",
+     "11.5mm",
+     "13mm",
+     "15mm"
+    ]
+   }
+  ],
+  "benefits_raw": [],
+  "indications": [
+   "Implantação estética unitária, parcial e múltipla",
+   "Protocolo convencional e carga imediata",
+   "Indicação dupla, maxila e mandíbula"
+  ],
+  "drill": null,
+  "title": "CONECT AR® Hexágono Interno",
+  "source": "https://www.conexao.com.br/produto/conect-ar-hexagono-interno/",
+  "image": "https://www.conexao.com.br/wp-content/uploads/2025/07/Conect-AR-HI.webp",
+  "gallery": [],
+  "drill_images": [
+   "https://www.conexao.com.br/wp-content/uploads/2025/07/FRESAGEM-conect-ar-3-75mm-PT.jpg",
+   "https://www.conexao.com.br/wp-content/uploads/2025/07/FRESAGEM-conect-ar-4-0mm-PT.jpg",
+   "https://www.conexao.com.br/wp-content/uploads/2025/07/FRESAGEM-4.3mm-PT.jpg",
+   "https://www.conexao.com.br/wp-content/uploads/2025/07/FRESAGEM-conect-ar-5-0mm-PT.jpg"
+  ],
+  "pdfs": [
+   "https://www.conexao.com.br/wp-content/uploads/2025/09/AR-HI.pdf"
+  ]
+ },
+ "easy-grip-hexagono-externo-rd": {
+  "kind": "implant",
+  "lede": "Projetado para quem busca desempenho e segurança em cada procedimento odontológico",
+  "tech": {
+   "name": "Titânio Hard®",
+   "spec": "955(MPa) 73% +resistente"
+  },
+  "features": [
+   "Macro estrutura cilíndrica",
+   "Dupla rosca com ápice ativo, quatro fresados",
+   "Bioplatform® (tipo switch)",
+   "Rosca Interna: M 2.0"
+  ],
+  "torque": "45 N.cm",
+  "leaflet_label": "Lâmina Easy Grip HE RD®",
+  "dimensions": [
+   {
+    "d": "3.75",
+    "lengths": [
+     "8.5mm",
+     "10mm",
+     "11.5mm",
+     "13mm",
+     "15mm"
+    ]
+   },
+   {
+    "d": "4.3",
+    "lengths": [
+     "7mm",
+     "8.5mm",
+     "10mm",
+     "11.5mm",
+     "13mm",
+     "15mm"
+    ]
+   },
+   {
+    "d": "5.0",
+    "lengths": [
+     "7mm",
+     "8.5mm",
+     "10mm",
+     "11.5mm",
+     "13mm",
+     "15mm"
+    ]
+   }
+  ],
+  "benefits_raw": [],
+  "indications": [
+   "Implantações unitária, parcial e múltipla",
+   "Protocolo convencional e carga imediata",
+   "Indicação dupla, maxila e mandíbula"
+  ],
+  "drill": null,
+  "title": "EASY GRIP® Hexágono Externo RD",
+  "source": "https://www.conexao.com.br/produto/easy-grip-hexagono-externo-rd/",
+  "image": "https://www.conexao.com.br/wp-content/uploads/2025/07/EASY-GRIP-HE-RD.webp",
+  "gallery": [],
+  "drill_images": [
+   "https://www.conexao.com.br/wp-content/uploads/2025/07/FRESAGEM-Easy_RD-3-75mm-PT.jpg",
+   "https://www.conexao.com.br/wp-content/uploads/2025/07/FRESAGEM-Easy_RD-4-3mm-PT.jpg",
+   "https://www.conexao.com.br/wp-content/uploads/2025/07/FRESAGEM-Easy_RD-5-0mm-PT.jpg"
+  ],
+  "pdfs": [
+   "https://www.conexao.com.br/wp-content/uploads/2025/09/EASY-HE-RD.pdf"
+  ]
+ },
+ "easy-grip-hexagono-externo-sd": {
+  "kind": "implant",
+  "lede": "Ideal para espaços estreitos, sua plataforma protética HE SD que garante estabilidade e precisão",
+  "tech": {
+   "name": "Titânio Hard®",
+   "spec": "955(MPa) 73% +resistente"
+  },
+  "features": [
+   "Implante híbrido de corpo único",
+   "Macro estrutura cilíndrica",
+   "Dupla rosca com ápice ativo, quatro fresados",
+   "Bioplatform® (tipo switch)",
+   "Rosca Interna: M 1.8"
+  ],
+  "torque": "45 N.cm",
+  "leaflet_label": "Lâmina Easy Grip HE SD®",
+  "dimensions": [
+   {
+    "d": "3.3",
+    "lengths": [
+     "10mm",
+     "11.5mm",
+     "13mm",
+     "15mm"
+    ]
+   }
+  ],
+  "benefits_raw": [],
+  "indications": [
+   "Implantações unitária, parcial e múltipla",
+   "Protocolo convencional e carga imediata",
+   "Indicação dupla, maxila e mandíbula",
+   "Espaços reduzidos"
+  ],
+  "drill": null,
+  "title": "EASY GRIP® Hexágono Externo SD",
+  "source": "https://www.conexao.com.br/produto/easy-grip-hexagono-externo-sd/",
+  "image": "https://www.conexao.com.br/wp-content/uploads/2025/07/EASY-GRIP-SD.webp",
+  "gallery": [],
+  "drill_images": [
+   "https://www.conexao.com.br/wp-content/uploads/2025/07/FRESAGEM-Easy-SD-3-3mm-PT.jpg"
+  ],
+  "pdfs": [
+   "https://www.conexao.com.br/wp-content/uploads/2025/09/EASY-HE-SD.pdf"
+  ]
+ },
+ "flash-cone-morse-np-24": {
+  "kind": "implant",
+  "lede": "Design inovador para uma inserção rápida e precisa, com tecnologia que garante compactação óssea e dissipação de forças",
+  "tech": {
+   "name": "Titânio Hard®",
+   "spec": "955(MPa) 73% +resistente"
+  },
+  "features": [
+   "Colar reduzido para aumentar a espessura óssea na cervical do implante",
+   "Espiras com alto poder de corte",
+   "Angulação Interna: 24°",
+   "Rosca interna: M1.6",
+   "Web® (ampliação do contato ósseo)",
+   "Bioplatform® (tipo switch)"
+  ],
+  "torque": "60 N.cm",
+  "leaflet_label": "Lâmina Flash® NP",
+  "dimensions": [
+   {
+    "d": "3.5",
+    "lengths": [
+     "8.5mm",
+     "10mm",
+     "11.5mm",
+     "13mm",
+     "15mm"
+    ]
+   },
+   {
+    "d": "3.75",
+    "lengths": [
+     "8.5mm",
+     "10mm",
+     "11.5mm",
+     "13mm",
+     "15mm"
+    ]
+   },
+   {
+    "d": "4.3",
+    "lengths": [
+     "8.5mm",
+     "10mm",
+     "11.5mm",
+     "13mm",
+     "15mm"
+    ]
+   },
+   {
+    "d": "5.0",
+    "lengths": [
+     "8.5mm",
+     "10mm",
+     "11.5mm",
+     "13mm",
+     "15mm"
+    ]
+   }
+  ],
+  "benefits_raw": [],
+  "indications": [
+   "Implantações unitária, parcial e múltipla",
+   "Protocolo convencional e carga imediata",
+   "Preferencialmente maxila"
+  ],
+  "drill": {
+   "head": [
+    "3.5",
+    "3.75",
+    "4.3",
+    "5.0"
+   ],
+   "rows": [
+    {
+     "name": "Osso Macio",
+     "cells": [
+      {
+       "v": "2,8mm"
+      },
+      {
+       "v": "3,2mm"
+      },
+      {
+       "v": "3,6mm"
+      },
+      {
+       "v": "3,8mm"
+      }
+     ]
+    },
+    {
+     "name": "Osso Médio",
+     "cells": [
+      {
+       "v": "2,8mm",
+       "alt": "(3,2mm)*"
+      },
+      {
+       "v": "3,2mm",
+       "alt": "(3,4mm)*"
+      },
+      {
+       "v": "3,6mm",
+       "alt": "(3,8mm)*"
+      },
+      {
+       "v": "3,8mm",
+       "alt": "(4,2mm)*"
+      }
+     ]
+    },
+    {
+     "name": "Osso Duro",
+     "cells": [
+      {
+       "v": "3,2mm"
+      },
+      {
+       "v": "3,4mm"
+      },
+      {
+       "v": "3,8mm"
+      },
+      {
+       "v": "4,2mm"
+      }
+     ]
+    }
+   ]
+  },
+  "title": "FLASH® Cone Morse NP® 24°",
+  "source": "https://www.conexao.com.br/produto/flash-cone-morse-np-24/",
+  "image": "https://www.conexao.com.br/wp-content/uploads/2025/07/Flash-NP.webp",
+  "gallery": [],
+  "drill_images": [
+   "https://www.conexao.com.br/wp-content/uploads/2025/07/FRESAGEM-3-5mm-PT.jpg",
+   "https://www.conexao.com.br/wp-content/uploads/2025/07/FRESAGEM-4-3mm-PT.jpg",
+   "https://www.conexao.com.br/wp-content/uploads/2025/07/FRESAGEM-5-0mm-PT.jpg"
+  ],
+  "pdfs": [
+   "https://www.conexao.com.br/wp-content/uploads/2025/09/FLASH-NP.pdf",
+   "https://www.conexao.com.br/wp-content/uploads/2026/01/FLASH_NP_EN_US.pdf",
+   "https://www.conexao.com.br/wp-content/uploads/2026/01/FLASH_NP_ES_ES.pdf"
+  ]
+ },
+ "flash-cone-morse-np-ptery-24": {
+  "kind": "implant",
+  "lede": "A solução perfeita para reabilitação oral em áreas de difícil acesso, garantindo estabilidade e desempenho em casos de atrofia óssea!",
+  "tech": {
+   "name": "Titânio Hard®",
+   "spec": "955(MPa) 73% +resistente"
+  },
+  "features": [
+   "Colar reduzido para aumentar a espessura óssea na cervical do implante",
+   "Espiras com alto poder de corte",
+   "Angulação Interna: 24°",
+   "Rosca interna M 1.6",
+   "Web® (ampliação do contato ósseo)",
+   "Bioplatform® (tipo switch)"
+  ],
+  "torque": "60 N.cm",
+  "leaflet_label": "Lâmina Flash Ptery NP®",
+  "dimensions": [
+   {
+    "d": "3.5",
+    "lengths": [
+     "18mm",
+     "21mm",
+     "24mm"
+    ]
+   },
+   {
+    "d": "4.3",
+    "lengths": [
+     "18mm",
+     "21mm",
+     "24mm"
+    ]
+   }
+  ],
+  "benefits_raw": [],
+  "indications": [
+   "Implantação múltipla",
+   "Protocolo convencional e carga imediata",
+   "Preferencialmente maxila"
+  ],
+  "drill": null,
+  "title": "FLASH® Cone Morse NP Ptery® 24°",
+  "source": "https://www.conexao.com.br/produto/flash-cone-morse-np-ptery-24/",
+  "image": "https://www.conexao.com.br/wp-content/uploads/2025/07/Flash-Ptery-NP.webp",
+  "gallery": [],
+  "drill_images": [],
+  "pdfs": [
+   "https://www.conexao.com.br/wp-content/uploads/2025/09/PTERY-NP.pdf"
+  ]
+ },
+ "flex-gold-cone-morse-fit-11-5": {
+  "kind": "implant",
+  "lede": "Projetado para alcançar alta estabilidade primária em todas as densidades ósseas: Maxila e Mandíbula.",
+  "tech": {
+   "name": "Titânio Hard®",
+   "spec": "955(MPa) 73% +resistente"
+  },
+  "features": [
+   "Implante híbrido de corpo único",
+   "Cone morse 24°",
+   "Região cervical: Cilíndrico",
+   "Região apical: Cônico",
+   "Permite sub-instrumentação",
+   "Rosca Interna: M 1.6"
+  ],
+  "torque": "60 N.cm",
+  "leaflet_label": "Lâmina Flex Gold FIT®",
+  "dimensions": [
+   {
+    "d": "3.5",
+    "lengths": [
+     "8.5mm",
+     "10mm",
+     "11.5mm",
+     "13mm",
+     "15mm"
+    ]
+   },
+   {
+    "d": "3.75",
+    "lengths": [
+     "8.5mm",
+     "10mm",
+     "11.5mm",
+     "13mm",
+     "15mm"
+    ]
+   },
+   {
+    "d": "4.3",
+    "lengths": [
+     "8.5mm",
+     "10mm",
+     "11.5mm",
+     "13mm",
+     "15mm"
+    ]
+   },
+   {
+    "d": "5.0",
+    "lengths": [
+     "8.5mm",
+     "10mm",
+     "11.5mm",
+     "13mm",
+     "15mm"
+    ]
+   }
+  ],
+  "benefits_raw": [
+   "Roscas duplas compactantes progressivas",
+   "Aumenta a velocidade de instalação",
+   "Aumenta a estabilidade primária",
+   "Ápice ativo",
+   "Câmaras helicoidais autocortantes",
+   "Ponta suavemente aredondada",
+   "Estabiliza e harmoniza os tecidos ao redor",
+   "Superfície Porous",
+   "Microgeometria com nano tecnologia",
+   "Estimula a velocidade da osseointegração"
+  ],
+  "indications": [],
+  "drill": {
+   "head": [
+    "3.5",
+    "3.75",
+    "4.3",
+    "5.0"
+   ],
+   "rows": [
+    {
+     "name": "Osso Macio",
+     "cells": [
+      {
+       "v": "2,8mm"
+      },
+      {
+       "v": "3,2mm"
+      },
+      {
+       "v": "3,6mm"
+      },
+      {
+       "v": "3,8mm"
+      }
+     ]
+    },
+    {
+     "name": "Osso Médio",
+     "cells": [
+      {
+       "v": "2,8mm",
+       "alt": "(3,2mm)*"
+      },
+      {
+       "v": "3,2mm",
+       "alt": "(3,4mm)*"
+      },
+      {
+       "v": "3,6mm",
+       "alt": "(3,8mm)*"
+      },
+      {
+       "v": "3,8mm",
+       "alt": "(4,2mm)*"
+      }
+     ]
+    },
+    {
+     "name": "Osso Duro",
+     "cells": [
+      {
+       "v": "3,2mm"
+      },
+      {
+       "v": "3,4mm"
+      },
+      {
+       "v": "3,8mm"
+      },
+      {
+       "v": "4,2mm"
+      }
+     ]
+    }
+   ]
+  },
+  "title": "FLEX GOLD® Cone Morse FIT 11.5°",
+  "source": "https://www.conexao.com.br/produto/flex-gold-cone-morse-fit-11-5/",
+  "image": "https://www.conexao.com.br/wp-content/uploads/2025/07/Flex-Gold-FIT-1.webp",
+  "gallery": [],
+  "drill_images": [
+   "https://www.conexao.com.br/wp-content/uploads/2025/07/FRESAGEM-3.5mm-PT.jpg",
+   "https://www.conexao.com.br/wp-content/uploads/2025/07/FRESAGEM-3.75mm-PT.jpg",
+   "https://www.conexao.com.br/wp-content/uploads/2025/07/FRESAGEM-4.3mm-PT.jpg",
+   "https://www.conexao.com.br/wp-content/uploads/2025/07/FRESAGEM-5.0mm-PT.jpg"
+  ],
+  "pdfs": [
+   "https://www.conexao.com.br/wp-content/uploads/2025/09/Flex_Gold_FIT.pdf"
+  ]
+ },
+ "flex-gold-cone-morse-gmf-16": {
+  "kind": "implant",
+  "lede": "Projetado para alcançar alta estabilidade primária em todas as densidades ósseas: Maxila e Mandíbula.",
+  "tech": {
+   "name": "Titânio Hard®",
+   "spec": "955(MPa) 73% +resistente"
+  },
+  "features": [
+   "Implante híbrido de corpo único",
+   "Cone morse 16°",
+   "Região cervical: Cilíndrico",
+   "Região apical: Cônico",
+   "Permite sub-instrumentação",
+   "Rosca Interna: M 1.6"
+  ],
+  "torque": "60 N.cm",
+  "leaflet_label": "Lâmina Flex Gold GMF®",
+  "dimensions": [
+   {
+    "d": "3.5",
+    "lengths": [
+     "8.5mm",
+     "10mm",
+     "11.5mm",
+     "13mm",
+     "15mm"
+    ]
+   },
+   {
+    "d": "3.75",
+    "lengths": [
+     "8.5mm",
+     "10mm",
+     "11.5mm",
+     "13mm",
+     "15mm"
+    ]
+   },
+   {
+    "d": "4.3",
+    "lengths": [
+     "8.5mm",
+     "10mm",
+     "11.5mm",
+     "13mm",
+     "15mm"
+    ]
+   },
+   {
+    "d": "5.0",
+    "lengths": [
+     "8.5mm",
+     "10mm",
+     "11.5mm",
+     "13mm",
+     "15mm"
+    ]
+   }
+  ],
+  "benefits_raw": [
+   "Roscas duplas compactantes progressivas",
+   "Aumenta a velocidade de instalação",
+   "Aumenta a estabilidade primária",
+   "Ápice ativo",
+   "Câmaras helicoidais autocortantes",
+   "Ponta suavemente aredondada",
+   "Estabiliza e harmoniza os tecidos ao redor",
+   "Superfície Porous",
+   "Microgeometria com nano tecnologia",
+   "Estimula a velocidade da osseointegração"
+  ],
+  "indications": [],
+  "drill": {
+   "head": [
+    "3.5",
+    "3.75",
+    "4.3",
+    "5.0"
+   ],
+   "rows": [
+    {
+     "name": "Osso Macio",
+     "cells": [
+      {
+       "v": "2,8mm"
+      },
+      {
+       "v": "3,2mm"
+      },
+      {
+       "v": "3,6mm"
+      },
+      {
+       "v": "3,8mm"
+      }
+     ]
+    },
+    {
+     "name": "Osso Médio",
+     "cells": [
+      {
+       "v": "2,8mm",
+       "alt": "(3,2mm)*"
+      },
+      {
+       "v": "3,2mm",
+       "alt": "(3,4mm)*"
+      },
+      {
+       "v": "3,6mm",
+       "alt": "(3,8mm)*"
+      },
+      {
+       "v": "3,8mm",
+       "alt": "(4,2mm)*"
+      }
+     ]
+    },
+    {
+     "name": "Osso Duro",
+     "cells": [
+      {
+       "v": "3,2mm"
+      },
+      {
+       "v": "3,4mm"
+      },
+      {
+       "v": "3,8mm"
+      },
+      {
+       "v": "4,2mm"
+      }
+     ]
+    }
+   ]
+  },
+  "title": "FLEX GOLD® Cone Morse GMF 16°",
+  "source": "https://www.conexao.com.br/produto/flex-gold-cone-morse-gmf-16/",
+  "image": "https://www.conexao.com.br/wp-content/uploads/2025/07/Flex-Gold_GMF.webp",
+  "gallery": [],
+  "drill_images": [
+   "https://www.conexao.com.br/wp-content/uploads/2025/07/FRESAGEM-3.5mm-PT.jpg",
+   "https://www.conexao.com.br/wp-content/uploads/2025/07/FRESAGEM-3.75mm-PT.jpg",
+   "https://www.conexao.com.br/wp-content/uploads/2025/07/FRESAGEM-4.3mm-PT.jpg",
+   "https://www.conexao.com.br/wp-content/uploads/2025/07/FRESAGEM-5.0mm-PT.jpg"
+  ],
+  "pdfs": [
+   "https://www.conexao.com.br/wp-content/uploads/2025/09/Flex_Gold_GMF.pdf"
+  ]
+ },
+ "flex-gold-cone-morse-np-24": {
+  "kind": "implant",
+  "lede": "Projetado para alcançar alta estabilidade primária em todas as densidades ósseas: Maxila e Mandíbula.",
+  "tech": {
+   "name": "Titânio Hard®",
+   "spec": "955(MPa) 73% +resistente"
+  },
+  "features": [
+   "Implante híbrido de corpo único",
+   "Cone morse 24°",
+   "Região cervical: Cilíndrico",
+   "Região apical: Cônico",
+   "Permite sub-instrumentação",
+   "Rosca Interna: M 1.6"
+  ],
+  "torque": "60 N.cm",
+  "leaflet_label": "Lâmina Flex Gold® NP",
+  "dimensions": [
+   {
+    "d": "3.5",
+    "lengths": [
+     "8.5mm",
+     "10mm",
+     "11.5mm",
+     "13mm",
+     "15mm"
+    ]
+   },
+   {
+    "d": "3.75",
+    "lengths": [
+     "8.5mm",
+     "10mm",
+     "11.5mm",
+     "13mm",
+     "15mm"
+    ]
+   },
+   {
+    "d": "4.3",
+    "lengths": [
+     "8.5mm",
+     "10mm",
+     "11.5mm",
+     "13mm",
+     "15mm"
+    ]
+   },
+   {
+    "d": "5.0",
+    "lengths": [
+     "8.5mm",
+     "10mm",
+     "11.5mm",
+     "13mm",
+     "15mm"
+    ]
+   }
+  ],
+  "benefits_raw": [
+   "Roscas duplas compactantes progressivas",
+   "Aumenta a velocidade de instalação",
+   "Aumenta a estabilidade primária",
+   "Ápice ativo",
+   "Câmaras helicoidais autocortantes",
+   "Ponta suavemente aredondada",
+   "Estabiliza e harmoniza os tecidos ao redor",
+   "Superfície Porous",
+   "Microgeometria com nano tecnologia",
+   "Estimula a velocidade da osseointegração"
+  ],
+  "indications": [],
+  "drill": {
+   "head": [
+    "3.5",
+    "3.75",
+    "4.3",
+    "5.0"
+   ],
+   "rows": [
+    {
+     "name": "Osso Macio",
+     "cells": [
+      {
+       "v": "2,8mm"
+      },
+      {
+       "v": "3,2mm"
+      },
+      {
+       "v": "3,6mm"
+      },
+      {
+       "v": "3,8mm"
+      }
+     ]
+    },
+    {
+     "name": "Osso Médio",
+     "cells": [
+      {
+       "v": "2,8mm",
+       "alt": "(3,2mm)*"
+      },
+      {
+       "v": "3,2mm",
+       "alt": "(3,4mm)*"
+      },
+      {
+       "v": "3,6mm",
+       "alt": "(3,8mm)*"
+      },
+      {
+       "v": "3,8mm",
+       "alt": "(4,2mm)*"
+      }
+     ]
+    },
+    {
+     "name": "Osso Duro",
+     "cells": [
+      {
+       "v": "3,2mm"
+      },
+      {
+       "v": "3,4mm"
+      },
+      {
+       "v": "3,8mm"
+      },
+      {
+       "v": "4,2mm"
+      }
+     ]
+    }
+   ]
+  },
+  "title": "FLEX GOLD® Cone Morse NP® 24°",
+  "source": "https://www.conexao.com.br/produto/flex-gold-cone-morse-np-24/",
+  "image": "https://www.conexao.com.br/wp-content/uploads/2025/07/Flex-Gold-NP-1.webp",
+  "gallery": [],
+  "drill_images": [
+   "https://www.conexao.com.br/wp-content/uploads/2025/07/FRESAGEM-3.5mm-PT.jpg",
+   "https://www.conexao.com.br/wp-content/uploads/2025/07/FRESAGEM-3.75mm-PT.jpg",
+   "https://www.conexao.com.br/wp-content/uploads/2025/07/FRESAGEM-4.3mm-PT.jpg",
+   "https://www.conexao.com.br/wp-content/uploads/2025/07/FRESAGEM-5.0mm-PT.jpg"
+  ],
+  "pdfs": [
+   "https://www.conexao.com.br/wp-content/uploads/2025/09/Flex_Gold_NP.pdf"
+  ]
+ },
+ "flex-gold-hexagono-externo-rd": {
+  "kind": "implant",
+  "lede": "Projetado para alcançar alta estabilidade primária em todas as densidades ósseas: Maxila e Mandíbula.",
+  "tech": {
+   "name": "Titânio Hard®",
+   "spec": "955(MPa) 73% +resistente"
+  },
+  "features": [
+   "Implante híbrido de corpo único",
+   "Hexágono Externo RD",
+   "Região cervical: Cilíndrico",
+   "Região apical: Cônico",
+   "Permite sub-instrumentação",
+   "Rosca Interna: M 2.0"
+  ],
+  "torque": "60 N.cm",
+  "leaflet_label": "Lâmina Flex Gold Hexágono Externo RD®",
+  "dimensions": [
+   {
+    "d": "3.5",
+    "lengths": [
+     "8.5mm",
+     "10mm",
+     "11.5mm",
+     "13mm",
+     "15mm"
+    ]
+   },
+   {
+    "d": "3.75",
+    "lengths": [
+     "8.5mm",
+     "10mm",
+     "11.5mm",
+     "13mm",
+     "15mm"
+    ]
+   },
+   {
+    "d": "4.3",
+    "lengths": [
+     "8.5mm",
+     "10mm",
+     "11.5mm",
+     "13mm",
+     "15mm"
+    ]
+   },
+   {
+    "d": "5.0",
+    "lengths": [
+     "8.5mm",
+     "10mm",
+     "11.5mm",
+     "13mm",
+     "15mm"
+    ]
+   }
+  ],
+  "benefits_raw": [
+   "Roscas duplas compactantes progressivas",
+   "Aumenta a velocidade de instalação",
+   "Aumenta a estabilidade primária",
+   "Ápice ativo",
+   "Câmaras helicoidais autocortantes",
+   "Ponta suavemente aredondada",
+   "Estabiliza e harmoniza os tecidos ao redor",
+   "Superfície Porous",
+   "Microgeometria com nano tecnologia",
+   "Estimula a velocidade da osseointegração"
+  ],
+  "indications": [],
+  "drill": {
+   "head": [
+    "3.5",
+    "3.75",
+    "4.3",
+    "5.0"
+   ],
+   "rows": [
+    {
+     "name": "Osso Macio",
+     "cells": [
+      {
+       "v": "2,8mm"
+      },
+      {
+       "v": "3,2mm"
+      },
+      {
+       "v": "3,6mm"
+      },
+      {
+       "v": "3,8mm"
+      }
+     ]
+    },
+    {
+     "name": "Osso Médio",
+     "cells": [
+      {
+       "v": "2,8mm",
+       "alt": "(3,2mm)*"
+      },
+      {
+       "v": "3,2mm",
+       "alt": "(3,4mm)*"
+      },
+      {
+       "v": "3,6mm",
+       "alt": "(3,8mm)*"
+      },
+      {
+       "v": "3,8mm",
+       "alt": "(4,2mm)*"
+      }
+     ]
+    },
+    {
+     "name": "Osso Duro",
+     "cells": [
+      {
+       "v": "3,2mm"
+      },
+      {
+       "v": "3,4mm"
+      },
+      {
+       "v": "3,8mm"
+      },
+      {
+       "v": "4,2mm"
+      }
+     ]
+    }
+   ]
+  },
+  "title": "FLEX GOLD® Hexágono Externo RD",
+  "source": "https://www.conexao.com.br/produto/flex-gold-hexagono-externo-rd/",
+  "image": "https://www.conexao.com.br/wp-content/uploads/2025/07/Flex-HE-RD.webp",
+  "gallery": [],
+  "drill_images": [
+   "https://www.conexao.com.br/wp-content/uploads/2025/07/FRESAGEM-3.5mm-PT.jpg",
+   "https://www.conexao.com.br/wp-content/uploads/2025/07/FRESAGEM-3.75mm-PT.jpg",
+   "https://www.conexao.com.br/wp-content/uploads/2025/07/FRESAGEM-4.3mm-PT.jpg",
+   "https://www.conexao.com.br/wp-content/uploads/2025/07/FRESAGEM-5.0mm-PT.jpg"
+  ],
+  "pdfs": [
+   "https://www.conexao.com.br/wp-content/uploads/2025/09/Flex_Gold_HERD.pdf"
+  ]
+ },
+ "kit-expertguide": {
+  "kind": "kit",
+  "facts": {
+   "Implantes": "Narrow Ø2,9, 3,3 e 3,5 | Regular Ø3,75, 4,0 e 4,3 Short"
+  },
+  "features": [],
+  "paragraphs": [
+   "Sequência lógica de utilização da esquerda para a direita seguindo as linhas das setas, Narrow e Regular"
+  ],
+  "code": "689926",
+  "composition": [
+   {
+    "code": "950055",
+    "name": "Caixa Organizadora Expertguide"
+   },
+   {
+    "code": "93610599",
+    "name": "Fresa Helicoidal Ø1,4mm - Guide"
+   },
+   {
+    "code": "90006099",
+    "name": "Pino Fixador - Guide"
+   },
+   {
+    "code": "99310099",
+    "name": "Estabilizador MI NP - Guide"
+   },
+   {
+    "code": "937031",
+    "name": "Punch Flat Narrow"
+   },
+   {
+    "code": "934354",
+    "name": "Plane Narrow"
+   },
+   {
+    "code": "934353",
+    "name": "Center Narrow Ø2,4 - 5mm"
+   },
+   {
+    "code": "934365",
+    "name": "Fresa Hand Free Narrow Ø2,4/2,8 - 8,5mm"
+   },
+   {
+    "code": "934366",
+    "name": "Fresa Hand Free Narrow Ø2,4/2,8 - 10mm"
+   },
+   {
+    "code": "934367",
+    "name": "Fresa Hand Free Narrow Ø2,4/2,8 - 11,5mm"
+   },
+   {
+    "code": "934368",
+    "name": "Fresa Hand Free Narrow Ø2,4/2,8 - 13mm"
+   },
+   {
+    "code": "934382",
+    "name": "Fresa Hand Free Narrow SL Ø1,6/2,4 - 10mm"
+   },
+   {
+    "code": "934383",
+    "name": "Fresa Hand Free Narrow SL Ø1,6/2,4 - 11,5mm"
+   },
+   {
+    "code": "934384",
+    "name": "Fresa Hand Free Narrow SL Ø1,6/2,4 - 13mm"
+   },
+   {
+    "code": "932113",
+    "name": "Counter Guide Easy/Torq Ø3,3/3,5"
+   },
+   {
+    "code": "937032",
+    "name": "Punch Flat Regular"
+   },
+   {
+    "code": "934356",
+    "name": "Plane Regular"
+   },
+   {
+    "code": "934355",
+    "name": "Center Regular Ø2,8 - 5mm"
+   },
+   {
+    "code": "934371",
+    "name": "Fresa Hand Free Regular Ø2,8/3,2 - 8,5mm"
+   },
+   {
+    "code": "934372",
+    "name": "Fresa Hand Free Regular Ø2,8/3,2 - 10mm"
+   },
+   {
+    "code": "934373",
+    "name": "Fresa Hand Free Regular Ø2,8/3,2 - 11,5mm"
+   },
+   {
+    "code": "934374",
+    "name": "Fresa Hand Free Regular Ø2,8/3,2 - 13mm"
+   },
+   {
+    "code": "934370",
+    "name": "Fresa Hand Free Regular Ø2,8/3,2 - 7mm"
+   },
+   {
+    "code": "934377",
+    "name": "Fresa Hand Free Regular Ø3,2/3,6 - 7mm"
+   },
+   {
+    "code": "932114",
+    "name": "Counter Guide AR/Torq Ø3,75/4,0"
+   },
+   {
+    "code": "977008",
+    "name": "Chave Guide NP Narrow"
+   },
+   {
+    "code": "993770",
+    "name": "Solid Guide NP Nar"
+   },
+   {
+    "code": "993740",
+    "name": "Solid Index Guide NP Nar"
+   },
+   {
+    "code": "977005",
+    "name": "Chave Guide NP Regular"
+   },
+   {
+    "code": "993780",
+    "name": "Solid Guide NP Reg"
+   },
+   {
+    "code": "993750",
+    "name": "Solid Index Guide NP Reg"
+   },
+   {
+    "code": "900055",
+    "name": "Anel Redutor Regular"
+   },
+   {
+    "code": "993760",
+    "name": "Solid Extension"
+   },
+   {
+    "code": "40300099",
+    "name": "Surgical Torque Wrench"
+   },
+   {
+    "code": "99000099",
+    "name": "Extensor de Fresas"
+   },
+   {
+    "code": "99102099",
+    "name": "Adaptador Quadrado"
+   },
+   {
+    "code": "07020099",
+    "name": "Chave Digital Hexagonal 0,9mm Media"
+   },
+   {
+    "code": "07120099",
+    "name": "Chave Digital Hexagonal 1,2mm Media"
+   },
+   {
+    "code": "934369",
+    "name": "Fresa Hand Free Narrow Ø2,4/2,8 - 15mm"
+   },
+   {
+    "code": "934385",
+    "name": "Fresa Hand Free Narrow SL Ø1,6/2,4 - 15mm"
+   },
+   {
+    "code": "934375",
+    "name": "Fresa Hand Free Regular Ø2,8/3,2 - 15mm"
+   },
+   {
+    "code": "900071",
+    "name": "Anel Redutor Regular 4,1/4,3"
+   },
+   {
+    "code": "902514",
+    "name": "Haste Redutora Narrow"
+   }
+  ],
+  "leaflet_label": "Lâmina KITS 2025®",
+  "notes": [],
+  "title": "KIT EXPERTGUIDE®",
+  "source": "https://www.conexao.com.br/produto/kit-expertguide/",
+  "image": "https://www.conexao.com.br/wp-content/uploads/2025/07/KitExpertGuide®.webp",
+  "gallery": [
+   "https://www.conexao.com.br/wp-content/uploads/2025/07/Kit-Expertguide-1.webp"
+  ],
+  "drill_images": [],
+  "pdfs": [
+   "https://www.conexao.com.br/wp-content/uploads/2025/09/KIT-EXPERTGUIDE.pdf"
+  ]
+ },
+ "kit-master-flex": {
+  "kind": "kit",
+  "facts": {
+   "Sistemas": "Morse: NP, FIT e SL, Hexágono Externo: RD e SD, Short HE e Short NP/BLT",
+   "Diâmetros": "02,9- Ø3,5, Ø3,75, Ø4,0, Ø4,3, 05,0"
+  },
+  "features": [
+   "Desenvolvido para acomodar os instrumentos cirúrgicos para instalação dos implantes Conexão",
+   "Confeccionado em polissulfona, material que permite ser autoclavado",
+   "Disponibiliza um protocolo de perfuração gravado no kit para instalação dos implantes corespondente com a marcação das fresas"
+  ],
+  "paragraphs": [],
+  "code": "716290",
+  "composition": [
+   {
+    "code": "934401",
+    "name": "Fresa Master Lanca Ø2,0"
+   },
+   {
+    "code": "934403",
+    "name": "Fresa Master Ø2,4"
+   },
+   {
+    "code": "934404",
+    "name": "Fresa Master Ø2,8"
+   },
+   {
+    "code": "934405",
+    "name": "Fresa Master Ø3,2"
+   },
+   {
+    "code": "934406",
+    "name": "Fresa Master Ø3,4"
+   },
+   {
+    "code": "934407",
+    "name": "Fresa Master Ø3,6"
+   },
+   {
+    "code": "934408",
+    "name": "Fresa Master Ø3,8"
+   },
+   {
+    "code": "934409",
+    "name": "Fresa Master Ø4,2"
+   },
+   {
+    "code": "934410",
+    "name": "Fresa Master Ø4,6"
+   },
+   {
+    "code": "99000099",
+    "name": "Extensor de Fresas"
+   },
+   {
+    "code": "07020099",
+    "name": "Chave Digital Hexagonal 0,9mm Media"
+   },
+   {
+    "code": "07120099",
+    "name": "Chave Digital Hexagonal 1,2mm Media"
+   },
+   {
+    "code": "99624299",
+    "name": "Pino de Paralelismo Ø 2/2,4/2,8"
+   },
+   {
+    "code": "40300099",
+    "name": "Surgical Torque Wrench"
+   },
+   {
+    "code": "99901399",
+    "name": "Sonda de Medicao Multiuso"
+   },
+   {
+    "code": "99102099",
+    "name": "Adaptador Quadrado"
+   },
+   {
+    "code": "977004",
+    "name": "Chave Master NP - Short"
+   },
+   {
+    "code": "977005",
+    "name": "Chave Master NP - Long"
+   },
+   {
+    "code": "977000",
+    "name": "Chave Master HE Fit - Short"
+   },
+   {
+    "code": "977001",
+    "name": "Chave Master HE Fit - Long"
+   },
+   {
+    "code": "977006",
+    "name": "Chave Master SD SL - Short"
+   },
+   {
+    "code": "977007",
+    "name": "Chave Master SD SL - Long"
+   },
+   {
+    "code": "06510099",
+    "name": "Extension Fitness - Short"
+   },
+   {
+    "code": "06520099",
+    "name": "Extension Fitness - Medium"
+   },
+   {
+    "code": "93135299",
+    "name": "Countersink AR/C Ø3,5"
+   },
+   {
+    "code": "93137999",
+    "name": "Countersink EASY Ø3,75/4"
+   },
+   {
+    "code": "93137799",
+    "name": "Countersink AR/C Ø3,75/4"
+   },
+   {
+    "code": "950063",
+    "name": "Caixa Organizadora Master Flex"
+   }
+  ],
+  "leaflet_label": "Lâmina KITS 2025®",
+  "notes": [],
+  "title": "KIT MASTER FLEX®",
+  "source": "https://www.conexao.com.br/produto/kit-master-flex/",
+  "image": "https://www.conexao.com.br/wp-content/uploads/2025/07/Kit-Master-Flex.webp",
+  "gallery": [],
+  "drill_images": [],
+  "pdfs": [
+   "https://www.conexao.com.br/wp-content/uploads/2025/09/KIT-MASTER-FLEX.pdf"
+  ]
+ },
+ "kit-protetico": {
+  "kind": "kit",
+  "facts": {},
+  "features": [],
+  "paragraphs": [
+   "O Kit Protético mais Vendido e Desejado pelos Implantodontistas!"
+  ],
+  "code": "679042",
+  "composition": [
+   {
+    "code": "99102099",
+    "name": "Adaptador Quadrado"
+   },
+   {
+    "code": "40200099",
+    "name": "Prosthetic Torque Wrench"
+   },
+   {
+    "code": "07210099",
+    "name": "Chave Adaptadora Digital Curta"
+   },
+   {
+    "code": "05820099",
+    "name": "Chave de Fenda Média"
+   },
+   {
+    "code": "06220099",
+    "name": "Chave Quadrada 1,3mm Media"
+   },
+   {
+    "code": "06230099",
+    "name": "Chave Quadrada 1,3mm Longa"
+   },
+   {
+    "code": "06010099",
+    "name": "Chave Hexagonal 1,2mm Curta"
+   },
+   {
+    "code": "06020099",
+    "name": "Chave Hexagonal 1,2mm Media"
+   },
+   {
+    "code": "06030099",
+    "name": "Chave Hexagonal 1,2mm Longa"
+   },
+   {
+    "code": "06320099",
+    "name": "Chave Hexagonal 0,9mm Media"
+   },
+   {
+    "code": "06810099",
+    "name": "Chave Friccao Dupla"
+   },
+   {
+    "code": "05900099",
+    "name": "Chave Hexagono Interno 2,0mm"
+   },
+   {
+    "code": "06520199",
+    "name": "Chave Hexagono Interno 2,5mm - Media"
+   },
+   {
+    "code": "06420099",
+    "name": "Chave Hexagono Interno 2,7mm - Media"
+   },
+   {
+    "code": "953008",
+    "name": "Caixa Organizadora Protetico"
+   }
+  ],
+  "leaflet_label": "Lâmina KITS 2025®",
+  "notes": [],
+  "title": "KIT PROTÉTICO",
+  "source": "https://www.conexao.com.br/produto/kit-protetico/",
+  "image": "https://www.conexao.com.br/wp-content/uploads/2025/07/kit-protetico-conexao.jpg",
+  "gallery": [],
+  "drill_images": [],
+  "pdfs": [
+   "https://www.conexao.com.br/wp-content/uploads/2025/10/KIT_PROTETICO.pdf"
+  ]
+ },
+ "kit-startflex": {
+  "kind": "kit",
+  "facts": {
+   "Sistemas": "Morse: NP, FIT e SL, Hexágono Externo: RD e SD, Short HE e Short NP/BLT",
+   "Diâmetros": "Ø3,5-Ø3,75"
+  },
+  "features": [
+   "Desenvolvido para acomodar os instrumentos cirúrgicos para instalação dos implantes Conexão",
+   "Confeccionado em polissulfona, material que permite ser autoclavado",
+   "Disponibiliza um protocolo de perfuração gravado no kit para instalação dos implantes correspondente com a marcação das fresas"
+  ],
+  "paragraphs": [],
+  "code": "716292",
+  "composition": [
+   {
+    "code": "934401",
+    "name": "Fresa Master Lanca Ø2,0"
+   },
+   {
+    "code": "934403",
+    "name": "Fresa Master Ø2,4"
+   },
+   {
+    "code": "934404",
+    "name": "Fresa Master Ø2,8"
+   },
+   {
+    "code": "934405",
+    "name": "Fresa Master Ø3,2"
+   },
+   {
+    "code": "934406",
+    "name": "Fresa Master Ø3,4"
+   },
+   {
+    "code": "934407",
+    "name": "Fresa Master Ø3,6"
+   },
+   {
+    "code": "99000099",
+    "name": "Extensor de Fresas"
+   },
+   {
+    "code": "07020099",
+    "name": "Chave Digital Hexagonal 0,9mm Media"
+   },
+   {
+    "code": "07120099",
+    "name": "Chave Digital Hexagonal 1,2mm Media"
+   },
+   {
+    "code": "99624299",
+    "name": "Pino de Paralelismo Ø 2/2,4/2,8"
+   },
+   {
+    "code": "40300099",
+    "name": "Surgical Torque Wrench"
+   },
+   {
+    "code": "99102099",
+    "name": "Adaptador Quadrado"
+   },
+   {
+    "code": "977004",
+    "name": "Chave Master NP - Short"
+   },
+   {
+    "code": "977000",
+    "name": "Chave Master HE Fit - Short"
+   },
+   {
+    "code": "977006",
+    "name": "Chave Master SD SL - Short"
+   },
+   {
+    "code": "06510099",
+    "name": "Extension Fitness - Short"
+   },
+   {
+    "code": "06520099",
+    "name": "Extension Fitness - Medium"
+   },
+   {
+    "code": "950063",
+    "name": "Caixa Organizadora Master Flex"
+   }
+  ],
+  "leaflet_label": "Lâmina Kits 2025®",
+  "notes": [],
+  "title": "KIT START FLEX®",
+  "source": "https://www.conexao.com.br/produto/kit-startflex/",
+  "image": "https://www.conexao.com.br/wp-content/uploads/2025/07/Kit-Start-Flex.webp",
+  "gallery": [],
+  "drill_images": [],
+  "pdfs": [
+   "https://www.conexao.com.br/wp-content/uploads/2025/09/KIT-STARTFLEX.pdf"
+  ]
+ },
+ "kit-startguide": {
+  "kind": "kit",
+  "facts": {
+   "Implantes": "Startguide Sistemas Morse: NP, FIT, GMF e Hexágono Externo: RD e SD, Short NP/BLT",
+   "Diâmetros": "Ø3,5 e Ø3,75"
+  },
+  "features": [],
+  "paragraphs": [],
+  "code": null,
+  "composition": [
+   {
+    "code": "950066",
+    "name": "Caixa Organizadora Startguide"
+   },
+   {
+    "code": "937031",
+    "name": "Punch Flat Narrow"
+   },
+   {
+    "code": "934354",
+    "name": "Plane Narrow"
+   },
+   {
+    "code": "934353",
+    "name": "Center Narrow Ø2,4 - 5mm"
+   },
+   {
+    "code": "934365",
+    "name": "Fresa Hand Free Narrow Ø2,4/2,8 - 8,5mm"
+   },
+   {
+    "code": "934366",
+    "name": "Fresa Hand Free Narrow Ø2,4/2,8 - 10mm"
+   },
+   {
+    "code": "934367",
+    "name": "Fresa Hand Free Narrow Ø2,4/2,8 - 11,5mm"
+   },
+   {
+    "code": "934368",
+    "name": "Fresa Hand Free Narrow Ø2,4/2,8 - 13mm"
+   },
+   {
+    "code": "934369",
+    "name": "Fresa Hand Free Narrow Ø2,4/2,8 - 15mm"
+   },
+   {
+    "code": "932118",
+    "name": "Counter Guide Flex Nar Ø3,5"
+   },
+   {
+    "code": "993760",
+    "name": "Solid Extension"
+   },
+   {
+    "code": "99000099",
+    "name": "Extensor de Fresas"
+   },
+   {
+    "code": "90006099",
+    "name": "Pino Fixador - Guide"
+   },
+   {
+    "code": "93610599",
+    "name": "Fresa Helicoidal Ø1,4mm - Guide"
+   },
+   {
+    "code": "40300099",
+    "name": "Surgical Torque Wrench"
+   },
+   {
+    "code": "99102099",
+    "name": "Adaptador Quadrado"
+   },
+   {
+    "code": "977012",
+    "name": "Chave Guide FIT / GM Narrow"
+   },
+   {
+    "code": "993775",
+    "name": "Solid Guide FIT/GM Nar"
+   },
+   {
+    "code": "993745",
+    "name": "Solid Index Guide FIT/GM Nar"
+   },
+   {
+    "code": "977008",
+    "name": "Chave Guide NP Narrow"
+   },
+   {
+    "code": "993770",
+    "name": "Solid Guide NP Nar"
+   },
+   {
+    "code": "993740",
+    "name": "Solid Index Guide NP Nar"
+   },
+   {
+    "code": "977010",
+    "name": "Chave Guide HE SD Narrow"
+   },
+   {
+    "code": "993743",
+    "name": "Solid Index Guide HE SD Nar"
+   },
+   {
+    "code": "993773",
+    "name": "Solid Guide HE SD Nar"
+   }
+  ],
+  "leaflet_label": "Lâmina KITS 2025®",
+  "notes": [],
+  "title": "KIT STARTGUIDE®",
+  "source": "https://www.conexao.com.br/produto/kit-startguide/",
+  "image": "https://www.conexao.com.br/wp-content/uploads/2025/07/Kit-Startguide.webp",
+  "gallery": [
+   "https://www.conexao.com.br/wp-content/uploads/2025/07/Kit-Startguide-1.webp"
+  ],
+  "drill_images": [],
+  "pdfs": [
+   "https://www.conexao.com.br/wp-content/uploads/2025/09/KIT-STARTGUIDE.pdf"
+  ]
+ },
+ "kit-stop-drill": {
+  "kind": "kit",
+  "facts": {},
+  "features": [],
+  "paragraphs": [
+   "Máxima precisão e segurança na perfuração",
+   "Stop Drill® foi desenvolvido com polímero especial técnico da família poliacetal especificamente indicado para área da saúde. É um termoplástico cristalino com alta rigidez, dureza, estabilidade dimensional e resitência a altas temperaturas."
+  ],
+  "code": null,
+  "composition": [],
+  "leaflet_label": "Lâmina KIT 2025®",
+  "notes": [
+   "* Os Stop Drills estão disponíveis para fins de reposição agrupados por altura:"
+  ],
+  "title": "KIT STOP DRILL®",
+  "source": "https://www.conexao.com.br/produto/kit-stop-drill/",
+  "image": "https://www.conexao.com.br/wp-content/uploads/2025/07/Kit-Stop-Drill.webp",
+  "gallery": [
+   "https://www.conexao.com.br/wp-content/uploads/2025/07/Kit-Stop-Drill-1.webp",
+   "https://www.conexao.com.br/wp-content/uploads/2025/07/Kit-Stop-Drill-2.webp"
+  ],
+  "drill_images": [],
+  "pdfs": [
+   "https://www.conexao.com.br/wp-content/uploads/2025/09/KIT-STOP-DRILL.pdf"
+  ]
+ },
+ "kit-zigomatico": {
+  "kind": "kit",
+  "facts": {},
+  "features": [],
+  "paragraphs": [
+   "Fixações zigomáticas de hexágono externo e interno",
+   "Conjunto para instalar os implantes Master Zigo Flat e Zigomax. Contém os melhores acessórios para a facilidade do cirurgião. Fresas escalonadas para menor número de perfurações no ato cirúrgico, otimizando o procedimento de alta complexidade."
+  ],
+  "code": "696351",
+  "composition": [
+   {
+    "code": "97200499",
+    "name": "Chave Cirurgica Manual Zigo"
+   },
+   {
+    "code": "99900899",
+    "name": "Sonda de Medicao Zigo"
+   },
+   {
+    "code": "99900599",
+    "name": "Sonda de Medição Zigomático"
+   },
+   {
+    "code": "93928699",
+    "name": "Fresa Helicoidal Ø3,3 Longa Zigo"
+   },
+   {
+    "code": "93933299",
+    "name": "Fresa Helicoidal Escalonada Ø2,8x3,3 Curta Zigo"
+   },
+   {
+    "code": "93320299",
+    "name": "Fresa Helicoidal Escalonada Ø2,0 p/ Zigomático"
+   },
+   {
+    "code": "93230499",
+    "name": "Fresa Esferica Ø2,8 Curta Zigo"
+   },
+   {
+    "code": "93400299",
+    "name": "Fresa Lança p/ Zigomático"
+   },
+   {
+    "code": "96400099",
+    "name": "Chave Adaptadora para Contra-angulo Cirurgica"
+   },
+   {
+    "code": "93433899",
+    "name": "Fresa Pilot p/ Zigomático"
+   },
+   {
+    "code": "93400099",
+    "name": "Fresa Lança"
+   },
+   {
+    "code": "90120199",
+    "name": "Afastador Cirurgico"
+   },
+   {
+    "code": "99301299",
+    "name": "Solid Mount HI - Medium"
+   },
+   {
+    "code": "95300599",
+    "name": "Caixa Organizadora Zigomatico"
+   }
+  ],
+  "leaflet_label": "Lâmina KITS 2025®",
+  "notes": [],
+  "title": "KIT ZIGOMÁTICO®",
+  "source": "https://www.conexao.com.br/produto/kit-zigomatico/",
+  "image": "https://www.conexao.com.br/wp-content/uploads/2025/07/Kit-Zigomatico.webp",
+  "gallery": [],
+  "drill_images": [],
+  "pdfs": [
+   "https://www.conexao.com.br/wp-content/uploads/2025/09/KIT-ZIGOMATICO.pdf"
+  ]
+ },
+ "short-cone-morse-np-blt-24": {
+  "kind": "implant",
+  "lede": "Ideal para casos clínicos com pouco osso, sua plataforma protética HE RD que garante estabilidade e precisão.",
+  "tech": {
+   "name": "Titânio Hard®",
+   "spec": "955(MPa) 73% +resistente"
+  },
+  "features": [
+   "Cone Morse Indexado NP",
+   "Angulação Interna: 24°",
+   "Macro estrutura cilíndrica",
+   "Dupla rosca com ápice ativo, quatro fresados",
+   "Bioplatform® (tipo switch)",
+   "Rosca Interna: M 1.6"
+  ],
+  "torque": "60 N.cm",
+  "leaflet_label": "Lâmina Short CM NP BLT®",
+  "dimensions": [
+   {
+    "d": "3.75",
+    "lengths": [
+     "6.5mm"
+    ]
+   },
+   {
+    "d": "4.3",
+    "lengths": [
+     "6.5mm"
+    ]
+   }
+  ],
+  "benefits_raw": [],
+  "indications": [
+   "Implantações unitária, parcial e múltipla",
+   "Protocolo convencional e carga imediata"
+  ],
+  "drill": null,
+  "title": "SHORT® Cone Morse NP® BLT 24°",
+  "source": "https://www.conexao.com.br/produto/short-cone-morse-np-blt-24/",
+  "image": "https://www.conexao.com.br/wp-content/uploads/2025/07/SHORT®-Cone-Morse-NP®-BLT.webp",
+  "gallery": [],
+  "drill_images": [
+   "https://www.conexao.com.br/wp-content/uploads/2025/07/FRESAGEM-Short-NP-4-3mm-SHORT-CM-PT.jpg",
+   "https://www.conexao.com.br/wp-content/uploads/2025/07/FRESAGEM-Short-NP-5-0mm-SHORT-CM-PT.jpg"
+  ],
+  "pdfs": [
+   "https://www.conexao.com.br/wp-content/uploads/2025/09/SHORT-NP.pdf"
+  ]
+ },
+ "short-hexagono-externo-rd": {
+  "kind": "implant",
+  "lede": "Ideal para casos clínicos com pouco osso, sua plataforma protética HE RD que garante estabilidade e precisão.",
+  "tech": {
+   "name": "Titânio Hard®",
+   "spec": "955(MPa) 73% +resistente"
+  },
+  "features": [
+   "Macro estrutura cilíndrica",
+   "Dupla rosca com ápice ativo, quatro fresados",
+   "Bioplatform® (tipo switch)",
+   "Rosca Interna: M 2.0"
+  ],
+  "torque": "45 N.cm",
+  "leaflet_label": "Lâmina Short HE RD®",
+  "dimensions": [
+   {
+    "d": "4.3",
+    "lengths": [
+     "5.5mm"
+    ]
+   },
+   {
+    "d": "5.0",
+    "lengths": [
+     "5.5mm"
+    ]
+   }
+  ],
+  "benefits_raw": [],
+  "indications": [
+   "Implantações unitária, parcial e múltipla",
+   "Protocolo convencional e carga imediata",
+   "Pouco osso"
+  ],
+  "drill": null,
+  "title": "SHORT® Hexágono Externo RD",
+  "source": "https://www.conexao.com.br/produto/short-hexagono-externo-rd/",
+  "image": "https://www.conexao.com.br/wp-content/uploads/2025/07/Short-HE-RD.webp",
+  "gallery": [],
+  "drill_images": [
+   "https://www.conexao.com.br/wp-content/uploads/2025/07/FRESAGEM-Short-RD-4-3mm-SHORT-HE-PT.jpg",
+   "https://www.conexao.com.br/wp-content/uploads/2025/07/FRESAGEM-Short-RD-5-0mm-SHORT-HE-PT.jpg"
+  ],
+  "pdfs": [
+   "https://www.conexao.com.br/wp-content/uploads/2025/09/SHORT-HE-RD.pdf"
+  ]
+ },
+ "torq-cone-morse-np-24": {
+  "kind": "implant",
+  "lede": "Design inovador para uma inserção rápida e precisa, com tecnologia que garante compactação óssea e dissipação de forças",
+  "tech": {
+   "name": "Titânio Hard®",
+   "spec": "955(MPa) 73% +resistente"
+  },
+  "features": [
+   "Colar reduzido para aumentar a espessura óssea na cervical do implante",
+   "Espiras com alto poder de corte",
+   "Angulação Interna: 24°",
+   "Rosca interna: M1.6",
+   "Web® (ampliação do contato ósseo)",
+   "Bioplatform® (tipo switch)"
+  ],
+  "torque": "60 N.cm",
+  "leaflet_label": "Lâmina Torq® NP",
+  "dimensions": [
+   {
+    "d": "3.5",
+    "lengths": [
+     "8.5mm",
+     "10mm",
+     "11.5mm",
+     "13mm",
+     "15mm"
+    ]
+   },
+   {
+    "d": "3.75",
+    "lengths": [
+     "8.5mm",
+     "10mm",
+     "11.5mm",
+     "13mm",
+     "15mm"
+    ]
+   },
+   {
+    "d": "4.0",
+    "lengths": [
+     "8.5mm",
+     "10mm",
+     "11.5mm",
+     "13mm",
+     "15mm"
+    ]
+   },
+   {
+    "d": "5.0",
+    "lengths": [
+     "8.5mm",
+     "10mm",
+     "11.5mm",
+     "13mm",
+     "15mm"
+    ]
+   }
+  ],
+  "benefits_raw": [],
+  "indications": [
+   "Implantações unitária, parcial e múltipla",
+   "Protocolo convencional e carga imediata",
+   "Indicação dupla, maxila e mandíbula"
+  ],
+  "drill": {
+   "head": [
+    "3.5",
+    "3.75",
+    "4.0",
+    "5.0"
+   ],
+   "rows": [
+    {
+     "name": "Osso Macio",
+     "cells": [
+      {
+       "v": "2,8mm"
+      },
+      {
+       "v": "3,2mm"
+      },
+      {
+       "v": "3,6mm"
+      },
+      {
+       "v": "3,8mm"
+      }
+     ]
+    },
+    {
+     "name": "Osso Médio",
+     "cells": [
+      {
+       "v": "2,8mm",
+       "alt": "(3,2mm)*"
+      },
+      {
+       "v": "3,2mm",
+       "alt": "(3,4mm)*"
+      },
+      {
+       "v": "3,6mm",
+       "alt": "(3,8mm)*"
+      },
+      {
+       "v": "3,8mm",
+       "alt": "(4,2mm)*"
+      }
+     ]
+    },
+    {
+     "name": "Osso Duro",
+     "cells": [
+      {
+       "v": "3,2mm"
+      },
+      {
+       "v": "3,4mm"
+      },
+      {
+       "v": "3,8mm"
+      },
+      {
+       "v": "4,2mm"
+      }
+     ]
+    }
+   ]
+  },
+  "title": "TORQ® Cone Morse NP® 24°",
+  "source": "https://www.conexao.com.br/produto/torq-cone-morse-np-24/",
+  "image": "https://www.conexao.com.br/wp-content/uploads/2025/07/Torq-NP.webp",
+  "gallery": [],
+  "drill_images": [
+   "https://www.conexao.com.br/wp-content/uploads/2025/07/FRESAGEM-Torq-3-5mm-PT.jpg",
+   "https://www.conexao.com.br/wp-content/uploads/2025/07/FRESAGEM-Torq-3-75mm-PT.jpg",
+   "https://www.conexao.com.br/wp-content/uploads/2025/07/FRESAGEM-Torq-4-0mm-PT.jpg",
+   "https://www.conexao.com.br/wp-content/uploads/2025/07/FRESAGEM-Torq-5-0mm-PT.jpg"
+  ],
+  "pdfs": [
+   "https://www.conexao.com.br/wp-content/uploads/2025/09/TOR-NP.pdf",
+   "https://www.conexao.com.br/wp-content/uploads/2026/01/TORQ_NP_EN_US.pdf",
+   "https://www.conexao.com.br/wp-content/uploads/2026/01/TORQ_NP_ES_ES.pdf"
+  ]
+ },
+ "zigoflat-hexagono-externo-rd": {
+  "kind": "implant",
+  "lede": "A solução perfeita para reabilitação oral em áreas de difícil acesso, garantindo estabilidade e desempenho em casos de atrofia óssea!",
+  "tech": null,
+  "features": [
+   "Hexágono Externo RD",
+   "Região cervical: Cilíndrico",
+   "Região apical: Cônico",
+   "Permite sub-instrumentação",
+   "Rosca Interna: M 2.0"
+  ],
+  "torque": "45 N.cm",
+  "leaflet_label": "Lâmina ZIGOFLAT HE RD®",
+  "dimensions": [
+   {
+    "d": "4.0",
+    "lengths": [
+     "30mm",
+     "32.5mm",
+     "35mm",
+     "37mm",
+     "40mm",
+     "42.5mm",
+     "45mm",
+     "47.5mm",
+     "50mm",
+     "52.5mm",
+     "55mm"
+    ]
+   }
+  ],
+  "benefits_raw": [],
+  "indications": [
+   "Implantação múltipla",
+   "Protocolo convencional e carga imediata",
+   "Indicação maxila"
+  ],
+  "drill": null,
+  "title": "ZIGOFLAT® Hexágono Externo RD",
+  "source": "https://www.conexao.com.br/produto/zigoflat-hexagono-externo-rd/",
+  "image": "https://www.conexao.com.br/wp-content/uploads/2025/07/ZIGOFLAT®-Hexagono-Externo-RD.webp",
+  "gallery": [],
+  "drill_images": [],
+  "pdfs": [
+   "https://www.conexao.com.br/wp-content/uploads/2025/09/ZIGO-HE-RD.pdf"
+  ]
+ }
+}
