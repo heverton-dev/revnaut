@@ -40,6 +40,4 @@ tmp/
 *.webm
 *.bmp
 
-# Reversa
-.reversa/config.user.toml
 _revnault_sdd/
