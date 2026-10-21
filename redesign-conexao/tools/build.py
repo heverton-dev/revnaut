@@ -198,32 +198,23 @@ def spec_rows(p):
 
 
 def drill_section(p, diam_list):
-    imgs = {drill_diam(u): u for u in p['drill_images'] if drill_diam(u) in diam_list}
     table = p.get('drill')
-    if not table and not imgs:
+    if not table:
         return ''
-    keys = table['head'] if table else [d for d in diam_list if d in imgs]
-    seg = ''.join('<button aria-pressed="%s" data-d="%d" data-img="%s">⌀%s</button>' % ('true' if i == 0 else 'false', i, e(imgs.get(k, '')), e(k))
+    keys = table['head']
+    seg = ''.join('<button aria-pressed="%s" data-d="%d">⌀%s</button>' % ('true' if i == 0 else 'false', i, e(k))
                   for i, k in enumerate(keys))
-    t = ''
-    if table:
-        head = ''.join('<th>⌀%s</th>' % e(h) for h in table['head'])
-        body = ''.join('<tr><th scope="row">%s</th>%s</tr>' % (e(r['name'].replace('Osso ', 'Osso ').capitalize()),
-                       ''.join('<td>%s%s</td>' % (e(c['v']), '<span>%s</span>' % e(c['alt']) if c.get('alt') else '') for c in r['cells']))
-                       for r in table['rows'])
-        has_alt = any(c.get('alt') for r in table['rows'] for c in r['cells'])
-        note = '<p class="drill-note">*Valores entre parênteses: consulte a lâmina técnica para a indicação de uso.</p>' if has_alt else ''
-        t = ('<div class="reveal"><table class="drill-table" id="drillTable"><thead><tr><th scope="col" style="text-align:left;padding-left:24px">Densidade</th>%s</tr></thead>'
-             '<tbody>%s</tbody></table>%s</div>') % (head, body, note)
-    first = imgs.get(keys[0], '')
-    img = ('<div class="drill-img reveal"><img id="drillImg" src="%s" alt="Protocolo de fresagem" loading="lazy"%s>'
-           '<p class="drill-missing" id="drillMissing"%s>Protocolo ilustrado deste diâmetro disponível na lâmina técnica.</p></div>'
-           % (e(first), '' if first else ' hidden', ' hidden' if first else ''))
-    layout = 'drill' if table else 'drill solo'
-    lede = 'Escolha o diâmetro para ver a fresa final por densidade óssea e a sequência ilustrada.' if table else 'Escolha o diâmetro para ver a sequência de fresas.'
+    head = ''.join('<th>⌀%s</th>' % e(h) for h in table['head'])
+    body = ''.join('<tr><th scope="row">%s</th>%s</tr>' % (e(r['name'].capitalize()),
+                   ''.join('<td>%s%s</td>' % (e(c['v']), '<span>%s</span>' % e(c['alt']) if c.get('alt') else '') for c in r['cells']))
+                   for r in table['rows'])
+    has_alt = any(c.get('alt') for r in table['rows'] for c in r['cells'])
+    note = '<p class="drill-note">*Valores entre parênteses: consulte a lâmina técnica para a indicação de uso.</p>' if has_alt else ''
+    t = ('<div class="reveal"><table class="drill-table" id="drillTable"><thead><tr><th scope="col" style="text-align:left;padding-left:24px">Densidade</th>%s</tr></thead>'
+         '<tbody>%s</tbody></table>%s</div>') % (head, body, note)
     return ('<section class="band" id="fresagem"><div class="wrap-wide"><div class="head"><h2 class="display-2 reveal">Protocolo de fresagem.</h2>'
-            '<p class="lede reveal">%s</p></div><div class="seg-wrap reveal"><div class="seg" id="drillSeg" role="group" aria-label="Diâmetro">%s</div></div>'
-            '<div class="%s">%s%s</div></div></section>') % (lede, seg, layout, t, img)
+            '<p class="lede reveal">Escolha o diâmetro para ver a fresa final por densidade óssea.</p></div><div class="seg-wrap reveal"><div class="seg" id="drillSeg" role="group" aria-label="Diâmetro">%s</div></div>'
+            '<div class="drill solo">%s</div></div></section>') % (seg, t)
 
 
 def docs(pdfs, leaflet):
@@ -260,18 +251,10 @@ PAGE_JS = '''<script>
   var reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var seg=document.getElementById('drillSeg');
   if(seg){
-    var btns=seg.querySelectorAll('button'), img=document.getElementById('drillImg'), miss=document.getElementById('drillMissing'), table=document.getElementById('drillTable');
-    btns.forEach(function(b){if(b.dataset.img)new Image().src=b.dataset.img});
+    var btns=seg.querySelectorAll('button'), table=document.getElementById('drillTable');
     var pick=function(d){
       btns.forEach(function(b){b.setAttribute('aria-pressed',String(+b.dataset.d===d))});
       if(table)table.querySelectorAll('tr').forEach(function(tr){tr.querySelectorAll('th,td').forEach(function(c,k){c.classList.toggle('col-on',k===d+1)})});
-      var src=btns[d].dataset.img;
-      img.style.opacity=0;
-      setTimeout(function(){
-        img.hidden=!src;miss.hidden=!!src;
-        if(src){img.src=src;img.alt='Protocolo de fresagem '+btns[d].textContent;}
-        img.style.opacity=1;
-      },reduce?0:200);
     };
     btns.forEach(function(b){b.addEventListener('click',function(){pick(+b.dataset.d)})});
     pick(0);
@@ -343,7 +326,7 @@ def build_line(cfg):
     stats_html = ''.join('<div><b>%s</b><span>%s</span></div>' % (e(a), e(b)) for a, b in stats)
     sub = (cfg['kicker'] + '. ' + ', '.join(variant_label(v['title']) for v in vs) + '.') if multi else ('. '.join(p0['indications']) + '.' if p0['indications'] else p0['features'][0] + '.')
     links = [('visao', 'Visão geral'), ('especificacoes', 'Especificações')]
-    drill_src = next((v for v in vs if v.get('drill') or v['drill_images']), None)
+    drill_src = next((v for v in vs if v.get('drill')), None)
     if drill_src:
         links.append(('fresagem', 'Fresagem'))
     links.append(('documentacao', 'Documentação'))

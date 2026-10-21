@@ -18,7 +18,6 @@ import { cn } from "@/lib/utils";
 import { getActiveUserId, setActiveUserId, ToastPayload, dispatchToast } from "@/lib/api";
 import { NotificationCenter } from "@/components/layout/NotificationCenter";
 import {
-  ROLE_WORKSPACES,
   ROLE_ID_TO_WORKSPACE,
   resolveRoleConfig,
   buildNavSections,
@@ -35,7 +34,6 @@ import {
 } from "@/lib/accessApi";
 
 export type { NavItem, RoleWorkspaceConfig };
-export { ROLE_WORKSPACES, resolveRoleConfig };
 
 export interface AuthUserItem {
   id: string;
@@ -196,8 +194,9 @@ export function AppShell({
   const displayUserRole = currentUserProfile?.role || userRole;
 
   const currentRoleConfig = React.useMemo(() => {
-    // Prefer DB grants (phase 3); fall back to navConfig seed by role_id/label
-    if (accessMe && accessMe.routes.length > 0 && accessMe.user_id === selectedUserId) {
+    // Fonte de verdade: /access/me (banco). Seed navConfig só enquanto a API
+    // ainda não respondeu para este usuário (offline / 1º render).
+    if (accessMe && accessMe.user_id === selectedUserId && accessMe.routes.length > 0) {
       return accessMeToRoleConfig(accessMe);
     }
     return resolveRoleConfig(
@@ -293,7 +292,7 @@ export function AppShell({
     const built = buildNavSections(currentRoleConfig, effectiveShowAll);
     if (built.length === 0 || built.every((s) => s.items.length === 0)) {
       return buildNavSections(
-        ROLE_ID_TO_WORKSPACE["role-field"] ?? ROLE_WORKSPACES.field_sales,
+        ROLE_ID_TO_WORKSPACE["role-field"],
         false
       );
     }
@@ -420,11 +419,13 @@ export function AppShell({
   const handleUserChange = (newUserId: string) => {
     setSelectedUserId(newUserId);
     setActiveUserId(newUserId);
+    // Dropa grants do usuário anterior — /access/me do novo id carrega em seguida
+    setAccessMe(null);
     const targetUser = availableUsers.find((u) => u.id === newUserId);
     if (targetUser) {
       setCurrentUserProfile(targetUser);
-      // Profile switch always re-applies hard RBAC focus (no leftover "all modules")
       setShowAllModules(false);
+      // Interim seed até o banco responder (guard usa accessMe quando chegar)
       const newRole = resolveRoleConfig(targetUser.role, targetUser.role_id ?? null);
       if (!newRole.visibleRoutes.includes(activeNav)) {
         handleSelectNav(newRole.defaultLandingRoute, newRole.defaultFacility);

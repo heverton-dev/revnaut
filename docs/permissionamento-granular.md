@@ -244,30 +244,68 @@ access_audit_log
 
 ---
 
-## 6. Plano de migração (fases)
+## 6. Plano de migração (fases) — STATUS FINAL
 
-### Fase 1 — Schema + seed (esta entrega)
-- [x] Doc neste arquivo  
-- [ ] Alembic `0005_granular_rbac` (tabelas + catálogo + grants default + `role-access-admin`)  
-- [ ] Seed idempotente em `database.py` para hosts que não rodam Alembic no boot  
+### Fase 1 — Schema + seed
+- [x] Documento
+- [x] Alembic `0005_granular_rbac`
+- [x] Seed idempotente em `database.py` (`_seed_granular_access`) + `role-access-admin`
 
 ### Fase 2 — API de leitura
-- [ ] `GET /api/v1/access/me` → `{ role_id, routes[], facilities[], landing }` (efetivo, com impersonation)  
-- [ ] Middleware de rota no backend: 403 se facility/route fora do grant (além do guard atual de UI)  
+- [x] `GET /api/v1/access/me` (efetivo + impersonation X-User-Id)
+- [x] `GET /api/v1/access/matrix`
+- [x] `PUT /api/v1/access/roles/{role_id}/grants` (Super Admin / Admin de Acesso)
 
 ### Fase 3 — Frontend consome banco
-- [ ] `navConfig` deixa de ser fonte de grants; vira **catálogo estático de labels/icons**  
-- [ ] AppShell/App carregam grants via `/access/me` (cache + fallback seed em offline dev)  
-- [ ] Guard de URL usa o mesmo payload  
+- [x] AppShell monta menu a partir de `/access/me` (`source: "db"`)
+- [x] Guard de URL + facility (`?f=`) valida o mesmo payload
+- [x] Fallback `navConfig` se API indisponível
 
 ### Fase 4 — Módulo Admin de Acesso (UI)
-- [ ] Rota `#!/rbac?f=permissions` evolui para matriz (cargos × rotas × facilities)  
-- [ ] CRUD restrito: Super Admin e Admin de Acesso (escopo `access_admin_scopes`)  
-- [ ] Auditoria em `access_audit_log`  
+- [x] `AccessAdminMatrix` em `#!/rbac?f=permissions`
+- [x] Matriz cargo × rota × facility + salvar no banco
+- [x] Cargos protegidos (ceo / access-admin) sem edição para Admin de Acesso
 
 ### Fase 5 — Hardening
-- [ ] Testes: deep-link bloqueado por facility, impersonation, 403 API, auto-elevação negada  
-- [ ] Gate de quality: seed vs catálogo divergente → exit 1  
+- [x] `tests/test_access_granular_rbac.py` — 9 testes (seed, /me, matrix, 403, round-trip, auto-elevação)
+- [x] Gate seed/catálogo coberto por `test_seed_catalog_has_routes_and_grants`
+
+### Fase 6 — 403 em APIs de domínio (backend)
+- [x] Mapa path → route_ids em `access/service.py` (`required_routes_for_path`)
+- [x] Gate no `ApiAuthMiddleware` após sessão + tenant (grants do banco)
+- [x] Isentos: auth, access, health, webhooks, storage, quarteto, tasks, mcp
+- [x] `tests/test_access_api_route_gate.py` — logística 403 em `/deals`, 200 em dentgo, superadmin ok
+- [x] Impersonation: X-User-Id só herda grants se o dono do token for superadmin
+
+### Fase 7 — UI de criar cargos + grants
+- [x] `POST /api/v1/access/roles` — cargo operacional + grants iniciais
+- [x] Botão **“Novo cargo”** na matriz (`AccessAdminMatrix`) — Super Admin e Admin de Acesso
+- [x] Admin de Acesso: novo cargo entra em `access_admin_scopes` (editável por ele)
+- [x] Duplicata de nome → 409; logística → 403
+- [x] `tests/test_access_create_role.py` (3 testes)
+
+### Fase 8 — Atribuir usuário existente a cargo
+- [x] `GET /api/v1/access/roles/{role_id}/users` — membros do cargo
+- [x] `PUT /api/v1/access/roles/{role_id}/users/{user_id}` — atribui `users.role_id` + rótulo
+- [x] UI na matriz: lista de membros + “Atribuir usuário” (select de usuários da conta)
+- [x] Guards: sem permissão → 403; não rebaixa superadmin; audit `user.assign_role`
+- [x] `tests/test_access_assign_user.py` (3 testes)
+
+### Fase 9 — Desvincular usuário do cargo
+- [x] `DELETE /api/v1/access/roles/{role_id}/users/{user_id}` — `role_id` → NULL, rótulo “Sem cargo”
+- [x] UI: botão **Desvincular** em cada membro
+- [x] Guards: só se o vínculo existir (senão 409); não remove a própria conta Super Admin da diretoria; último superadmin protegido; audit `user.unassign_role`
+- [x] Fallback `/access/me` sem role_id → menu least-privilege (não vazio)
+- [x] `tests/test_access_unassign_user.py` (4 testes)
+
+### Backlog — executado (pós-fase 9)
+- [x] AppShell: `/access/me` é fonte de verdade; seed navConfig **só** até a API responder; `setAccessMe(null)` na troca de perfil
+- [x] Prefixes extras no gate: `automations` (scheduling/support/marketing), `integrations/totvs` (settings/deals/dentgo)
+- [x] Documenso `contracts` já coberto
+
+### Pendências opcionais (backlog) — executado
+- [x] **Usuários fora da matriz:** aba *Configurações → Usuários* ganha select “Atribuir cargo…” (usa `/access/matrix` + `PUT …/users/{id}`); só admin com grants editáveis
+- [x] AppShell: removido re-export/import de `ROLE_WORKSPACES` (fallback de campo via `ROLE_ID_TO_WORKSPACE`)
 
 ---
 

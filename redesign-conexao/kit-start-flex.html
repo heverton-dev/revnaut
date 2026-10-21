@@ -84,18 +84,10 @@
   var reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var seg=document.getElementById('drillSeg');
   if(seg){
-    var btns=seg.querySelectorAll('button'), img=document.getElementById('drillImg'), miss=document.getElementById('drillMissing'), table=document.getElementById('drillTable');
-    btns.forEach(function(b){if(b.dataset.img)new Image().src=b.dataset.img});
+    var btns=seg.querySelectorAll('button'), table=document.getElementById('drillTable');
     var pick=function(d){
       btns.forEach(function(b){b.setAttribute('aria-pressed',String(+b.dataset.d===d))});
       if(table)table.querySelectorAll('tr').forEach(function(tr){tr.querySelectorAll('th,td').forEach(function(c,k){c.classList.toggle('col-on',k===d+1)})});
-      var src=btns[d].dataset.img;
-      img.style.opacity=0;
-      setTimeout(function(){
-        img.hidden=!src;miss.hidden=!!src;
-        if(src){img.src=src;img.alt='Protocolo de fresagem '+btns[d].textContent;}
-        img.style.opacity=1;
-      },reduce?0:200);
     };
     btns.forEach(function(b){b.addEventListener('click',function(){pick(+b.dataset.d)})});
     pick(0);

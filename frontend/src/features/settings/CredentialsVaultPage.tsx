@@ -25,6 +25,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { Tabs } from "@/components/ui/Tabs";
 import { Dialog } from "@/components/ui/Dialog";
+import { dispatchToast } from "@/lib/api";
 
 export interface VaultAuditLogItem {
   id: string;
@@ -90,6 +91,7 @@ export interface UserItem {
   name: string;
   email: string;
   role: string;
+  role_id?: string | null;
   is_active: boolean;
   is_superadmin: boolean;
   team_name?: string;
@@ -175,6 +177,11 @@ export function CredentialsVaultPage({ initialTab = "vault" }: { initialTab?: st
   // TAB 4: USUÁRIOS & QUARTETO CANÔNICO
   // ==========================================
   const [users, setUsers] = React.useState<UserItem[]>([]);
+  const [assignableRoles, setAssignableRoles] = React.useState<
+    Array<{ role_id: string; name: string }>
+  >([]);
+  const [canAssignRoles, setCanAssignRoles] = React.useState(false);
+  const [assigningUserId, setAssigningUserId] = React.useState<string | null>(null);
   const [manuais, setManuais] = React.useState<QuartetoManual[]>([]);
   const [, setLoadingUsers] = React.useState(false);
   const [showUserModal, setShowUserModal] = React.useState(false);
@@ -249,15 +256,14 @@ export function CredentialsVaultPage({ initialTab = "vault" }: { initialTab?: st
     }
   }, []);
 
-  // Carregar Usuários & Quarteto
+  // Carregar Usuários & Quarteto + cargos atribuíveis (matriz)
   const fetchUsersAndQuarteto = React.useCallback(async () => {
     setLoadingUsers(true);
     try {
-      const [resUsers, resManuais] = await Promise.all([
-        fetch("/api/v1/auth/users", {
-          headers: { "x-user-id": "usr-superadmin-god" },
-        }),
+      const [resUsers, resManuais, resMatrix] = await Promise.all([
+        fetch("/api/v1/auth/users"),
         fetch("/api/v1/quarteto/manuais"),
+        fetch("/api/v1/access/matrix"),
       ]);
       if (resUsers.ok) {
         const usersData = await resUsers.json();
@@ -269,12 +275,62 @@ export function CredentialsVaultPage({ initialTab = "vault" }: { initialTab?: st
         const list = Array.isArray(manuaisData?.manuais) ? manuaisData.manuais : (Array.isArray(manuaisData) ? manuaisData : []);
         setManuais(list);
       }
+      if (resMatrix.ok) {
+        const matrix = await resMatrix.json();
+        const editable =
+          matrix.viewer_is_superadmin ||
+          (Array.isArray(matrix.editable_role_ids) && matrix.editable_role_ids.length > 0);
+        setCanAssignRoles(Boolean(editable));
+        const roles = Array.isArray(matrix.roles)
+          ? matrix.roles
+              .filter((r: { editable?: boolean }) => r.editable !== false)
+              .map((r: { role_id: string; role_name: string }) => ({
+                role_id: r.role_id,
+                name: r.role_name,
+              }))
+          : [];
+        setAssignableRoles(roles);
+      } else {
+        setCanAssignRoles(false);
+        setAssignableRoles([]);
+      }
     } catch {
       // fallback
     } finally {
       setLoadingUsers(false);
     }
   }, []);
+
+  const handleAssignRole = async (userId: string, roleId: string) => {
+    if (!roleId) return;
+    setAssigningUserId(userId);
+    try {
+      const res = await fetch(
+        `/api/v1/access/roles/${encodeURIComponent(roleId)}/users/${encodeURIComponent(userId)}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_id: userId, sync_role_label: true }),
+        }
+      );
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.detail || String(res.status));
+      dispatchToast({
+        type: "success",
+        title: "Cargo atualizado",
+        message: String(body.role_name || roleId),
+      });
+      await fetchUsersAndQuarteto();
+    } catch (err: unknown) {
+      dispatchToast({
+        type: "error",
+        title: "Erro ao atribuir cargo",
+        message: err instanceof Error ? err.message : "Falha",
+      });
+    } finally {
+      setAssigningUserId(null);
+    }
+  };
 
   React.useEffect(() => {
     if (activeTab === "vault") fetchCredentials();
@@ -1179,7 +1235,27 @@ export function CredentialsVaultPage({ initialTab = "vault" }: { initialTab?: st
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {canAssignRoles && (
+                      <select
+                        aria-label={`Cargo de ${u.name}`}
+                        value={u.role_id || ""}
+                        disabled={assigningUserId === u.id}
+                        onChange={(e) => {
+                          if (e.target.value) void handleAssignRole(u.id, e.target.value);
+                        }}
+                        className="rounded border border-border bg-surface-card px-2 py-0.5 text-[11px] text-text-main max-w-[11rem]"
+                      >
+                        <option value="">Atribuir cargo…</option>
+                        {assignableRoles
+                          .filter((r) => r.role_id !== u.role_id)
+                          .map((r) => (
+                            <option key={r.role_id} value={r.role_id}>
+                              {r.name}
+                            </option>
+                          ))}
+                      </select>
+                    )}
                     <button
                       onClick={() => handleToggleUserStatus(u.id, u.is_active)}
                       className={`px-2 py-0.5 rounded text-[10px] font-semibold border ${

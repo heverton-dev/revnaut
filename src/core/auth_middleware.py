@@ -180,6 +180,41 @@ class ApiAuthMiddleware:
             await _json_response(send, 403, "Acesso negado a dados de outro tenant.")
             return
 
+        # Fase 6 — gate de grants de navegação em APIs de domínio (banco)
+        from src.features.access.service import (
+            required_routes_for_path,
+            resolve_role_id_from_name,
+            user_can_access_routes,
+        )
+        from src.features.auth.service import get_user_profile
+
+        required = required_routes_for_path(path)
+        if required is not None:
+            effective_id = (headers.get("x-user-id") or "").strip() or user["id"]
+            profile = get_user_profile(effective_id) or {}
+            # Impersonation só se o dono do token for superadmin
+            owner_profile = get_user_profile(user["id"]) or {}
+            if effective_id != user["id"] and not owner_profile.get("is_superadmin"):
+                effective_id = user["id"]
+                profile = owner_profile
+            grant_user = {
+                "id": profile.get("id", effective_id),
+                "role_id": profile.get("role_id") or resolve_role_id_from_name(
+                    profile.get("role") or ""
+                ),
+                "role": profile.get("role") or "",
+                "is_superadmin": bool(profile.get("is_superadmin")),
+            }
+            if not user_can_access_routes(
+                grant_user, profile.get("account_id") or account_id, required
+            ):
+                await _json_response(
+                    send,
+                    403,
+                    "Acesso negado: este módulo não está liberado para o seu cargo.",
+                )
+                return
+
         content_type = headers.get("content-type", "")
         if method in ("POST", "PUT", "PATCH", "DELETE") and "application/json" in content_type:
             body, receive = await _read_body(receive)

@@ -13,6 +13,7 @@ import {
   Lock,
   History,
 } from "lucide-react";
+import { AccessAdminMatrix } from "@/features/rbac/AccessAdminMatrix";
 import { Badge } from "@/components/ui/Badge";
 import { RouteHeader } from "@/components/ui/RouteHeader";
 import { Card } from "@/components/ui/Card";
@@ -769,6 +770,9 @@ export function RbacHierarchyTree({
       {/* ========================================================================= */}
       {activeTab === "permissions" && (
         <div className="space-y-4">
+          {/* Fase 4 — Matriz granular de rotas/subrotas (banco) */}
+          <AccessAdminMatrix />
+
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-bold uppercase tracking-wider text-text-secondary">
               Perfis de Acesso & Matriz de Escopo de Dados

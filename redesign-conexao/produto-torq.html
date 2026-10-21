@@ -159,7 +159,7 @@
     <div class="wrap-wide">
       <div class="head">
         <h2 class="display-2 reveal">Protocolo de fresagem.</h2>
-        <p class="lede reveal">Escolha o diâmetro para ver a sequência de fresas e a fresa final por densidade óssea.</p>
+        <p class="lede reveal">Escolha o diâmetro para ver a fresa final por densidade óssea.</p>
       </div>
       <div class="seg-wrap reveal">
         <div class="seg" role="group" aria-label="Diâmetro do implante">
@@ -169,7 +169,7 @@
           <button aria-pressed="false" data-d="3">⌀5.0</button>
         </div>
       </div>
-      <div class="drill">
+      <div class="drill solo">
         <div class="reveal">
           <table class="drill-table" id="drillTable">
             <thead><tr><th scope="col" style="text-align:left;padding-left:24px">Densidade</th><th>⌀3.5</th><th>⌀3.75</th><th>⌀4.0</th><th>⌀5.0</th></tr></thead>
@@ -180,9 +180,6 @@
             </tbody>
           </table>
           <p class="drill-note">*Valores entre parênteses: consulte a lâmina técnica do Torq® NP para a indicação de uso.</p>
-        </div>
-        <div class="drill-img reveal">
-          <img id="drillImg" src="https://www.conexao.com.br/wp-content/uploads/2025/07/FRESAGEM-Torq-3-5mm-PT-1024x724.jpg" alt="Sequência de fresagem para implante Torq de 3.5mm" loading="lazy">
         </div>
       </div>
     </div>
@@ -265,22 +262,13 @@
 <script>
 (function(){
   var reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var IMG='https://www.conexao.com.br/wp-content/uploads/2025/07/FRESAGEM-Torq-';
-  var sizes=['3-5','3-75','4-0','5-0'], labels=['3.5','3.75','4.0','5.0'];
-  var table=document.getElementById('drillTable'), img=document.getElementById('drillImg');
+  var table=document.getElementById('drillTable');
   var btns=document.querySelectorAll('.seg button');
-  sizes.forEach(function(s){new Image().src=IMG+s+'mm-PT-1024x724.jpg'});
   function pick(d){
     btns.forEach(function(b){b.setAttribute('aria-pressed',String(+b.dataset.d===d))});
     table.querySelectorAll('tr').forEach(function(tr){
       tr.querySelectorAll('th,td').forEach(function(c,k){c.classList.toggle('col-on',k===d+1)});
     });
-    img.style.opacity=0;
-    setTimeout(function(){
-      img.src=IMG+sizes[d]+'mm-PT-1024x724.jpg';
-      img.alt='Sequência de fresagem para implante Torq de '+labels[d]+'mm';
-      img.style.opacity=1;
-    },reduce?0:200);
   }
   btns.forEach(function(b){b.addEventListener('click',function(){pick(+b.dataset.d)})});
   pick(0);
