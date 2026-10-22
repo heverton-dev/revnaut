@@ -13,6 +13,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Lock,
+  UserX,
+  CalendarPlus,
 } from "lucide-react";
 import { LiveKitDealRoomModal } from "@/features/communications/LiveKitDealRoomModal";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
@@ -260,6 +262,64 @@ export const CalcomReactivationWorkspace: React.FC = () => {
     }
   };
 
+  const [markingNoShowId, setMarkingNoShowId] = React.useState<string | null>(null);
+  const [rescheduling7d, setRescheduling7d] = React.useState<boolean>(false);
+
+  const handleMarkNoShow = async (booking: CalcomBookingItem) => {
+    setMarkingNoShowId(booking.id);
+    setErrorMsg(null);
+    try {
+      const res = await fetch("/api/v1/automations/calcom/webhook", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          triggerEvent: "BOOKING_NO_SHOW",
+          payload: {
+            uid: booking.id,
+            patient_name: booking.patient_name,
+            status: "NO_SHOW",
+          },
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || "Falha ao registrar falta do paciente.");
+      setFeedbackMsg(`Falta / No-Show registrada para ${booking.patient_name}. Disparo de reengajamento enfileirado.`);
+      await loadCalcomData();
+    } catch (err: any) {
+      setErrorMsg(err.message || "Erro ao registrar no-show.");
+    } finally {
+      setMarkingNoShowId(null);
+    }
+  };
+
+  const handleReschedulePlus7Days = async (patientNameTarget?: string) => {
+    setRescheduling7d(true);
+    setErrorMsg(null);
+    try {
+      const targetP = patientNameTarget || patientName || "Paciente Retorno";
+      const pastSurgery = new Date(Date.now() - 180 * 86400000).toISOString().slice(0, 10);
+      const res = await fetch("/api/v1/automations/calcom/schedule-reactivation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          patient_name: targetP,
+          patient_phone: patientPhone || "+5511991234567",
+          surgeon_name: surgeonName || "Dr. Lucas Mendes",
+          procedure_name: "Reagendamento No-Show (+7d)",
+          surgery_date: pastSurgery,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || "Falha ao reagendar paciente faltoso (+7d).");
+      setFeedbackMsg(`Reagendamento (+7d) agendado com sucesso para ${targetP}! Novas réguas profiláticas ativadas.`);
+      await loadCalcomData();
+    } catch (err: any) {
+      setErrorMsg(err.message || "Erro ao reagendar (+7d).");
+    } finally {
+      setRescheduling7d(false);
+    }
+  };
+
   const scheduleColumns: Column<ReactivationScheduleItem>[] = [
     {
       key: "patient_name",
@@ -356,6 +416,34 @@ export const CalcomReactivationWorkspace: React.FC = () => {
         </Button>
       ),
     },
+    {
+      key: "actions",
+      header: "Gestão de Presença",
+      render: (b) => (
+        <div className="flex items-center gap-1.5">
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={markingNoShowId === b.id}
+            onClick={() => handleMarkNoShow(b)}
+            className="gap-1 text-status-danger hover:border-status-danger"
+          >
+            <UserX className="h-3 w-3" />
+            Marcar Falta / No-Show (Não)
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={rescheduling7d}
+            onClick={() => handleReschedulePlus7Days(b.patient_name)}
+            className="gap-1 text-brand-primary hover:border-brand-primary"
+          >
+            <CalendarPlus className="h-3 w-3" />
+            Reagendar (+7d)
+          </Button>
+        </div>
+      ),
+    },
   ];
 
   const dispatchedCount = schedules.filter((s) => s.status === "DISPATCHED").length;
@@ -378,12 +466,21 @@ export const CalcomReactivationWorkspace: React.FC = () => {
             onClick: handleScanDispatches,
           },
           {
+            id: "reschedule-7d",
+            label: "Reagendar Faltosos (+7d)",
+            variant: "outline",
+            icon: <CalendarPlus className={`h-3.5 w-3.5 ${rescheduling7d ? "animate-spin" : ""}`} />,
+            disabled: rescheduling7d,
+            title: "Reagendar Faltosos (+7d) via schedule-reactivation",
+            onClick: () => handleReschedulePlus7Days(),
+          },
+          {
             id: "reschedule",
-            label: "Reagendar",
+            label: "Reagendar Lote",
             variant: "outline",
             icon: <RotateCcw className={`h-3.5 w-3.5 ${rescheduling ? "animate-spin" : ""}`} />,
             disabled: rescheduling,
-            title: "Reagendamento de Faltosos",
+            title: "Reagendamento Prioritário de Faltosos",
             onClick: handleBatchRescheduleNoShows,
           },
           {

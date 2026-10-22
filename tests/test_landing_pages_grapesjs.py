@@ -104,3 +104,52 @@ def test_landing_page_public_submission_and_event_publishing(client):
     assert found is not None
     assert found["cro_verified"] is True
     assert found["specialty"] == "Implantodontia"
+
+
+def test_automation_flow_creation_and_ab_split(client):
+    # 1. Test POST /api/v1/automations/flows
+    flow_payload = {
+        "name": "Régua Cirúrgica Pós-Venda",
+        "category": "POST_SALE",
+        "trigger_event": "deal.won",
+        "action_description": "Disparo de instruções de pós-operatório",
+        "email_html": "<p>Instruções pós-operatórias</p>",
+        "is_active": True,
+        "account_id": "0f14ffff"
+    }
+    res_flow = client.post("/api/v1/automations/flows", json=flow_payload)
+    assert res_flow.status_code == 201
+    flow_data = res_flow.json()
+    assert flow_data["name"] == "Régua Cirúrgica Pós-Venda"
+    assert flow_data["is_active"] is True
+
+    # 2. Test A/B split persistence
+    lp_payload = {
+        "title": "A/B Test Landing Page",
+        "slug": "ab-split-test",
+        "gjs_html": "<div>Variante A Controle</div>",
+        "gjs_css": "body { color: black; }",
+        "ab_test_enabled": True,
+        "variant_b_html": "<div>Variante B Teste</div>"
+    }
+    res_create = client.post("/api/v1/campaigns/landing-pages", json=lp_payload)
+    assert res_create.status_code in (200, 201)
+    lp_id = res_create.json()["id"]
+
+    # Test PUT update A/B fields
+    res_update = client.put(f"/api/v1/campaigns/landing-pages/{lp_id}", json={
+        "ab_test_enabled": True,
+        "variant_b_html": "<div>Variante B Atualizada</div>"
+    })
+    assert res_update.status_code == 200
+    updated = res_update.json()
+    assert updated["ab_test_enabled"] is True
+    assert updated["variant_b_html"] == "<div>Variante B Atualizada</div>"
+
+    # Test render deterministic split
+    from src.features.campaigns.landing_pages import render_landing_page_html
+    r1 = render_landing_page_html("ab-split-test")
+    r2 = render_landing_page_html("ab-split-test")
+    assert r1 is not None and r2 is not None
+    # One of them has Variante A, one has Variante B
+    assert ("Variante A Controle" in r1 and "Variante B Atualizada" in r2) or ("Variante B Atualizada" in r1 and "Variante A Controle" in r2)

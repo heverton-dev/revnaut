@@ -286,3 +286,15 @@ def test_forgot_password_and_reset_token_flow():
     set_user_password(row["id"], SUPERADMIN_TEST_PASSWORD)
 
 
+def test_react_login_page_wires_password_recovery():
+    """Valida paridade tela-contrato: LoginPage.tsx consome endpoints de recuperacao de senha."""
+    from pathlib import Path
+    login_tsx = Path(__file__).resolve().parent.parent / "frontend" / "src" / "features" / "auth" / "LoginPage.tsx"
+    assert login_tsx.exists(), "LoginPage.tsx deve existir"
+    content = login_tsx.read_text(encoding="utf-8")
+    assert "/api/v1/auth/forgot-password" in content
+    assert "/api/v1/auth/reset-password-with-token" in content
+    assert "#!/reset-password" in content
+
+
+

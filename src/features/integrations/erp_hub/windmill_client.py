@@ -13,8 +13,18 @@ from typing import Any, Dict, List, Optional
 
 from src.core.database import get_connection, init_db
 from src.core.events import EventBus, StreamName, default_event_bus
-from src.core.storage import R2StorageClient
+from src.core.storage import R2StorageClient, LOCAL_STORAGE_ROOT
 from src.features.integrations.totvs.adapter import get_erp_connector
+
+
+def _write_local_fiscal_files(xml_key: str, xml_bytes: bytes, pdf_key: str, pdf_bytes: bytes) -> None:
+    for key, data in ((xml_key, xml_bytes), (pdf_key, pdf_bytes)):
+        target = LOCAL_STORAGE_ROOT / key
+        try:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(data)
+        except Exception:
+            pass
 
 
 def _build_nfe_xml_bytes(inv: Dict[str, Any]) -> bytes:
@@ -135,6 +145,7 @@ class WindmillERPOrchestrator:
         pdf_bytes = _build_danfe_pdf_bytes(inv)
         xml_upload = self.storage.upload_bytes(xml_key, xml_bytes, "application/xml")
         pdf_upload = self.storage.upload_bytes(pdf_key, pdf_bytes, "application/pdf")
+        _write_local_fiscal_files(xml_key, xml_bytes, pdf_key, pdf_bytes)
 
         r2_domain = os.getenv("R2_PUBLIC_URL", "https://r2.revnault.internal")
         xml_url = xml_upload if isinstance(xml_upload, str) else (xml_upload.get("public_url") or f"{r2_domain}/{xml_key}")
@@ -235,8 +246,11 @@ class WindmillERPOrchestrator:
             module="fiscal/nfe",
             filename=f"{ret_access_key}.pdf"
         )
-        self.storage.upload_bytes(ret_xml_key, _build_nfe_xml_bytes(ret_inv), "application/xml")
-        self.storage.upload_bytes(ret_pdf_key, _build_danfe_pdf_bytes(ret_inv), "application/pdf")
+        ret_xml_bytes = _build_nfe_xml_bytes(ret_inv)
+        ret_pdf_bytes = _build_danfe_pdf_bytes(ret_inv)
+        self.storage.upload_bytes(ret_xml_key, ret_xml_bytes, "application/xml")
+        self.storage.upload_bytes(ret_pdf_key, ret_pdf_bytes, "application/pdf")
+        _write_local_fiscal_files(ret_xml_key, ret_xml_bytes, ret_pdf_key, ret_pdf_bytes)
         ret_invoice_id = f"inv-ret-{uuid.uuid4().hex[:8]}"
 
         # 2. Venda Consignada (CFOP 5.113 / 6.113)
@@ -253,8 +267,11 @@ class WindmillERPOrchestrator:
             module="fiscal/nfe",
             filename=f"{sale_access_key}.pdf"
         )
-        self.storage.upload_bytes(sale_xml_key, _build_nfe_xml_bytes(sale_inv), "application/xml")
-        self.storage.upload_bytes(sale_pdf_key, _build_danfe_pdf_bytes(sale_inv), "application/pdf")
+        sale_xml_bytes = _build_nfe_xml_bytes(sale_inv)
+        sale_pdf_bytes = _build_danfe_pdf_bytes(sale_inv)
+        self.storage.upload_bytes(sale_xml_key, sale_xml_bytes, "application/xml")
+        self.storage.upload_bytes(sale_pdf_key, sale_pdf_bytes, "application/pdf")
+        _write_local_fiscal_files(sale_xml_key, sale_xml_bytes, sale_pdf_key, sale_pdf_bytes)
         sale_invoice_id = f"inv-sale-{uuid.uuid4().hex[:8]}"
 
         job_id = self._trigger_windmill_job_http(

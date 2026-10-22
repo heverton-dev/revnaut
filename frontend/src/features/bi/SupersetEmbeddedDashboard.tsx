@@ -179,6 +179,8 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
   mode = "bi_studio",
   dashboardId: initialDashboardId,
   dashboardType: initialDashboardType = "industry_consignment",
+  userId = "usr-director-br",
+  accountId = "0f14ffff",
   title,
   initialTab,
   onNavigate,
@@ -555,21 +557,70 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
     [favoriteQueries, persistFavoriteQueries]
   );
 
-  // TICKET-ANA-02: link de compartilhamento role-scoped
+  // TICKET-ANA-02: link de compartilhamento role-scoped com Guest Token determinístico
+  const [emailScheduleStatus, setEmailScheduleStatus] = useState<string | null>(null);
+  const [emailScheduling, setEmailScheduling] = useState<boolean>(false);
+
   const buildShareLink = useCallback(
-    (role: string) => {
-      const token = Math.random().toString(36).slice(2, 10);
+    (role: string, tokenVal?: string) => {
+      const token = tokenVal || btoa(`rls-${resolvedDashboardId}-${role}`).replace(/=/g, "").slice(0, 16);
       const base = `${window.location.origin}${window.location.pathname}`;
       return `${base}#!/analytics?share=${token}&role=${encodeURIComponent(role)}&dash=${encodeURIComponent(resolvedDashboardId)}`;
     },
     [resolvedDashboardId]
   );
 
-  const handleGenerateShareLink = useCallback(() => {
-    setShareLink(buildShareLink(shareRole));
-    setShareCopied(false);
+  const handleGenerateShareLink = useCallback(async () => {
     setShowShareModal(true);
-  }, [buildShareLink, shareRole]);
+    setShareCopied(false);
+    setEmailScheduleStatus(null);
+    try {
+      const res = await fetch("/api/v1/intelligence/bi/guest-token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: userId || "usr-director-br",
+          dashboard_id: resolvedDashboardId,
+          account_id: accountId || "0f14ffff",
+          dashboard_type: "industry_consignment",
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const serverToken = (data.guest_token || data.token || "").slice(0, 24);
+        setShareLink(buildShareLink(shareRole, serverToken));
+        return;
+      }
+    } catch {
+      // fallback
+    }
+    setShareLink(buildShareLink(shareRole));
+  }, [accountId, buildShareLink, resolvedDashboardId, shareRole, userId]);
+
+  const handleScheduleEmailBroadcast = useCallback(async () => {
+    if (!shareLink) return;
+    setEmailScheduling(true);
+    setEmailScheduleStatus(null);
+    try {
+      const res = await fetch("/api/v1/campaigns/broadcast-listmonk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: "Relatório Analítico Executivo RevNault",
+          subject: "Cockpit Executivo & Inteligência de Carteira - Atualização BI",
+          body_html: `<p>Acesse o painel analítico compartilhado com controle de acesso RLS:</p><p><a href="${shareLink}">${shareLink}</a></p>`,
+          target_uf: "ALL",
+          target_specialty: "Implantodontia",
+        }),
+      });
+      if (!res.ok) throw new Error("Falha ao agendar broadcast de e-mail.");
+      setEmailScheduleStatus("Envio por e-mail agendado via Listmonk com sucesso!");
+    } catch (err: any) {
+      setEmailScheduleStatus(`Erro: ${err.message}`);
+    } finally {
+      setEmailScheduling(false);
+    }
+  }, [shareLink]);
 
   const handleCopyShareLink = useCallback(async () => {
     try {
@@ -2706,6 +2757,20 @@ export const SupersetEmbeddedDashboard: React.FC<SupersetEmbeddedProps> = ({
                 {shareCopied ? "Copiado" : "Copiar"}
               </Button>
             </div>
+          </div>
+          <div className="flex items-center justify-between pt-2 border-t border-border-subtle">
+            <span className="text-[11px] text-text-secondary">
+              {emailScheduleStatus || "Disparar boletim analítico para a equipe médica"}
+            </span>
+            <Button
+              size="sm"
+              variant="default"
+              onClick={handleScheduleEmailBroadcast}
+              disabled={!shareLink || emailScheduling}
+              className="text-xs"
+            >
+              {emailScheduling ? "Agendando..." : "Agendar Envio por E-mail"}
+            </Button>
           </div>
           <p className="text-xs text-text-muted">
             O link expira em 24h e aplica automaticamente as restrições RLS do papel no Guest Token.

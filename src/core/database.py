@@ -1319,6 +1319,8 @@ def init_db() -> None:
             cfo_responsible_name TEXT,
             published_r2_url TEXT,
             is_published INTEGER NOT NULL DEFAULT 0,
+            ab_test_enabled INTEGER NOT NULL DEFAULT 0,
+            variant_b_html TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (tenant_id) REFERENCES accounts(id)
@@ -2502,6 +2504,13 @@ def init_db() -> None:
         wh_cols = {row[1] for row in cur.fetchall()}
         if "signing_secret_encrypted" not in wh_cols:
             cur.execute("ALTER TABLE webhook_subscriptions ADD COLUMN signing_secret_encrypted TEXT;")
+
+        cur.execute("PRAGMA table_info(landing_pages);")
+        lp_cols = {row[1] for row in cur.fetchall()}
+        if "ab_test_enabled" not in lp_cols:
+            cur.execute("ALTER TABLE landing_pages ADD COLUMN ab_test_enabled INTEGER NOT NULL DEFAULT 0;")
+        if "variant_b_html" not in lp_cols:
+            cur.execute("ALTER TABLE landing_pages ADD COLUMN variant_b_html TEXT;")
 
         cur.execute("""
             CREATE TABLE IF NOT EXISTS scoring_history (

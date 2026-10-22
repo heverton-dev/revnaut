@@ -53,6 +53,16 @@ interface QuarantineStatusInfo {
   blocked_at: string;
 }
 
+interface SupportTicketItem {
+  id: string;
+  title: string;
+  customer_name?: string;
+  priority?: string;
+  category?: string;
+  status: string;
+  created_at?: string;
+}
+
 interface SosTicketDetail {
   id: string;
   ticket_id?: string;
@@ -196,6 +206,46 @@ export const SupportAnvisaWorkspace: React.FC<SupportAnvisaWorkspaceProps> = ({
     "Estou com sangramento forte na gengiva e inchaço intenso no rosto, muita dor!"
   );
 
+  // Estados Aba 4: Fila Geral de Engenharia & Suporte
+  const [engineeringTickets, setEngineeringTickets] = React.useState<SupportTicketItem[]>([]);
+  const [loadingTickets, setLoadingTickets] = React.useState<boolean>(false);
+  const [updatingTicketId, setUpdatingTicketId] = React.useState<string | null>(null);
+
+  const loadEngineeringTickets = React.useCallback(async () => {
+    setLoadingTickets(true);
+    try {
+      const res = await fetch("/api/v1/tickets");
+      if (res.ok) {
+        const data = await res.json();
+        setEngineeringTickets(Array.isArray(data) ? data : []);
+      }
+    } catch {
+      setEngineeringTickets([]);
+    } finally {
+      setLoadingTickets(false);
+    }
+  }, []);
+
+  const handleUpdateTicketStatus = async (ticketId: string, newStatus: string) => {
+    setUpdatingTicketId(ticketId);
+    setErrorMsg(null);
+    try {
+      const res = await fetch(`/api/v1/tickets/${encodeURIComponent(ticketId)}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || "Falha ao atualizar status do ticket.");
+      setFeedbackMsg(`Status do chamado #${ticketId} atualizado para "${newStatus}".`);
+      await loadEngineeringTickets();
+    } catch (err: any) {
+      setErrorMsg(err.message || "Erro ao atualizar status do chamado.");
+    } finally {
+      setUpdatingTicketId(null);
+    }
+  };
+
   const loadRmaClaims = React.useCallback(async () => {
     setLoadingRma(true);
     try {
@@ -229,7 +279,8 @@ export const SupportAnvisaWorkspace: React.FC<SupportAnvisaWorkspaceProps> = ({
   React.useEffect(() => {
     loadRmaClaims();
     loadPostOpSchedules();
-  }, [loadRmaClaims, loadPostOpSchedules]);
+    loadEngineeringTickets();
+  }, [loadRmaClaims, loadPostOpSchedules, loadEngineeringTickets]);
 
   const handleCreateRma = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -280,22 +331,6 @@ export const SupportAnvisaWorkspace: React.FC<SupportAnvisaWorkspaceProps> = ({
       }
     } catch {
       setSelectedClaim(claim);
-    }
-  };
-
-  const handleUpdateTicketStatus = async (ticketId: string, nextStatus: string) => {
-    try {
-      const res = await fetch(`/api/v1/tickets/${ticketId}/status`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: nextStatus }),
-      });
-      if (res.ok) {
-        setFeedbackMsg(`Ticket #${ticketId} atualizado para '${nextStatus}'.`);
-        await loadRmaClaims();
-      }
-    } catch {
-      // Silencioso
     }
   };
 
@@ -600,6 +635,7 @@ export const SupportAnvisaWorkspace: React.FC<SupportAnvisaWorkspaceProps> = ({
             onClick: () => {
               loadRmaClaims();
               loadPostOpSchedules();
+              loadEngineeringTickets();
             },
           },
         ]}
@@ -637,6 +673,7 @@ export const SupportAnvisaWorkspace: React.FC<SupportAnvisaWorkspaceProps> = ({
           { id: "anvisa_rma", label: "Tecnovigilância ANVISA & Quarentena (RMA)", count: rmaClaims.length },
           { id: "surgical_sos", label: "SOS Mesa Cirúrgica & Despacho Emergencial" },
           { id: "postop_b2c", label: "Linha de Cuidado Pós-Operatória B2C (24h-7d)", count: postOpSchedules.length },
+          { id: "engineering_tickets", label: "Chamados Engenharia & Suporte", count: engineeringTickets.length },
         ]}
       />
 
@@ -1193,6 +1230,109 @@ export const SupportAnvisaWorkspace: React.FC<SupportAnvisaWorkspaceProps> = ({
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* ABA 4: CHAMADOS GERAIS DE ENGENHARIA & SUPORTE */}
+      {activeTab === "engineering_tickets" && (
+        <Card className="border-border">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Cpu className="h-4 w-4 text-brand-primary" />
+                  Fila de Chamados de Engenharia de Produto & Suporte
+                </CardTitle>
+                <CardDescription>
+                  Chamados protocolados via escalação RMA, SLA crítico de centro cirúrgico e investigação técnica.
+                </CardDescription>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={loadEngineeringTickets}
+                disabled={loadingTickets}
+                className="gap-1.5"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${loadingTickets ? "animate-spin" : ""}`} />
+                Recarregar Fila
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {engineeringTickets.length === 0 ? (
+              <div className="p-8 text-center text-xs text-text-muted border border-dashed border-border rounded-xl">
+                Nenhum chamado de suporte ou engenharia registrado na fila ativa.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {engineeringTickets.map((t) => (
+                  <div
+                    key={t.id}
+                    className="p-4 rounded-xl border border-border bg-surface-card flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-card"
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-xs font-semibold text-brand-primary">#{t.id}</span>
+                        <Badge
+                          variant={
+                            t.status === "resolvido" || t.status === "closed"
+                              ? "success"
+                              : t.status === "em_andamento" || t.status === "in_progress"
+                              ? "warning"
+                              : "navy"
+                          }
+                          className="text-[10px]"
+                        >
+                          {t.status}
+                        </Badge>
+                        {t.priority && (
+                          <Badge variant="outline" className="text-[10px] uppercase font-mono">
+                            {t.priority}
+                          </Badge>
+                        )}
+                        {t.category && (
+                          <span className="text-[11px] text-text-muted font-medium">({t.category})</span>
+                        )}
+                      </div>
+                      <h4 className="text-xs font-semibold text-text-main">{t.title}</h4>
+                      <div className="flex items-center gap-3 text-[11px] text-text-secondary">
+                        {t.customer_name && <span>Cliente/Cirurgião: {t.customer_name}</span>}
+                        {t.created_at && <span className="font-mono">Criado em: {t.created_at}</span>}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <Button
+                        size="sm"
+                        variant={t.status === "em_andamento" ? "default" : "outline"}
+                        disabled={updatingTicketId === t.id}
+                        onClick={() => handleUpdateTicketStatus(t.id, "em_andamento")}
+                      >
+                        Em Andamento
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={t.status === "resolvido" ? "default" : "outline"}
+                        disabled={updatingTicketId === t.id}
+                        onClick={() => handleUpdateTicketStatus(t.id, "resolvido")}
+                      >
+                        Resolver
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={t.status === "fechado" ? "secondary" : "outline"}
+                        disabled={updatingTicketId === t.id}
+                        onClick={() => handleUpdateTicketStatus(t.id, "fechado")}
+                      >
+                        Fechar
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       )}
     </div>
   );

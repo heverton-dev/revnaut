@@ -304,10 +304,17 @@ def apply_preset(preset_key: str, account_id: str = "0f14ffff", overwrite_existi
 def recalculate_all_scores(
     account_id: str = "0f14ffff",
     tier_a_min: int = 80,
-    tier_b_min: int = 50
+    tier_b_min: int = 50,
+    weights: Optional[Dict[str, float]] = None
 ) -> Dict[str, Any]:
     conn = get_connection()
     cur = conn.cursor()
+
+    norm_w: Dict[str, float] = {}
+    if weights and isinstance(weights, dict):
+        total_w = sum(max(0.0, float(v)) for v in weights.values() if v is not None)
+        if total_w > 0:
+            norm_w = {k.lower(): max(0.0, float(v)) / total_w for k, v in weights.items() if v is not None}
 
     # 1. Obter regras ativas
     cur.execute(
@@ -357,6 +364,17 @@ def recalculate_all_scores(
                 key = r["condition_key"].lower().strip()
                 targets = [v.strip().lower() for v in r["condition_val"].split(",") if v.strip()]
                 pts = int(r["points"])
+
+                if norm_w:
+                    base_share = 0.25
+                    if key in ("monthly_implants_volume",):
+                        pts = int(round(pts * (norm_w.get("volume", base_share) / base_share)))
+                    elif key in ("specialty",):
+                        pts = int(round(pts * (norm_w.get("specialty", base_share) / base_share)))
+                    elif key in ("cro", "cro_uf", "uf", "city"):
+                        pts = int(round(pts * (norm_w.get("geography", base_share) / base_share)))
+                    elif key in ("company", "customer_type", "work_model"):
+                        pts = int(round(pts * (norm_w.get("institution", base_share) / base_share)))
 
                 if key in ("tag", "source"):
                     if any(target in tag for target in targets for tag in tags_lower):

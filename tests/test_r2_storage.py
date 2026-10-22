@@ -110,3 +110,56 @@ def test_storage_api_presign_endpoints():
         headers={"X-Account-ID": "tenant-adversary"},
     )
     assert unauthorized_res.status_code in (403, 400)
+
+    # 4. Presign download via path param (/api/v1/storage/presign-download/{file_id:path})
+    path_download_res = client.get(
+        f"/api/v1/storage/presign-download/{data['key']}",
+        headers={"X-Account-ID": "0f14ffff"},
+    )
+    assert path_download_res.status_code == 200
+    assert "download_url" in path_download_res.json()
+
+    # 5. Presign download via path param com tenant incorreto
+    path_unauth_res = client.get(
+        f"/api/v1/storage/presign-download/{data['key']}",
+        headers={"X-Account-ID": "tenant-adversary"},
+    )
+    assert path_unauth_res.status_code == 403
+
+
+def test_storage_owasp_path_traversal_blocked():
+    """Valida bloqueio rigido contra Path Traversal em upload e download direto."""
+    # 1. Tentativa de path traversal em upload-direct (normalizado pela URL para 404 ou barrado como 400)
+    res_upload = client.put(
+        "/api/v1/storage/upload-direct/../secret.txt",
+        content=b"malicious",
+        headers={"X-Account-ID": "0f14ffff"},
+    )
+    assert res_upload.status_code in (400, 404)
+
+    # 1.1 Tentativa com .. decodificado no path
+    res_encoded = client.put(
+        "/api/v1/storage/upload-direct/folder%2F..%2Fsecret.txt",
+        content=b"malicious",
+        headers={"X-Account-ID": "0f14ffff"},
+    )
+    assert res_encoded.status_code in (400, 404)
+
+    # 2. Tentativa de path traversal em get_stored_file
+    res_get = client.get(
+        "/api/v1/storage/files/../../../../etc/passwd",
+        headers={"X-Account-ID": "0f14ffff"},
+    )
+    assert res_get.status_code in (400, 404)
+
+
+def test_storage_missing_file_returns_404_without_fake_stub_fabrication():
+    """Valida que arquivo ausente retorna 404 e nao fabrica stub falso no disco."""
+    missing_key = "0f14ffff/nonexistent/missing_sample_2026.pdf"
+    res = client.get(
+        f"/api/v1/storage/files/{missing_key}",
+        headers={"X-Account-ID": "0f14ffff"},
+    )
+    assert res.status_code == 404
+    assert "Arquivo nao encontrado" in res.json().get("detail", "")
+

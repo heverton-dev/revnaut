@@ -112,6 +112,21 @@ export const OmnichannelContextSidebar: React.FC<OmnichannelContextSidebarProps>
     }
   };
 
+  const [chatwootPanelStatus, setChatwootPanelStatus] = useState<string | null>(null);
+
+  const handleCheckChatwootPanel = async () => {
+    try {
+      const res = await fetch(
+        `/api/v1/omnichannel/chatwoot-context-panel?contact_identifier=${encodeURIComponent(effectiveIdentifier)}`
+      );
+      if (!res.ok) throw new Error("Painel indisponível");
+      const json = await res.json();
+      setChatwootPanelStatus(`Painel Chatwoot Ativo (${json.contact?.name || "Sincronizado"})`);
+    } catch (err: any) {
+      setChatwootPanelStatus(`Erro: ${err.message}`);
+    }
+  };
+
   if (loading) {
     return (
       <aside className="w-full border border-border rounded-xl bg-surface-card p-4 text-text-main">
@@ -362,6 +377,24 @@ export const OmnichannelContextSidebar: React.FC<OmnichannelContextSidebarProps>
           </div>
         ) : (
           <p className="text-xs text-text-secondary italic">Nenhuma entrega de urgencia em rota</p>
+        )}
+      </div>
+
+      <div className="pt-2 border-t border-border flex flex-col gap-1.5">
+        <button
+          type="button"
+          onClick={handleCheckChatwootPanel}
+          className="w-full flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg border border-border bg-surface-bg text-xs font-semibold text-text-main hover:border-brand-primary"
+        >
+          <svg className="h-3.5 w-3.5 text-brand-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          </svg>
+          Verificar Painel Chatwoot
+        </button>
+        {chatwootPanelStatus && (
+          <p className="text-[10px] font-mono text-text-secondary text-center">
+            {chatwootPanelStatus}
+          </p>
         )}
       </div>
     </aside>

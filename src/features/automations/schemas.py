@@ -21,6 +21,17 @@ class HotLeadEvaluationResponse(BaseModel):
     message: str
 
 
+
+class AutomationFlowCreate(BaseModel):
+    name: str = Field(..., min_length=2, description="Nome da régua de automação")
+    category: str = Field(default="NURTURING", description="Categoria do fluxo")
+    trigger_event: str = Field(..., min_length=2, description="Evento de disparo")
+    action_description: str = Field(..., min_length=2, description="Descrição da ação executada")
+    email_html: Optional[str] = None
+    is_active: bool = True
+    account_id: str = "0f14ffff"
+
+
 class AutomationFlowOut(BaseModel):
     id: str
     account_id: str

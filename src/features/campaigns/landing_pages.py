@@ -139,8 +139,9 @@ def create_landing_page(data: LandingPageCreate, tenant_id: str = "0f14ffff") ->
             (t for t in PREBUILT_TEMPLATES if t["template_type"] == data.template_type),
             PREBUILT_TEMPLATES[0]
         )
-        final_html = data.gjs_html or chosen_template["html"]
-        final_css = data.gjs_css or chosen_template["css"]
+        final_html = data.gjs_html or data.html or chosen_template["html"]
+        final_css = data.gjs_css or data.css or chosen_template["css"]
+        ab_enabled_int = 1 if data.ab_test_enabled else 0
 
         cur.execute("SELECT id FROM landing_pages WHERE slug = ? AND tenant_id = ?", (clean_slug, tenant_id))
         existing = cur.fetchone()
@@ -150,6 +151,7 @@ def create_landing_page(data: LandingPageCreate, tenant_id: str = "0f14ffff") ->
                 UPDATE landing_pages
                 SET title = ?, template_type = ?, gjs_html = ?, gjs_css = ?,
                     gjs_components_json = ?, cfo_responsible_cro = ?, cfo_responsible_name = ?,
+                    ab_test_enabled = ?, variant_b_html = ?,
                     is_published = 0, published_r2_url = NULL, updated_at = CURRENT_TIMESTAMP
                 WHERE id = ?
             """, (
@@ -160,6 +162,8 @@ def create_landing_page(data: LandingPageCreate, tenant_id: str = "0f14ffff") ->
                 data.gjs_components_json,
                 data.cfo_responsible_cro,
                 data.cfo_responsible_name,
+                ab_enabled_int,
+                data.variant_b_html,
                 page_id,
             ))
         else:
@@ -169,9 +173,10 @@ def create_landing_page(data: LandingPageCreate, tenant_id: str = "0f14ffff") ->
                     id, tenant_id, slug, title, template_type,
                     gjs_html, gjs_css, gjs_components_json,
                     cfo_responsible_cro, cfo_responsible_name,
+                    ab_test_enabled, variant_b_html,
                     published_r2_url, is_published
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 0)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 0)
             """, (
                 page_id,
                 tenant_id,
@@ -183,6 +188,8 @@ def create_landing_page(data: LandingPageCreate, tenant_id: str = "0f14ffff") ->
                 data.gjs_components_json,
                 data.cfo_responsible_cro,
                 data.cfo_responsible_name,
+                ab_enabled_int,
+                data.variant_b_html,
             ))
         conn.commit()
 
@@ -194,11 +201,16 @@ def create_landing_page(data: LandingPageCreate, tenant_id: str = "0f14ffff") ->
             "template_type": data.template_type or "imersao_fluxo_digital",
             "gjs_html": final_html,
             "gjs_css": final_css,
+            "html": final_html,
+            "css": final_css,
             "gjs_components_json": data.gjs_components_json,
             "cfo_responsible_cro": data.cfo_responsible_cro,
             "cfo_responsible_name": data.cfo_responsible_name,
             "published_r2_url": None,
+            "published_url": f"/lp/{clean_slug}",
             "is_published": False,
+            "ab_test_enabled": bool(data.ab_test_enabled),
+            "variant_b_html": data.variant_b_html,
         }
     finally:
         conn.close()
@@ -214,6 +226,10 @@ def get_landing_page(page_id: str, tenant_id: str = "0f14ffff") -> Optional[Dict
             return None
         d = dict(row)
         d["is_published"] = bool(d.get("is_published"))
+        d["ab_test_enabled"] = bool(d.get("ab_test_enabled"))
+        d["html"] = d.get("gjs_html")
+        d["css"] = d.get("gjs_css")
+        d["published_url"] = f"/lp/{d['slug']}" if d.get("slug") else None
         return d
     finally:
         conn.close()
@@ -232,6 +248,10 @@ def get_landing_page_by_slug(slug: str, tenant_id: Optional[str] = None) -> Opti
             return None
         d = dict(row)
         d["is_published"] = bool(d.get("is_published"))
+        d["ab_test_enabled"] = bool(d.get("ab_test_enabled"))
+        d["html"] = d.get("gjs_html")
+        d["css"] = d.get("gjs_css")
+        d["published_url"] = f"/lp/{d['slug']}" if d.get("slug") else None
         return d
     finally:
         conn.close()
@@ -241,6 +261,12 @@ def update_landing_page(page_id: str, data: LandingPageUpdate, tenant_id: str = 
     current = get_landing_page(page_id, tenant_id)
     if not current:
         return None
+
+    html_val = data.gjs_html if data.gjs_html is not None else data.html
+    css_val = data.gjs_css if data.gjs_css is not None else data.css
+    cro_val = data.cfo_responsible_cro if data.cfo_responsible_cro is not None else data.cfo_cro
+    name_val = data.cfo_responsible_name if data.cfo_responsible_name is not None else data.cfo_name
+    ab_enabled_int = (1 if data.ab_test_enabled else 0) if data.ab_test_enabled is not None else None
 
     conn = get_connection()
     try:
@@ -255,17 +281,21 @@ def update_landing_page(page_id: str, data: LandingPageUpdate, tenant_id: str = 
                 gjs_components_json = COALESCE(?, gjs_components_json),
                 cfo_responsible_cro = COALESCE(?, cfo_responsible_cro),
                 cfo_responsible_name = COALESCE(?, cfo_responsible_name),
+                ab_test_enabled = COALESCE(?, ab_test_enabled),
+                variant_b_html = COALESCE(?, variant_b_html),
                 updated_at = CURRENT_TIMESTAMP
             WHERE id = ? AND tenant_id = ?
         """, (
             data.title,
             data.slug.strip().lower() if data.slug else None,
             data.template_type,
-            data.gjs_html,
-            data.gjs_css,
+            html_val,
+            css_val,
             data.gjs_components_json,
-            data.cfo_responsible_cro,
-            data.cfo_responsible_name,
+            cro_val,
+            name_val,
+            ab_enabled_int,
+            data.variant_b_html,
             page_id,
             tenant_id,
         ))
@@ -283,6 +313,10 @@ def list_landing_pages(tenant_id: str = "0f14ffff") -> List[Dict[str, Any]]:
         rows = [dict(r) for r in cur.fetchall()]
         for r in rows:
             r["is_published"] = bool(r.get("is_published"))
+            r["ab_test_enabled"] = bool(r.get("ab_test_enabled"))
+            r["html"] = r.get("gjs_html")
+            r["css"] = r.get("gjs_css")
+            r["published_url"] = f"/lp/{r['slug']}" if r.get("slug") else None
         return rows
     finally:
         conn.close()
@@ -480,6 +514,12 @@ def render_landing_page_html(slug: str) -> Optional[str]:
     """
 
     body_content = lp.get("gjs_html") or "<h1>RevNault Landing Page</h1>"
+    if lp.get("ab_test_enabled") and lp.get("variant_b_html"):
+        if not hasattr(render_landing_page_html, "_ab_counter"):
+            render_landing_page_html._ab_counter = 0
+        render_landing_page_html._ab_counter += 1
+        if render_landing_page_html._ab_counter % 2 == 0:
+            body_content = lp.get("variant_b_html")
     if cfo_cro:
         body_content = body_content.replace("CRO-SP 00000", cfo_cro).replace("Dr. Consultor Clínico", cfo_name)
     if "cfo-compliance-footer" not in body_content:

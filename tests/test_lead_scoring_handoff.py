@@ -108,3 +108,22 @@ def test_lead_scoring_handoff_api_endpoint(client):
     assert data["success"] is True
     assert data["score"] >= 75
     assert data["deal_id"] is not None
+
+
+def test_recalculate_scoring_with_custom_weights(client):
+    payload = {
+        "tier_a_min": 80,
+        "tier_b_min": 50,
+        "weights": {
+            "volume": 40.0,
+            "specialty": 30.0,
+            "geography": 15.0,
+            "institution": 15.0
+        }
+    }
+    res = client.post("/api/v1/scoring/recalculate", json=payload)
+    assert res.status_code == 200
+    data = res.json()
+    assert "recalculated_count" in data
+    assert "ranked_leads" in data
+    assert isinstance(data["ranked_leads"], list)

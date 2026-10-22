@@ -125,3 +125,48 @@ def test_export_deals_csv_and_parquet_endpoint():
     assert res_parquet.content[:4] == b"PAR1"
 
 
+def test_pipeline_stages_order_and_contract_generation():
+    # 1. Test PUT /api/v1/pipelines/{pipeline_id}/stages-order
+    res_order = client.put("/api/v1/pipelines/1/stages-order", json={
+        "stages_order": [102, 101, 103, 104, 105]
+    })
+    assert res_order.status_code == 200
+    order_data = res_order.json()
+    assert order_data["pipeline_id"] == 1
+    assert order_data["stages_order"] == [102, 101, 103, 104, 105]
+
+    # Verify order in stages query
+    res_deals = client.get("/api/v1/deals?pipeline_id=1")
+    assert res_deals.status_code == 200
+    stages = res_deals.json()["stages"]
+    stage_ids = [s["id"] for s in stages]
+    assert stage_ids[:2] == [102, 101]
+
+    # Revert back to original order
+    client.put("/api/v1/pipelines/1/stages-order", json={
+        "stages_order": [101, 102, 103, 104, 105]
+    })
+
+    # 2. Test POST /api/v1/deals/{deal_id}/contracts/generate
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id FROM deals WHERE approval_status IS NULL OR approval_status != 'PENDING_DISCOUNT_APPROVAL' LIMIT 1")
+    row = cur.fetchone()
+    conn.close()
+    assert row is not None
+    real_deal_id = row["id"]
+
+    res_contract = client.post(f"/api/v1/deals/{real_deal_id}/contracts/generate", json={
+        "deal_id": real_deal_id,
+        "contract_type": "fornecimento_implantes",
+        "signer_name": "Dr. Fernando Souza",
+        "signer_email": "fernando.souza@clinica.com.br",
+        "signer_phone": "+5511999998888",
+        "account_id": "0f14ffff"
+    })
+    assert res_contract.status_code == 200
+    contract_data = res_contract.json()
+    assert "contract_id" in contract_data
+
+
+

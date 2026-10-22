@@ -79,7 +79,8 @@ class ResetPasswordRequest(BaseModel):
 
 
 class UpdateUserStatusRequest(BaseModel):
-    is_active: bool
+    is_active: Optional[bool] = None
+    status: Optional[str] = None
 
 
 class UserStatusResponse(BaseModel):
@@ -147,6 +148,17 @@ class TenantCredentialResponse(BaseModel):
 class CredentialDeleteResponse(BaseModel):
     success: bool = True
     message: str
+
+
+class RotateCredentialResponse(BaseModel):
+    id: str
+    account_id: str
+    service_name: str
+    credential_type: str
+    masked_value: str
+    metadata: Optional[dict] = None
+    rotated_at: Optional[str] = None
+
 
 
 

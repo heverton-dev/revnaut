@@ -153,3 +153,21 @@ def test_livekit_endpoints_api(client):
     assert res_rec.status_code == 200
     rec_list = res_rec.json()
     assert isinstance(rec_list, list)
+
+    # 4. Convidar 2º Cirurgião Especialista via token de sala
+    guest_tok_req = {
+        "room_name": "deal-room-api-1",
+        "identity": "specialist-guest-99",
+        "name": "Dr. Segundo Especialista",
+        "deal_id": "d-1",
+        "account_id": "0f14ffff"
+    }
+    res_guest = client.post("/api/v1/communications/rooms/token", json=guest_tok_req)
+    assert res_guest.status_code == 200
+    assert "token" in res_guest.json()
+
+    # 5. Enviar mensagem de chat na conversa
+    res_msg = client.post("/api/v1/conversations/d-1/messages", json={"text": "Convite enviado ao 2o Especialista"})
+    assert res_msg.status_code in (200, 201)
+    assert res_msg.json()["text"] == "Convite enviado ao 2o Especialista"
+

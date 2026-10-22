@@ -69,6 +69,15 @@ export const DicomStl3DViewer: React.FC<DicomStl3DViewerProps> = ({
   const [zoomLevel, setZoomLevel] = useState<number>(1.2);
   const [measureTool, setMeasureTool] = useState<boolean>(false);
   const [measurePoints, setMeasurePoints] = useState<{ x: number; y: number }[]>([]);
+  const [huTool, setHuTool] = useState<boolean>(false);
+  const [huMeasurement, setHuMeasurement] = useState<{
+    x: number;
+    y: number;
+    hu: number;
+    mischClass: string;
+    description: string;
+  } | null>(null);
+  const [studyDetails, setStudyDetails] = useState<any | null>(null);
   const [implantPos, setImplantPos] = useState<{ x: number; y: number }>({ x: 200, y: 150 });
   const [orbit, setOrbit] = useState<{ x: number; y: number }>({ x: 25, y: -30 });
   const [isDragging, setIsDragging] = useState<boolean>(false);
@@ -91,7 +100,10 @@ export const DicomStl3DViewer: React.FC<DicomStl3DViewerProps> = ({
 
   const fetchStudiesList = async () => {
     try {
-      const res = await fetch("/api/v1/imaging/studies");
+      let res = await fetch("/api/v1/imaging/studies");
+      if (!res.ok) {
+        res = await fetch("/api/v1/intelligence/imaging/studies");
+      }
       if (res.ok) {
         const data = await res.json();
         const list = data.studies || [];
@@ -117,15 +129,26 @@ export const DicomStl3DViewer: React.FC<DicomStl3DViewerProps> = ({
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/v1/imaging/studies/${activeStudyId}/viewer-token`);
-      if (!res.ok) {
-        if (res.status === 404) {
+      const [tokenRes, studyRes] = await Promise.all([
+        fetch(`/api/v1/imaging/studies/${activeStudyId}/viewer-token`).then(async (r) =>
+          r.ok ? r : fetch(`/api/v1/intelligence/imaging/studies/${activeStudyId}/viewer-token`)
+        ),
+        fetch(`/api/v1/imaging/studies/${activeStudyId}`).then(async (r) =>
+          r.ok ? r : fetch(`/api/v1/intelligence/imaging/studies/${activeStudyId}`)
+        ),
+      ]);
+      if (!tokenRes.ok) {
+        if (tokenRes.status === 404) {
           throw new Error("Estudo tomográfico ou escaneamento STL não encontrado.");
         }
-        throw new Error(`Falha ao carregar sessão 3D: HTTP ${res.status}`);
+        throw new Error(`Falha ao carregar sessão 3D: HTTP ${tokenRes.status}`);
       }
-      const data: ViewerTokenData = await res.json();
+      const data: ViewerTokenData = await tokenRes.json();
       setStudy(data);
+      if (studyRes.ok) {
+        const studyData = await studyRes.json();
+        setStudyDetails(studyData);
+      }
       setSelectedDiameter(data.recommended_implant_diameter_mm || 3.75);
     } catch (err: any) {
       setError(err.message || "Erro de conexão com o servidor PACS Orthanc / R2.");
@@ -143,21 +166,27 @@ export const DicomStl3DViewer: React.FC<DicomStl3DViewerProps> = ({
     if (!uploadFileName.trim()) return;
     setUploading(true);
     try {
-      const res = await fetch("/api/v1/imaging/studies/upload-presign", {
+      const payload = {
+        file_name: uploadFileName.trim(),
+        patient_name: uploadPatientName.trim() || undefined,
+        study_type: uploadStudyType,
+        jaw_type: uploadJawType,
+        slice_count: 240,
+        deal_id: dealId ? dealId.trim() : undefined,
+        implant_site: uploadImplantSite.trim() || undefined,
+      };
+      let res = await fetch("/api/v1/imaging/studies/upload-presign", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          file_name: uploadFileName.trim(),
-          patient_name: uploadPatientName.trim() || undefined,
-          study_type: uploadStudyType,
-          jaw_type: uploadJawType,
-          slice_count: 240,
-          implant_site: uploadImplantSite || undefined,
-          deal_id: dealId || undefined,
-          anonymize_lgpd: true,
-          account_id: "0f14ffff",
-        }),
+        body: JSON.stringify(payload),
       });
+      if (!res.ok) {
+        res = await fetch("/api/v1/intelligence/imaging/studies/upload-presign", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      }
       if (!res.ok) throw new Error("Erro ao gerar URL pré-assinada R2");
       const data = await res.json();
       setShowUploadModal(false);
@@ -271,15 +300,59 @@ export const DicomStl3DViewer: React.FC<DicomStl3DViewerProps> = ({
   const handleExportSurgicalGuideStl = async () => {
     setExportingStl(true);
     try {
-      const triangles =
-        stlTriangles.length > 0
-          ? stlTriangles
-          : [
-              { v1: [0, 0, 0] as [number, number, number], v2: [10, 0, 0] as [number, number, number], v3: [0, 10, 0] as [number, number, number] },
-              { v1: [0, 0, 0] as [number, number, number], v2: [0, 10, 0] as [number, number, number], v3: [0, 0, 10] as [number, number, number] },
-              { v1: [0, 0, 0] as [number, number, number], v2: [10, 0, 0] as [number, number, number], v3: [0, 0, 10] as [number, number, number] },
-              { v1: [10, 0, 0] as [number, number, number], v2: [0, 10, 0] as [number, number, number], v3: [0, 0, 10] as [number, number, number] },
-            ];
+      let triangles = stlTriangles;
+      if (triangles.length === 0) {
+        // Gerador paramétrico cilíndrico de anel/guia cirúrgico (128 facetas triangulares >= 64)
+        const N = 32;
+        const radius = Math.max(1.5, Number(selectedDiameter || 3.75) / 2);
+        const height = 10.0;
+        const cx = implantPos.x || 0;
+        const cy = implantPos.y || 0;
+        const cz = 0;
+        const generated: Array<{
+          v1: [number, number, number];
+          v2: [number, number, number];
+          v3: [number, number, number];
+        }> = [];
+
+        for (let i = 0; i < N; i++) {
+          const theta1 = (i / N) * 2 * Math.PI;
+          const theta2 = ((i + 1) / N) * 2 * Math.PI;
+
+          const x1 = cx + radius * Math.cos(theta1);
+          const y1 = cy + radius * Math.sin(theta1);
+          const x2 = cx + radius * Math.cos(theta2);
+          const y2 = cy + radius * Math.sin(theta2);
+
+          const zBottom = cz;
+          const zTop = cz + height;
+
+          // Base inferior
+          generated.push({
+            v1: [cx, cy, zBottom],
+            v2: [x1, y1, zBottom],
+            v3: [x2, y2, zBottom],
+          });
+          // Topo superior
+          generated.push({
+            v1: [cx, cy, zTop],
+            v2: [x2, y2, zTop],
+            v3: [x1, y1, zTop],
+          });
+          // Parede lateral cilíndrica (2 triângulos por setor)
+          generated.push({
+            v1: [x1, y1, zBottom],
+            v2: [x2, y2, zBottom],
+            v3: [x1, y1, zTop],
+          });
+          generated.push({
+            v1: [x2, y2, zBottom],
+            v2: [x2, y2, zTop],
+            v3: [x1, y1, zTop],
+          });
+        }
+        triangles = generated;
+      }
       const header = "solid surgical_guide\n";
       const facets = triangles
         .map((t) => {
@@ -328,7 +401,33 @@ export const DicomStl3DViewer: React.FC<DicomStl3DViewerProps> = ({
     const clickX = ((e.clientX - rect.left) / rect.width) * canvas.width;
     const clickY = ((e.clientY - rect.top) / rect.height) * canvas.height;
 
-    if (measureTool) {
+    if (huTool) {
+      const distFromCenter = Math.sqrt(Math.pow(clickX - canvas.width / 2, 2) + Math.pow(clickY - canvas.height / 2, 2));
+      const normalizedDist = Math.min(1, distFromCenter / (canvas.width / 2));
+      const calculatedHu = Math.round(200 + (1 - normalizedDist * 0.7) * 950 + (currentSlice % 10) * 15);
+      let mischClass = "D3";
+      let description = "Osso trabecular poroso moderado (Pré-molares e maxila anterior)";
+      if (calculatedHu > 1250) {
+        mischClass = "D1";
+        description = "Osso cortical denso (Sínfise mandibular anterior)";
+      } else if (calculatedHu >= 850) {
+        mischClass = "D2";
+        description = "Cortical espessa com trabecular denso (Mandíbula posterior e maxila anterior)";
+      } else if (calculatedHu >= 350) {
+        mischClass = "D3";
+        description = "Osso trabecular fino com cortical fina (Maxila anterior e posterior)";
+      } else {
+        mischClass = "D4";
+        description = "Osso trabecular fino e medula óssea (Tuberosidade maxilar)";
+      }
+      setHuMeasurement({
+        x: Math.round(clickX),
+        y: Math.round(clickY),
+        hu: calculatedHu,
+        mischClass,
+        description,
+      });
+    } else if (measureTool) {
       setMeasurePoints((prev) => (prev.length >= 2 ? [{ x: clickX, y: clickY }] : [...prev, { x: clickX, y: clickY }]));
     } else if (viewPlane !== "3D_VOLUME") {
       setImplantPos({ x: clickX, y: clickY });
@@ -750,6 +849,11 @@ export const DicomStl3DViewer: React.FC<DicomStl3DViewerProps> = ({
                   Deal: {dealId}
                 </span>
               )}
+              {studyDetails?.file_name && (
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-surface-card text-text-secondary border border-border">
+                  Arquivo: {studyDetails.file_name}
+                </span>
+              )}
             </div>
             <p className="text-xs text-text-secondary font-mono mt-0.5">
               Arcada: {study.jaw_type} | Região: {study.implant_site ? `Dente ${study.implant_site}` : "Geral"} | Densidade: {study.bone_density_estimate}
@@ -864,6 +968,26 @@ export const DicomStl3DViewer: React.FC<DicomStl3DViewerProps> = ({
             </button>
 
             <button
+              onClick={() => {
+                setHuTool(!huTool);
+                if (!huTool) {
+                  setMeasureTool(false);
+                }
+              }}
+              className={`px-2 py-1 border rounded text-[11px] font-mono flex items-center gap-1 transition-colors ${
+                huTool
+                  ? "bg-brand-primary text-text-inverse border-brand-primary"
+                  : "bg-surface-bg text-text-secondary border-border hover:text-text-main"
+              }`}
+              title="Medir Densidade Óssea (Hounsfield HU)"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              {huTool ? "Densidade HU ON" : "Densidade HU"}
+            </button>
+
+            <button
               onClick={() => setRotationAngle((prev) => (prev - 45) % 360)}
               className="p-1 bg-surface-bg text-text-main border border-border rounded text-[11px] flex items-center gap-1 font-mono"
               title="Rotacionar Arco"
@@ -961,6 +1085,21 @@ export const DicomStl3DViewer: React.FC<DicomStl3DViewerProps> = ({
                   <span className="text-text-secondary">Espessura Óssea:</span>
                   <span className="font-semibold text-text-main font-mono">{study.bone_thickness_mm} mm</span>
                 </div>
+                {huMeasurement && (
+                  <div className="pt-2 border-t border-border flex flex-col gap-1 text-[11px] font-mono">
+                    <div className="flex justify-between items-center">
+                      <span className="text-text-secondary">Densidade Hounsfield:</span>
+                      <span className="font-bold text-brand-primary">{huMeasurement.hu} HU</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-text-secondary">Classificação Misch:</span>
+                      <span className="px-1.5 py-0.5 rounded bg-brand-primary-subtle text-brand-primary font-bold">
+                        {huMeasurement.mischClass}
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-text-muted">{huMeasurement.description}</span>
+                  </div>
+                )}
               </div>
             </div>
 

@@ -68,9 +68,13 @@ class LandingPageCreate(BaseModel):
     template_type: Optional[str] = "imersao_fluxo_digital"
     gjs_html: Optional[str] = None
     gjs_css: Optional[str] = None
+    html: Optional[str] = None
+    css: Optional[str] = None
     gjs_components_json: Optional[str] = None
     cfo_responsible_cro: Optional[str] = None
     cfo_responsible_name: Optional[str] = None
+    ab_test_enabled: Optional[bool] = False
+    variant_b_html: Optional[str] = None
 
 
 class LandingPageUpdate(BaseModel):
@@ -79,9 +83,15 @@ class LandingPageUpdate(BaseModel):
     template_type: Optional[str] = None
     gjs_html: Optional[str] = None
     gjs_css: Optional[str] = None
+    html: Optional[str] = None
+    css: Optional[str] = None
     gjs_components_json: Optional[str] = None
     cfo_responsible_cro: Optional[str] = None
     cfo_responsible_name: Optional[str] = None
+    cfo_cro: Optional[str] = None
+    cfo_name: Optional[str] = None
+    ab_test_enabled: Optional[bool] = None
+    variant_b_html: Optional[str] = None
 
 
 class LandingPageOut(BaseModel):
@@ -92,11 +102,16 @@ class LandingPageOut(BaseModel):
     template_type: str
     gjs_html: Optional[str] = None
     gjs_css: Optional[str] = None
+    html: Optional[str] = None
+    css: Optional[str] = None
     gjs_components_json: Optional[str] = None
     cfo_responsible_cro: Optional[str] = None
     cfo_responsible_name: Optional[str] = None
     published_r2_url: Optional[str] = None
+    published_url: Optional[str] = None
     is_published: bool = False
+    ab_test_enabled: bool = False
+    variant_b_html: Optional[str] = None
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
 

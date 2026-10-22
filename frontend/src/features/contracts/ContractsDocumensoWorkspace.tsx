@@ -349,6 +349,7 @@ export const ContractsDocumensoWorkspace: React.FC<ContractsDocumensoWorkspacePr
   const [signerName, setSignerName] = React.useState<string>("Dr. Roberto Silveira");
   const [signerEmail, setSignerEmail] = React.useState<string>("roberto@clinica.med.br");
   const [signerPhone, setSignerPhone] = React.useState<string>("+5511998877665");
+  const [icpCertSerial, setIcpCertSerial] = React.useState<string>("ICP-BR-A1-2026-9941");
   const [generatingContract, setGeneratingContract] = React.useState<boolean>(false);
 
   // Estados Tab 2: Catálogo ANVISA & Simulador de Proposta Comercial
@@ -455,6 +456,7 @@ export const ContractsDocumensoWorkspace: React.FC<ContractsDocumensoWorkspacePr
           signer_name: signerName,
           signer_email: signerEmail,
           signer_phone: signerPhone,
+          icp_certificate_serial: icpCertSerial || undefined,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -556,6 +558,7 @@ export const ContractsDocumensoWorkspace: React.FC<ContractsDocumensoWorkspacePr
           signer_phone: contract.signer_phone || signerPhone,
           renewal_months: 12,
           parent_contract_id: contract.id,
+          icp_certificate_serial: icpCertSerial || undefined,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -634,12 +637,20 @@ export const ContractsDocumensoWorkspace: React.FC<ContractsDocumensoWorkspacePr
     if (!r2KeyInput.trim()) return;
     setErrorMsg(null);
     try {
-      const res = await fetch(
+      let res = await fetch(
         `/api/v1/storage/presign-download?key=${encodeURIComponent(r2KeyInput.trim())}`,
         {
           headers: { "X-Account-ID": "0f14ffff" },
         }
       );
+      if (!res.ok) {
+        res = await fetch(
+          `/api/v1/storage/presign-download/${encodeURIComponent(r2KeyInput.trim())}`,
+          {
+            headers: { "X-Account-ID": "0f14ffff" },
+          }
+        );
+      }
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         throw new Error(data.detail || "Acesso negado ou chave R2 inválida para este tenant.");
@@ -814,6 +825,16 @@ export const ContractsDocumensoWorkspace: React.FC<ContractsDocumensoWorkspacePr
                   <Input
                     value={signerPhone}
                     onChange={(e) => setSignerPhone(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-text-secondary mb-1">
+                    Serial Certificado Digital ICP-Brasil (e-CPF A1/A3)
+                  </label>
+                  <Input
+                    placeholder="Ex: ICP-BR-A1-2026-9941 ou AC Certisign A3"
+                    value={icpCertSerial}
+                    onChange={(e) => setIcpCertSerial(e.target.value)}
                   />
                 </div>
                 <Button type="submit" size="sm" disabled={generatingContract} className="w-full gap-1.5">

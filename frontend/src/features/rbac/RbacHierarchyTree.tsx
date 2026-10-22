@@ -12,6 +12,7 @@ import {
   Download,
   Lock,
   History,
+  Calculator,
 } from "lucide-react";
 import { AccessAdminMatrix } from "@/features/rbac/AccessAdminMatrix";
 import { Badge } from "@/components/ui/Badge";
@@ -200,14 +201,46 @@ export function RbacHierarchyTree({
   const [statementResult, setStatementResult] = React.useState<any>(null);
   // TICKET-RBAC-01: Bloqueio temporário de usuário
   const [userBlockToggle, setUserBlockToggle] = React.useState<boolean>(false);
+  const [blockingUser, setBlockingUser] = React.useState<boolean>(false);
+  const [treeNodes, setTreeNodes] = React.useState<Team[]>([]);
 
-  // Carregar Dados da Tab 1 (BU & Teams)
+  // Simulador de Comissões do Vendedor (70% Field / 30% Inside)
+  const [simSalesVolume, setSimSalesVolume] = React.useState<number>(200000);
+  const [simTargetGoal, setSimTargetGoal] = React.useState<number>(150000);
+  const [simBaseRate, setSimBaseRate] = React.useState<number>(5.0);
+  const [simAccelRate, setSimAccelRate] = React.useState<number>(7.5);
+
+  const handleToggleUserBlock = async () => {
+    setBlockingUser(true);
+    const nextStatus = userBlockToggle ? "active" : "suspended";
+    try {
+      const res = await fetch(`/api/v1/auth/users/${encodeURIComponent(statementUserId)}/status`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: nextStatus,
+          is_active: nextStatus === "active",
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || "Falha ao alterar status do usuário.");
+      setUserBlockToggle(!userBlockToggle);
+      alert(`Status do colaborador #${statementUserId} alterado para "${nextStatus}".`);
+    } catch (err: any) {
+      alert(err.message || "Erro ao alterar status do usuário.");
+    } finally {
+      setBlockingUser(false);
+    }
+  };
+
+  // Carregar Dados da Tab 1 (BU & Teams & Tree)
   const fetchTreeData = React.useCallback(async () => {
     setLoadingTree(true);
     try {
-      const [resBu, resTeams] = await Promise.all([
+      const [resBu, resTeams, resTree] = await Promise.all([
         fetch(`/api/v1/hierarchy/business-units?account_id=${accountId}`),
         fetch(`/api/v1/hierarchy/teams?account_id=${accountId}`),
+        fetch(`/api/v1/hierarchy/tree?account_id=${accountId}`),
       ]);
       if (resBu.ok) {
         const buData = await resBu.json();
@@ -223,6 +256,11 @@ export function RbacHierarchyTree({
           setReparentTeamId(list[0].id);
           setTargetEntityId(list[0].id);
         }
+      }
+      if (resTree.ok) {
+        const treeData = await resTree.json();
+        const list = Array.isArray(treeData) ? treeData : (Array.isArray(treeData?.teams) ? treeData.teams : []);
+        setTreeNodes(list);
       }
     } catch {
       // fallback
@@ -666,23 +704,32 @@ export function RbacHierarchyTree({
                 </Button>
               </div>
 
-              {/* Lista de Equipes */}
+              {/* Arvore Hierarquica DAG de Equipes */}
               <div className="space-y-2 max-h-80 overflow-y-auto">
-                {teams.map((team) => (
-                  <div key={team.id} className="p-2.5 rounded-lg border border-border bg-surface-bg flex items-center justify-between text-xs">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-text-main">{team.name}</span>
-                        <span className="font-mono text-[10px] text-brand-primary">
-                          {team.id}
-                        </span>
-                      </div>
-                      <div className="text-[11px] text-text-secondary font-mono mt-0.5">
-                        Unidade: {team.business_unit_id} {team.parent_id ? `| Pai: ${team.parent_id}` : "| Top Level (Raiz)"}
+                {(treeNodes.length > 0 ? treeNodes : teams).map((team) => {
+                  const isChild = Boolean(team.parent_id);
+                  return (
+                    <div
+                      key={team.id}
+                      className={`p-2.5 rounded-lg border border-border bg-surface-bg flex items-center justify-between text-xs transition-all ${
+                        isChild ? "ml-5 border-l-4 border-l-brand-primary/60 bg-surface-bg/80" : "font-semibold"
+                      }`}
+                    >
+                      <div>
+                        <div className="flex items-center gap-2">
+                          {isChild && <GitFork className="h-3.5 w-3.5 text-brand-primary rotate-180" />}
+                          <span className="text-text-main">{team.name}</span>
+                          <span className="font-mono text-[10px] text-brand-primary">
+                            {team.id}
+                          </span>
+                        </div>
+                        <div className="text-[11px] text-text-secondary font-mono mt-0.5">
+                          Unidade: {team.business_unit_id} {team.parent_id ? `| Pai: ${team.parent_id}` : "| Top Level (Raiz DAG)"}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </Card>
           </div>
@@ -1220,11 +1267,10 @@ export function RbacHierarchyTree({
                   </Button>
                   <Button
                     size="sm"
-                    variant="outline"
+                    variant={userBlockToggle ? "danger" : "outline"}
+                    disabled={blockingUser}
                     className="text-xs h-7 py-0 gap-1"
-                    onClick={() => {
-                      setUserBlockToggle(!userBlockToggle);
-                    }}
+                    onClick={handleToggleUserBlock}
                   >
                     <Lock className="h-3 w-3" />
                     {userBlockToggle ? "Desbloquear Usuario" : "Bloqueio Temporario"}
@@ -1266,6 +1312,101 @@ export function RbacHierarchyTree({
                   ))}
                 </div>
               </div>
+            </Card>
+
+            {/* Simulador de Comissões do Vendedor (70% Field / 30% Inside) */}
+            <Card className="lg:col-span-3 p-4 border border-border bg-surface-card space-y-4">
+              <div className="flex items-center justify-between border-b border-border pb-2">
+                <h3 className="text-xs font-bold text-text-main flex items-center gap-1.5">
+                  <Calculator className="h-4 w-4 text-brand-primary" />
+                  Simulador de Comissões do Vendedor (70% Field / 30% Inside)
+                </h3>
+                <span className="text-[10px] text-text-muted font-mono">
+                  Regra Bipartida de RevOps Cirúrgico
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
+                <div>
+                  <label className="text-[11px] font-semibold text-text-secondary block mb-1">
+                    Volume Faturado BRL
+                  </label>
+                  <Input
+                    type="number"
+                    value={simSalesVolume}
+                    onChange={(e) => setSimSalesVolume(Number(e.target.value))}
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-text-secondary block mb-1">
+                    Meta Período BRL
+                  </label>
+                  <Input
+                    type="number"
+                    value={simTargetGoal}
+                    onChange={(e) => setSimTargetGoal(Number(e.target.value))}
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-text-secondary block mb-1">
+                    Taxa Base (%)
+                  </label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    value={simBaseRate}
+                    onChange={(e) => setSimBaseRate(Number(e.target.value))}
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-text-secondary block mb-1">
+                    Taxa Acelerador (&ge;100%)
+                  </label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    value={simAccelRate}
+                    onChange={(e) => setSimAccelRate(Number(e.target.value))}
+                  />
+                </div>
+              </div>
+
+              {(() => {
+                const achievementPct = simTargetGoal > 0 ? (simSalesVolume / simTargetGoal) * 100 : 0;
+                const effectiveRate = achievementPct >= 100 ? simAccelRate : simBaseRate;
+                const totalCommission = (simSalesVolume * effectiveRate) / 100;
+                const fieldPayout = totalCommission * 0.7;
+                const insidePayout = totalCommission * 0.3;
+
+                return (
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-3 p-3 bg-surface-bg rounded-xl border border-border text-xs">
+                    <div>
+                      <span className="text-text-secondary text-[11px] block">Atingimento de Meta</span>
+                      <span className="font-mono text-sm font-bold text-text-main">
+                        {achievementPct.toFixed(1)}% {achievementPct >= 100 ? "(Acelerador Ativo)" : "(Base)"}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-text-secondary text-[11px] block">Comissão Bruta Total</span>
+                      <span className="font-mono text-sm font-bold text-brand-primary">
+                        R$ {totalCommission.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-text-secondary text-[11px] block">70% Consultor de Campo (Field)</span>
+                      <span className="font-mono text-sm font-bold text-status-success">
+                        R$ {fieldPayout.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-text-secondary text-[11px] block">30% Inside Sales / SDR</span>
+                      <span className="font-mono text-sm font-bold text-brand-navy">
+                        R$ {insidePayout.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
             </Card>
           </div>
         </div>

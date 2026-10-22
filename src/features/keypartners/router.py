@@ -36,11 +36,13 @@ router = APIRouter(prefix="/api/v1/keypartners", tags=["KeyPartners • Consigna
 
 @router.post("/agreements", response_model=PartnerAgreementOut, status_code=status.HTTP_201_CREATED, summary="Criar novo acordo de consignação e parceria")
 def create_agreement(payload: PartnerAgreementCreate):
+    cro = payload.partner_cro_uf or payload.partner_cro
+    limit = payload.credit_limit_brl if payload.credit_limit_brl is not None else payload.credit_limit
     return service.create_partner_agreement(
         partner_name=payload.partner_name,
-        partner_cro_uf=payload.partner_cro_uf,
+        partner_cro_uf=cro,
         tier=payload.tier,
-        credit_limit=payload.credit_limit,
+        credit_limit=limit,
         min_monthly_revenue=payload.min_monthly_revenue,
         max_turnover_days=payload.max_turnover_days,
         account_id=payload.account_id or "0f14ffff"

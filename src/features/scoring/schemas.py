@@ -4,7 +4,7 @@ Vertical Slice: Scoring Schemas (Lead Scoring & Qualificação ICP)
 """
 
 from __future__ import annotations
-from typing import List, Optional
+from typing import Dict, List, Optional
 from pydantic import BaseModel, Field
 
 
@@ -58,6 +58,7 @@ class LeadRankItem(BaseModel):
 class RecalculateRequest(BaseModel):
     tier_a_min: int = Field(default=80, ge=1, le=100, description="Nota mínima para Tier A")
     tier_b_min: int = Field(default=50, ge=1, le=100, description="Nota mínima para Tier B")
+    weights: Optional[Dict[str, float]] = Field(default=None, description="Pesos dimensionais (volume, specialty, geography, institution)")
 
 
 class RecalculateResponse(BaseModel):

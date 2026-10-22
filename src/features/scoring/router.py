@@ -68,7 +68,8 @@ def delete_rule(rule_id: str):
 def recalculate_scores(payload: Optional[RecalculateRequest] = Body(default=None)):
     tier_a = payload.tier_a_min if payload else 80
     tier_b = payload.tier_b_min if payload else 50
-    return service.recalculate_all_scores(tier_a_min=tier_a, tier_b_min=tier_b)
+    weights = payload.weights if payload else None
+    return service.recalculate_all_scores(tier_a_min=tier_a, tier_b_min=tier_b, weights=weights)
 
 
 @router.post("/evaluate-handoff", response_model=EvaluateHandoffResponse, summary="Avaliar lead scoring odontológico e executar handoff automático")

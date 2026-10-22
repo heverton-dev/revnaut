@@ -271,6 +271,36 @@ export const DentgoExpressCockpit: React.FC<DentgoExpressCockpitProps> = ({
   const [searchQty, setSearchQty] = useState<number>(2);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searchingEmergency, setSearchingEmergency] = useState<boolean>(false);
+  const [allocatingHub, setAllocatingHub] = useState<boolean>(false);
+
+  const handleAllocateAndDispatch = async (candidate: any) => {
+    setAllocatingHub(true);
+    try {
+      const res = await fetch("/api/v1/dentgo/orders/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customer_cro_uf: "CRO-SP-12345",
+          delivery_address: "Av. Paulista, 1000 - Bela Vista, São Paulo - SP",
+          delivery_lat: searchLat,
+          delivery_lng: searchLng,
+          items: [
+            {
+              product_id: searchProductId || candidate.product_id || "IMP-CM-4311",
+              quantity: Number(searchQty || 1),
+            },
+          ],
+        }),
+      });
+      if (!res.ok) throw new Error("Falha ao alocar hub e despachar pedido");
+      await fetchOrders();
+      alert(`Pedido express despachado com sucesso a partir do Hub ${candidate.hub_name}!`);
+    } catch (err: any) {
+      alert("Erro ao despachar pedido: " + (err.message || "Falha na requisição"));
+    } finally {
+      setAllocatingHub(false);
+    }
+  };
 
   // Tab 3: FEFO Flash Deals
   const [fefoDeals, setFefoDeals] = useState<FefoDeal[]>([]);
@@ -322,7 +352,8 @@ export const DentgoExpressCockpit: React.FC<DentgoExpressCockpitProps> = ({
     if (e) e.stopPropagation();
     setNotifyingOrderId(order.id);
     try {
-      const text = "[DENTGO Express] Prezado(a) Dr(a). (CRO: " + ((order as any).doctor_cro || "Cirurgião") + "), seu pedido #" + order.id + " está no status " + order.status + ". Previsão estimada de entrega (ETA): ~" + (order.estimated_eta_minutes || 35) + " minutos. Endereço: " + order.delivery_address + ". Acompanhe em tempo real.";
+      const pinText = (order as any).custody_pin || (order as any).pin ? ` PIN de Custódia: ${(order as any).custody_pin || (order as any).pin}.` : "";
+      const text = "[DENTGO Express] Prezado(a) Dr(a). (CRO: " + ((order as any).doctor_cro || order.customer_cro_uf || "Cirurgião") + "), seu pedido #" + order.id + " está no status " + order.status + ". Previsão estimada de entrega (ETA): ~" + (order.estimated_eta_minutes || 35) + " minutos." + pinText + " Endereço: " + order.delivery_address + ". Acompanhe em tempo real.";
       const res = await fetch("/api/v1/chat/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -788,9 +819,18 @@ export const DentgoExpressCockpit: React.FC<DentgoExpressCockpitProps> = ({
                 {orders.map((order) => (
                   <div
                     key={order.id}
-                    onClick={() => {
+                    onClick={async () => {
                       setSelectedOrder(order);
                       setSplitOrderId(order.id);
+                      try {
+                        const res = await fetch(`/api/v1/dentgo/orders/${order.id}`);
+                        if (res.ok) {
+                          const detailed = await res.json();
+                          setSelectedOrder(detailed);
+                        }
+                      } catch {
+                        // mantém order
+                      }
                     }}
                     className={`p-4 rounded-xl border transition-all cursor-pointer ${
                       selectedOrder?.id === order.id
@@ -1254,6 +1294,15 @@ export const DentgoExpressCockpit: React.FC<DentgoExpressCockpitProps> = ({
                           <span>Estoque: {res.quantity_available} un</span>
                           <span className="text-text-main font-bold">R$ {res.unit_price.toFixed(2)}</span>
                         </div>
+                        <Button
+                          size="sm"
+                          onClick={() => handleAllocateAndDispatch(res)}
+                          disabled={allocatingHub}
+                          className="w-full mt-2 text-xs gap-1.5"
+                        >
+                          <Truck className="h-3.5 w-3.5" />
+                          {allocatingHub ? "Alocando..." : "Alocar Hub & Despachar Agora (1-Clique)"}
+                        </Button>
                       </div>
                     ))}
                   </div>
@@ -1337,7 +1386,18 @@ export const DentgoExpressCockpit: React.FC<DentgoExpressCockpitProps> = ({
 
                   <Button
                     size="sm"
-                    onClick={() => setSelectedFefoDeal(deal)}
+                    onClick={async () => {
+                      setSelectedFefoDeal(deal);
+                      try {
+                        const res = await fetch(`/api/v1/dentgo/fefo/deals/${deal.id}`);
+                        if (res.ok) {
+                          const freshDeal = await res.json();
+                          setSelectedFefoDeal(freshDeal);
+                        }
+                      } catch {
+                        // mantém deal
+                      }
+                    }}
                     className="w-full gap-1.5 text-xs mt-2"
                   >
                     <Tag className="w-3.5 h-3.5" />

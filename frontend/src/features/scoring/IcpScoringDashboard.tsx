@@ -123,12 +123,21 @@ export const IcpScoringDashboard: React.FC = () => {
       const res = await fetch("/api/v1/scoring/recalculate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tier_a_min: 80, tier_b_min: 50 }),
+        body: JSON.stringify({
+          tier_a_min: 80,
+          tier_b_min: 50,
+          weights: {
+            volume: weightVolume,
+            specialty: weightSpecialty,
+            geography: weightGeography,
+            institution: weightInstitution,
+          },
+        }),
       });
       if (!res.ok) throw new Error("Falha ao recalcular scores da base de cirurgiões.");
       const data = await res.json();
       setRecalcMessage(
-        `Recálculo concluído com sucesso: ${data.total_evaluated ?? 0} cirurgiões avaliados. Prioridade Alta: ${data.tier_a_count ?? 0}.`
+        `Recálculo concluído com sucesso: ${data.recalculated_count ?? data.total_evaluated ?? 0} cirurgiões avaliados. Prioridade Alta: ${data.tier_a_count ?? 0}.`
       );
       await fetchScoringData();
     } catch (err: any) {
@@ -493,7 +502,7 @@ export const IcpScoringDashboard: React.FC = () => {
                 </thead>
                 <tbody>
                   {contacts.slice(0, 8).map((c, idx) => {
-                    const score = (c as any).score ?? Math.max(40, 95 - idx * 7);
+                    const score = Number((c as any).score ?? 0);
                     const tier = score >= 80 ? "A+" : score >= 65 ? "A" : score >= 50 ? "B" : "C";
                     return (
                       <tr key={c.id} className="border-b border-border-subtle hover:bg-surface-bg/50">

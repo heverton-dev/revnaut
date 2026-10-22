@@ -45,8 +45,27 @@ export function R2DirectUploader({
       });
 
       if (!presignRes.ok) {
-        const errData = await presignRes.json().catch(() => ({}));
-        throw new Error(errData.detail || "Falha ao obter autorização de upload");
+        // Fallback de contingência para upload direto no storage local do backend revnault
+        const directRes = await fetch(`/api/v1/storage/upload-direct/${module}/${encodeURIComponent(file.name)}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": file.type || "application/octet-stream",
+            "X-Account-ID": "0f14ffff",
+          },
+          body: file,
+        });
+        if (!directRes.ok) {
+          const errData = await directRes.json().catch(() => ({}));
+          throw new Error(errData.detail || "Falha ao obter autorização de upload");
+        }
+        const directData = await directRes.json();
+        setIsUploading(false);
+        setProgress(100);
+        setUploadedKey(directData.key);
+        if (onUploadComplete) {
+          onUploadComplete({ key: directData.key, filename: file.name });
+        }
+        return;
       }
 
       const { upload_url, key } = await presignRes.json();

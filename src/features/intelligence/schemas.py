@@ -6,7 +6,7 @@ Tipagem estrita para Grafo Clínico KOL e Radar Anti-Churn Odontológico (RFM).
 
 from __future__ import annotations
 from typing import List, Optional, Dict, Any
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class ContactInstitutionCreate(BaseModel):
@@ -178,8 +178,21 @@ class MeetingIntelligenceExtraction(BaseModel):
 
 class CopilotExtractAndApplyRequest(BaseModel):
     deal_id: str = Field(..., description="ID do Deal vinculado")
-    transcription_text: str = Field(..., description="Texto da transcrição ou nota de voz")
+    transcription_text: Optional[str] = Field(default="", description="Texto da transcrição ou nota de voz")
+    raw_notes: Optional[str] = Field(default=None, description="Notas brutas ou transcrição")
     account_id: Optional[str] = Field(default="0f14ffff", description="ID do tenant")
+
+    @model_validator(mode="before")
+    @classmethod
+    def _fill_text(cls, values: Any) -> Any:
+        if isinstance(values, dict):
+            t = values.get("transcription_text")
+            r = values.get("raw_notes")
+            if not t and r:
+                values["transcription_text"] = r
+            elif not r and t:
+                values["raw_notes"] = t
+        return values
 
 
 class CopilotExtractAndApplyResponse(BaseModel):

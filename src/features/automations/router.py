@@ -3,12 +3,14 @@
 Router FastAPI para Automações e Gatilhos de Receita.
 """
 
+import uuid
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 from fastapi import APIRouter, HTTPException, status
 from src.core.database import get_connection
 from src.features.automations.schemas import (
     HotLeadEvaluationResponse,
+    AutomationFlowCreate,
     AutomationFlowOut,
     AutomationFlowToggleResponse,
     AutomationTestResponse,
@@ -58,6 +60,42 @@ def list_flows(account_id: str = "0f14ffff"):
             )
             for r in rows
         ]
+    finally:
+        conn.close()
+
+
+@router.post("/flows", response_model=AutomationFlowOut, status_code=status.HTTP_201_CREATED, summary="Criar novo fluxo de automação cirúrgica")
+def create_flow(flow: AutomationFlowCreate):
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        flow_id = f"flow-{uuid.uuid4().hex[:8]}"
+        cur.execute("""
+            INSERT INTO automation_flows (
+                id, account_id, name, category, trigger_event, action_description, is_active, execution_count, last_run_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, 0, NULL)
+        """, (
+            flow_id,
+            flow.account_id,
+            flow.name,
+            flow.category,
+            flow.trigger_event,
+            flow.action_description,
+            1 if flow.is_active else 0,
+        ))
+        conn.commit()
+        return AutomationFlowOut(
+            id=flow_id,
+            account_id=flow.account_id,
+            name=flow.name,
+            category=flow.category,
+            trigger_event=flow.trigger_event,
+            action_description=flow.action_description,
+            is_active=flow.is_active,
+            execution_count=0,
+            last_run_at=None,
+        )
     finally:
         conn.close()
 

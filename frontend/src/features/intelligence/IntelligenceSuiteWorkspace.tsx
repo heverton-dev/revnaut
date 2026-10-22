@@ -17,6 +17,8 @@ import {
   Mic,
   Square,
   Radar,
+  MessageSquare,
+  CheckCircle2,
 } from "lucide-react";
 import { Tabs } from "@/components/ui/Tabs";
 import { RouteHeader } from "@/components/ui/RouteHeader";
@@ -45,6 +47,7 @@ interface TranscriptionItem {
   account_id: string;
   call_id: string;
   deal_id?: string;
+  contact_id?: string;
   full_text: string;
   language: string;
   model_name: string;
@@ -282,6 +285,52 @@ export const IntelligenceSuiteWorkspace: React.FC<IntelligenceSuiteWorkspaceProp
       // Fallback
     }
   }, []);
+
+  const [chatwootSyncing, setChatwootSyncing] = useState<boolean>(false);
+  const [chatwootFeedback, setChatwootFeedback] = useState<string | null>(null);
+
+  const handleSelectTranscription = async (t: TranscriptionItem) => {
+    setSelectedTranscription(t);
+    setChatwootFeedback(null);
+    try {
+      const res = await fetch(`/api/v1/intelligence/transcriptions/${t.id}`);
+      if (res.ok) {
+        const detail = await res.json();
+        setSelectedTranscription(detail);
+      }
+    } catch {
+      // Mantém t
+    }
+  };
+
+  const handleSendChatwootAction = async () => {
+    if (!selectedTranscription) return;
+    setChatwootSyncing(true);
+    setChatwootFeedback(null);
+    const effectiveContactId = selectedTranscription.contact_id || selectedDealId || "cnt-01";
+    try {
+      await fetch(`/api/v1/omnichannel/chatwoot/sync-contact/${encodeURIComponent(effectiveContactId)}`, {
+        method: "POST",
+      });
+      const msgRes = await fetch("/api/v1/chat/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          conversation_id: selectedTranscription.id,
+          text: `Sugestão Copilot Cirúrgico (${selectedTranscription.id}): ${selectedTranscription.full_text}`,
+        }),
+      });
+      if (msgRes.ok) {
+        setChatwootFeedback("Sugestão de ação clínica sincronizada com Chatwoot e enviada ao canal de chat com sucesso!");
+      } else {
+        setChatwootFeedback("Contato sincronizado no Chatwoot com sucesso.");
+      }
+    } catch (err: any) {
+      setChatwootFeedback(`Erro ao sincronizar com Chatwoot: ${err.message || "Falha na requisição"}`);
+    } finally {
+      setChatwootSyncing(false);
+    }
+  };
 
   useEffect(() => {
     fetchDeals();
@@ -854,7 +903,7 @@ export const IntelligenceSuiteWorkspace: React.FC<IntelligenceSuiteWorkspaceProp
                     {transcriptions.map((t) => (
                       <div
                         key={t.id}
-                        onClick={() => setSelectedTranscription(t)}
+                        onClick={() => handleSelectTranscription(t)}
                         className={`p-3 rounded-lg border transition-all cursor-pointer ${
                           selectedTranscription?.id === t.id
                             ? "bg-surface-bg border-brand-primary shadow-card"
@@ -884,10 +933,30 @@ export const IntelligenceSuiteWorkspace: React.FC<IntelligenceSuiteWorkspaceProp
                 )}
 
                 {selectedTranscription && (
-                  <div className="mt-3 p-3 bg-surface-bg rounded-xl border border-border space-y-2">
-                    <span className="text-xs font-semibold text-text-main block">
-                      Segmentos Diarizados ({selectedTranscription.id}):
-                    </span>
+                  <div className="mt-3 p-3 bg-surface-bg rounded-xl border border-border space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-text-main block">
+                        Segmentos Diarizados ({selectedTranscription.id}):
+                      </span>
+                      <Button
+                        size="sm"
+                        variant="default"
+                        disabled={chatwootSyncing}
+                        onClick={handleSendChatwootAction}
+                        className="gap-1.5"
+                      >
+                        <MessageSquare className="h-3.5 w-3.5" />
+                        {chatwootSyncing ? "Enviando..." : "Enviar Sugestão de Ação ao Chatwoot"}
+                      </Button>
+                    </div>
+
+                    {chatwootFeedback && (
+                      <div className="p-2 rounded bg-status-success-subtle border border-status-success/30 text-[11px] text-status-success flex items-center gap-1.5">
+                        <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                        <span>{chatwootFeedback}</span>
+                      </div>
+                    )}
+
                     <div className="space-y-1.5 max-h-36 overflow-y-auto text-xs">
                       {selectedTranscription.segments && selectedTranscription.segments.length > 0 ? (
                         selectedTranscription.segments.map((seg, i) => (

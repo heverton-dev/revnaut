@@ -351,7 +351,7 @@ export const DealsWorkspace: React.FC<DealsWorkspaceProps> = ({ currentUserId })
     setGeneratingPdf(true);
     setDealActionError(null);
     try {
-      const res = await fetch(`/api/v1/deals/${selectedDeal.id}/generate-contract`, {
+      const res = await fetch(`/api/v1/deals/${selectedDeal.id}/contracts/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "X-User-Id": userId },
         body: JSON.stringify({
@@ -564,9 +564,14 @@ export const DealsWorkspace: React.FC<DealsWorkspaceProps> = ({ currentUserId })
   const handleExportDeals = async () => {
     setIsExporting(true);
     try {
-      const res = await fetch(`/api/v1/deals/export?format=${exportFormat}&pipeline_id=${encodeURIComponent(selectedPipelineId)}`, {
-        headers: { "X-User-Id": userId },
-      });
+      const res =
+        exportFormat === "csv"
+          ? await fetch(`/api/v1/deals/export/csv?pipeline_id=${encodeURIComponent(selectedPipelineId)}`, {
+              headers: { "X-User-Id": userId },
+            })
+          : await fetch(`/api/v1/deals/export?format=parquet&pipeline_id=${encodeURIComponent(selectedPipelineId)}`, {
+              headers: { "X-User-Id": userId },
+            });
       if (!res.ok) throw new Error(`Falha ao exportar ${exportFormat.toUpperCase()} do pipeline.`);
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -620,18 +625,28 @@ export const DealsWorkspace: React.FC<DealsWorkspaceProps> = ({ currentUserId })
     const current = customStageOrder.length > 0 ? [...customStageOrder] : rawStages.map((s) => Number(s.id));
     const idx = current.indexOf(numId);
     if (idx === -1) return;
+    let changed = false;
     if (direction === "left" && idx > 0) {
       const temp = current[idx - 1];
       current[idx - 1] = current[idx];
       current[idx] = temp;
-      setCustomStageOrder(current);
+      changed = true;
+      setCustomStageOrder([...current]);
       setDealActionFeedback(`Estágio movido para a esquerda.`);
     } else if (direction === "right" && idx < current.length - 1) {
       const temp = current[idx + 1];
       current[idx + 1] = current[idx];
       current[idx] = temp;
-      setCustomStageOrder(current);
+      changed = true;
+      setCustomStageOrder([...current]);
       setDealActionFeedback(`Estágio movido para a direita.`);
+    }
+    if (changed) {
+      fetch(`/api/v1/pipelines/${encodeURIComponent(selectedPipelineId)}/stages-order`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", "X-User-Id": userId },
+        body: JSON.stringify({ stages_order: current }),
+      }).catch(() => {});
     }
   };
 

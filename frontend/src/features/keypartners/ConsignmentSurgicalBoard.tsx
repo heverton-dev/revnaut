@@ -205,6 +205,8 @@ export const ConsignmentSurgicalBoard: React.FC<ConsignmentSurgicalBoardProps> =
   const [kolTarget, setKolTarget] = useState<number>(25);
   const [kolQuota, setKolQuota] = useState<number>(2);
   const [creatingKol, setCreatingKol] = useState<boolean>(false);
+  const [selectedKolDetail, setSelectedKolDetail] = useState<any | null>(null);
+  const [loadingKolDetail, setLoadingKolDetail] = useState<boolean>(false);
 
   const [consumptionContractId, setConsumptionContractId] = useState<string | null>(null);
   const [consumptionQty, setConsumptionQty] = useState<number>(22);
@@ -630,14 +632,25 @@ export const ConsignmentSurgicalBoard: React.FC<ConsignmentSurgicalBoardProps> =
     setDispatchingCustody(true);
     setDispatchCustodyFeedback(null);
     try {
-      const res = await fetch(
-        `/api/v1/keypartners/agreements/${encodeURIComponent(selectedCustodyAgreementId)}/dispatch-custody`,
+      const payload = { items: lots, account_id: "0f14ffff" };
+      let res = await fetch(
+        `/api/v1/keypartners/agreements/${encodeURIComponent(selectedCustodyAgreementId)}/dispatch`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ items: lots, account_id: "0f14ffff" }),
+          body: JSON.stringify(payload),
         },
       );
+      if (!res.ok) {
+        res = await fetch(
+          `/api/v1/keypartners/agreements/${encodeURIComponent(selectedCustodyAgreementId)}/dispatch-custody`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          },
+        );
+      }
       if (res.ok) {
         setShowDispatchCustodyModal(false);
         setDispatchLots([]);
@@ -919,9 +932,19 @@ export const ConsignmentSurgicalBoard: React.FC<ConsignmentSurgicalBoardProps> =
                             {normStatus === "EM_POSSE_CLINICA" && (
                               <div className="space-y-1.5 mt-2">
                                 <button
-                                  onClick={(e) => {
+                                  onClick={async (e) => {
                                     e.stopPropagation();
-                                    setPostopOrder(order);
+                                    try {
+                                      const res = await fetch(`/api/v1/keypartners/surgical-orders/${order.id}`);
+                                      if (res.ok) {
+                                        const fullOrder = await res.json();
+                                        setPostopOrder(fullOrder);
+                                      } else {
+                                        setPostopOrder(order);
+                                      }
+                                    } catch {
+                                      setPostopOrder(order);
+                                    }
                                   }}
                                   className="w-full py-1.5 px-3 bg-brand-navy-subtle hover:bg-brand-primary text-brand-navy hover:text-text-inverse border border-brand-navy/30 text-xs font-semibold rounded transition-colors flex items-center justify-center gap-1.5"
                                 >
@@ -1270,6 +1293,31 @@ export const ConsignmentSurgicalBoard: React.FC<ConsignmentSurgicalBoardProps> =
                       </div>
 
                       <div className="flex flex-wrap gap-2 pt-2 border-t border-border">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={async () => {
+                            setLoadingKolDetail(true);
+                            try {
+                              const res = await fetch(`/api/v1/keypartners/kol-contracts/${kol.id}`);
+                              if (res.ok) {
+                                const detail = await res.json();
+                                setSelectedKolDetail(detail);
+                              } else {
+                                setSelectedKolDetail(kol);
+                              }
+                            } catch {
+                              setSelectedKolDetail(kol);
+                            } finally {
+                              setLoadingKolDetail(false);
+                            }
+                          }}
+                          disabled={loadingKolDetail}
+                          className="text-xs gap-1"
+                        >
+                          <FileText className="w-3.5 h-3.5" />
+                          Inspecionar Contrato
+                        </Button>
                         <Button
                           size="sm"
                           variant="outline"
@@ -1806,7 +1854,7 @@ export const ConsignmentSurgicalBoard: React.FC<ConsignmentSurgicalBoardProps> =
             <div className="flex justify-between items-center pb-3 border-b border-border">
               <h3 className="text-base font-bold text-text-main flex items-center gap-2">
                 <ScanLine className="h-4 w-4 text-brand-primary" />
-                Leitor de Código de Barras / DataMatrix
+                Auditoria de Maleta via QR Code & DataMatrix
               </h3>
               <button
                 type="button"
@@ -1819,7 +1867,7 @@ export const ConsignmentSurgicalBoard: React.FC<ConsignmentSurgicalBoardProps> =
             </div>
             <div className="space-y-3 text-xs">
               <p className="text-text-secondary">
-                Posicione o código ANVISA/DataMatrix da maleta ou do lote de implante. O leitor usa a câmera quando disponível ou aceita digitação manual.
+                Posicione o código ANVISA/DataMatrix da maleta ou do lote de implante. O leitor valida contra quarentenas ANVISA e custódia ativa.
               </p>
               <div>
                 <label className="text-text-secondary block mb-1">Código / Lote / Serial</label>
@@ -1852,18 +1900,25 @@ export const ConsignmentSurgicalBoard: React.FC<ConsignmentSurgicalBoardProps> =
                     return;
                   }
                   try {
-                    const [prodRes, quarRes] = await Promise.all([
+                    const promises: Promise<Response>[] = [
                       fetch("/api/v1/deals/catalog/products"),
                       fetch("/api/v1/tickets/anvisa-rma/quarantines"),
-                    ]);
+                    ];
+                    if (selectedCustodyAgreementId) {
+                      promises.push(
+                        fetch(`/api/v1/keypartners/agreements/${encodeURIComponent(selectedCustodyAgreementId)}/custody-summary`)
+                      );
+                    }
+                    const [prodRes, quarRes, custodyRes] = await Promise.all(promises);
                     const products = await prodRes.json().catch(() => []);
                     const quarantines = await quarRes.json().catch(() => []);
+                    const custodyData = custodyRes && custodyRes.ok ? await custodyRes.json().catch(() => null) : null;
 
                     const cleanCode = code.toUpperCase();
                     const matchedProd = Array.isArray(products)
                       ? products.find((p: any) => cleanCode.includes(p.sku?.toUpperCase()) || p.sku?.toUpperCase().includes(cleanCode))
                       : null;
-                    const sku = matchedProd ? matchedProd.sku : "IMP-CM-37511";
+                    const sku = matchedProd ? matchedProd.sku : cleanCode;
 
                     const matchedQuar = Array.isArray(quarantines)
                       ? quarantines.find((q: any) => cleanCode.includes(q.batch_number?.toUpperCase()) || q.batch_number?.toUpperCase().includes(cleanCode))
@@ -1873,7 +1928,16 @@ export const ConsignmentSurgicalBoard: React.FC<ConsignmentSurgicalBoardProps> =
                     const batchStatus = isBlocked ? "QUARANTINE_BLOCKED" : "LIBERADO";
                     const expiry = matchedQuar?.recall_protocol ? "RECOLHIDO" : "2028-10-19";
 
-                    setScanResult(`Status do Lote: ${batchStatus} | SKU: ${sku} | Validade: ${expiry} | Ref: ${code}`);
+                    const custodyMatch = custodyData?.lots?.find?.(
+                      (l: any) =>
+                        cleanCode.includes(String(l.batch_number || "").toUpperCase()) ||
+                        cleanCode.includes(String(l.product_id || "").toUpperCase())
+                    );
+                    const custodyMsg = custodyMatch
+                      ? ` | Acordo ${selectedCustodyAgreementId}: Qtd ${custodyMatch.quantity} em custódia`
+                      : "";
+
+                    setScanResult(`Status do Lote: ${batchStatus} | SKU: ${sku} | Validade: ${expiry} | Ref: ${code}${custodyMsg}`);
                   } catch (err: any) {
                     setScanResult(`Erro na validação do lote: ${err.message}`);
                   }
@@ -1881,6 +1945,56 @@ export const ConsignmentSurgicalBoard: React.FC<ConsignmentSurgicalBoardProps> =
               >
                 <ScanLine className="h-3.5 w-3.5" />
                 Validar Código
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: Inspeção Detalhe Contrato KOL */}
+      {selectedKolDetail && (
+        <div className="fixed inset-0 bg-surface-overlay backdrop-blur-sm transition-all duration-200 animate-in fade-in-0 flex items-center justify-center p-4 z-50">
+          <div className="bg-surface-card border border-border rounded-2xl max-w-lg w-full p-5 sm:p-7 shadow-modal space-y-4 max-h-[85vh] overflow-y-auto animate-in fade-in-0 zoom-in-95">
+            <div className="flex justify-between items-center pb-3 border-b border-border">
+              <h3 className="text-base font-bold text-text-main flex items-center gap-2">
+                <FileText className="h-4 w-4 text-brand-primary" />
+                Contrato KOL #{selectedKolDetail.id}
+              </h3>
+              <button onClick={() => setSelectedKolDetail(null)} className="text-text-secondary hover:text-text-main">
+                X
+              </button>
+            </div>
+            <div className="space-y-3 text-xs">
+              <div className="grid grid-cols-2 gap-2 p-3 bg-surface-bg rounded-lg border border-border">
+                <div>
+                  <span className="text-text-muted block text-[10px]">KOL:</span>
+                  <span className="font-bold text-text-main">{selectedKolDetail.kol_name}</span>
+                </div>
+                <div>
+                  <span className="text-text-muted block text-[10px]">CRO/UF:</span>
+                  <span className="font-mono">{selectedKolDetail.cro_uf}</span>
+                </div>
+                <div>
+                  <span className="text-text-muted block text-[10px]">Equipamento:</span>
+                  <span>{selectedKolDetail.equipment_name}</span>
+                </div>
+                <div>
+                  <span className="text-text-muted block text-[10px]">Patrimônio / Tag:</span>
+                  <span className="font-mono text-brand-primary">{selectedKolDetail.asset_tag}</span>
+                </div>
+                <div>
+                  <span className="text-text-muted block text-[10px]">Meta Mensal:</span>
+                  <span className="font-mono">{selectedKolDetail.min_monthly_implants_target} implantes</span>
+                </div>
+                <div>
+                  <span className="text-text-muted block text-[10px]">Consumo Atual:</span>
+                  <span className="font-mono font-bold text-brand-primary">{selectedKolDetail.current_month_consumption} implantes</span>
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end pt-2 border-t border-border">
+              <Button size="sm" variant="outline" onClick={() => setSelectedKolDetail(null)}>
+                Fechar
               </Button>
             </div>
           </div>

@@ -17,6 +17,10 @@ import {
   ChevronDown,
   ChevronUp,
   History,
+  Building2,
+  Package,
+  Eye,
+  Send,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { RouteHeader } from "@/components/ui/RouteHeader";
@@ -230,6 +234,127 @@ export function CredentialsVaultPage({ initialTab = "vault" }: { initialTab?: st
       setLoadingInvoices(false);
     }
   }, []);
+
+  const [totvsSyncing, setTotvsSyncing] = React.useState(false);
+  const [totvsOrdering, setTotvsOrdering] = React.useState(false);
+  const [testingListmonk, setTestingListmonk] = React.useState(false);
+  const [activeManualContent, setActiveManualContent] = React.useState<string | null>(null);
+  const [activeManualTitle, setActiveManualTitle] = React.useState<string | null>(null);
+
+  const handleTotvsCustomerSync = async () => {
+    setTotvsSyncing(true);
+    try {
+      const res = await fetch("/api/v1/integrations/totvs/customers/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          a1_cod: "CLI-9901",
+          a1_nome: "Clinica Odontologica Paulista Master",
+          a1_cgc: "12345678000195",
+          a1_tipo: "F",
+          a1_est: "SP",
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || "Falha na sincronização SA1 com TOTVS.");
+      setFeedbackMsg(`Cliente SA1 sincronizado no TOTVS Protheus com sucesso (${data.message || data.status || "OK"}).`);
+      await fetchErpData();
+    } catch (err: any) {
+      alert(err.message || "Erro na sincronização TOTVS SA1.");
+    } finally {
+      setTotvsSyncing(false);
+    }
+  };
+
+  const handleTotvsOrderCreate = async () => {
+    setTotvsOrdering(true);
+    try {
+      const res = await fetch("/api/v1/integrations/totvs/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          c5_cliente: "CLI-9901",
+          c5_lojacli: "01",
+          c5_tipocli: "F",
+          c5_condpag: "001",
+          items: [
+            {
+              c6_produto: "IMP-CM-37511",
+              c6_qtdven: 2,
+              c6_prcven: 450.0,
+            },
+          ],
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || "Falha ao emitir pedido SC5 no TOTVS Protheus.");
+      setFeedbackMsg(`Pedido SC5 gerado com sucesso no TOTVS Protheus (${data.message || data.status || "OK"}).`);
+      await fetchErpData();
+    } catch (err: any) {
+      alert(err.message || "Erro na emissão de pedido TOTVS SC5.");
+    } finally {
+      setTotvsOrdering(false);
+    }
+  };
+
+  const handleInspectInvoice = async (invId: string) => {
+    try {
+      const res = await fetch(`/api/v1/integrations/erp/invoices/${encodeURIComponent(invId)}`);
+      if (res.ok) {
+        const data = await res.json();
+        alert(`Detalhes da NF-e #${data.nfe_number || invId}:\nCFOP: ${data.cfop}\nStatus: ${data.status}\nValor Total: R$ ${data.total_amount}\nChave de Acesso: ${data.nfe_access_key}`);
+      }
+    } catch {
+      alert("Erro ao consultar detalhes da NF-e.");
+    }
+  };
+
+  const handleInspectSubscription = async (subId: string) => {
+    try {
+      const res = await fetch(`/api/v1/webhooks/subscriptions/${encodeURIComponent(subId)}`);
+      if (res.ok) {
+        const data = await res.json();
+        alert(`Assinatura Webhook #${data.id}:\nNome: ${data.name}\nURL: ${data.target_url}\nCircuit Tripped: ${data.circuit_breaker_tripped ? "SIM" : "NÃO"}\nFalhas Consecutivas: ${data.consecutive_failures}`);
+      }
+    } catch {
+      alert("Erro ao inspecionar assinatura webhook.");
+    }
+  };
+
+  const handleTestListmonkWebhook = async () => {
+    setTestingListmonk(true);
+    try {
+      const res = await fetch("/api/v1/webhooks/listmonk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          event: "campaign.sent",
+          campaign_id: 1,
+          email: "dr.cirurgiao@revnault.internal",
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || "Falha no disparo de teste Listmonk.");
+      setFeedbackMsg(`Webhook Listmonk testado e processado com sucesso: ${data.message || data.status || "OK"}.`);
+    } catch (err: any) {
+      alert(err.message || "Erro no teste de webhook Listmonk.");
+    } finally {
+      setTestingListmonk(false);
+    }
+  };
+
+  const handleOpenManual = async (filename: string) => {
+    try {
+      const res = await fetch(`/api/v1/quarteto/manuais/${encodeURIComponent(filename)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setActiveManualTitle(filename);
+        setActiveManualContent(data.content || JSON.stringify(data, null, 2));
+      }
+    } catch {
+      alert("Erro ao carregar conteúdo do manual.");
+    }
+  };
 
   // Carregar Webhooks
   const fetchWebhooksData = React.useCallback(async () => {
@@ -615,26 +740,18 @@ export function CredentialsVaultPage({ initialTab = "vault" }: { initialTab?: st
                     <button
                       onClick={async () => {
                         try {
-                          const newRotatedSecret = `sk_live_${Math.random().toString(36).substring(2)}${Math.random().toString(36).substring(2)}`;
-                          const res = await fetch("/api/v1/auth/credentials", {
+                          const res = await fetch(`/api/v1/auth/credentials/${encodeURIComponent(c.id)}/rotate`, {
                             method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                              service_name: c.service_name,
-                              credential_type: c.credential_type,
-                              secret_payload: newRotatedSecret,
-                              metadata: { rotated_at: new Date().toISOString() },
-                            }),
                           });
                           if (!res.ok) throw new Error("Falha ao rotacionar credencial no cofre.");
                           await fetchCredentials();
-                          setFeedbackMsg(`Chave do serviço ${c.service_name} rotacionada e persistida no cofre (AES-256-GCM).`);
+                          setFeedbackMsg(`Chave do serviço ${c.service_name} rotacionada com CSPRNG seguro e persistida no cofre (AES-256-GCM).`);
                         } catch (err: any) {
                           alert(err.message || "Erro na rotação da credencial.");
                         }
                       }}
                       className="p-1 rounded text-brand-primary hover:bg-brand-primary-subtle"
-                      title="Rotacionar Chave Automaticamente"
+                      title="Rotacionar Chave Automaticamente (CSPRNG)"
                     >
                       <RefreshCw className="h-3.5 w-3.5" />
                     </button>
@@ -917,14 +1034,36 @@ export function CredentialsVaultPage({ initialTab = "vault" }: { initialTab?: st
 
           {/* Tabela de Notas Fiscais Emitidas */}
           <Card className="p-4 border border-border bg-surface-card space-y-3">
-            <div className="flex items-center justify-between border-b border-border pb-2">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-2">
               <div className="flex items-center gap-2">
                 <h3 className="text-xs font-bold text-text-main">Histórico de Notas Fiscais Emitidas ({invoices.length})</h3>
                 <span className="text-[11px] font-mono text-text-secondary">Outbox TOTVS: {outboxItems.length} pendentes</span>
               </div>
-              <Button size="sm" variant="outline" onClick={fetchErpData} className="text-xs h-7 py-0">
-                <RefreshCw className="h-3 w-3 mr-1" /> Atualizar
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={totvsSyncing}
+                  onClick={handleTotvsCustomerSync}
+                  className="text-xs h-7 py-0"
+                >
+                  <Building2 className="h-3 w-3 mr-1" />
+                  {totvsSyncing ? "Sincronizando..." : "Sincronizar SA1 TOTVS"}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={totvsOrdering}
+                  onClick={handleTotvsOrderCreate}
+                  className="text-xs h-7 py-0"
+                >
+                  <Package className="h-3 w-3 mr-1" />
+                  {totvsOrdering ? "Emitindo..." : "Emitir Pedido SC5"}
+                </Button>
+                <Button size="sm" variant="outline" onClick={fetchErpData} className="text-xs h-7 py-0">
+                  <RefreshCw className="h-3 w-3 mr-1" /> Atualizar
+                </Button>
+              </div>
             </div>
 
             <div className="space-y-2 max-h-72 overflow-y-auto">
@@ -950,6 +1089,14 @@ export function CredentialsVaultPage({ initialTab = "vault" }: { initialTab?: st
                       <span className="text-[10px] text-status-success">{inv.status}</span>
                     </div>
                     <div className="flex gap-1.5">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleInspectInvoice(inv.id)}
+                        className="text-[10px] h-6 px-1.5"
+                      >
+                        <Eye className="h-3 w-3 mr-1" /> Detalhes NF-e
+                      </Button>
                       <a
                         href={`/api/v1/storage/files/${inv.danfe_pdf_r2_key || `0f14ffff/erp_invoices/${inv.nfe_number}.pdf`}`}
                         target="_blank"
@@ -985,10 +1132,22 @@ export function CredentialsVaultPage({ initialTab = "vault" }: { initialTab?: st
             <h3 className="text-xs font-bold uppercase tracking-wider text-text-secondary">
               Endpoints de Destino & Proteção de Resiliência
             </h3>
-            <Button size="sm" variant="default" onClick={() => setShowSubModal(true)} className="text-xs">
-              <Plus className="h-3.5 w-3.5 mr-1" />
-              Novo Webhook
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={testingListmonk}
+                onClick={handleTestListmonkWebhook}
+                className="text-xs"
+              >
+                <Send className="h-3.5 w-3.5 mr-1" />
+                {testingListmonk ? "Disparando..." : "Testar Ingestão Listmonk"}
+              </Button>
+              <Button size="sm" variant="default" onClick={() => setShowSubModal(true)} className="text-xs">
+                <Plus className="h-3.5 w-3.5 mr-1" />
+                Novo Webhook
+              </Button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -1018,6 +1177,12 @@ export function CredentialsVaultPage({ initialTab = "vault" }: { initialTab?: st
                     <div className="flex items-center justify-between pt-1 border-t border-border/50 text-[10px]">
                       <span>Falhas seguidas: <strong>{sub.consecutive_failures}</strong></span>
                       <div className="flex gap-1.5">
+                        <button
+                          onClick={() => handleInspectSubscription(sub.id)}
+                          className="px-2 py-0.5 rounded bg-surface-card hover:bg-surface-bg border border-border text-[10px] text-text-secondary font-semibold"
+                        >
+                          Inspecionar
+                        </button>
                         {sub.circuit_breaker_tripped && (
                           <button
                             onClick={() => handleResetCircuitBreaker(sub.id)}
@@ -1203,6 +1368,49 @@ export function CredentialsVaultPage({ initialTab = "vault" }: { initialTab?: st
                 <span className="font-bold text-xs text-text-main">Guia Canônico</span>
                 <span className="text-[10px] text-text-muted font-mono">/docs/guia ({manuais.length} rotas)</span>
               </a>
+            </div>
+
+            {/* Leitor de Manuais Canônicos */}
+            <div className="pt-2 border-t border-border space-y-2">
+              <span className="text-[11px] font-bold text-text-secondary block uppercase">
+                Manuais Canônicos de Rotas ({manuais.length})
+              </span>
+              <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto">
+                {manuais.map((m: any) => {
+                  const fname = m.filename || m.rota || "manual.md";
+                  return (
+                    <button
+                      key={fname}
+                      type="button"
+                      onClick={() => handleOpenManual(fname)}
+                      className="px-2 py-1 rounded border border-border bg-surface-card hover:border-brand-primary text-[10px] text-text-main font-mono"
+                    >
+                      {fname}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {activeManualTitle && (
+                <div className="mt-3 p-3 rounded-lg border border-border bg-surface-bg space-y-2">
+                  <div className="flex items-center justify-between border-b border-border pb-1">
+                    <span className="text-xs font-bold text-brand-primary font-mono">{activeManualTitle}</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveManualTitle(null);
+                        setActiveManualContent(null);
+                      }}
+                      className="text-[10px] text-text-muted hover:underline"
+                    >
+                      Fechar
+                    </button>
+                  </div>
+                  <pre className="text-[11px] font-mono text-text-secondary max-h-60 overflow-y-auto whitespace-pre-wrap">
+                    {activeManualContent}
+                  </pre>
+                </div>
+              )}
             </div>
           </Card>
 

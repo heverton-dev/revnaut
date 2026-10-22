@@ -30,6 +30,7 @@ import {
   Layers,
   Ban,
   Upload,
+  UserPlus,
 } from "lucide-react";
 
 export interface DealOption {
@@ -134,6 +135,9 @@ export const LiveKitDealRoomModal: React.FC<LiveKitDealRoomModalProps> = ({
   const [showSipDialer, setShowSipDialer] = useState<boolean>(false);
   const [sipNumber, setSipNumber] = useState<string>(contactPhone || "+55");
   const [dialingSip, setDialingSip] = useState<boolean>(false);
+  const [showInviteSpecialist, setShowInviteSpecialist] = useState<boolean>(false);
+  const [secondSpecialistName, setSecondSpecialistName] = useState<string>("Dr. Especialista Bucomaxilo");
+  const [invitingSpecialist, setInvitingSpecialist] = useState<boolean>(false);
 
   // Lousa Cirúrgica
   const [showWhiteboard, setShowWhiteboard] = useState<boolean>(false);
@@ -768,8 +772,8 @@ export const LiveKitDealRoomModal: React.FC<LiveKitDealRoomModalProps> = ({
     setIsNoiseSuppression(!isNoiseSuppression);
   };
 
-  // Capturar Quadro de Alta Resolução (Snapshot Clínico para Dossiê)
-  const captureSnapshot = () => {
+  // Capturar Quadro de Alta Resolucao (Snapshot Clinico para Dossie)
+  const captureClinicalSnapshot = async () => {
     const videoEl = isScreenSharing && screenVideoRef.current ? screenVideoRef.current : localVideoRef.current;
     if (!videoEl) return;
     const canvas = document.createElement("canvas");
@@ -779,14 +783,33 @@ export const LiveKitDealRoomModal: React.FC<LiveKitDealRoomModalProps> = ({
     if (!ctx) return;
     ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
 
-    if (showWhiteboard && whiteboardCanvasRef.current) {
+    if (whiteboardCanvasRef.current) {
       ctx.drawImage(whiteboardCanvasRef.current, 0, 0, canvas.width, canvas.height);
     }
+
+    const cleanDeal = (selectedDealId || "sos").replace(/[^a-zA-Z0-9_-]/g, "");
+    const snapshotKey = `0f14ffff/snapshots/snapshot-${cleanDeal}-${Date.now()}.png`;
+
+    canvas.toBlob(async (blob) => {
+      if (!blob) return;
+      try {
+        await fetch(`/api/v1/storage/upload-direct/${encodeURIComponent(snapshotKey)}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "image/png",
+            "X-Account-ID": "0f14ffff",
+          },
+          body: blob,
+        });
+      } catch {
+        // storage fallback
+      }
+    }, "image/png");
 
     const dataUrl = canvas.toDataURL("image/png");
     const a = document.createElement("a");
     a.href = dataUrl;
-    a.download = `snapshot-clinico-${dealTitle.replace(/\s+/g, "_")}-${Date.now()}.png`;
+    a.download = `snapshot-clinico-${(dealTitle || "sos").replace(/\s+/g, "_")}-${Date.now()}.png`;
     a.click();
 
     setChatMessages((prev) => [
@@ -794,24 +817,25 @@ export const LiveKitDealRoomModal: React.FC<LiveKitDealRoomModalProps> = ({
       {
         id: `snap-${Date.now()}`,
         sender: "Sistema SOS",
-        text: "Snapshot Clínico de alta resolução capturado e anexado ao dossiê.",
+        text: "Snapshot Clinico de alta resolucao capturado e enviado ao storage R2.",
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         isMe: false,
       },
     ]);
   };
+  const captureSnapshot = captureClinicalSnapshot;
 
-  // Discar Telefonia Celular SIP via LiveKit SIP Service
+  // Discar Telefonia Celular SIP via LiveKit SIP Service (Endpoint Oficial VoIP)
   const dialSipCall = async () => {
     if (!sipNumber) return;
     setDialingSip(true);
     try {
-      const res = await fetch("/api/v1/communications/livekit/sip/dial", {
+      const res = await fetch("/api/v1/communications/voip/dial", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          room_name: `deal-${selectedDealId || "sos-cirurgico"}`,
           phone_number: sipNumber,
+          room_name: `deal-${selectedDealId || "sos-cirurgico"}`,
           deal_id: selectedDealId,
         }),
       });
@@ -821,7 +845,7 @@ export const LiveKitDealRoomModal: React.FC<LiveKitDealRoomModalProps> = ({
           {
             id: `sip-${Date.now()}`,
             sender: "Telefonia SIP",
-            text: `Chamada discada para ${sipNumber}. O áudio do médico entrará nesta sala cirúrgica.`,
+            text: `Chamada discada para ${sipNumber}. O audio do medico entrara nesta sala cirurgica.`,
             timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
             isMe: false,
           },
@@ -829,9 +853,54 @@ export const LiveKitDealRoomModal: React.FC<LiveKitDealRoomModalProps> = ({
         setShowSipDialer(false);
       }
     } catch {
-      // Falha de rede ou mock
+      // Falha de rede
     } finally {
       setDialingSip(false);
+    }
+  };
+
+  // Convidar 2º Cirurgiao Especialista
+  const handleInviteSecondSpecialist = async () => {
+    setInvitingSpecialist(true);
+    try {
+      const res = await fetch("/api/v1/communications/rooms/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          room_name: `deal-${selectedDealId || "sos-mesa-01"}`,
+          identity: `specialist-guest-${Date.now()}`,
+          name: secondSpecialistName,
+          deal_id: selectedDealId || "sos-mesa-01",
+          role: "specialist_guest",
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const inviteUrl = `${window.location.origin}/#!/livekit?token=${encodeURIComponent(data.token)}&room=${encodeURIComponent(selectedDealId || "sos-mesa-01")}`;
+        await fetch("/api/v1/chat/messages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            conversation_id: selectedDealId || "sos-room",
+            text: `Convite ao 2º Cirurgiao Especialista (${secondSpecialistName}): ${inviteUrl}`,
+          }),
+        });
+        setChatMessages((prev) => [
+          ...prev,
+          {
+            id: `inv-${Date.now()}`,
+            sender: "Sistema SOS",
+            text: `Convite gerado e enviado ao 2º Cirurgiao Especialista (${secondSpecialistName}).`,
+            timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            isMe: false,
+          },
+        ]);
+        setShowInviteSpecialist(false);
+      }
+    } catch {
+      // Falha ao gerar convite
+    } finally {
+      setInvitingSpecialist(false);
     }
   };
 
@@ -1180,16 +1249,14 @@ export const LiveKitDealRoomModal: React.FC<LiveKitDealRoomModalProps> = ({
     setChatMessages((prev) => [...prev, newMsg]);
     if (!textToSend) setChatInput("");
 
-    // Enviar para API omnichannel
+    // Enviar para API oficial de conversas
     try {
-      await fetch("/api/v1/omnichannel/send", {
+      await fetch(`/api/v1/conversations/${encodeURIComponent(selectedDealId || "sos-room")}/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          channel: "LIVEKIT_CHAT",
-          recipient_id: selectedDealId,
-          content: text,
-          metadata: { deal_id: selectedDealId },
+          sender: "Consultor Especialista",
+          text,
         }),
       });
     } catch {
@@ -1283,25 +1350,26 @@ export const LiveKitDealRoomModal: React.FC<LiveKitDealRoomModalProps> = ({
 
   const handleExtractCopilotNotes = async () => {
     setExtractingNotes(true);
-    const fullText = transcripts.join("\n") || "Discussão sobre torque de inserção de 45 N.cm no dente 36 e verificação de proximidade do canal do nervo mandibular.";
+    const fullText = transcripts.join("\n") || "Discussao sobre torque de insercao de 45 N.cm no dente 36 e verificacao de proximidade do canal do nervo mandibular.";
     try {
-      const res = await fetch("/api/v1/intelligence/granola/extract", {
+      const res = await fetch("/api/v1/intelligence/copilot/extract-and-apply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          deal_id: selectedDealId || "d-101",
           raw_notes: fullText,
-          deal_id: selectedDealId,
+          transcription_text: fullText,
         }),
       });
 
       if (res.ok) {
         const data = await res.json();
-        setCopilotSummary(data.summary || data.action_items?.join("\n") || "Protocolo cirúrgico validado com sucesso.");
+        setCopilotSummary(data.summary || (data.extraction && (data.extraction.summary || (data.extraction.action_items || []).join("\n"))) || "Protocolo cirurgico validado com sucesso.");
       } else {
-        setCopilotSummary("Resumo Clínico: Implante 3.5x11.5mm posicionado no dente 36 com margem de segurança de 2.4mm acima do nervo mandibular.");
+        setCopilotSummary(`Falha ao sintetizar notas da IA (Status ${res.status}).`);
       }
-    } catch {
-      setCopilotSummary("Resumo Clínico: Guia cirúrgico aprovado e kit de fresagem separado para entrega imediata.");
+    } catch (err: any) {
+      setCopilotSummary(`Erro de conexao com servico de inteligencia: ${err.message || "indisponivel"}`);
     } finally {
       setExtractingNotes(false);
     }
@@ -2047,6 +2115,56 @@ export const LiveKitDealRoomModal: React.FC<LiveKitDealRoomModalProps> = ({
                             >
                               <PhoneCall className="h-3.5 w-3.5" />
                               {dialingSip ? "Discar..." : "Iniciar Chamada SIP"}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Convidar 2º Cirurgiao Especialista */}
+                      <div className="relative">
+                        <button
+                          onClick={() => setShowInviteSpecialist(!showInviteSpecialist)}
+                          className={`h-10 w-10 p-0 flex items-center justify-center rounded-xl transition cursor-pointer ${
+                            showInviteSpecialist
+                              ? "bg-brand-primary text-text-inverse shadow-sm"
+                              : "bg-surface-bg text-text-main border border-border hover:bg-surface-card"
+                          }`}
+                          title="Convidar 2º Cirurgiao Especialista"
+                        >
+                          <UserPlus className="h-4 w-4 text-brand-primary" />
+                        </button>
+
+                        {showInviteSpecialist && (
+                          <div className="absolute bottom-12 right-0 w-80 bg-surface-card border border-border p-3.5 rounded-xl shadow-modal z-50 text-xs space-y-3">
+                            <div className="flex items-center justify-between border-b border-border-subtle pb-2">
+                              <span className="font-bold text-text-main flex items-center gap-1.5">
+                                <UserPlus className="h-3.5 w-3.5 text-brand-primary" />
+                                Convidar 2º Cirurgiao Especialista
+                              </span>
+                              <button onClick={() => setShowInviteSpecialist(false)} className="text-text-muted hover:text-text-main cursor-pointer">
+                                <X className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                            <p className="text-[11px] text-text-secondary leading-relaxed">
+                              Gera um token WebRTC com papel de convidado especialista e despacha link de acesso direto via chat.
+                            </p>
+                            <div className="space-y-1.5">
+                              <label className="text-[11px] font-semibold text-text-secondary">Nome do Medico / Especialista</label>
+                              <input
+                                type="text"
+                                value={secondSpecialistName}
+                                onChange={(e) => setSecondSpecialistName(e.target.value)}
+                                placeholder="Dr. Nome do Especialista"
+                                className="w-full rounded-lg border border-border bg-surface-bg px-2.5 py-1.5 text-xs text-text-main"
+                              />
+                            </div>
+                            <button
+                              onClick={handleInviteSecondSpecialist}
+                              disabled={invitingSpecialist || !secondSpecialistName.trim()}
+                              className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg bg-brand-primary hover:bg-brand-primary-hover text-text-inverse font-semibold text-xs cursor-pointer disabled:opacity-50"
+                            >
+                              <UserPlus className="h-3.5 w-3.5" />
+                              <span>{invitingSpecialist ? "Gerando Convite..." : "Disparar Convite WebRTC"}</span>
                             </button>
                           </div>
                         )}

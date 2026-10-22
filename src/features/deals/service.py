@@ -24,6 +24,21 @@ def list_pipelines() -> List[Dict[str, Any]]:
     return rows
 
 
+def update_pipeline_stages_order(pipeline_id: int, stages_order: List[int]) -> List[int]:
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        for idx, stage_id in enumerate(stages_order):
+            cur.execute(
+                "UPDATE stages SET step_order = ? WHERE id = ? AND pipeline_id = ?",
+                (idx + 1, stage_id, pipeline_id),
+            )
+        conn.commit()
+        return stages_order
+    finally:
+        conn.close()
+
+
 def get_pipeline_and_deals(
     pipeline_id: Optional[int] = None, 
     account_id: str = "0f14ffff", 

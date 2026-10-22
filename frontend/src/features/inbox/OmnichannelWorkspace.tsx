@@ -23,6 +23,8 @@ import {
   PhoneCall,
   Briefcase,
   ArrowRightLeft,
+  Activity,
+  Radio,
 } from "lucide-react";
 import { QrCodeSvg } from "@/components/shared/QrCodeSvg";
 import { R2DirectUploader } from "@/components/shared/R2DirectUploader";
@@ -308,6 +310,77 @@ export const OmnichannelWorkspace: React.FC<OmnichannelWorkspaceProps> = ({
     }
   };
 
+  const [instanceHealthFeedback, setInstanceHealthFeedback] = React.useState<Record<string, string>>({});
+
+  const handleCheckInstanceHealth = async (inst: WhatsappInstance) => {
+    try {
+      const res = await fetch(`/api/v1/omnichannel/whatsapp/instances/${encodeURIComponent(inst.instance_name)}`);
+      if (!res.ok) throw new Error("Falha ao obter status");
+      const data = await res.json();
+      setInstanceHealthFeedback((prev) => ({
+        ...prev,
+        [inst.instance_name]: `Saúde: ${data.status || "online"} (Node: ${data.shard_node_url || "cluster-primary"})`,
+      }));
+    } catch (err: any) {
+      setInstanceHealthFeedback((prev) => ({
+        ...prev,
+        [inst.instance_name]: `Erro: ${err.message}`,
+      }));
+    }
+  };
+
+  const [webhookDiagFeedback, setWebhookDiagFeedback] = React.useState<string | null>(null);
+
+  const handleTestChatwootWebhook = async () => {
+    try {
+      setWebhookDiagFeedback("Disparando webhook Chatwoot...");
+      const res = await fetch("/api/v1/webhooks/chatwoot", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Chatwoot-Signature": "dev_test_sig",
+        },
+        body: JSON.stringify({
+          event: "conversation_created",
+          id: 101,
+          contact: { name: "Dr. Cirurgião" },
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      setWebhookDiagFeedback(
+        res.ok
+          ? "Webhook Chatwoot processado com sucesso."
+          : `Resposta Chatwoot (${res.status}): ${typeof data.detail === "string" ? data.detail : "OK"}`
+      );
+    } catch (err: any) {
+      setWebhookDiagFeedback(`Erro Chatwoot: ${err.message}`);
+    }
+  };
+
+  const handleTestMauticWebhook = async () => {
+    try {
+      setWebhookDiagFeedback("Disparando webhook Mautic...");
+      const res = await fetch("/api/v1/webhooks/mautic", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Mautic-Signature": "dev_test_sig",
+        },
+        body: JSON.stringify({
+          "mautic.lead_post_save_new": [{ lead: { id: 1, email: "dr@revnault.internal" } }],
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      setWebhookDiagFeedback(
+        res.ok
+          ? "Webhook Mautic processado com sucesso."
+          : `Resposta Mautic (${res.status}): ${typeof data.detail === "string" ? data.detail : "OK"}`
+      );
+    } catch (err: any) {
+      setWebhookDiagFeedback(`Erro Mautic: ${err.message}`);
+    }
+  };
+
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (!messageText.trim() || sendMessageMutation.isPending) return;
@@ -336,6 +409,22 @@ export const OmnichannelWorkspace: React.FC<OmnichannelWorkspaceProps> = ({
         }
         actions={[
           {
+            id: "test-chatwoot",
+            label: "Diag. Chatwoot",
+            variant: "outline",
+            icon: <MessageSquare className="h-3.5 w-3.5" />,
+            title: "Testar Webhook Chatwoot Inbound",
+            onClick: handleTestChatwootWebhook,
+          },
+          {
+            id: "test-mautic",
+            label: "Diag. Mautic",
+            variant: "outline",
+            icon: <Radio className="h-3.5 w-3.5" />,
+            title: "Testar Webhook Mautic Lead Scoring",
+            onClick: handleTestMauticWebhook,
+          },
+          {
             id: "new-instance",
             label: "Instância",
             variant: "default",
@@ -357,6 +446,19 @@ export const OmnichannelWorkspace: React.FC<OmnichannelWorkspaceProps> = ({
           },
         ]}
       />
+
+      {webhookDiagFeedback && (
+        <div className="p-2.5 rounded-lg border border-border bg-surface-card text-xs font-mono text-brand-primary flex items-center justify-between">
+          <span>{webhookDiagFeedback}</span>
+          <button
+            type="button"
+            onClick={() => setWebhookDiagFeedback(null)}
+            className="text-text-muted hover:text-text-main text-[11px]"
+          >
+            Fechar
+          </button>
+        </div>
+      )}
 
       {/* 3-Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
@@ -520,7 +622,20 @@ export const OmnichannelWorkspace: React.FC<OmnichannelWorkspaceProps> = ({
                         <PhoneCall className="h-3 w-3 text-brand-primary" />
                         Simular Chamada Vídeo (CALL_OFFER)
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => handleCheckInstanceHealth(inst)}
+                        className="flex items-center gap-1 px-2 py-1 rounded border border-border bg-surface-card text-[10px] text-text-main hover:border-brand-primary"
+                      >
+                        <Activity className="h-3 w-3 text-brand-primary" />
+                        Verificar Saúde da Instância
+                      </button>
                     </div>
+                    {instanceHealthFeedback[inst.instance_name] && (
+                      <p className="text-[10px] font-mono text-brand-primary bg-surface-card border border-border rounded p-1.5 mt-1">
+                        {instanceHealthFeedback[inst.instance_name]}
+                      </p>
+                    )}
                   </div>
                 ))}
                 {callFeedback && (

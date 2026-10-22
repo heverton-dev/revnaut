@@ -13,6 +13,7 @@ from src.features.deals.schemas import (
     PipelineMetricsOut, DealsListResponse, DealCreateResponse,
     DealMoveResponse, DealDetailOut, DealTimelineResponse,
     DealApproveCreditResponse,
+    PipelineStagesOrderUpdate, PipelineStagesOrderResponse,
     ProductCatalogItemOut, PriceTableOut,
     CalculateProposalRequest, CalculateProposalResponse,
     ApproveDiscountRequest, ApproveDiscountResponse,
@@ -32,6 +33,12 @@ router = APIRouter(tags=["Vendas & Funil"])
 @router.get("/api/v1/pipelines", response_model=List[PipelineItemOut], summary="Listar Funis de Vendas Disponíveis")
 def read_pipelines():
     return service.list_pipelines()
+
+
+@router.put("/api/v1/pipelines/{pipeline_id}/stages-order", response_model=PipelineStagesOrderResponse, summary="Atualizar ordenação de estágios do pipeline")
+def update_stages_order(pipeline_id: int, payload: PipelineStagesOrderUpdate):
+    service.update_pipeline_stages_order(pipeline_id=pipeline_id, stages_order=payload.stages_order)
+    return PipelineStagesOrderResponse(pipeline_id=pipeline_id, stages_order=payload.stages_order)
 
 
 @router.get("/api/v1/metrics", response_model=PipelineMetricsOut, summary="Métricas de Pipeline e MRR")
@@ -179,6 +186,7 @@ def approve_discount(payload: ApproveDiscountRequest):
 
 
 @router.post("/api/v1/deals/{deal_id}/generate-contract", response_model=GenerateContractResponse, summary="Gerar contrato Documenso para o Deal")
+@router.post("/api/v1/deals/{deal_id}/contracts/generate", response_model=GenerateContractResponse, summary="Gerar proposta/contrato PDF do Deal")
 def generate_deal_contract(deal_id: str, payload: GenerateContractRequest):
     try:
         return documenso_service.generate_contract_for_deal(
@@ -188,22 +196,9 @@ def generate_deal_contract(deal_id: str, payload: GenerateContractRequest):
             signer_email=payload.signer_email,
             signer_phone=payload.signer_phone,
             account_id=payload.account_id or "0f14ffff",
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-
-
-@router.post("/api/v1/deals/{deal_id}/contracts/generate", response_model=GenerateContractResponse, summary="Gerar proposta/contrato PDF do Deal (alias)")
-def generate_deal_contract_alias(deal_id: str, payload: GenerateContractRequest):
-    """Alias de /generate-contract usado pelo frontend (TICKET-DEALS-02)."""
-    try:
-        return documenso_service.generate_contract_for_deal(
-            deal_id=deal_id,
-            contract_type=payload.contract_type,
-            signer_name=payload.signer_name,
-            signer_email=payload.signer_email,
-            signer_phone=payload.signer_phone,
-            account_id=payload.account_id or "0f14ffff",
+            renewal_months=payload.renewal_months,
+            parent_contract_id=payload.parent_contract_id,
+            icp_certificate_serial=payload.icp_certificate_serial,
         )
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))

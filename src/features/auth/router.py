@@ -139,7 +139,8 @@ from src.features.auth.schemas import (
     ResetPasswordRequest,
     UpdateUserStatusRequest,
     UserStatusResponse,
-    ResetPasswordResponse
+    ResetPasswordResponse,
+    RotateCredentialResponse,
 )
 
 
@@ -158,9 +159,14 @@ def change_status(
     payload: UpdateUserStatusRequest,
     current_user: UserProfileOut = Depends(get_current_user)
 ):
+    active_val = payload.is_active
+    if active_val is None and payload.status is not None:
+        active_val = (payload.status.lower() in ("active", "ativo", "true", "1"))
+    elif active_val is None:
+        active_val = True
     return update_user_status(
         target_user_id=user_id,
-        is_active=payload.is_active,
+        is_active=active_val,
         current_user=current_user.model_dump()
     )
 
@@ -209,6 +215,7 @@ from src.features.auth.service import (
     store_tenant_credential,
     list_tenant_credentials,
     delete_tenant_credential,
+    rotate_tenant_credential,
 )
 
 
@@ -243,6 +250,15 @@ def get_credentials(
     account_id = x_account_id or "0f14ffff"
     creds = list_tenant_credentials(account_id)
     return [TenantCredentialResponse(**c) for c in creds]
+
+
+@router.post("/credentials/{credential_id}/rotate", response_model=RotateCredentialResponse, summary="Rotacionar credencial via CSPRNG e re-criptografar AES-256")
+def post_rotate_credential(
+    credential_id: str,
+    x_account_id: Optional[str] = Header(None, alias="X-Account-ID"),
+):
+    account_id = x_account_id or "0f14ffff"
+    return rotate_tenant_credential(account_id, credential_id)
 
 
 @router.delete("/credentials/{credential_id}", response_model=CredentialDeleteResponse, summary="Remover credencial do cofre")

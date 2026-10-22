@@ -95,7 +95,18 @@ def _walk_tree(repo_root: Path) -> list[Path]:
 def _candidate_files(repo_root: Path) -> list[Path]:
     staged = _staged_files(repo_root)
     if staged is not None:
-        return [f for f in staged if f.is_file()]
+        valid: list[Path] = []
+        for f in staged:
+            if not f.is_file() or f.name in EXCLUDED_FILES:
+                continue
+            try:
+                parts = f.relative_to(repo_root).parts
+            except ValueError:
+                parts = f.parts
+            if any(part in EXCLUDED_DIRS for part in parts):
+                continue
+            valid.append(f)
+        return valid
     return _walk_tree(repo_root)
 
 

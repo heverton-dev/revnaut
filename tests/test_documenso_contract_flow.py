@@ -159,3 +159,23 @@ def test_documenso_api_endpoints(client):
     hook_data = res_hook.json()
     assert hook_data["success"] is True
     assert hook_data["new_stage_id"] == 105
+
+
+def test_documenso_renewal_validity_and_icp_certificate(client):
+    payload = {
+        "deal_id": "d-1",
+        "contract_type": "renewal",
+        "signer_name": "Dr. Marcelo Sampaio",
+        "signer_email": "marcelo@sampaio.odonto.br",
+        "signer_phone": "+551199881122",
+        "renewal_months": 12,
+        "parent_contract_id": "cntr-parent-99",
+        "icp_certificate_serial": "ICP-BR-A3-2026-7788"
+    }
+    res = client.post("/api/v1/deals/d-1/generate-contract", json=payload)
+    assert res.status_code == 200
+    data = res.json()
+    assert data["renewal_months"] == 12
+    assert data["parent_contract_id"] == "cntr-parent-99"
+    assert data["icp_certificate_serial"] == "ICP-BR-A3-2026-7788"
+    assert data["valid_until"] is not None

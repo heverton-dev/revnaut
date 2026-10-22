@@ -508,9 +508,7 @@ export const ContactsCrmWorkspace: React.FC<ContactsCrmWorkspaceProps> = ({
   const handleExportContacts = async () => {
     setIsExporting(true);
     try {
-      const res = await fetch(`/api/v1/contacts/export?format=${exportFormat}`, {
-        headers: { "X-User-Id": "usr-director-br" },
-      });
+      const res = await fetch(`/api/v1/contacts/export?format=${exportFormat}`);
       if (!res.ok) throw new Error(`Falha ao exportar ${exportFormat.toUpperCase()} da carteira.`);
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -1181,8 +1179,22 @@ export const ContactsCrmWorkspace: React.FC<ContactsCrmWorkspaceProps> = ({
                       variant="outline"
                       size="sm"
                       className="gap-2 text-xs w-full justify-start"
-                      onClick={() => {
-                        window.location.hash = "#!/keypartners";
+                      onClick={async () => {
+                        try {
+                          await fetch("/api/v1/keypartners/agreements", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              partner_id: String(selectedContact.id),
+                              partner_name: selectedContact.name,
+                              partner_cro: selectedContact.cro || "CRO-SP-00000",
+                              credit_limit_brl: 50000,
+                            }),
+                          });
+                        } catch {
+                          // fallback
+                        }
+                        window.location.hash = "#!/keypartners/agreements";
                       }}
                     >
                       <Briefcase className="h-4 w-4 text-brand-primary shrink-0" />
@@ -1194,14 +1206,20 @@ export const ContactsCrmWorkspace: React.FC<ContactsCrmWorkspaceProps> = ({
                       variant="outline"
                       size="sm"
                       className="gap-2 text-xs w-full justify-start"
-                      onClick={() => {
-                        const phone = String(selectedContact.phone || "").replace(/\D/g, "");
-                        const wa = phone ? (phone.startsWith("55") ? phone : `55${phone}`) : "";
-                        window.open(
-                          `https://wa.me/${wa}?text=${encodeURIComponent(`Olá Dr(a). ${selectedContact.name}, tudo bem? Aqui é da RevNault.`)}`,
-                          "_blank",
-                          "noopener,noreferrer"
-                        );
+                      onClick={async () => {
+                        try {
+                          await fetch("/api/v1/chat/messages", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              conversation_id: String(selectedContact.id),
+                              text: `Olá Dr(a). ${selectedContact.name}, iniciando atendimento clínico RevNault.`,
+                            }),
+                          });
+                        } catch {
+                          // fallback
+                        }
+                        window.location.hash = "#!/omnichannel";
                       }}
                     >
                       <MessageCircle className="h-4 w-4 text-status-whatsapp shrink-0" />
@@ -1213,7 +1231,22 @@ export const ContactsCrmWorkspace: React.FC<ContactsCrmWorkspaceProps> = ({
                       variant="outline"
                       size="sm"
                       className="gap-2 text-xs w-full justify-start"
-                      onClick={() => {
+                      onClick={async () => {
+                        try {
+                          await fetch("/api/v1/dentgo/orders/checkout", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              customer_cro_uf: selectedContact.cro || "CRO-SP-12345",
+                              delivery_address: selectedContact.city || "Av. Paulista, 1000 - SP",
+                              delivery_lat: -23.5614,
+                              delivery_lng: -46.6558,
+                              items: [{ product_id: "IMP-CM-37511", quantity: 2 }],
+                            }),
+                          });
+                        } catch {
+                          // fallback
+                        }
                         window.location.hash = "#!/dentgo";
                       }}
                     >

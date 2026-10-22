@@ -4,6 +4,7 @@ Vertical Slice: Deals & Pipeline
 Schemas tipados OpenAPI 3.1
 """
 
+from typing import Optional, List, Dict, Any
 from pydantic import BaseModel, Field
 
 
@@ -32,6 +33,17 @@ class DealUpdate(BaseModel):
 class PipelineItemOut(BaseModel):
     id: int
     name: str
+
+
+class PipelineStagesOrderUpdate(BaseModel):
+    stages_order: list[int] = Field(..., min_length=1, description="Lista ordenada de IDs de estágios")
+
+
+class PipelineStagesOrderResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    pipeline_id: int
+    stages_order: list[int]
+    status: str = "updated"
 
 
 class PipelineMetricsOut(BaseModel):
@@ -173,6 +185,9 @@ class GenerateContractRequest(BaseModel):
     signer_email: str | None = Field(default=None, description="E-mail do signatário")
     signer_phone: str | None = Field(default=None, description="WhatsApp/Telefone para envio do link de assinatura")
     account_id: str | None = Field(default="0f14ffff", description="ID do tenant")
+    renewal_months: Optional[int] = Field(default=None, description="Prazo em meses para renovação de vigência")
+    parent_contract_id: Optional[str] = Field(default=None, description="ID do contrato pai/original em caso de renovação")
+    icp_certificate_serial: Optional[str] = Field(default=None, description="Serial do certificado digital ICP-Brasil e-CPF")
 
 
 class GenerateContractResponse(BaseModel):
@@ -183,6 +198,10 @@ class GenerateContractResponse(BaseModel):
     status: str
     original_pdf_r2_key: str
     signing_url: str
+    valid_until: Optional[str] = None
+    renewal_months: Optional[int] = None
+    parent_contract_id: Optional[str] = None
+    icp_certificate_serial: Optional[str] = None
 
 
 class DealContractOut(BaseModel):

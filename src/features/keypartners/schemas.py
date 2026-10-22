@@ -10,9 +10,12 @@ from pydantic import BaseModel, Field
 
 class PartnerAgreementCreate(BaseModel):
     partner_name: str = Field(..., description="Nome do parceiro / clínica / cirurgião")
+    partner_id: Optional[str] = Field(default=None, description="ID do contato ou parceiro")
     partner_cro_uf: Optional[str] = Field(default=None, description="CRO/UF do responsável técnico")
+    partner_cro: Optional[str] = Field(default=None, description="CRO do responsável técnico")
     tier: str = Field(default="SILVER", description="Nível de parceria: SILVER | GOLD | BLACK_KOL")
     credit_limit: float = Field(default=15000.0, description="Limite de crédito consignado em R$")
+    credit_limit_brl: Optional[float] = Field(default=None, description="Limite de crédito consignado em BRL")
     min_monthly_revenue: float = Field(default=0.0, description="Piso mínimo de faturamento mensal")
     max_turnover_days: int = Field(default=60, description="Prazo máximo de giro do estoque em dias")
     account_id: Optional[str] = Field(default="0f14ffff", description="ID da conta tenant")

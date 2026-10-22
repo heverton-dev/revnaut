@@ -125,19 +125,77 @@ export const LandingPageBuilder: React.FC<LandingPageBuilderProps> = ({
 
   const [savedPages, setSavedPages] = useState<LandingPageItem[]>([]);
   const [resolvedCampaignId, setResolvedCampaignId] = useState<string>(campaignId || "");
+  const [showNewCampaignModal, setShowNewCampaignModal] = useState<boolean>(false);
+  const [newCampName, setNewCampName] = useState<string>("");
+  const [newCampChannel, setNewCampChannel] = useState<string>("Google Ads Search (GCLID)");
+  const [newCampUtmSource, setNewCampUtmSource] = useState<string>("google");
+  const [newCampUtmMedium, setNewCampUtmMedium] = useState<string>("cpc");
+  const [newCampUtmCampaign, setNewCampUtmCampaign] = useState<string>("implantes-sp");
+  const [newCampBudget, setNewCampBudget] = useState<number>(5000);
+  const [newCampFeedback, setNewCampFeedback] = useState<string | null>(null);
+
+  const fetchCampaigns = () => {
+    fetch("/api/v1/campaigns")
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0 && !campaignId) {
+          setResolvedCampaignId(data[0].id);
+        }
+      })
+      .catch(() => {});
+  };
 
   useEffect(() => {
     if (!campaignId) {
-      fetch("/api/v1/campaigns")
-        .then((r) => r.json())
-        .then((data) => {
-          if (Array.isArray(data) && data.length > 0) {
-            setResolvedCampaignId(data[0].id);
-          }
-        })
-        .catch(() => {});
+      fetchCampaigns();
     }
   }, [campaignId]);
+
+  const handleCreateMediaCampaign = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setNewCampFeedback(null);
+    try {
+      const res = await fetch("/api/v1/campaigns", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newCampName,
+          channel: newCampChannel,
+          utm_source: newCampUtmSource,
+          utm_medium: newCampUtmMedium,
+          utm_campaign: newCampUtmCampaign,
+          budget: Number(newCampBudget) || 0,
+          spend: 0,
+          revenue: 0,
+          leads_count: 0,
+          deals_count: 0,
+          status: "ativa",
+        }),
+      });
+      if (!res.ok) throw new Error("Falha ao criar campanha de mídia");
+      const created = await res.json();
+      setNewCampFeedback(`Campanha ${created.name} criada.`);
+      setResolvedCampaignId(created.id);
+      setShowNewCampaignModal(false);
+      setNewCampName("");
+      fetchCampaigns();
+    } catch (err: any) {
+      setNewCampFeedback(`Erro: ${err.message}`);
+    }
+  };
+
+  const handleDispatchCampaign = async () => {
+    try {
+      const res = await fetch(`/api/v1/campaigns/${encodeURIComponent(activeCampaignId)}/dispatch`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await res.json().catch(() => ({}));
+      setNewCampFeedback(res.ok ? "Campanha de mídia aprovada e disparada!" : `Erro (${res.status}): ${data.detail || "Falha"}`);
+    } catch (err: any) {
+      setNewCampFeedback(`Erro: ${err.message}`);
+    }
+  };
 
   const activeCampaignId = campaignId || resolvedCampaignId || "camp-01";
   const [title, setTitle] = useState(initialTitle);
@@ -331,6 +389,8 @@ export const LandingPageBuilder: React.FC<LandingPageBuilderProps> = ({
       if (res.ok) {
         const detail = await res.json();
         applyContent(detail.html ?? "", detail.css ?? "");
+        setAbTestEnabled(Boolean(detail.ab_test_enabled));
+        if (detail.variant_b_html) setAbVariantB(detail.variant_b_html);
         return;
       }
     } catch {
@@ -472,6 +532,8 @@ export const LandingPageBuilder: React.FC<LandingPageBuilderProps> = ({
         css,
         cfo_cro: cfoCro,
         cfo_name: cfoName,
+        ab_test_enabled: abTestEnabled,
+        variant_b_html: abVariantB,
       };
 
       const res = await fetch(`/api/v1/campaigns/landing-pages/${currentId}`, {
@@ -847,6 +909,24 @@ export const LandingPageBuilder: React.FC<LandingPageBuilderProps> = ({
               <Button
                 variant="outline"
                 size="sm"
+                onClick={() => setShowNewCampaignModal(true)}
+                className="flex items-center gap-1.5 text-xs border-brand-primary/40 text-brand-primary"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Nova Campanha de Mídia (POST)
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDispatchCampaign}
+                className="flex items-center gap-1.5 text-xs border-brand-primary/40 text-brand-primary"
+              >
+                <Send className="w-3.5 h-3.5" />
+                Disparar Campanha (POST)
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={handleCreateLandingPage}
                 disabled={isSaving}
                 className="flex items-center gap-1.5 text-xs"
@@ -890,14 +970,25 @@ export const LandingPageBuilder: React.FC<LandingPageBuilderProps> = ({
               )}
             </div>
 
-            {publishedUrl && (
-              <div className="flex items-center gap-2 font-mono text-status-success">
-                <span>R2 URL:</span>
-                <a href={publishedUrl} target="_blank" rel="noreferrer" className="underline truncate max-w-xs">
-                  {publishedUrl}
-                </a>
-              </div>
-            )}
+            <div className="flex items-center gap-4">
+              <a
+                href={`/lp/${slug}`}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-1 font-mono text-xs text-brand-primary underline hover:text-brand-primary-hover"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                Visualizar LP Pública (/lp/{slug})
+              </a>
+              {publishedUrl && (
+                <div className="flex items-center gap-2 font-mono text-status-success">
+                  <span>R2 URL:</span>
+                  <a href={publishedUrl} target="_blank" rel="noreferrer" className="underline truncate max-w-xs">
+                    {publishedUrl}
+                  </a>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Estúdio Visual de Landing Page (self-contained) */}
@@ -1731,14 +1822,122 @@ export const LandingPageBuilder: React.FC<LandingPageBuilderProps> = ({
               <Button variant="outline" size="sm" onClick={() => setShowAbModal(false)}>Cancelar</Button>
               <Button
                 size="sm"
-                onClick={() => {
+                onClick={async () => {
                   setAbTestEnabled(true);
                   setShowAbModal(false);
+                  if (currentId) {
+                    try {
+                      await fetch(`/api/v1/campaigns/landing-pages/${currentId}`, {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          title,
+                          slug,
+                          html: editorHtml,
+                          css: editorCss,
+                          cfo_cro: cfoCro,
+                          cfo_name: cfoName,
+                          ab_test_enabled: true,
+                          variant_b_html: abVariantB,
+                        }),
+                      });
+                      await fetchLandingPages();
+                    } catch {
+                      // ignore
+                    }
+                  }
                 }}
               >
                 Ativar Split 50/50
               </Button>
             </div>
+      </Dialog>
+
+      {/* Modal de Criação de Campanha de Mídia (POST /api/v1/campaigns) */}
+      <Dialog
+        isOpen={showNewCampaignModal}
+        onClose={() => setShowNewCampaignModal(false)}
+        size="form"
+        title="Nova Campanha de Mídia"
+        description="Cadastre uma campanha de tráfego pago ou inbound para atribuição direta de receita e leads."
+      >
+        <form onSubmit={handleCreateMediaCampaign} className="space-y-3">
+          <div>
+            <label className="block text-xs font-medium text-text-secondary mb-1">Nome da Campanha</label>
+            <Input
+              value={newCampName}
+              onChange={(e) => setNewCampName(e.target.value)}
+              placeholder="Ex: Campanha Implantes Cone Morse SP"
+              className="text-xs"
+              required
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="block text-xs font-medium text-text-secondary mb-1">Canal de Mídia</label>
+              <select
+                value={newCampChannel}
+                onChange={(e) => setNewCampChannel(e.target.value)}
+                className="w-full px-2.5 py-1.5 rounded-lg border border-border bg-surface-bg text-xs text-text-main"
+              >
+                <option value="Google Ads Search (GCLID)">Google Ads Search (GCLID)</option>
+                <option value="Meta Ads Instagram (FBCLID)">Meta Ads Instagram (FBCLID)</option>
+                <option value="LinkedIn Lead Gen">LinkedIn Lead Gen</option>
+                <option value="Eventos Odontológicos">Eventos Odontológicos</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-text-secondary mb-1">Orçamento (BRL)</label>
+              <Input
+                type="number"
+                value={newCampBudget}
+                onChange={(e) => setNewCampBudget(Number(e.target.value))}
+                className="text-xs font-mono"
+                required
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <div>
+              <label className="block text-xs font-medium text-text-secondary mb-1">UTM Source</label>
+              <Input
+                value={newCampUtmSource}
+                onChange={(e) => setNewCampUtmSource(e.target.value)}
+                className="text-xs font-mono"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-text-secondary mb-1">UTM Medium</label>
+              <Input
+                value={newCampUtmMedium}
+                onChange={(e) => setNewCampUtmMedium(e.target.value)}
+                className="text-xs font-mono"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-text-secondary mb-1">UTM Campaign</label>
+              <Input
+                value={newCampUtmCampaign}
+                onChange={(e) => setNewCampUtmCampaign(e.target.value)}
+                className="text-xs font-mono"
+                required
+              />
+            </div>
+          </div>
+          {newCampFeedback && (
+            <p className="text-xs text-brand-primary">{newCampFeedback}</p>
+          )}
+          <div className="flex justify-end gap-2 pt-3 border-t border-border-subtle">
+            <Button variant="outline" size="sm" type="button" onClick={() => setShowNewCampaignModal(false)}>
+              Cancelar
+            </Button>
+            <Button size="sm" type="submit">
+              Criar Campanha
+            </Button>
+          </div>
+        </form>
       </Dialog>
     </div>
   );

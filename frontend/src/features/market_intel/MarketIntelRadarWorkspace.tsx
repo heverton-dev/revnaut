@@ -342,10 +342,32 @@ export const MarketIntelRadarWorkspace: React.FC<MarketIntelRadarWorkspaceProps>
     }
   };
 
+  const [matchingSignalId, setMatchingSignalId] = React.useState<string | null>(null);
+
+  const handleMatchOpportunity = async (signalId: string) => {
+    setMatchingSignalId(signalId);
+    try {
+      const matchRes = await api<any>("/api/v1/market-intel/opportunities/match", {
+        method: "POST",
+        body: JSON.stringify({
+          signal_id: signalId,
+          region_code: role === "director" ? undefined : region,
+        }),
+      });
+      notify(`Oportunidade cruzada com sucesso! ${matchRes.matches_count || 1} correspondência(s) encontrada(s) no catálogo.`);
+      await loadOpportunities();
+      setActiveTab("opportunities");
+    } catch (err: any) {
+      notify(null, err.message || "Erro ao cruzar sinal com catálogo.");
+    } finally {
+      setMatchingSignalId(null);
+    }
+  };
+
   const handleDispatch = async (campaign: TargetedCampaign) => {
     setDispatchingId(campaign.id);
     try {
-      const result = await api<CampaignDispatchResult>(`/api/v1/campaigns/${encodeURIComponent(campaign.id)}/dispatch`, {
+      const result = await api<CampaignDispatchResult>(`/api/v1/market-intel/campaigns/${encodeURIComponent(campaign.id)}/dispatch`, {
         method: "POST",
       });
       setLastDispatch(result);
@@ -495,14 +517,26 @@ export const MarketIntelRadarWorkspace: React.FC<MarketIntelRadarWorkspaceProps>
                       <span className="text-text-secondary">{s.structured_payload.detected_trends.join(", ") || "-"}</span>
                     </div>
                   </div>
-                  <a
-                    href={s.source_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-xs text-brand-primary hover:underline"
-                  >
-                    <ExternalLink className="h-3.5 w-3.5" /> Fonte original
-                  </a>
+                  <div className="flex items-center justify-between pt-2 border-t border-border">
+                    <a
+                      href={s.source_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-xs text-brand-primary hover:underline"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" /> Fonte original
+                    </a>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={matchingSignalId === s.id}
+                      onClick={() => handleMatchOpportunity(s.id)}
+                      className="gap-1"
+                    >
+                      <Target className="h-3.5 w-3.5" />
+                      {matchingSignalId === s.id ? "Cruzando..." : "Cruzar Sinal com Catálogo (Match Vetorial)"}
+                    </Button>
+                  </div>
                 </Card>
               ))}
             </div>

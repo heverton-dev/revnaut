@@ -58,14 +58,44 @@ def presign_download(
         )
 
 
+def _validate_safe_storage_path(file_key: str, account_id: Optional[str] = None) -> Path:
+    if not file_key or ".." in file_key or file_key.startswith("/") or file_key.startswith("\\"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Path traversal detectado: caminho invalido ou inseguro.",
+        )
+    p = Path(file_key)
+    if p.is_absolute() or any(part == ".." for part in p.parts):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Path traversal detectado: caminho invalido ou inseguro.",
+        )
+    resolved = (LOCAL_STORAGE_ROOT / file_key).resolve()
+    if not resolved.is_relative_to(LOCAL_STORAGE_ROOT.resolve()):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Path traversal detectado: arquivo fora do diretorio permitido.",
+        )
+
+    if account_id:
+        try:
+            storage_client.validate_tenant_access(tenant_id=account_id, key=file_key)
+        except StorageSecurityException as e:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=str(e),
+            )
+    return resolved
+
+
 @router.get("/presign-download/{file_id:path}", response_model=PresignDownloadResponse)
 def presign_download_by_path(
     file_id: str,
     x_account_id: Optional[str] = Header(None, alias="X-Account-ID"),
 ):
     account_id = x_account_id or "0f14ffff"
+    _validate_safe_storage_path(file_id, account_id=account_id)
     try:
-        storage_client.validate_tenant_access(tenant_id=account_id, key=file_id)
         res = storage_client.generate_presigned_download_url(key=file_id, expires_in=900)
         return PresignDownloadResponse(**res)
     except StorageSecurityException as e:
@@ -80,9 +110,10 @@ def presign_download_by_path(
 async def upload_direct_by_key(
     file_key: str,
     request: Request,
+    x_account_id: Optional[str] = Header(None, alias="X-Account-ID"),
 ):
+    dest = _validate_safe_storage_path(file_key, account_id=x_account_id)
     body = await request.body()
-    dest = LOCAL_STORAGE_ROOT / file_key
     try:
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_bytes(body)
@@ -99,63 +130,44 @@ async def upload_direct_by_key(
 
 
 @router.get("/files/{file_key:path}", summary="Servir arquivo armazenado localmente ou no R2")
-def get_stored_file(file_key: str, download: Optional[bool] = Query(False)):
-    file_path = LOCAL_STORAGE_ROOT / file_key
-    if not file_path.exists() or not file_path.is_file():
-        try:
-            file_path.parent.mkdir(parents=True, exist_ok=True)
-            _, ext = os.path.splitext(file_key.lower())
-            if ext == ".pdf":
-                content = b"%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj 2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj 3 0 obj<</Type/Page/MediaBox[0 0 595 842]/Parent 2 0 R/Resources<<>>>>endobj\nxref\n0 4\n0000000000 65535 f\n0000000010 00000 n\n0000000053 00000 n\n0000000102 00000 n\ntrailer<</Size 4/Root 1 0 R>>\nstartxref\n180\n%%EOF"
-            elif ext == ".xml":
-                content = b'<?xml version="1.0" encoding="UTF-8"?>\n<nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00"><status>AUTORIZADO</status></nfeProc>'
-            elif ext == ".csv":
-                content = b"col1,col2,col3\nval1,val2,val3\n"
-            elif ext == ".html":
-                content = b"<!DOCTYPE html><html lang=\"pt-BR\"><head><meta charset=\"UTF-8\"><title>RevNault Document</title></head><body><h1>RevNault Document</h1></body></html>"
-            elif ext in [".png", ".jpg", ".jpeg"]:
-                content = b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15c4\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82"
-            elif ext in [".webm", ".mp4"]:
-                content = b""
-            else:
-                content = b"\x00"
-            file_path.write_bytes(content)
-        except Exception:
-            pass
-
-    if file_path.exists() and file_path.is_file():
-        _, ext = os.path.splitext(file_key.lower())
-        mime_map = {
-            ".pdf": "application/pdf",
-            ".xml": "application/xml",
-            ".csv": "text/csv",
-            ".html": "text/html",
-            ".stl": "model/stl",
-            ".dcm": "application/dicom",
-            ".webm": "video/webm",
-            ".mp4": "video/mp4",
-            ".ogg": "audio/ogg",
-            ".png": "image/png",
-            ".jpg": "image/jpeg",
-            ".jpeg": "image/jpeg",
-        }
-        mime_type = mime_map.get(ext)
-        if not mime_type:
-            mime_type, _ = mimetypes.guess_type(str(file_path))
-        mime_type = mime_type or "application/octet-stream"
-
-        is_attachment = download or ext in [".csv", ".parquet", ".zip", ".tar", ".gz", ".xlsx"]
-        disp_type = "attachment" if is_attachment else "inline"
-        return FileResponse(
-            path=str(file_path),
-            media_type=mime_type,
-            headers={"Content-Disposition": f'{disp_type}; filename="{Path(file_key).name}"'}
+def get_stored_file(
+    file_key: str,
+    download: Optional[bool] = Query(False),
+    x_account_id: Optional[str] = Header(None, alias="X-Account-ID"),
+):
+    file_path = _validate_safe_storage_path(file_key, account_id=x_account_id)
+    if not file_path.is_file():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Arquivo nao encontrado no storage.",
         )
 
-    return Response(
-        content=b"%PDF-1.4\n%%EOF",
-        media_type="application/pdf",
-        headers={"Content-Disposition": f'inline; filename="{Path(file_key).name}"'}
+    _, ext = os.path.splitext(file_key.lower())
+    mime_map = {
+        ".pdf": "application/pdf",
+        ".xml": "application/xml",
+        ".csv": "text/csv",
+        ".html": "text/html",
+        ".stl": "model/stl",
+        ".dcm": "application/dicom",
+        ".webm": "video/webm",
+        ".mp4": "video/mp4",
+        ".ogg": "audio/ogg",
+        ".png": "image/png",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+    }
+    mime_type = mime_map.get(ext)
+    if not mime_type:
+        mime_type, _ = mimetypes.guess_type(str(file_path))
+    mime_type = mime_type or "application/octet-stream"
+
+    is_attachment = download or ext in [".csv", ".parquet", ".zip", ".tar", ".gz", ".xlsx"]
+    disp_type = "attachment" if is_attachment else "inline"
+    return FileResponse(
+        path=str(file_path),
+        media_type=mime_type,
+        headers={"Content-Disposition": f'{disp_type}; filename="{Path(file_key).name}"'}
     )
 
 

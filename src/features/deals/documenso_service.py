@@ -52,6 +52,9 @@ def generate_contract_for_deal(
     signer_phone: Optional[str] = None,
     account_id: str = "0f14ffff",
     mock_mode: Optional[bool] = None,
+    renewal_months: Optional[int] = None,
+    parent_contract_id: Optional[str] = None,
+    icp_certificate_serial: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Gera contrato/proposta comercial formal vinculada ao Deal, salva o PDF original no R2
@@ -87,16 +90,30 @@ def generate_contract_for_deal(
         signing_url = f"https://documenso.revnault.internal/sign/{documenso_id}"
         contract_title = f"Contrato de Fornecimento Odontológico - {row_dict['title']}"
 
+        valid_until = None
+        if renewal_months:
+            from datetime import datetime, timezone, timedelta
+            valid_dt = datetime.now(timezone.utc) + timedelta(days=int(renewal_months) * 30)
+            valid_until = valid_dt.strftime("%Y-%m-%d")
+
+        pdf_lines = [
+            f"Deal ID: {deal_id}",
+            f"Modalidade: {contract_type}",
+            f"Signatario: {name} ({email} / {phone})",
+            f"Valor Global Contratado: R$ {deal_value:.2f}",
+            f"Tenant Account: {effective_account}",
+        ]
+        if renewal_months:
+            pdf_lines.append(f"Renovacao: +{renewal_months} meses (Validade ate {valid_until})")
+        if parent_contract_id:
+            pdf_lines.append(f"Contrato Pai / Origem: {parent_contract_id}")
+        if icp_certificate_serial:
+            pdf_lines.append(f"Certificado Digital ICP-Brasil: {icp_certificate_serial}")
+
         # 1. Compila PDF real e faz upload para o Cloudflare R2
         pdf_bytes = _build_pdf_document_bytes(
             contract_title,
-            [
-                f"Deal ID: {deal_id}",
-                f"Modalidade: {contract_type}",
-                f"Signatario: {name} ({email} / {phone})",
-                f"Valor Global Contratado: R$ {deal_value:.2f}",
-                f"Tenant Account: {effective_account}",
-            ],
+            pdf_lines,
         )
         storage = R2StorageClient()
         original_r2_url = storage.upload_bytes(
@@ -165,6 +182,10 @@ def generate_contract_for_deal(
             "original_pdf_r2_url": original_r2_url,
             "signing_url": signing_url,
             "whatsapp_message_id": msg_id,
+            "valid_until": valid_until,
+            "renewal_months": renewal_months,
+            "parent_contract_id": parent_contract_id,
+            "icp_certificate_serial": icp_certificate_serial,
         }
     finally:
         conn.close()
