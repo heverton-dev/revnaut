@@ -1,6 +1,0 @@
-data
-tools
-.env*
-Dockerfile
-docker-compose.yml
-DEPLOY.md
